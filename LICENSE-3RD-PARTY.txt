@@ -1,0 +1,100 @@
+GSEA is distributed, in part, under and subject to the provisions of licenses for:
+
+Ant, Copyright 2000-2014 The Apache Software Foundation. All rights reserved. (http://ant.apache.org/).
+Apache Commons Compress, Copyright 2002-2014 The Apache Software Foundation. All rights reserved. (http://commons.apache.org/proper/commons-compress/).
+Apache Commons IO, Copyright 2002-2012 The Apache Software Foundation. All rights reserved. (http://commons.apache.org/proper/commons-io/).
+Apache Commons Lang, Copyright 2001-2015 The Apache Software Foundation. All rights reserved. (http://commons.apache.org/proper/commons-lang/).
+Apache Commons Logging, Copyright 2003-2014 The Apache Software Foundation. All rights reserved. (http://commons.apache.org/proper/commons-logging/).
+Apache HTTP Components, Copyright 1999-2016 The Apache Software Foundation. All rights reserved. (http://hc.apache.org/index.html).
+Apache Log4j, Copyright 1999-2012 The Apache Software Foundation. All rights reserved. (http://logging.apache.org/log4j/1.2/index.html)
+dom4j, Copyright 2001-2010 MetaStuff, Ltd. All Rights Reserved. (http://dom4j.sourceforge.net/)
+edtFTPJ/Free, Copyright 2001-2007 Enterprise Distributed Technologies Ltd. All Rights Reserved. (enterprisedt.com)
+Jakarta ECS, Copyright The Apache Software Foundation. All rights reserved. (https://attic.apache.org/projects/jakarta-ecs.html).
+JCommon, Copyright 2007-2014 Object Refinery Limited. (http://www.jfree.org/jcommon/)
+JFreeChart, Copyright 2005-2014 Object Refinery Limited. (http://www.jfree.org/jfreechart/)
+JFreeSVG, Copyright 2013-2016 Object Refinery Limited. (http://www.jfree.org/jfreesvg/)
+JExcelApi, Copyright 2001-2009 Andrew Khan, Copyright 1996-2000 by Elliot Joel Berk and C. Scott Ananian. (http://jexcelapi.sourceforge.net/)
+JIDE Common, Copyright 2002-2016, JIDE Software, Inc. All Rights Reserved.  (www.jidesoft.com)
+Maven Artifact, Copyright 2001-2008. All rights reserved. (http://maven.apache.org/index.html).
+MeV algorithms.jar, (http://www.tm4.org/mev.html)
+ProGuard, Copyright 2002-2016 Eric Lafortune @ GuardSquare. (http://proguard.sourceforge.net/)
+SGLayout, Copyright John Redmond (John.Redmond@mq.edu.au). (http://www.javaworld.com/article/2077494/learn-java/java-tip-129--sglayout--8212-a-layout-manager-for-the-rest-of-us.html)
+Trove, Copyright 2001-2005 Eric D. Friedman. All Rights Reserved. (trove.starlight-systems.com/)
+Universal Java Matrix Package (UJMP), Copyright 2008-2016 Holger Arndt. All rights reserved. (https://ujmp.org/) 
+
+---- 
+JIDE Components, JIDE Dock, JIDE Grids: Copyright 2002-2016, JIDE Software, Inc. All Rights Reserved. (http://www.jidesoft.com/)
+  Note that it is necessary to provide a JIDE Software license key in order to use JIDE Components, Dock and Grids.
+  The key included for the GSEA source was generously provided to the GSEA development team for use with the GSEA project.
+  Other developers and commercial users should contact http://www.jidesoft.com to determine what type of license is needed.
+----
+
+
+Foxtrot and JGoodies are under BSD-style license, as quoted below.
+----
+Foxtrot (http://foxtrot.sourceforge.net/)
+ * Copyright (c) 2002-2008, Simone Bordet
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without modification,
+ * are permitted provided that the following conditions are met:
+ * 
+ *    - Redistributions of source code must retain the above copyright notice,
+ *      this list of conditions and the following disclaimer.
+ * 
+ *    - Redistributions in binary form must reproduce the above copyright notice,
+ *      this list of conditions and the following disclaimer in the documentation
+ *      and/or other materials provided with the distribution.
+ * 
+ *    - Neither the name of Foxtrot nor the names of the contributors may be used
+ *      to endorse or promote products derived from this software without specific
+ *      prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE COPYRIGHT OWNERS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+ * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+ * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+ * OF THE POSSIBILITY OF SUCH DAMAGE.
+----
+
+JGoodies Looks (http://www.jgoodies.com/downloads/libraries/)
+ * Copyright (c) 2001-2006 JGoodies Karsten Lentzsch. All Rights Reserved.
+
+JGoodies Forms (http://www.jgoodies.com/downloads/libraries/)
+ * Copyright (c) 2002-2006 JGoodies Karsten Lentzsch. All Rights Reserved.
+
+JGoodies UIF Lite, (http://www.jgoodies.com/)
+ * Copyright (c) 2003 JGoodies Karsten Lentzsch. All Rights Reserved.                                                                                       
+
+ *
+ * Redistribution and use in source and binary forms, with or without 
+ * modification, are permitted provided that the following conditions are met:
+ * 
+ *  o Redistributions of source code must retain the above copyright notice, 
+ *    this list of conditions and the following disclaimer. 
+ *     
+ *  o Redistributions in binary form must reproduce the above copyright notice, 
+ *    this list of conditions and the following disclaimer in the documentation 
+ *    and/or other materials provided with the distribution. 
+ *     
+ *  o Neither the name of JGoodies Karsten Lentzsch nor the names of 
+ *    its contributors may be used to endorse or promote products derived 
+ *    from this software without specific prior written permission. 
+ *     
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, 
+ * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR 
+ * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR 
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, 
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; 
+ * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE 
+ * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, 
+ * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+----

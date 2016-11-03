@@ -1,0 +1,5 @@
+/dist/
+/bin/
+/proguard_opt_log/
+.DS_Store
+*~
