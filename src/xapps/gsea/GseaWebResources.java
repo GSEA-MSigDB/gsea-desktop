@@ -43,7 +43,7 @@ public class GseaWebResources {
     }
 
     public static String getGseaBaseURL() {
-        return "www.gsea-msigdb.org/gsea";
+        return "http://www.gsea-msigdb.org/gsea";
     }
 
     public static String getGseaURLDisplayName() {
