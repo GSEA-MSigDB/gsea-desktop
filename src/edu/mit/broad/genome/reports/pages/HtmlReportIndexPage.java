@@ -131,7 +131,7 @@ public class HtmlReportIndexPage extends HtmlPage {
             buf.append("<div class=\"date\">").append(fToolReport.getProducerName()).append("&nbsp[").append(date).append(']').append("</div>\n");
 
             buf.append("<div class=\"contact\">Website: <a href=\"").append(GseaWebResources.getGseaBaseURL()).append("\">").append(GseaWebResources.getGseaURLDisplayName()).append("</a>\n");
-            buf.append("Questions & Suggestions: <a href=\"mailto:").append(GseaWebResources.getGseaEmail()).append("\">Email</a></div>\n");
+            buf.append("Questions & Suggestions: <a href=\"").append(GseaWebResources.getGseaContactURL()).append("\">Contact page</a></div>\n");
 
             buf.append("<div class=\"spacer\">&nbsp;</div>\n");
             buf.append("</div>\n");

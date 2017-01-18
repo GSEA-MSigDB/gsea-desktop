@@ -53,6 +53,8 @@ public interface WindowManager {
 
     public DialogDescriptor createDialogDescriptor(final String title, final Component comp, final Action helpAction_opt);
 
+    public DialogDescriptor createDialogDescriptor(final String title, final Component comp, final Action helpAction_opt, boolean showLicenseButton);
+
     public DialogDescriptor createDialogDescriptor(final String title, final Component comp);
 
     // -------------------------------------------------------------------------------------------- //
