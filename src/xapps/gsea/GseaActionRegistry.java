@@ -210,8 +210,8 @@ class GseaActionRegistry extends AbstractActionLookup implements Constants {
                     } catch (Exception e) {
                         Application.getWindowManager().showError(e.toString());
                     }
+                    return true;
                 }
-                return true;
             }
 
             new ParserWorker(files).execute();
