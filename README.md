@@ -12,7 +12,7 @@ GSEA is made available under the terms of a BSD-style license, a copy of which i
 #  Latest Version
 The latest binary release of this software can be obtained from the [Downloads page of the GSEA website](http://www.gsea-msigdb.org/gsea/downloads.jsp).
 
-If you have any comments, suggestions or bugs to report, please see our [Contact page])(http://www.gsea-msigdb.org/gsea/contact.jsp) for information on how to reach us.
+If you have any comments, suggestions or bugs to report, please see our [Contact page](http://www.gsea-msigdb.org/gsea/contact.jsp) for information on how to reach us.
 
 # History and Acknowledgements
 
