@@ -92,4 +92,6 @@ public interface Constants {
     public static final String MAKE_REPORT_DIR_KEY = "mkdir";
 
     public static final String GENE_SYMBOL_CHIP = GENE_SYMBOL + "." + CHIP;
+    
+    public static final String SEQ_ACCESSION_CHIP = SEQ_ACCESSION + "." + CHIP;
 }

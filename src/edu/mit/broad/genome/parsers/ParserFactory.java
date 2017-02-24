@@ -1071,7 +1071,7 @@ public class ParserFactory implements Constants {
         final boolean isSeqAccessionChip = VdbRuntimeResources.isChipSeqAccession(chipPath);
         if (!isGeneSymbolChip && !isSeqAccessionChip) return null;
 
-        final String chipName = (isGeneSymbolChip) ? Constants.GENE_SYMBOL_CHIP : Constants.SEQ_ACCESSION;
+        final String chipName = (isGeneSymbolChip) ? Constants.GENE_SYMBOL_CHIP : Constants.SEQ_ACCESSION_CHIP;
         final String overridePropName = (isGeneSymbolChip) ? GENE_SYMBOL_OVERRIDE_PROP_NAME : SEQ_ACCESSION_OVERRIDE_PROP_NAME;
         final String overridePropValue = (isGeneSymbolChip) ? GENE_SYMBOL_OVERRIDE_VALUE : SEQ_ACCESSION_OVERRIDE_VALUE;
         
