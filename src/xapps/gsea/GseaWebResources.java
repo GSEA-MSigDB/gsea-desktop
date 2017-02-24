@@ -43,19 +43,11 @@ public class GseaWebResources {
     }
 
     public static String getGseaBaseURL() {
-        if (edu.mit.broad.genome.Conf.isDebugMode()) {
-            return "http://dev.broadinstitute.org/gsea";
-        } else {
-            return "http://www.broadinstitute.org/gsea";
-        }
-    }
-
-    public static String getGseaEmail() {
-        return "gsea@broadinstitute.org";
+        return "http://www.gsea-msigdb.org/gsea";
     }
 
     public static String getGseaURLDisplayName() {
-        return "www.broadinstitute.org/GSEA";
+        return "www.gsea-msigdb.org/gsea";
     }
 
     public static String getGseaHelpURL() {

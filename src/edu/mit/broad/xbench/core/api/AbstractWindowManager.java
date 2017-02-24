@@ -106,6 +106,10 @@ public abstract class AbstractWindowManager implements WindowManager {
         ApplicationDialog.showMessage(title, msg);
     }
 
+    public DialogDescriptor createDialogDescriptor(final String title, final Component comp, final Action help_action_opt, boolean showLicenseButton) {
+        return new DialogDescriptorJide(title, comp, help_action_opt, showLicenseButton);
+    }
+
     public DialogDescriptor createDialogDescriptor(final String title, final Component comp, final Action help_action_opt) {
         return new DialogDescriptorJide(title, comp, help_action_opt);
     }

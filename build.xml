@@ -9,8 +9,8 @@
   <property name="dist.dir" value="${basedir}/dist" />
   <property name="proguard_opt_hist.dir" value="${basedir}/proguard_opt_log" />
   <property file="src/edu/mit/broad/genome/resources/build.properties" />
-  <property name="ALL_DEPS_JAR" value="gsea2_all_deps-${build.version}.jar" />
-  <property name="CLEANED_JAR" value="gsea2-${build.version}.jar" />
+  <property name="ALL_DEPS_JAR" value="gsea_all_deps-${build.version}.jar" />
+  <property name="CLEANED_JAR" value="gsea-${build.version}.jar" />
 
   <target name="-init">
     <!-- Create the time stamp -->

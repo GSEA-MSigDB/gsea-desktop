@@ -410,7 +410,7 @@ public class EnrichmentReports extends ChartHelper {
         div.addElement(h4);
         UL ul = new UL();
 
-        StringElement line7 = HtmlFormat.Links.hyper("Guide to", "http://www.broadinstitute.org/gsea/doc/GSEAUserGuideFrame.html?_Interpreting_GSEA_Results", "interpret results");
+        StringElement line7 = HtmlFormat.Links.hyper("Guide to", "http://www.gsea-msigdb.org/gsea/doc/GSEAUserGuideFrame.html?_Interpreting_GSEA_Results", "interpret results");
 
         if (edb.getNumScores(true) > 0) {
             StringElement line1 = new StringElement(edb.getNumScores(true) + " / " + gsets.length + " gene sets are upregulated in phenotype <b>" + classA_name_opt + "</b>");

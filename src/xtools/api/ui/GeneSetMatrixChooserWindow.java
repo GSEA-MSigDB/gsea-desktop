@@ -115,7 +115,7 @@ public class GeneSetMatrixChooserWindow {
         JPanel dummy = new JPanel(new BorderLayout()); // @note needed else the input widget comes up real small in the dd
         dummy.add(tab, BorderLayout.CENTER);
 
-        DialogDescriptor desc = Application.getWindowManager().createDialogDescriptor(text, dummy, JarResources.createHelpAction(Param.GMX));
+        DialogDescriptor desc = Application.getWindowManager().createDialogDescriptor(text, dummy, JarResources.createHelpAction(Param.GMX), true);
         for (int i = 0; i < jlGenes.length; i++) {
             desc.enableDoubleClickableJList(jlGenes[i]);
         }

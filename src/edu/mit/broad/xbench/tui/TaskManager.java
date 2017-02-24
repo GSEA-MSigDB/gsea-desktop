@@ -328,7 +328,7 @@ public class TaskManager {
                             //but.setIcon(JarResources.getIcon("ToolRunnerResults.png"));
                             but.setForeground(Color.GREEN);
                             //but.setText("Success");
-                            but.setText("<html><body><font color=green>Success " + len + "</font></body></html>");
+                            but.setText("<html><body><font color=green>Success</font></body></html>");
                             but.setIcon(GuiHelper.ICON_ELLIPSIS);
                             but.setVerticalTextPosition(JButton.TOP);
                             but.setToolTipText(but.getText());

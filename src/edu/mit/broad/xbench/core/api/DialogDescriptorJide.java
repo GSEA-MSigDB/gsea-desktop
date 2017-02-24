@@ -4,11 +4,17 @@
 package edu.mit.broad.xbench.core.api;
 
 import com.jidesoft.dialog.ButtonPanel;
+
 import edu.mit.broad.genome.XLogger;
 import edu.mit.broad.genome.swing.GuiHelper;
+import edu.mit.broad.xbench.actions.ext.BrowserAction;
+
 import org.apache.log4j.Logger;
 
+import xapps.gsea.GseaWebResources;
+
 import javax.swing.*;
+
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -34,6 +40,8 @@ public class DialogDescriptorJide implements DialogDescriptor {
     private JDialog fDialog;
 
     private String fTitle;
+    
+    private boolean showLicenseButton = false;
 
     private Action fHelpAction_opt;
 
@@ -86,6 +94,12 @@ public class DialogDescriptorJide implements DialogDescriptor {
         init(help_action_opt);
         jbInit(title, inputComp);
     }
+
+    public DialogDescriptorJide(final String title, final Component inputComp, final Action help_action_opt, boolean showLicenseButton) {
+        this.showLicenseButton = showLicenseButton;
+        init(help_action_opt);
+        jbInit(title, inputComp);
+      }
 
     protected DialogDescriptorJide() {
 
@@ -238,6 +252,13 @@ public class DialogDescriptorJide implements DialogDescriptor {
                 buttonPanel.addButton(bHelp, ButtonPanel.HELP_BUTTON);
             } else {
                 klog.debug("Not making help action button: " + fHelpAction_opt);
+            }
+
+            if (showLicenseButton) {
+                JButton bLicense = new JButton("MSigDB License", GuiHelper.ICON_HELP16);
+                bLicense.addActionListener(new BrowserAction("MSigDB License", "MSigDB License Terms",
+                        GuiHelper.ICON_HELP16, GseaWebResources.getGseaBaseURL() + "/license_terms_list.jsp"));
+                buttonPanel.addButton(bLicense, ButtonPanel.OTHER_BUTTON);
             }
 
             bOk.addActionListener(new ActionListener() {
