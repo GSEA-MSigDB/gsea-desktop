@@ -13,8 +13,6 @@ import edu.mit.broad.vdb.VdbRuntimeResources;
 import edu.mit.broad.vdb.chip.Chip;
 import edu.mit.broad.xbench.core.api.Application;
 
-import org.apache.commons.lang3.BooleanUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 
 import xapps.gsea.GseaWebResources;
@@ -31,12 +29,15 @@ import java.util.*;
  * for each jvm invocation.
  *
  * @author Aravind Subramanian
+ * @author David Eby
  * @version %I%, %G%
  */
 public class ParserFactory implements Constants {
 
-    private static final String GENE_SYMBOL_OVERRIDE_VALUE = System.getProperty("GENE_SYMBOL_OVERRIDE");
-    private static final boolean HAVE_GENE_SYMBOL_OVERRIDE = StringUtils.isNotBlank(GENE_SYMBOL_OVERRIDE_VALUE);
+    private static final String GENE_SYMBOL_OVERRIDE_PROP_NAME = "GENE_SYMBOL_OVERRIDE";
+    private static final String GENE_SYMBOL_OVERRIDE_VALUE = System.getProperty(GENE_SYMBOL_OVERRIDE_PROP_NAME);
+    private static final String SEQ_ACCESSION_OVERRIDE_PROP_NAME = "SEQ_ACCESSION_OVERRIDE";
+    private static final String SEQ_ACCESSION_OVERRIDE_VALUE = System.getProperty(SEQ_ACCESSION_OVERRIDE_PROP_NAME);
     private static final Logger klog = XLogger.getLogger(ParserFactory.class);
 
     /**
@@ -1060,45 +1061,48 @@ public class ParserFactory implements Constants {
         return new BufferedInputStream(new FileInputStream(file));
     }
 
-    private static final File processPossibleGeneSymbolOverride(URL url) throws IOException {
-        // If we were about to go get the GENE_SYMBOL file, check whether we can pick it up 
+    private static final File processPossibleSpecialChipFileOverride(URL url) throws IOException {
+        // If we were about to go get one of the Special Chip files, check whether we can pick it up 
         // through the override instead.
         
-        // Is the override enabled?  Were we retrieving GENE_SYMBOL?  If not, leave with no override.
-        if (!HAVE_GENE_SYMBOL_OVERRIDE) return null;
-        if (!VdbRuntimeResources.isPathGeneSymbolChip(url.getPath())) return null;
+        // Are we retrieving GENE_SYMBOL or SEQ_ACCESSION?  If not, leave with no override
+        String chipPath = url.getPath();
+        final boolean isGeneSymbolChip = VdbRuntimeResources.isPathGeneSymbolChip(chipPath);
+        final boolean isSeqAccessionChip = VdbRuntimeResources.isChipSeqAccession(chipPath);
+        if (!isGeneSymbolChip && !isSeqAccessionChip) return null;
 
-        Boolean isOverrideBoolean = BooleanUtils.toBooleanObject(GENE_SYMBOL_OVERRIDE_VALUE);
-        if (isOverrideBoolean == null) {
-            // If the override value does not represent a Boolean value then check whether
-            // the property value itself represents a path to the GENE_SYMBOL file.
-            if (VdbRuntimeResources.isPathGeneSymbolChip(GENE_SYMBOL_OVERRIDE_VALUE)) {
-                return new File(GENE_SYMBOL_OVERRIDE_VALUE);
+        final String chipName = (isGeneSymbolChip) ? Constants.GENE_SYMBOL_CHIP : Constants.SEQ_ACCESSION;
+        final String overridePropName = (isGeneSymbolChip) ? GENE_SYMBOL_OVERRIDE_PROP_NAME : SEQ_ACCESSION_OVERRIDE_PROP_NAME;
+        final String overridePropValue = (isGeneSymbolChip) ? GENE_SYMBOL_OVERRIDE_VALUE : SEQ_ACCESSION_OVERRIDE_VALUE;
+        
+        final File userProvidedChipFile = new File(Application.getVdbManager().getRuntimeHomeDir(), chipName);
+        if (overridePropValue == null) {
+            if (userProvidedChipFile.exists() && userProvidedChipFile.isFile()) {
+                klog.info("Found user-provided " + chipName + " in gsea_home.");
+                return userProvidedChipFile;
             } else {
-                // ...otherwise, we can't use it (it will screw up the cache as it has the
-                // wrong name). Issue a warning instead.
-                klog.warn("Invalid GENE_SYMBOL_OVERRIDE value '" + GENE_SYMBOL_OVERRIDE_VALUE + 
-                        "'; must be either a boolean value or represent a file named " + 
-                        Constants.GENE_SYMBOL_CHIP + ". Proceeding with FTP.");
-                return null;
+              klog.info("User-provided " + chipName + 
+                      " not found in local gsea_home file.  Override disabled; proceeding with FTP.");
+              return null;
             }
-        } else if (BooleanUtils.isTrue(isOverrideBoolean)) {
-            // Simple setting that can be easily described to users.  If the override flag
-            // is set to true, then pick up the file from the gsea_home directory.
-            return new File(Application.getVdbManager().getRuntimeHomeDir(),
-                    Constants.GENE_SYMBOL_CHIP);
+        } else if ((isGeneSymbolChip && VdbRuntimeResources.isPathGeneSymbolChip(GENE_SYMBOL_OVERRIDE_VALUE)) || 
+                (isSeqAccessionChip && VdbRuntimeResources.isChipSeqAccession(SEQ_ACCESSION_OVERRIDE_VALUE))) {
+            klog.info("Found user-provided " + chipName + " at path " + overridePropValue);
+            return new File(overridePropValue);
         } else {
-            klog.info("GENE_SYMBOL_OVERRIDE disabled. Proceeding with FTP.");
+            // ...otherwise, we can't use it (it will screw up the cache as it has the wrong name).
+            // Issue a warning instead.
+            klog.warn("Invalid " + overridePropName + " value '" + overridePropValue + 
+                    "'; must represent a file named " +  chipName + ". Override disabled; proceeding with FTP.");
             return null;
         }
     }
     
     private static InputStream createInputStream(final URL url) throws IOException {
-        // Special work-around for GENE_SYMBOL FTP dependency.  Note that we may want to abstract
-        // this in the future for SEQ_ACCESSION as well
-        File override = processPossibleGeneSymbolOverride(url);
+        // Special work-around for GENE_SYMBOL & SEQ_ACCESSION FTP dependencies.
+        File override = processPossibleSpecialChipFileOverride(url);
         if (override != null) {
-            klog.info("GENE_SYMBOL_OVERRIDE in effect; will process " + override.getAbsolutePath()
+            klog.info("Special Chip File override in effect; will process " + override.getAbsolutePath()
                     + " in place of " + url.toString() + ".  Ignore the following message(s) about this URL.");
             return new BufferedInputStream(new FileInputStream(override));
         }
