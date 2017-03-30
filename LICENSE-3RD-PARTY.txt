@@ -1,3 +1,6 @@
+GSEA Desktop Third-Party Components Acknowledgments
+------------------------------------------- 
+
 GSEA is distributed, in part, under and subject to the provisions of licenses for:
 
 Ant, Copyright 2000-2014 The Apache Software Foundation. All rights reserved. (http://ant.apache.org/).
