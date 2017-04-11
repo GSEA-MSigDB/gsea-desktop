@@ -10,7 +10,6 @@ Apache Commons Lang, Copyright 2001-2015 The Apache Software Foundation. All rig
 Apache Commons Logging, Copyright 2003-2014 The Apache Software Foundation. All rights reserved. (http://commons.apache.org/proper/commons-logging/).
 Apache HTTP Components, Copyright 1999-2016 The Apache Software Foundation. All rights reserved. (http://hc.apache.org/index.html).
 Apache Log4j, Copyright 1999-2012 The Apache Software Foundation. All rights reserved. (http://logging.apache.org/log4j/1.2/index.html)
-dom4j, Copyright 2001-2010 MetaStuff, Ltd. All Rights Reserved. (http://dom4j.sourceforge.net/)
 edtFTPJ/Free, Copyright 2001-2007 Enterprise Distributed Technologies Ltd. All Rights Reserved. (enterprisedt.com)
 Jakarta ECS, Copyright The Apache Software Foundation. All rights reserved. (https://attic.apache.org/projects/jakarta-ecs.html).
 JCommon, Copyright 2007-2014 Object Refinery Limited. (http://www.jfree.org/jcommon/)
@@ -33,7 +32,49 @@ JIDE Components, JIDE Dock, JIDE Grids: Copyright 2002-2016, JIDE Software, Inc.
 ----
 
 
-Foxtrot and JGoodies are under BSD-style license, as quoted below.
+dom4j, Foxtrot and JGoodies are under BSD-style license, as quoted below.
+----
+dom4j (http://dom4j.sourceforge.net/)
+Copyright 2001-2010 (C) MetaStuff, Ltd. All Rights Reserved.
+
+Redistribution and use of this software and associated documentation
+("Software"), with or without modification, are permitted provided
+that the following conditions are met:
+
+1. Redistributions of source code must retain copyright
+   statements and notices.  Redistributions must also contain a
+   copy of this document.
+ 
+2. Redistributions in binary form must reproduce the
+   above copyright notice, this list of conditions and the
+   following disclaimer in the documentation and/or other
+   materials provided with the distribution.
+ 
+3. The name "DOM4J" must not be used to endorse or promote
+   products derived from this Software without prior written
+   permission of MetaStuff, Ltd.  For written permission,
+   please contact dom4j-info@metastuff.com.
+ 
+4. Products derived from this Software may not be called "DOM4J"
+   nor may "DOM4J" appear in their names without prior written
+   permission of MetaStuff, Ltd. DOM4J is a registered
+   trademark of MetaStuff, Ltd.
+ 
+5. Due credit should be given to the DOM4J Project - 
+   http://dom4j.sourceforge.net
+ 
+THIS SOFTWARE IS PROVIDED BY METASTUFF, LTD. AND CONTRIBUTORS
+``AS IS'' AND ANY EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT
+NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL
+METASTUFF, LTD. OR ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+OF THE POSSIBILITY OF SUCH DAMAGE.
 ----
 Foxtrot (http://foxtrot.sourceforge.net/)
  * Copyright (c) 2002-2008, Simone Bordet
