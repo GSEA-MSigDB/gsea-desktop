@@ -35,7 +35,7 @@ The GSEA project is currently a joint effort of the Broad Institute and the Univ
 # Dependencies
 
 GSEA Desktop is 100% Pure Java.  Java 8 is required for our pre-built binaries.  Builds against other versions of Java
-may be possible but are unsupported.
+may be possible but are unsupported.  **Oracle Java is recommended as there are known issues with OpenJDK.**
 
 [Cytoscape](http://www.cytoscape.org/) v3.3.0 or greater must be installed in order to use the Enrichment Map integration.
 Cytoscape also requires Java 8.
