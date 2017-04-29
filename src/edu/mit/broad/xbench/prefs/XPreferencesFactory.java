@@ -135,12 +135,15 @@ public class XPreferencesFactory {
 
     public static final BooleanPreference kToolSelectorComponent = new BooleanPreference("Display tool selector in a tree", "Display the tool selector in a Tree", false, false, true);
 
+    public static final BooleanPreference kMakeGseaUpdateCheck = new BooleanPreference("Check for new GSEA version on startup", "Check for new GSEA version on startup", true, false, true);
+
     public static final PreferenceCategory kGeneralCategory = new PreferenceCategory(new Preference[]{kEmail,
             kAskBeforeAppShutdown,
             kDefaultReportsOutputDir,
             kTabPlacement,
             kToolDisplayComponent,
-            kToolSelectorComponent
+            kToolSelectorComponent,
+            kMakeGseaUpdateCheck
     });
     
     public static final StringPreference kLastToolName = new StringPreference("Last Tool Run",

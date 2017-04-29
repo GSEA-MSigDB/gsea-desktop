@@ -49,7 +49,7 @@ import java.util.Properties;
 
 public class GseaFijiTabsApplicationFrame extends DefaultDockableHolder implements Application.Handler {
 
-    private static final Properties buildProps = JarResources.getBuildInfo();
+    public static final Properties buildProps = JarResources.getBuildInfo();
     
     static {
         System.setProperty("GSEA", Boolean.TRUE.toString()); // needed for vdb manager to work properly
@@ -188,6 +188,8 @@ public class GseaFijiTabsApplicationFrame extends DefaultDockableHolder implemen
 
         // create one project tab for current project
         fFrame.getContentPane().add(fStatusBar.getAsComponent(), BorderLayout.AFTER_LAST_LINE);
+        
+        UpdateChecker.oneTimeGseaUpdateCheck(this);
     }
 
     private JComponent createToolBar() {

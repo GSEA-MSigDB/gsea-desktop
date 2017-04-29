@@ -98,6 +98,7 @@ public class GseaPreferencesDialog extends MultiplePageDialog {
             XPreferencesFactory.kOnlineMode.setValueOfPref2SelectionComponentValue();
             XPreferencesFactory.kCytoscapeDirectory.setValueOfPref2SelectionComponentValue();
             XPreferencesFactory.kDefaultReportsOutputDir.setValueOfPref2SelectionComponentValue();
+            XPreferencesFactory.kMakeGseaUpdateCheck.setValueOfPref2SelectionComponentValue();
 
             XPreferencesFactory.kBiasedVar.setValueOfPref2SelectionComponentValue();
             XPreferencesFactory.kMedian.setValueOfPref2SelectionComponentValue();
@@ -205,6 +206,10 @@ public class GseaPreferencesDialog extends MultiplePageDialog {
             rowCnt += 2; // because the spaces also count as a row
             builder.add(new JLabel("Connect over the Internet"), cc.xy(1, rowCnt));
             builder.add(XPreferencesFactory.kOnlineMode.getSelectionComponent().getComponent(), cc.xy(3, rowCnt));
+
+            rowCnt += 2;
+            builder.add(new JLabel("Check for new GSEA version on startup"), cc.xy(1, rowCnt));
+            builder.add(XPreferencesFactory.kMakeGseaUpdateCheck.getSelectionComponent().getComponent(), cc.xy(3, rowCnt));
 
             JPanel panel = builder.getPanel();
 

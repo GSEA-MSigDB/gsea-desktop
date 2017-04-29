@@ -18,10 +18,13 @@ import edu.mit.broad.genome.utils.SystemUtils;
 import edu.mit.broad.vdb.chip.Chip;
 import edu.mit.broad.xbench.core.api.Application;
 
+import org.apache.commons.lang3.BooleanUtils;
 import org.apache.ecs.html.Div;
 import org.apache.ecs.html.H4;
 import org.apache.log4j.Logger;
+import org.genepattern.uiutil.UIUtil;
 
+import xapps.gsea.UpdateChecker;
 import xtools.api.param.*;
 
 import java.io.IOException;
@@ -63,7 +66,7 @@ public abstract class AbstractTool implements Tool {
     private boolean fHelpMode;
 
     protected static final Object[] EMPTY_OBJECTS = new Object[]{};
-
+    
     /**
      * ----------- PARAMETERS COMMON TO ALL TOOLS -------------
      */
@@ -186,7 +189,7 @@ public abstract class AbstractTool implements Tool {
             if (param_file_path != null && param_file_path.length() > 0) {
                 enhanceParams(param_file_path, prp);
             }
-
+            
             init(prp);
 
         } catch (Throwable t) {
@@ -241,6 +244,7 @@ public abstract class AbstractTool implements Tool {
 
     // @note this is the core start report method
     protected void startExec(final ReportIndexState indexState) throws IOException {
+        UpdateChecker.oneTimeGseaUpdateCheck(null);
         fTimer.start();
         fReport = new ToolReport(this, true, indexState);
         //log.info("Running " + getName() + " with reports: " + fRptLabelParam.getReportLabel() + " folder: " + fReport.getReportDir() + " indexState: " + indexState.toString());
