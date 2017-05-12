@@ -33,11 +33,17 @@ import java.util.*;
  * @version %I%, %G%
  */
 public class ParserFactory implements Constants {
-
-    private static final String GENE_SYMBOL_OVERRIDE_PROP_NAME = "GENE_SYMBOL_OVERRIDE";
-    private static final String GENE_SYMBOL_OVERRIDE_VALUE = System.getProperty(GENE_SYMBOL_OVERRIDE_PROP_NAME);
-    private static final String SEQ_ACCESSION_OVERRIDE_PROP_NAME = "SEQ_ACCESSION_OVERRIDE";
-    private static final String SEQ_ACCESSION_OVERRIDE_VALUE = System.getProperty(SEQ_ACCESSION_OVERRIDE_PROP_NAME);
+    
+    // These probably belong elsewhere if we make a broader file cache than just for special CHIPs
+    private static final File fileCacheDir = new File(Application.getVdbManager().getRuntimeHomeDir(), "file_cache");
+    private static final File chipCacheDir = new File(fileCacheDir, "chip");
+    static {
+        // Make sure the cache dirs exist.
+        if (!chipCacheDir.exists()) {
+            chipCacheDir.mkdirs();
+        }
+    }
+    
     private static final Logger klog = XLogger.getLogger(ParserFactory.class);
 
     /**
@@ -1061,50 +1067,41 @@ public class ParserFactory implements Constants {
         return new BufferedInputStream(new FileInputStream(file));
     }
 
-    private static final File processPossibleSpecialChipFileOverride(URL url) throws IOException {
+    private static final InputStream checkFileCacheForSpecialChipFile(URL url) throws IOException {
         // If we were about to go get one of the Special Chip files, check whether we can pick it up 
-        // through the override instead.
+        // from the local cache instead.
         
-        // Are we retrieving GENE_SYMBOL or SEQ_ACCESSION?  If not, leave with no override
+        // Are we retrieving GENE_SYMBOL or SEQ_ACCESSION?  If not, leave without checking the cache.
         String chipPath = url.getPath();
         final boolean isGeneSymbolChip = VdbRuntimeResources.isPathGeneSymbolChip(chipPath);
         final boolean isSeqAccessionChip = VdbRuntimeResources.isChipSeqAccession(chipPath);
         if (!isGeneSymbolChip && !isSeqAccessionChip) return null;
 
         final String chipName = (isGeneSymbolChip) ? Constants.GENE_SYMBOL_CHIP : Constants.SEQ_ACCESSION_CHIP;
-        final String overridePropName = (isGeneSymbolChip) ? GENE_SYMBOL_OVERRIDE_PROP_NAME : SEQ_ACCESSION_OVERRIDE_PROP_NAME;
-        final String overridePropValue = (isGeneSymbolChip) ? GENE_SYMBOL_OVERRIDE_VALUE : SEQ_ACCESSION_OVERRIDE_VALUE;
         
-        final File userProvidedChipFile = new File(Application.getVdbManager().getRuntimeHomeDir(), chipName);
-        if (overridePropValue == null) {
-            if (userProvidedChipFile.exists() && userProvidedChipFile.isFile()) {
-                klog.info("Found user-provided " + chipName + " in gsea_home.");
-                return userProvidedChipFile;
-            } else {
-              klog.info("User-provided " + chipName + 
-                      " not found in local gsea_home file.  Override disabled; proceeding with FTP.");
-              return null;
-            }
-        } else if ((isGeneSymbolChip && VdbRuntimeResources.isPathGeneSymbolChip(GENE_SYMBOL_OVERRIDE_VALUE)) || 
-                (isSeqAccessionChip && VdbRuntimeResources.isChipSeqAccession(SEQ_ACCESSION_OVERRIDE_VALUE))) {
-            klog.info("Found user-provided " + chipName + " at path " + overridePropValue);
-            return new File(overridePropValue);
+        final File localChipFile = new File(chipCacheDir, chipName);
+        if (localChipFile.exists() && localChipFile.isFile()) {
+            klog.info("Found user-provided " + chipName + " in gsea_home.");
+            klog.info("Special Chip File found in local file cache; will process " + localChipFile.getAbsolutePath()
+                    + " in place of " + url.toString() + ".  Ignore the following message(s) about this URL.");
+            return new BufferedInputStream(new FileInputStream(localChipFile));
         } else {
-            // ...otherwise, we can't use it (it will screw up the cache as it has the wrong name).
-            // Issue a warning instead.
-            klog.warn("Invalid " + overridePropName + " value '" + overridePropValue + 
-                    "'; must represent a file named " +  chipName + ". Override disabled; proceeding with FTP.");
-            return null;
+          klog.info("Local " + chipName + " not found in local file cache; proceeding with FTP.");
+          try {
+              FtpSingleUrlTransferCommand ftpCommand = new FtpSingleUrlTransferCommand(url);
+              return ftpCommand.retrieveAsInputStream();
+          }
+          catch (Exception e) {
+              throw new IOException(e);
+          }
         }
     }
     
     private static InputStream createInputStream(final URL url) throws IOException {
         // Special work-around for GENE_SYMBOL & SEQ_ACCESSION FTP dependencies.
-        File override = processPossibleSpecialChipFileOverride(url);
+        InputStream override = checkFileCacheForSpecialChipFile(url);
         if (override != null) {
-            klog.info("Special Chip File override in effect; will process " + override.getAbsolutePath()
-                    + " in place of " + url.toString() + ".  Ignore the following message(s) about this URL.");
-            return new BufferedInputStream(new FileInputStream(override));
+            return override;
         }
 
         klog.debug("Parsing URL: " + url.getPath() + " >> " + url.toString());
