@@ -66,8 +66,6 @@ public class UpdateChecker {
                     klog.info(message);
                     klog.info("Note: GenePattern users should update through GenePattern.");
                     
-                    // 
-                    
                     if (parent != null) {
                         UIUtil.showMessageDialog(parent, message);
                     }
