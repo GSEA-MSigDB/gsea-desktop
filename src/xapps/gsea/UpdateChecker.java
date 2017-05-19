@@ -8,6 +8,7 @@ import java.util.Properties;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.BooleanUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.log4j.Logger;
 import org.genepattern.uiutil.UIUtil;
@@ -56,13 +57,18 @@ public class UpdateChecker {
 
                 // Compare the current website version info to the local info and if so display/log a message.
                 if (newerVersionExists(currMajor, latestMajor, currMinor, latestMinor, currPatch, latestPatch)) {
-                    String latestVersion = latestGseaVersionProps.getProperty("build.version");
-                    String latestTimestamp = latestGseaVersionProps.getProperty("build.timestamp");
-                    String message = "Your current version of GSEA is " + currVersion + ". A newer version (" + latestVersion
-                            + ") is available." + IOUtils.LINE_SEPARATOR
-                            + "To update, please download from http://gsea-msigdb.org/gsea/downloads.jsp" + IOUtils.LINE_SEPARATOR
-                            + "(build date: " + latestTimestamp + ")";
-
+                    String latestVersion = latestGseaVersionProps.getProperty("build.version", "");
+                    String latestTimestamp = latestGseaVersionProps.getProperty("build.timestamp", "");
+                    String message = "Your current version of GSEA is " + currVersion + ". A newer version";
+                    if (StringUtils.isNotBlank(latestVersion)) {
+                        message += " (" + latestVersion + ")";
+                    }
+                    message += " is available." + IOUtils.LINE_SEPARATOR
+                            + "To update, please download from http://gsea-msigdb.org/gsea/downloads.jsp";
+                    if (StringUtils.isNotBlank(latestTimestamp)) {
+                            message += IOUtils.LINE_SEPARATOR + "(build date: " + latestTimestamp + ")";
+                    }
+                    
                     klog.info(message);
                     klog.info("Note: GenePattern users should update through GenePattern.");
                     
