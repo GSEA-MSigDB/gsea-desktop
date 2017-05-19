@@ -8,7 +8,6 @@ import java.util.Properties;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.BooleanUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.log4j.Logger;
 import org.genepattern.uiutil.UIUtil;
@@ -66,6 +65,9 @@ public class UpdateChecker {
 
                     klog.info(message);
                     klog.info("Note: GenePattern users should update through GenePattern.");
+                    
+                    // 
+                    
                     if (parent != null) {
                         UIUtil.showMessageDialog(parent, message);
                     }
@@ -81,9 +83,6 @@ public class UpdateChecker {
 
     @SuppressWarnings("unchecked")
     private static final Properties parseGseaVersionInfo(String versionCheckInfo) throws ParseException {
-        klog.info("Version info:");
-        klog.info(versionCheckInfo);
-
         JSONParser jsonParser = new JSONParser();
         JSONObject jsonObj = (JSONObject) (jsonParser.parse(versionCheckInfo));
 
