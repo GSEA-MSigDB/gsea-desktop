@@ -67,6 +67,7 @@
         <attribute name="Built-By" value="${user.name}" />
         <attribute name="GSEA-Build-Date" value="${TODAY}" />
         <attribute name="Permissions" value="all-permissions" />
+        <attribute name="Application-Name" value="GSEA" />
       </manifest>
     </jar>
 
