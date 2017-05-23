@@ -1081,7 +1081,9 @@ public class ParserFactory implements Constants {
             // We plan to transition to a different transfer method in the near future, so we'll rework things more completely
             // at that point.
             String localFileName = (isGeneSymbolChip) ? Constants.GENE_SYMBOL_CHIP : Constants.SEQ_ACCESSION_CHIP;
-            url = new URL("ftp://ftp.broadinstitute.org/pub/gsea/annotations/" + localFileName);
+            if (GseaWebResources.isUsingPublicFTP()) {            
+                url = new URL("ftp://ftp.broadinstitute.org/pub/gsea/annotations/" + localFileName);
+            }
             
             // Are we retrieving GENE_SYMBOL or SEQ_ACCESSION?  Check whether we can pick it up 
             // from the local cache instead.

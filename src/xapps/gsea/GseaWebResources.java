@@ -34,6 +34,10 @@ public class GseaWebResources {
         return "ftp://" + BROAD_FTP_SERVER + GSEA_FTP_SERVER_BASE_DIR;
     }
 
+    public static final boolean isUsingPublicFTP() {
+        return BROAD_FTP_SERVER.equalsIgnoreCase(GSEA_FTP_SERVER);
+    }
+    
     public static String getGseaFTPServerChipDir() {
         return GSEA_FTP_SERVER_BASE_DIR + "/" + GSEA_FTP_SERVER_CHIPFILES_SUB_DIR;
     }
