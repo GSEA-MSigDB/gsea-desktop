@@ -4,11 +4,9 @@
 package edu.mit.broad.cytoscape.view;
 
 import java.awt.BorderLayout;
-import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.File;
 
 import javax.swing.Icon;
 import javax.swing.JButton;
@@ -29,9 +27,7 @@ import com.jgoodies.forms.layout.CellConstraints;
 import com.jidesoft.grid.SortableTable;
 import com.jidesoft.swing.JideTabbedPane;
 
-import edu.mit.broad.cytoscape.CytoscapeLaunch;
 import edu.mit.broad.genome.JarResources;
-import edu.mit.broad.genome.objects.esmatrix.db.EnrichmentDb;
 import edu.mit.broad.genome.swing.GuiHelper;
 import edu.mit.broad.genome.swing.fields.GDirFieldPlusChooser;
 import edu.mit.broad.genome.swing.fields.GFieldPlusChooser;
@@ -51,13 +47,7 @@ public class EnrichmentMapInputPanel extends AbstractViewer {
 
     private SortableTable sortableTable;
 
-    private File curr_gseaResultDir;
-
-    private EnrichmentDb curr_edb;
-
     private JComponent fFiller;
-
-    private Component tableComponent;
 
     private EnrichmentMapInputPanel fInstance = this;
 
@@ -69,10 +59,6 @@ public class EnrichmentMapInputPanel extends AbstractViewer {
     public EnrichmentMapInputPanel() {
         super(NAME, ICON, "Enrichment Map Visualization");
         jbInit();
-      
-        //launch cytoscape rest service
-      	CytoscapeLaunch cyto = new CytoscapeLaunch();
-      	cyto.launch();
     }
 
 

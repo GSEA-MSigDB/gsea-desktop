@@ -3,6 +3,8 @@
  *******************************************************************************/
 package xapps.gsea;
 
+import com.apple.eawt.AboutHandler;
+import com.apple.eawt.AppEvent.AboutEvent;
 import com.jgoodies.looks.HeaderStyle;
 import com.jgoodies.looks.Options;
 import com.jidesoft.docking.DefaultDockableHolder;
@@ -40,8 +42,10 @@ import xtools.munge.CollapseDataset;
 
 import javax.swing.*;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
+import org.jfree.ui.about.AboutPanel;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -100,6 +104,19 @@ public class GseaFijiTabsApplicationFrame extends DefaultDockableHolder implemen
                 exitApplication(e);
             }
         };
+
+        if (SystemUtils.IS_OS_MAC_OSX) {
+            com.apple.eawt.Application.getApplication().setAboutHandler(new AboutHandler() {
+                @Override
+                public void handleAbout(AboutEvent arg0) {
+                    AboutPanel aboutPanel = new AboutPanel("Gene Set Enrichment Analysis (GSEA) v" + buildProps.getProperty("build.version"), 
+                            "Copyright (c) 2003-2017 Broad Institute, Inc., Massachusetts Institute of Technology, ",
+                            "and Regents of the University of California.  All rights reserved.", 
+                            formatBuildInfoForHelp());
+                    JOptionPane.showMessageDialog(fFrame, aboutPanel, "About GSEA", JOptionPane.PLAIN_MESSAGE);
+                }
+            });
+        }
 
         fFrame.addWindowListener(fWindowListener);
 

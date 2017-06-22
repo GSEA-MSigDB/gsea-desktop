@@ -4,12 +4,14 @@
 package edu.mit.broad.cytoscape;
 
 import java.awt.Desktop;
+import java.awt.EventQueue;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.net.URL;
 
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
+import javax.swing.SwingWorker;
 
 import org.apache.log4j.Logger;
 
@@ -19,16 +21,14 @@ import edu.mit.broad.xbench.prefs.XPreferencesFactory;
 
 public class CytoscapeLocationSingleton {
 	
+    private static final Logger klog = XLogger.getLogger(CytoscapeLocationSingleton.class);
 	private static CytoscapeLocationSingleton locationInfo = null;
 	
 	private String cytoscapeRootLocation = null;
 	private String cytoscapeConfigLocatin = null;
-	private static final Logger klog = XLogger.getLogger(CytoscapeLocationSingleton.class);
 	private Integer main_version =0;
 	private Integer sub_version = 0;
 	private String cytoscape_download_url = "http://www.cytoscape.org/download.html";
-	
-	private static JFileChooser fc = new JFileChooser(); 
 	
 	private boolean errorMsgviewed = false;
 	
@@ -184,45 +184,72 @@ public class CytoscapeLocationSingleton {
 		klog.info("Latest version of cytoscape is:" + latest);
 		return latest;
 	}
+
+	private class FileChooserRunner implements Runnable {
+        public File chosenFile = null;
+
+        @Override
+        public void run() {
+            JFileChooser fc = new JFileChooser();
+            fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+            int returnVal = fc.showOpenDialog(null);
+            if (returnVal == JFileChooser.APPROVE_OPTION) {
+                chosenFile = fc.getSelectedFile();
+            }
+        }
+	}
 	
 	/*
 	 * If Cytoscape is not installed on this system pop up a console indicating this and rederict browser to 
 	 * cytoscape download page.
 	 */
-	private String RedirectCytoscapeDownload(){
+	private String RedirectCytoscapeDownload() {
 		
 		String cytoscapeLocation = "";
-		try{
-			String[] options = new String[]{"Download","Locate"};
+		try {
+			String[] options = new String[]{"Download","Locate", "Cancel"};
 			int n = JOptionPane.showOptionDialog(null, "Unable to find Cytoscape 3.3 on your System.\n Would you like to install it?\n Or navigate to the directory where it is installed?\n PLEASE make sure to install CYTOSCAPE 3.3 or higher", "Cytoscape Not found", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE,null,options,options[0]);
 			
 			//redirect to cytoscape download page
-			if(n == 0){				
+			if (n == 0) {				
 				Desktop.getDesktop().browse(new URL(this.cytoscape_download_url).toURI());
 			}
 			//allow user to navigate to the directory where cytoscape is installed
-			else if( n == 1){
-				 //fc = new JFileChooser();
-				 fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-				 int returnVal = fc.showOpenDialog(null);				 
-				 if (returnVal == JFileChooser.APPROVE_OPTION) {
-			            File file = fc.getSelectedFile();
-			            cytoscapeLocation = file.getAbsolutePath();
-			            
-			            String version = file.getCanonicalPath().split("Cytoscape_v")[1];
-						String[] version_parts = version.split("\\.");
-			            if(version_parts.length > 1){
-			            		this.main_version = Integer.parseInt(version_parts[0]);
-			            		this.sub_version = Integer.parseInt(version_parts[1]);
-			            }
-			            else
-			            		System.out.println("Can't calculate cytoscape version from specified location");
-			        } else {
-			            System.out.println("Open command cancelled by user.\n" );
-			        }
+			else if (n == 1) {
+			    // We need to wrap the JFileChooser work in a Runnable so it can get passed to the Event Dispatch Thread,
+			    // otherwise the JFileChooser isn't displayed (seems to be a Mac-only issue).
+		        FileChooserRunner fileChooserRunner = new FileChooserRunner();
+                EventQueue.invokeAndWait(fileChooserRunner);
+                if (fileChooserRunner.chosenFile == null) {
+                    throw new CytoscapeDownloadException("User cancelled the locating of Cytoscape.  Enrichment Map Visualization will be closed.");
+                }
+                   
+                cytoscapeLocation = fileChooserRunner.chosenFile.getAbsolutePath();
+                String[] pathParts = fileChooserRunner.chosenFile.getCanonicalPath().split("Cytoscape_v");
+                if (pathParts.length < 2) {
+                    throw new CytoscapeDownloadException("Chosen location is not a recognized Cytoscape path:" + cytoscapeLocation);
+                }
+                String version = pathParts[1];
+                String[] version_parts = version.split("\\.");
+                if (version_parts.length > 1) {
+                    this.main_version = Integer.parseInt(version_parts[0]);
+                    this.sub_version = Integer.parseInt(version_parts[1]);
+                }
+                else {
+                    throw new CytoscapeDownloadException("Chosen location is not a recognized Cytoscape path:" + cytoscapeLocation);
+                }
 			}
+			else if (n == 2) {
+			    throw new CytoscapeDownloadException("User cancelled the Cytoscape download.  Enrichment Map Visualization will be closed.");
+			}
+        } catch (CytoscapeDownloadException cdce) {
+            // Signal that the download was cancelled, so just re-throw to the higher level handler.
+            throw cdce;
 		} catch (Throwable t) {
+		    // For unexpected errors, wrap as a RuntimeException to allow us to bail out of visualization UI creation completely
 			Application.getWindowManager().showError(t);
+			klog.error("An unexpected error occurred during Cytoscape download", t);
+			throw new RuntimeException("An unexpected error occurred during Cytoscape download", t);
 		}
 		return cytoscapeLocation;
 	}
@@ -279,6 +306,18 @@ public class CytoscapeLocationSingleton {
 	public void setCytoscapeConfigLocatin(String cytoscapeConfigLocatin) {
 		this.cytoscapeConfigLocatin = cytoscapeConfigLocatin;
 	}
-	
-	
+
+	/** 
+	 * Used to signal that something (recoverable) went wrong in the Cytoscape download.  
+	 */
+	public class CytoscapeDownloadException extends RuntimeException {
+
+        public CytoscapeDownloadException() {
+            super();
+        }
+
+        public CytoscapeDownloadException(String message) {
+            super(message);
+        }
+	}
 }
