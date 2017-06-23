@@ -42,6 +42,9 @@ public class EnrichmentMapInputPanelAction  extends WidgetAction {
                 // We'll swallow the exception (logging it) and null the fViewer reference
                 fViewer = null;
                 klog.info(cdce.getMessage());
+                if (cdce.isDisplayAsError()) {
+                    throw cdce;
+                }
             }
             catch (Throwable t) {
                 // Something went wrong in setting up the UI (possibly an issue retrieving Cytoscape)

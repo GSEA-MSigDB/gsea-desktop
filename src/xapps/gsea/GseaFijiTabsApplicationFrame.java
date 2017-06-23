@@ -3,8 +3,8 @@
  *******************************************************************************/
 package xapps.gsea;
 
-import com.apple.eawt.AboutHandler;
-import com.apple.eawt.AppEvent.AboutEvent;
+import apple.dts.samplecode.osxadapter.OSXAdapter;
+
 import com.jgoodies.looks.HeaderStyle;
 import com.jgoodies.looks.Options;
 import com.jidesoft.docking.DefaultDockableHolder;
@@ -42,7 +42,6 @@ import xtools.munge.CollapseDataset;
 
 import javax.swing.*;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
 import org.jfree.ui.about.AboutPanel;
@@ -101,21 +100,18 @@ public class GseaFijiTabsApplicationFrame extends DefaultDockableHolder implemen
         // add a widnow listener to do clear up when windows closing.
         fWindowListener = new WindowAdapter() {
             public void windowClosing(WindowEvent e) {
-                exitApplication(e);
+                exitApplication();
             }
         };
 
         if (SystemUtils.IS_OS_MAC_OSX) {
-            com.apple.eawt.Application.getApplication().setAboutHandler(new AboutHandler() {
-                @Override
-                public void handleAbout(AboutEvent arg0) {
-                    AboutPanel aboutPanel = new AboutPanel("Gene Set Enrichment Analysis (GSEA) v" + buildProps.getProperty("build.version"), 
-                            "Copyright (c) 2003-2017 Broad Institute, Inc., Massachusetts Institute of Technology, ",
-                            "and Regents of the University of California.  All rights reserved.", 
-                            formatBuildInfoForHelp());
-                    JOptionPane.showMessageDialog(fFrame, aboutPanel, "About GSEA", JOptionPane.PLAIN_MESSAGE);
-                }
-            });
+            try {
+                OSXAdapter.setAboutHandler(this, getClass().getDeclaredMethod("showAboutDialog", (Class[]) null));
+                OSXAdapter.setQuitHandler(this, getClass().getDeclaredMethod("exitApplication", (Class[]) null));
+            } catch (Exception e) {
+                e.printStackTrace(System.out);
+                System.out.println("Error setting apple-specific about and quit handlers");
+            }
         }
 
         fFrame.addWindowListener(fWindowListener);
@@ -144,6 +140,19 @@ public class GseaFijiTabsApplicationFrame extends DefaultDockableHolder implemen
         jbInit();
     }
 
+    public void showAboutDialog() {
+        String buildInfo = formatBuildInfoForHelp();
+        String buildTS = formatBuildTimestampForHelp();
+        if (buildTS != null) {
+            buildInfo += ", " + buildTS;
+        }
+        AboutPanel aboutPanel = new AboutPanel("Gene Set Enrichment Analysis (GSEA) v" + buildProps.getProperty("build.version"), 
+                "Copyright (c) 2003-2017 Broad Institute, Inc., Massachusetts Institute of Technology, ",
+                "and Regents of the University of California.  All rights reserved.", 
+                buildInfo);
+        JOptionPane.showMessageDialog(fFrame, aboutPanel, "About GSEA", JOptionPane.PLAIN_MESSAGE);
+    }
+    
     public void makeVisible(final boolean bring2front) {
         // load layout information from previous session. This indicates the end of beginLoadLayoutData() method above.
         // This makes the frame visible
@@ -469,8 +478,8 @@ public class GseaFijiTabsApplicationFrame extends DefaultDockableHolder implemen
 
         return menu;
     }
-
-    private void exitApplication(WindowEvent e_opt) {
+    
+    public void exitApplication() {
         boolean ask = XPreferencesFactory.kAskBeforeAppShutdown.getBoolean();
         if (ask) {
             final boolean res = getWindowManager().showConfirm("Exit the application?");
@@ -575,7 +584,7 @@ public class GseaFijiTabsApplicationFrame extends DefaultDockableHolder implemen
         }
 
         public void actionPerformed(final ActionEvent evt) {
-            exitApplication(null);
+            exitApplication();
         }
     }    // End inner class ExitAction
 

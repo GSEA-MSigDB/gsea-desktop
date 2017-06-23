@@ -221,13 +221,13 @@ public class CytoscapeLocationSingleton {
 		        FileChooserRunner fileChooserRunner = new FileChooserRunner();
                 EventQueue.invokeAndWait(fileChooserRunner);
                 if (fileChooserRunner.chosenFile == null) {
-                    throw new CytoscapeDownloadException("User cancelled the locating of Cytoscape.  Enrichment Map Visualization will be closed.");
+                    throw new CytoscapeDownloadException("User cancelled the locating of Cytoscape, required for Enrichment Map Visualization.", false);
                 }
                    
                 cytoscapeLocation = fileChooserRunner.chosenFile.getAbsolutePath();
                 String[] pathParts = fileChooserRunner.chosenFile.getCanonicalPath().split("Cytoscape_v");
                 if (pathParts.length < 2) {
-                    throw new CytoscapeDownloadException("Chosen location is not a recognized Cytoscape path:" + cytoscapeLocation);
+                    throw new CytoscapeDownloadException("Chosen location is not a recognized Cytoscape path:" + cytoscapeLocation, true);
                 }
                 String version = pathParts[1];
                 String[] version_parts = version.split("\\.");
@@ -236,11 +236,11 @@ public class CytoscapeLocationSingleton {
                     this.sub_version = Integer.parseInt(version_parts[1]);
                 }
                 else {
-                    throw new CytoscapeDownloadException("Chosen location is not a recognized Cytoscape path:" + cytoscapeLocation);
+                    throw new CytoscapeDownloadException("Chosen location is not a recognized Cytoscape path:" + cytoscapeLocation, true);
                 }
 			}
 			else if (n == 2) {
-			    throw new CytoscapeDownloadException("User cancelled the Cytoscape download.  Enrichment Map Visualization will be closed.");
+			    throw new CytoscapeDownloadException("User cancelled the Cytoscape download, required for Enrichment Map Visualization.", false);
 			}
         } catch (CytoscapeDownloadException cdce) {
             // Signal that the download was cancelled, so just re-throw to the higher level handler.
@@ -311,13 +311,15 @@ public class CytoscapeLocationSingleton {
 	 * Used to signal that something (recoverable) went wrong in the Cytoscape download.  
 	 */
 	public class CytoscapeDownloadException extends RuntimeException {
+	    private final boolean displayAsError;
 
-        public CytoscapeDownloadException() {
-            super();
+        public boolean isDisplayAsError() {
+            return displayAsError;
         }
 
-        public CytoscapeDownloadException(String message) {
+        public CytoscapeDownloadException(String message, boolean displayAsError) {
             super(message);
+            this.displayAsError = displayAsError;
         }
 	}
 }
