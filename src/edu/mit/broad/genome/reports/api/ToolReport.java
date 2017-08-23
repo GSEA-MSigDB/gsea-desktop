@@ -16,7 +16,6 @@ import edu.mit.broad.genome.utils.SystemUtils;
 import edu.mit.broad.genome.utils.ZipUtility;
 import edu.mit.broad.xbench.core.api.Application;
 
-import org.apache.ecs.Element;
 import org.apache.log4j.Logger;
 import org.genepattern.io.ImageUtil;
 
@@ -251,7 +250,7 @@ public class ToolReport implements Report {
             new ZipUtility().zipDir(fReportDir, tmp_zipped_file);
 
             // ok, move it into the dir once it has been zipped up
-            tmp_zipped_file.renameTo(zipped_file);
+            org.apache.commons.io.FileUtils.moveFile(tmp_zipped_file, zipped_file);
 
         } catch (Throwable t) {
             log.error(t);
