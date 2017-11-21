@@ -182,11 +182,7 @@ public class GeneSetScoringTables {
 
             score = _abs(score);
 
-            if (XMath.isPositive(score)) {
-                return score / totalWeight;
-            } else {
-                return score / totalWeight;
-            }
+            return score / totalWeight;
         }
 
         // misses are not weighted
