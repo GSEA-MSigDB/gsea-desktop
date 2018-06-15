@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry excluding="xtest/|xtest/api/" kind="src" path="src"/>
-	<classpathentry kind="lib" path="lib/log4j-1.2.11.jar"/>
 	<classpathentry kind="lib" path="lib/edtftpj.jar"/>
 	<classpathentry kind="lib" path="lib/jfreechart-1.0.2.jar"/>
 	<classpathentry kind="lib" path="lib/jcommon-1.0.6.jar"/>
@@ -21,14 +20,27 @@
 	<classpathentry kind="lib" path="lib/httpclient-4.5.2.jar"/>
 	<classpathentry kind="lib" path="lib/httpcore-4.4.4.jar"/>
 	<classpathentry kind="lib" path="lib/commons-logging-1.2.jar"/>
-	<classpathentry kind="lib" path="lib/jfreesvg-3.0.jar"/>
 	<classpathentry kind="lib" path="lib/commons-compress-1.9.jar"/>
+	<classpathentry kind="lib" path="lib/algorithms.jar"/>
+	<classpathentry kind="lib" path="lib/json-simple-1.1.1.jar"/>
+	<classpathentry kind="lib" path="lib/jide-common.jar"/>
+	<classpathentry kind="lib" path="lib/jide-components.jar"/>
 	<classpathentry kind="lib" path="lib/jide-dock.jar"/>
 	<classpathentry kind="lib" path="lib/jide-grids.jar"/>
-	<classpathentry kind="lib" path="lib/jide-components.jar"/>
-	<classpathentry kind="lib" path="lib/algorithms.jar"/>
-	<classpathentry kind="lib" path="lib/jide-common.jar"/>
-	<classpathentry kind="lib" path="lib/json-simple-1.1.1.jar"/>
+	<classpathentry kind="lib" path="lib/batik-awt-util-1.10.jar"/>
+	<classpathentry kind="lib" path="lib/batik-bridge-1.10.jar"/>
+	<classpathentry kind="lib" path="lib/batik-codec-1.10.jar"/>
+	<classpathentry kind="lib" path="lib/batik-dom-1.10.jar"/>
+	<classpathentry kind="lib" path="lib/batik-gui-util-1.10.jar"/>
+	<classpathentry kind="lib" path="lib/batik-gvt-1.10.jar"/>
+	<classpathentry kind="lib" path="lib/batik-parser-1.10.jar"/>
+	<classpathentry kind="lib" path="lib/batik-svg-dom-1.10.jar"/>
+	<classpathentry kind="lib" path="lib/batik-svggen-1.10.jar"/>
+	<classpathentry kind="lib" path="lib/batik-transcoder-1.10.jar"/>
+	<classpathentry kind="lib" path="lib/batik-util-1.10.jar"/>
+	<classpathentry kind="lib" path="lib/batik-w3c-dom-1.10.jar"/>
+	<classpathentry kind="lib" path="lib/batik-xml-1.10.jar"/>
+	<classpathentry kind="lib" path="lib/log4j-1.2.11.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
