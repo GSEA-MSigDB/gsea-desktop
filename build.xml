@@ -1,93 +1,125 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!--
-  Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
--->
-<project name="GSEA" default="build-gsea" basedir=".">
-  <taskdef resource="proguard/ant/task.properties" classpath="lib.build/proguard.jar" />
+<!-- Copyright (c) 2003-2018 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents 
+    of the University of California. All rights reserved. -->
+<project name="GSEA" default="build" basedir=".">
+    <taskdef resource="proguard/ant/task.properties" classpath="lib.build/proguard.jar" />
 
-  <!-- GLOBAL VARS -->
-  <property name="dist.dir" value="${basedir}/dist" />
-  <property name="proguard_opt_hist.dir" value="${basedir}/proguard_opt_log" />
-  <property file="src/edu/mit/broad/genome/resources/build.properties" />
-  <property name="ALL_DEPS_JAR" value="gsea_all_deps-${build.version}.jar" />
-  <property name="CLEANED_JAR" value="gsea-${build.version}.jar" />
+    <!-- GLOBAL VARS -->
+    <property name="dist.dir" value="${basedir}/dist" />
+    <property name="proguard_opt_hist.dir" value="${basedir}/proguard_opt_log" />
+    <property file="src/edu/mit/broad/genome/resources/build.properties" />
+    <property name="ALL_DEPS_JAR" value="gsea_all_deps-${build.version}.jar" />
+    <property name="RELEASE_JAR" value="gsea-${build.version}.jar" />
 
-  <target name="-init">
-    <!-- Create the time stamp -->
-    <tstamp>
-      <format property="TODAY" pattern="MMMdd_yyyy_HHmmss" />
-      <format property="time.stamp" pattern="yyyy-MM-dd_HHmmss"/>
-    </tstamp>
-  </target>
+    <target name="-init">
+        <!-- Create the time stamp -->
+        <tstamp>
+            <format property="TODAY" pattern="MMMdd_yyyy_HHmmss" />
+            <format property="time.stamp" pattern="yyyy-MM-dd_HHmmss" />
+        </tstamp>
+    </target>
 
-  <target name="clean">
-    <delete dir="${dist.dir}" failonerror="false" />
-    <!-- Leave behind the proguard_opt_hist dir as the reports may be useful for comparison. -->
-  </target>
+    <target name="clean">
+        <delete dir="${dist.dir}" failonerror="false" />
+        <!-- Leave behind the proguard_opt_hist dir as the reports may be useful for comparison. -->
+    </target>
 
-  <target name="compile-gsea">
-    <mkdir dir="${dist.dir}/classes" />
-    <javac target="1.8" source="1.8" debug="true" defaultexcludes="true" deprecation="false" destdir="${dist.dir}/classes" optimize="false" srcdir="src" memoryMaximumSize="1024M" fork="true" includes="**" failonerror="true" includeantruntime="false">
-      <classpath>
-        <fileset dir="lib" includes="*.jar" />
-      </classpath>
-    </javac>
-  </target>
+    <target name="update-build-props" depends="-init">
+        <!-- Increment the build properties. The application reads these from build.properties for display 
+            in Help->About -->
+        <propertyfile file="src/edu/mit/broad/genome/resources/build.properties">
+            <entry key="build.number" type="int" operation="+" pattern="0000" default="0001" />
+            <entry key="build.timestamp" type="date" operation="=" value="${time.stamp}"
+                pattern="EEE, d MMM yyyy HH:mm:ss Z" />
+        </propertyfile>
+        <property file="src/edu/mit/broad/genome/resources/build.properties" />
+        <property name="RELEASE_JAR" value="gsea-${build.version}.jar" />
+    </target>
 
-  <target name="copy-resources" depends="compile-gsea" description="Copies resources into build tree">
-    <!-- copies resource files from .java file tree to .class file tree -->
-    <mkdir dir="${dist.dir}/classes/edu/mit/broad/geneome/resources" />
-    <copy todir="${dist.dir}/classes/edu/mit/broad/genome/resources">
-      <fileset dir="src/edu/mit/broad/genome/resources" />
-    </copy>
-  </target>
+    <target name="compile" depends="update-build-props">
+        <mkdir dir="${dist.dir}/classes" />
+        <javac target="1.8" source="1.8" debug="true" defaultexcludes="true" deprecation="false"
+            destdir="${dist.dir}/classes" optimize="false" srcdir="src" memoryMaximumSize="1024M"
+            fork="true" includes="**" failonerror="true" includeantruntime="false">
+            <classpath>
+                <fileset dir="lib" includes="*.jar" />
+            </classpath>
+        </javac>
+    </target>
 
-  <!-- makes a single jar file with external and internal stuff (not optimized yet) -->
-  <target name="one-jar-gsea" depends="-init, clean, compile-gsea, copy-resources" description="Builds single (unoptimized) JAR for GSEA">
+    <target name="copy-resources" depends="compile" description="Copies resources into build tree">
+        <!-- copies resource files from .java file tree to .class file tree -->
+        <mkdir dir="${dist.dir}/classes/edu/mit/broad/geneome/resources" />
+        <copy todir="${dist.dir}/classes/edu/mit/broad/genome/resources">
+            <fileset dir="src/edu/mit/broad/genome/resources" />
+        </copy>
+    </target>
 
-    <jar basedir="${dist.dir}/classes" defaultexcludes="true" jarfile="${dist.dir}/just_internal.jar" />
+    <!-- makes a single jar file with external and internal stuff (not optimized yet) -->
+    <target name="one-jar" depends="-init, clean, compile, copy-resources"
+        description="Builds single (unoptimized) JAR">
 
-    <jar destfile="${dist.dir}/tmp.jar">
-      <zipgroupfileset dir="lib">
-        <include name="*.jar" />
-        <exclude name="META-INF/**" />
-      </zipgroupfileset>
+        <jar basedir="${dist.dir}/classes" defaultexcludes="true" jarfile="${dist.dir}/just_internal.jar" />
 
-      <zipgroupfileset dir="${dist.dir}" includes="just_internal.jar" />
-    </jar>
+        <jar destfile="${dist.dir}/tmp.jar">
+            <zipgroupfileset dir="lib">
+                <include name="*.jar" />
+                <exclude name="META-INF/**" />
+            </zipgroupfileset>
 
-    <jar destfile="${dist.dir}/${ALL_DEPS_JAR}">
-      <zipfileset src="${dist.dir}/tmp.jar" excludes="META-INF/**, README.txt, COPYING.txt">
-      </zipfileset>
-      <fileset file="LICENSE.txt" />
-      <fileset file="LICENSE-3RD-PARTY.txt" />
-      <fileset file="README.md" />
-      <manifest>
-        <attribute name="Main-Class" value="xapps.gsea.GSEA" />
-        <attribute name="Built-By" value="${user.name}" />
-        <attribute name="GSEA-Build-Date" value="${TODAY}" />
-      </manifest>
-    </jar>
+            <zipgroupfileset dir="${dist.dir}" includes="just_internal.jar" />
+        </jar>
 
-    <!-- clean up just_internal.jar and tmp.jar file -->
-    <delete file="${dist.dir}/just_internal.jar" failonerror="false" />
-    <delete file="${dist.dir}/tmp.jar" failonerror="false" />
+        <jar destfile="${dist.dir}/${ALL_DEPS_JAR}">
+            <zipfileset src="${dist.dir}/tmp.jar" excludes="META-INF/**, README.txt, COPYING.txt">
+            </zipfileset>
+            <fileset file="LICENSE.txt" />
+            <fileset file="LICENSE-3RD-PARTY.txt" />
+            <fileset file="README.md" />
+            <manifest>
+                <attribute name="Main-Class" value="xapps.gsea.GSEA" />
+                <attribute name="Built-By" value="${user.name}" />
+                <attribute name="GSEA-Build-Date" value="${TODAY}" />
+                <attribute name="Permissions" value="all-permissions" />
+                <attribute name="Application-Name" value="GSEA" />
+                <attribute name="Codebase"
+                    value="http://*.broadinstitute.org/gsea/software https://*.broadinstitute.org/gsea/software http://*.broadinstitute.org:8080/gsea/software https://*.broadinstitute.org:8080/gsea/software http://*.gsea-msigdb.org/gsea/software https://*.gsea-msigdb.org/gsea/software http://*.msigdb.org/gsea/software https://*.msigdb.org/gsea/software" />
+            </manifest>
+        </jar>
 
-  </target>
+        <!-- clean up just_internal.jar and tmp.jar file -->
+        <delete file="${dist.dir}/just_internal.jar" failonerror="false" />
+        <delete file="${dist.dir}/tmp.jar" failonerror="false" />
+    </target>
 
-  <target name="build-gsea" depends="one-jar-gsea" description="Optimize GSEA JAR by removing unused classes and resources">
-    <mkdir dir="${proguard_opt_hist.dir}" />
-    <proguard printusage="${proguard_opt_hist.dir}/proguard_opt_log_${time.stamp}.txt">
-      <injar path="${dist.dir}/${ALL_DEPS_JAR}" />
-      <outjar path="${dist.dir}/${CLEANED_JAR}" />
-      <libraryjar path="${java.home}/lib/rt.jar" />
-      <libraryjar path="${java.home}/lib/charsets.jar" />
-      <libraryjar path="${java.home}/lib/jce.jar" />
-      <libraryjar path="${java.home}/lib/jfr.jar" />
-      <libraryjar path="${java.home}/lib/jsse.jar" />
-      <libraryjar path="${java.home}/lib/resources.jar" />
-      <libraryjar path="${java.home}/lib/ext" jarfilter="*.jar" />
-      <configuration file="lib.build/proguard_opt.cfg" />
-    </proguard>
-  </target>
+    <target name="build" depends="one-jar"
+        description="Optimize JAR by removing unused classes and resources">
+        <mkdir dir="${proguard_opt_hist.dir}" />
+        <proguard printusage="${proguard_opt_hist.dir}/proguard_opt_log_${time.stamp}.txt">
+            <injar path="${dist.dir}/${ALL_DEPS_JAR}" />
+            <outjar path="${dist.dir}/${RELEASE_JAR}" />
+            <libraryjar path="${java.home}/lib/rt.jar" />
+            <libraryjar path="${java.home}/lib/charsets.jar" />
+            <libraryjar path="${java.home}/lib/jce.jar" />
+            <libraryjar path="${java.home}/lib/jfr.jar" />
+            <libraryjar path="${java.home}/lib/jsse.jar" />
+            <libraryjar path="${java.home}/lib/resources.jar" />
+            <libraryjar path="${java.home}/lib/ext" jarfilter="*.jar" />
+            <configuration file="lib.build/proguard_opt.cfg" />
+        </proguard>
+    </target>
+
+    <target name="sign-jar" depends="build" description="Sign the optimized JAR">
+        <!-- sign the jar. Note: (1) the current signing certificate expires in June, 2019 (2) the build 
+            user will be prompted for the keystore password -->
+        <input addproperty="password" message="Enter the keystore password to sign the JAR: ">
+            <handler type="secure" />
+        </input>
+        <signjar jar="${dist.dir}/${RELEASE_JAR}" keystore="lib.build/GSEA.jks" maxmemory="1024M"
+            alias="codesign" tsaurl="http://timestamp.comodoca.com/rfc3161" storepass="${password}" />
+    </target>
+
+    <target name="build-release" depends="build, sign-jar"
+        description="Builds and signs the JAR with an updated build date and number" />
+
 </project>
