@@ -110,13 +110,10 @@
     </target>
 
     <target name="sign-jar" depends="build" description="Sign the optimized JAR">
-        <!-- sign the jar. Note: (1) the current signing certificate expires in June, 2019 (2) the build 
-            user will be prompted for the keystore password -->
-        <input addproperty="password" message="Enter the keystore password to sign the JAR: ">
-            <handler type="secure" />
-        </input>
+        <!-- sign the jar. Note: (1) the current signing certificate expires in June, 2019 (2) the build must
+            provide the keystore password as a Java command-line property, like "ant -Dstore-password=FOO..." -->
         <signjar jar="${dist.dir}/${RELEASE_JAR}" keystore="${keystore}" maxmemory="1024M"
-            alias="codesign" tsaurl="http://timestamp.comodoca.com/rfc3161" storepass="${password}" />
+            alias="codesign" tsaurl="http://timestamp.comodoca.com/rfc3161" storepass="${store-password}" />
     </target>
 
     <target name="build-release" depends="build, sign-jar"
