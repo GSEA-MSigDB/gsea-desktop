@@ -115,7 +115,7 @@
         <input addproperty="password" message="Enter the keystore password to sign the JAR: ">
             <handler type="secure" />
         </input>
-        <signjar jar="${dist.dir}/${RELEASE_JAR}" keystore="lib.build/GSEA.jks" maxmemory="1024M"
+        <signjar jar="${dist.dir}/${RELEASE_JAR}" keystore="${keystore}" maxmemory="1024M"
             alias="codesign" tsaurl="http://timestamp.comodoca.com/rfc3161" storepass="${password}" />
     </target>
 
