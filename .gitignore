@@ -1,6 +1,9 @@
 /dist/
+/dist_java9/
 /bin/
 /proguard_opt_log/
 .DS_Store
 *~
-lib.build/GSEA.jks
+.classpath
+.project
+/.settings
