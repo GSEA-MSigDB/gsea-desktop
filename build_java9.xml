@@ -29,15 +29,15 @@
         <property name="MINIMAL_JAR" value="gsea-minimal-${build.version}_java9.jar" />
     </target>
 
-    <target name="compile" depends="update-build-props">
+    <target name="compile" depends="-init"> <!-- temporarily skipping 'update-build-props' to avoid build # updates -->
+        <property name="MINIMAL_JAR" value="gsea-minimal-DEV_java9.jar" />
         <mkdir dir="${dist.dir}/classes" />
         <javac target="1.9" source="1.9" debug="true" defaultexcludes="true" deprecation="false"
             destdir="${dist.dir}/classes" optimize="false" srcdir="src/main/java" memoryMaximumSize="1024M"
             fork="true" includes="**" failonerror="true" includeantruntime="false">
-            <src>
-            </src>
             <modulepath>
                 <fileset dir="lib" includes="*.jar" />
+                <fileset dir="lib_java9" includes="*.jar" />
             </modulepath>
         </javac>
     </target>
