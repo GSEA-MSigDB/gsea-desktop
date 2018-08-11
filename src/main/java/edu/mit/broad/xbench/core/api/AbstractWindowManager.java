@@ -4,7 +4,6 @@
 package edu.mit.broad.xbench.core.api;
 
 import edu.mit.broad.genome.Errors;
-import edu.mit.broad.genome.XLogger;
 import edu.mit.broad.xbench.core.ApplicationDialog;
 import edu.mit.broad.xbench.core.WrappedComponent;
 import org.apache.log4j.Logger;
@@ -19,7 +18,7 @@ public abstract class AbstractWindowManager implements WindowManager {
 
     private JFrame fRootFrame;
 
-    protected static final Logger klog = XLogger.getLogger(AbstractWindowManager.class);
+    protected static final Logger klog = Logger.getLogger(AbstractWindowManager.class);
 
     /**
      * Class constructor

@@ -5,7 +5,6 @@ package xtools.api.param;
 
 import edu.mit.broad.genome.Constants;
 import edu.mit.broad.genome.JarResources;
-import edu.mit.broad.genome.XLogger;
 import edu.mit.broad.genome.objects.PersistentObject;
 import edu.mit.broad.genome.utils.ClassUtils;
 import org.apache.log4j.Logger;
@@ -17,7 +16,7 @@ import javax.swing.*;
  */
 public abstract class AbstractParam implements Param {
 
-    protected static final Logger klog = XLogger.getLogger(AbstractParam.class);
+    protected static final Logger klog = Logger.getLogger(AbstractParam.class);
 
     protected Logger log;
     private String fName;
@@ -285,7 +284,7 @@ public abstract class AbstractParam implements Param {
         this.fReqd = reqd;
         this.fDefault = def;
         this.fType = type;
-        this.log = XLogger.getLogger(this.getClass());
+        this.log = Logger.getLogger(this.getClass());
     }
 
     public String getName() {

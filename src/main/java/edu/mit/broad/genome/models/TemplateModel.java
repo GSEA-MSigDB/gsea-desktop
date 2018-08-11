@@ -3,7 +3,6 @@
  *******************************************************************************/
 package edu.mit.broad.genome.models;
 
-import edu.mit.broad.genome.XLogger;
 import edu.mit.broad.genome.objects.Template;
 import org.apache.log4j.Logger;
 
@@ -33,7 +32,7 @@ public class TemplateModel extends AbstractTableModel {
     /**
      * For logging support
      */
-    private final Logger log = XLogger.getLogger(TemplateModel.class);
+    private final Logger log = Logger.getLogger(TemplateModel.class);
 
     /**
      * Class Constructor.

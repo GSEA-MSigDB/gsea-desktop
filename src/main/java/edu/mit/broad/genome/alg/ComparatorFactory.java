@@ -8,7 +8,6 @@ import java.util.Comparator;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.log4j.Logger;
 
-import edu.mit.broad.genome.XLogger;
 import edu.mit.broad.genome.math.Order;
 import edu.mit.broad.genome.objects.PersistentObject;
 import edu.mit.broad.genome.objects.ScoredDataset;
@@ -23,7 +22,7 @@ import edu.mit.broad.vdb.VdbRuntimeResources;
  */
 public class ComparatorFactory {
 
-    private static final Logger klog = XLogger.getLogger(ComparatorFactory.class);
+    private static final Logger klog = Logger.getLogger(ComparatorFactory.class);
 
     /**
      * Privatized Class constructor

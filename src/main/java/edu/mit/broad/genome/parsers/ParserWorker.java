@@ -12,7 +12,6 @@ import javax.swing.SwingWorker;
 import org.apache.log4j.Logger;
 
 import edu.mit.broad.genome.Errors;
-import edu.mit.broad.genome.XLogger;
 import edu.mit.broad.genome.objects.PersistentObject;
 import edu.mit.broad.xbench.core.api.Application;
 
@@ -23,7 +22,7 @@ import edu.mit.broad.xbench.core.api.Application;
  * @author David Eby
  */
 public class ParserWorker extends SwingWorker<Object, Void> {
-    private static final Logger klog = XLogger.getLogger(ParserWorker.class);
+    private static final Logger klog = Logger.getLogger(ParserWorker.class);
 
     private File[] files;
 

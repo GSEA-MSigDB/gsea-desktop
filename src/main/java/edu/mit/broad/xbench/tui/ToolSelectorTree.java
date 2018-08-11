@@ -4,7 +4,6 @@
 package edu.mit.broad.xbench.tui;
 
 import edu.mit.broad.genome.JarResources;
-import edu.mit.broad.genome.XLogger;
 import edu.mit.broad.genome.models.ReportModel;
 import edu.mit.broad.genome.reports.api.Report;
 import edu.mit.broad.genome.swing.GuiHelper;
@@ -35,7 +34,7 @@ import java.util.List;
 public class ToolSelectorTree extends JTree {
 
     private final Tool[] fTools;
-    private final Logger log = XLogger.getLogger(ToolSelectorTree.class);
+    private final Logger log = Logger.getLogger(ToolSelectorTree.class);
     private final DefaultTreeModel fModel;
 
     /**

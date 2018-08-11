@@ -15,7 +15,6 @@ import java.net.URLConnection;
 
 import org.apache.log4j.Logger;
 
-import edu.mit.broad.genome.XLogger;
 import edu.mit.broad.xbench.core.api.Application;
 
 /* 
@@ -26,7 +25,7 @@ import edu.mit.broad.xbench.core.api.Application;
  */
 public class CytoscapeLaunch {
 	
-	private static final Logger klog = XLogger.getLogger(CytoscapeLaunch.class);
+	private static final Logger klog = Logger.getLogger(CytoscapeLaunch.class);
 
 	//files to remotely install plugins
 	private String emgsea_jar_toinstall_cyto3 = "enrichmentmap-v2.1.0.jar"; 

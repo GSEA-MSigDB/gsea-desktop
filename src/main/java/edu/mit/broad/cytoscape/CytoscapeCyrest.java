@@ -29,12 +29,11 @@ import org.apache.http.message.BasicNameValuePair;
 
 import org.apache.log4j.Logger;
 
-import edu.mit.broad.genome.XLogger;
 import edu.mit.broad.xbench.core.api.Application;
 
 public class CytoscapeCyrest {
 
-	private static final Logger klog = XLogger.getLogger(CytoscapeLaunch.class);
+	private static final Logger klog = Logger.getLogger(CytoscapeLaunch.class);
 
 	
 	//path to the edb directory

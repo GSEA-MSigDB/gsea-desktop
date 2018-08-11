@@ -3,7 +3,6 @@
  *******************************************************************************/
 package edu.mit.broad.genome.math;
 
-import edu.mit.broad.genome.XLogger;
 import org.apache.log4j.Logger;
 
 import java.util.ArrayList;
@@ -20,7 +19,7 @@ import java.util.Random;
  */
 public class XMath {
 
-    private static final Logger klog = XLogger.getLogger(XMath.class);
+    private static final Logger klog = Logger.getLogger(XMath.class);
 
     /**
      * Privatized class constructor.

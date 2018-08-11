@@ -4,7 +4,6 @@
 package edu.mit.broad.xbench.explorer.filemgr;
 
 import com.jidesoft.swing.FolderChooser;
-import edu.mit.broad.genome.XLogger;
 import edu.mit.broad.xbench.core.api.Application;
 import org.apache.log4j.Logger;
 
@@ -22,7 +21,7 @@ public class XDirChooserJideImpl implements XDirChooser {
 
     private static final String DEFAULT_APPROVE_BUTTON_TEXT = "Open";
 
-    private final Logger log = XLogger.getLogger(this.getClass());
+    private final Logger log = Logger.getLogger(this.getClass());
 
     private FolderChooser fFolderChooser;
 

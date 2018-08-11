@@ -10,8 +10,6 @@ import org.apache.log4j.Logger;
 import org.ujmp.core.doublematrix.DenseDoubleMatrix2D;
 import org.ujmp.core.util.MathUtil;
 
-import edu.mit.broad.genome.XLogger;
-
 /**
  * A labeled dense 2-dimensional matrix holding double elements.
  */
@@ -19,7 +17,7 @@ import edu.mit.broad.genome.XLogger;
 // library directly, but I'll leave it for the moment as there is still a fair chance we'll switch
 // away to a different Matrix library.
 public class DoubleMatrix2D {
-    private static final transient Logger klog = XLogger.getLogger(DoubleMatrix2D.class);
+    private static final transient Logger klog = Logger.getLogger(DoubleMatrix2D.class);
 
     // Wrapped data structure; to be unwrapped and used directly if possible.
     // Remember that it has metadata capabilities.

@@ -6,7 +6,6 @@ package edu.mit.broad.genome.objects;
 import edu.mit.broad.genome.Constants;
 import edu.mit.broad.genome.NamingConventions;
 import edu.mit.broad.genome.Printf;
-import edu.mit.broad.genome.XLogger;
 import edu.mit.broad.genome.math.Matrix;
 import edu.mit.broad.genome.math.Vector;
 import edu.mit.broad.genome.objects.strucs.DatasetTemplate;
@@ -26,7 +25,7 @@ import java.util.*;
  */
 public class TemplateFactory extends TemplateImpl {
 
-    private static final Logger klog = XLogger.getLogger(TemplateFactory.class);
+    private static final Logger klog = Logger.getLogger(TemplateFactory.class);
 
     private static final String VS = "_versus_";
 

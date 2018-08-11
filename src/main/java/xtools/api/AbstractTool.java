@@ -5,7 +5,6 @@ package xtools.api;
 
 import edu.mit.broad.genome.Conf;
 import edu.mit.broad.genome.JarResources;
-import edu.mit.broad.genome.XLogger;
 import edu.mit.broad.genome.alg.GeneSetGenerators;
 import edu.mit.broad.genome.objects.*;
 import edu.mit.broad.genome.parsers.ParseUtils;
@@ -18,11 +17,9 @@ import edu.mit.broad.genome.utils.SystemUtils;
 import edu.mit.broad.vdb.chip.Chip;
 import edu.mit.broad.xbench.core.api.Application;
 
-import org.apache.commons.lang3.BooleanUtils;
 import org.apache.ecs.html.Div;
 import org.apache.ecs.html.H4;
 import org.apache.log4j.Logger;
-import org.genepattern.uiutil.UIUtil;
 
 import xapps.gsea.UpdateChecker;
 import xtools.api.param.*;
@@ -57,7 +54,7 @@ public abstract class AbstractTool implements Tool {
      */
     protected transient Logger log;
 
-    protected static final transient Logger klog = XLogger.getLogger(AbstractTool.class);
+    protected static final transient Logger klog = Logger.getLogger(AbstractTool.class);
 
     protected ToolParamSet fParamSet;
 
@@ -115,7 +112,7 @@ public abstract class AbstractTool implements Tool {
         this.fTimer = new edu.mit.broad.genome.utils.Timer();
         //this.fHelpMode = Boolean.getBoolean(System.getProperty("help")); // just doesnt work!!
         //this.fHelpMode = SystemUtils.isPropertyTrue("help");
-        this.log = XLogger.getLogger(this.getClass());
+        this.log = Logger.getLogger(this.getClass());
 
         if (Application.isHandlerSet() == false) {
             Application.registerHandler(new XToolsApplication());

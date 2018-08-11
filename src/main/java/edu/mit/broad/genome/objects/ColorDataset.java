@@ -3,7 +3,6 @@
  *******************************************************************************/
 package edu.mit.broad.genome.objects;
 
-import edu.mit.broad.genome.XLogger;
 import edu.mit.broad.genome.math.*;
 import org.apache.log4j.Logger;
 
@@ -34,7 +33,7 @@ public interface ColorDataset extends Dataset {
 
     static class Helper {
 
-        private static final Logger klog = XLogger.getLogger(Helper.class);
+        private static final Logger klog = Logger.getLogger(Helper.class);
 
 
         /**

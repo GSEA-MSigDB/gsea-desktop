@@ -8,14 +8,13 @@ import org.apache.log4j.Logger;
 import edu.mit.broad.cytoscape.CytoscapeLaunch;
 import edu.mit.broad.cytoscape.CytoscapeLocationSingleton.CytoscapeDownloadException;
 import edu.mit.broad.cytoscape.view.EnrichmentMapInputPanel;
-import edu.mit.broad.genome.XLogger;
 import edu.mit.broad.genome.viewers.ReportViewer;
 import edu.mit.broad.xbench.actions.WidgetAction;
 import edu.mit.broad.xbench.core.Widget;
 import edu.mit.broad.xbench.tui.ToolLauncher;
 
 public class EnrichmentMapInputPanelAction  extends WidgetAction {
-    private static final Logger klog = XLogger.getLogger(EnrichmentMapInputPanelAction.class);
+    private static final Logger klog = Logger.getLogger(EnrichmentMapInputPanelAction.class);
 
     private EnrichmentMapInputPanel fViewer;
 

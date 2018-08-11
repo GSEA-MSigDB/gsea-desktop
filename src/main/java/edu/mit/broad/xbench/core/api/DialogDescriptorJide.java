@@ -5,7 +5,6 @@ package edu.mit.broad.xbench.core.api;
 
 import com.jidesoft.dialog.ButtonPanel;
 
-import edu.mit.broad.genome.XLogger;
 import edu.mit.broad.genome.swing.GuiHelper;
 import edu.mit.broad.xbench.actions.ext.BrowserAction;
 
@@ -29,7 +28,7 @@ import java.awt.event.MouseEvent;
  */
 public class DialogDescriptorJide implements DialogDescriptor {
 
-    private static final Logger klog = XLogger.getLogger(DialogDescriptorJide.class);
+    private static final Logger klog = Logger.getLogger(DialogDescriptorJide.class);
 
     private JPanel fMainPanel;
 

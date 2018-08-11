@@ -3,7 +3,6 @@
  *******************************************************************************/
 package edu.mit.broad.xbench.core.api;
 
-import edu.mit.broad.genome.XLogger;
 import edu.mit.broad.genome.alg.ComparatorFactory;
 import edu.mit.broad.genome.parsers.ParseUtils;
 import edu.mit.broad.genome.utils.FileUtils;
@@ -24,7 +23,7 @@ import java.util.List;
  */
 public class XStore extends AbstractListModel implements ComboBoxModel {
 
-    private static final Logger klog = XLogger.getLogger(XStore.class);
+    private static final Logger klog = Logger.getLogger(XStore.class);
 
     private File fFile;
 

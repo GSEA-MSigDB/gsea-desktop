@@ -19,11 +19,11 @@ import edu.mit.broad.genome.Conf;
 import edu.mit.broad.genome.JarResources;
 import edu.mit.broad.genome.swing.GuiHelper;
 import edu.mit.broad.genome.swing.ImageComponent;
+import edu.mit.broad.genome.swing.SystemConsole;
 import edu.mit.broad.xbench.actions.ShowAppRuntimeHomeDirAction;
 import edu.mit.broad.xbench.actions.ShowDefaultOutputDirAction;
 import edu.mit.broad.xbench.actions.XAction;
 import edu.mit.broad.xbench.actions.ext.BrowserAction;
-import edu.mit.broad.xbench.core.StatusBar;
 import edu.mit.broad.xbench.core.WrappedComponent;
 import edu.mit.broad.xbench.core.api.*;
 import edu.mit.broad.xbench.prefs.XPreferencesFactory;
@@ -32,7 +32,7 @@ import xapps.api.AppDataLoaderAction;
 import xapps.api.AppToolLauncherAction;
 import xapps.api.PastAnalysisAction;
 import xapps.api.frameworks.WorkspaceToolBar;
-import xapps.api.frameworks.fiji.StatusBarJideImpl;
+import xapps.api.frameworks.fiji.StatusBarAppender;
 import xapps.api.frameworks.fiji.WindowManagerImplJideTabbedPane;
 import xtools.api.Tool;
 import xtools.chip2chip.Chip2Chip;
@@ -76,7 +76,7 @@ public class GseaFijiTabsApplicationFrame extends DefaultDockableHolder implemen
     // @note IMP IMP: this is the name under which docking prefs etc are stored
     public static final String PROFILE_NAME = "gsea";
 
-    private StatusBar fStatusBar;
+    private StatusBarAppender fStatusBarAppender;
 
     private GseaFijiTabsApplicationFrame fFrame = this;
 
@@ -131,7 +131,7 @@ public class GseaFijiTabsApplicationFrame extends DefaultDockableHolder implemen
 
         this.fWindowManager = new MyWindowManagerImplJideTabbedPane();
 
-        this.fStatusBar = new StatusBarJideImpl();
+        this.fStatusBarAppender = SystemConsole.createStatusBarAppender("StatusBar");
 
         Application.registerHandler(this);
 
@@ -213,7 +213,7 @@ public class GseaFijiTabsApplicationFrame extends DefaultDockableHolder implemen
         fFrame.getContentPane().add(split);
 
         // create one project tab for current project
-        fFrame.getContentPane().add(fStatusBar.getAsComponent(), BorderLayout.AFTER_LAST_LINE);
+        fFrame.getContentPane().add(fStatusBarAppender.getAsComponent(), BorderLayout.AFTER_LAST_LINE);
         
         UpdateChecker.oneTimeGseaUpdateCheck(this);
     }
@@ -588,10 +588,6 @@ public class GseaFijiTabsApplicationFrame extends DefaultDockableHolder implemen
         }
     }    // End inner class ExitAction
 
-    // -------------------------------------------------------------------------------------------- //
-    // --------------------------- APPLICATION HANDLER IMPLEMENTATION ------------------------------ //
-    // -------------------------------------------------------------------------------------------- //
-
     private static final VdbManager fVdbmanager = new VdbManagerForGsea(RPT_CACHE_BUILD_DATE);
 
     private ToolManagerImpl fToolManager;
@@ -627,9 +623,7 @@ public class GseaFijiTabsApplicationFrame extends DefaultDockableHolder implemen
         return fWindowManager;
     }
 
-    public StatusBar getStatusBar() {
-        return fStatusBar;
+    public StatusBarAppender getStatusBarAppender() {
+        return fStatusBarAppender;
     }
-
-} // End class GseaFiji2Application
-
+}

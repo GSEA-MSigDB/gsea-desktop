@@ -3,7 +3,6 @@
  *******************************************************************************/
 package edu.mit.broad.genome.alg;
 
-import edu.mit.broad.genome.XLogger;
 import edu.mit.broad.genome.math.Vector;
 import edu.mit.broad.genome.math.XMath;
 import edu.mit.broad.genome.objects.Template;
@@ -30,7 +29,7 @@ public class Metrics {
     /**
      * For logging support
      */
-    protected static final transient Logger klog = XLogger.getLogger(Metrics.class);
+    protected static final transient Logger klog = Logger.getLogger(Metrics.class);
 
     private static final int MIN_NUM_FOR_VAR = 3;
 

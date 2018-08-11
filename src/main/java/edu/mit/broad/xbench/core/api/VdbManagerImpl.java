@@ -4,7 +4,6 @@
 package edu.mit.broad.xbench.core.api;
 
 import edu.mit.broad.genome.NamingConventions;
-import edu.mit.broad.genome.XLogger;
 import edu.mit.broad.genome.utils.SystemUtils;
 import edu.mit.broad.xbench.prefs.XPreferencesFactory;
 import org.apache.log4j.Logger;
@@ -18,7 +17,7 @@ public class VdbManagerImpl implements VdbManager {
 
     private String fBuildDate;
 
-    private static final Logger klog = XLogger.getLogger(VdbManagerImpl.class);
+    private static final Logger klog = Logger.getLogger(VdbManagerImpl.class);
 
     /**
      * Class constructor

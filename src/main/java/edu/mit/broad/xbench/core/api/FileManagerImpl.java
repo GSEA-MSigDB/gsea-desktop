@@ -4,7 +4,6 @@
 package edu.mit.broad.xbench.core.api;
 
 import edu.mit.broad.genome.JarResources;
-import edu.mit.broad.genome.XLogger;
 import edu.mit.broad.genome.parsers.ObjectCache;
 import edu.mit.broad.genome.parsers.ParserFactory;
 import edu.mit.broad.xbench.RendererFactory2;
@@ -33,7 +32,7 @@ import java.util.Set;
  */
 public class FileManagerImpl implements FileManager {
 
-    private static final Logger klog = XLogger.getLogger(FileManagerImpl.class);
+    private static final Logger klog = Logger.getLogger(FileManagerImpl.class);
 
     // Lots of things made lazilly in an effort to speedup loading process
     // Also some dependencies to Application helped by lazy loading

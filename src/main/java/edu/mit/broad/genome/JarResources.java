@@ -3,7 +3,6 @@
  *******************************************************************************/
 package edu.mit.broad.genome;
 
-import edu.mit.broad.genome.parsers.ParseUtils;
 import edu.mit.broad.xbench.core.api.Application;
 
 import org.apache.log4j.Logger;
@@ -14,7 +13,6 @@ import javax.swing.*;
 
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.Properties;
@@ -77,7 +75,7 @@ public class JarResources {
         try {
 
             kClassLoader = JarResources.class.getClassLoader();
-            klog = XLogger.getLogger(JarResources.class);
+            klog = Logger.getLogger(JarResources.class);
 
             /* strangely this seems to not work for the initial loading when running off off a jar file.
                Need to do the Toolkit.getDef .. thing.

@@ -4,7 +4,6 @@
 package edu.mit.broad.xbench.tui;
 
 import edu.mit.broad.genome.JarResources;
-import edu.mit.broad.genome.XLogger;
 import edu.mit.broad.xbench.core.Widget;
 import org.apache.log4j.Logger;
 import xtools.api.Tool;
@@ -27,7 +26,7 @@ public class SingleToolLauncher extends JPanel implements Widget, MouseMotionLis
 
     public static final String TITLE = "Tool Launcher";
     public static final Icon ICON = JarResources.getIcon("ToolLauncher.gif");
-    private static final Logger klog = XLogger.getLogger(SingleToolLauncher.class);
+    private static final Logger klog = Logger.getLogger(SingleToolLauncher.class);
     private Tool fTool;
     private ParamSet fParamSet;
     private ToolRunnerControl fToolRunner;

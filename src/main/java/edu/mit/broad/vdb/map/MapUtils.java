@@ -3,7 +3,6 @@
  *******************************************************************************/
 package edu.mit.broad.vdb.map;
 
-import edu.mit.broad.genome.XLogger;
 import edu.mit.broad.genome.objects.DefaultGeneSetMatrix;
 import edu.mit.broad.genome.objects.FSet;
 import edu.mit.broad.genome.objects.GeneSet;
@@ -25,7 +24,7 @@ import java.util.Set;
  */
 public class MapUtils {
 
-    private static final Logger klog = XLogger.getLogger(MapUtils.class);
+    private static final Logger klog = Logger.getLogger(MapUtils.class);
 
     private static final char DELIM = '.';
     private static final String DELIMS = ".";

@@ -3,7 +3,6 @@
  *******************************************************************************/
 package edu.mit.broad.genome.alg.gsea;
 
-import edu.mit.broad.genome.XLogger;
 import edu.mit.broad.genome.alg.DatasetGenerators;
 import edu.mit.broad.genome.alg.fdr.FdrAlgs;
 import edu.mit.broad.genome.math.*;
@@ -21,7 +20,7 @@ import org.apache.log4j.Logger;
  */
 public class PValueCalculatorImpls {
 
-    private static final Logger klog = XLogger.getLogger(PValueCalculatorImpls.class);
+    private static final Logger klog = Logger.getLogger(PValueCalculatorImpls.class);
 
     /**
      * The GSEA style implementation of pvalues and FDRs and FWERs

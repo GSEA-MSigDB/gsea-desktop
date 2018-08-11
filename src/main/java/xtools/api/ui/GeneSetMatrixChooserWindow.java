@@ -4,7 +4,6 @@
 package xtools.api.ui;
 
 import edu.mit.broad.genome.JarResources;
-import edu.mit.broad.genome.XLogger;
 import edu.mit.broad.genome.objects.FSet;
 import edu.mit.broad.genome.objects.GeneSet;
 import edu.mit.broad.genome.parsers.ParseUtils;
@@ -25,7 +24,7 @@ import java.util.ArrayList;
  */
 public class GeneSetMatrixChooserWindow {
 
-    private static final Logger klog = XLogger.getLogger(GeneSetMatrixChooserWindow.class);
+    private static final Logger klog = Logger.getLogger(GeneSetMatrixChooserWindow.class);
     private JList[] jlGenes;
 
     private final JTextArea taGenes = new JTextArea();

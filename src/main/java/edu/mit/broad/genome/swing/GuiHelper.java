@@ -5,7 +5,6 @@ package edu.mit.broad.genome.swing;
 
 import edu.mit.broad.genome.Constants;
 import edu.mit.broad.genome.JarResources;
-import edu.mit.broad.genome.XLogger;
 import gnu.trove.TIntArrayList;
 
 import org.apache.log4j.Logger;
@@ -67,7 +66,7 @@ public class GuiHelper implements Constants {
     public static final Color COLOR_DARK_BLUE = new Color(63, 64, 124);
 
     // -- private statics --
-    private static final Logger klog = XLogger.getLogger(GuiHelper.class);
+    private static final Logger klog = Logger.getLogger(GuiHelper.class);
     private static final Dimension kPlaceholderSize = new Dimension(200, 50);
 
     /**

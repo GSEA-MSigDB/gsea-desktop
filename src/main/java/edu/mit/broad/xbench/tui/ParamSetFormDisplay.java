@@ -7,7 +7,6 @@ import com.jgoodies.forms.builder.PanelBuilder;
 import com.jgoodies.forms.layout.CellConstraints;
 import com.jgoodies.forms.layout.FormLayout;
 
-import edu.mit.broad.genome.XLogger;
 import edu.mit.broad.genome.swing.GuiHelper;
 import edu.mit.broad.genome.swing.fields.GDirFieldPlusChooser;
 import edu.mit.broad.genome.swing.fields.GFieldPlusChooser;
@@ -30,7 +29,7 @@ import java.util.ArrayList;
  */
 public class ParamSetFormDisplay implements ParamSetDisplay {
 
-    private Logger log = XLogger.getLogger(ParamSetFormDisplay.class);
+    private Logger log = Logger.getLogger(ParamSetFormDisplay.class);
 
     private ParamSet fParamSet;
 

@@ -3,7 +3,6 @@
  *******************************************************************************/
 package xtools.api;
 
-import edu.mit.broad.genome.XLogger;
 import edu.mit.broad.genome.reports.api.ToolReport;
 import edu.mit.broad.genome.reports.pages.HtmlFormat;
 import org.apache.ecs.html.Div;
@@ -19,7 +18,7 @@ import java.io.File;
  */
 public class ReportBlocks {
 
-    private static final Logger klog = XLogger.getLogger(ReportBlocks.class);
+    private static final Logger klog = Logger.getLogger(ReportBlocks.class);
 
     // a report listing section that simply lists the elements in a block
     public static class SimpleBlockListing {

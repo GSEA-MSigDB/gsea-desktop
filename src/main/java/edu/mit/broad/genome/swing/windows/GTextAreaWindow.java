@@ -3,7 +3,6 @@
  *******************************************************************************/
 package edu.mit.broad.genome.swing.windows;
 
-import edu.mit.broad.genome.XLogger;
 import edu.mit.broad.xbench.core.api.Application;
 import edu.mit.broad.xbench.core.api.DialogDescriptor;
 
@@ -18,7 +17,7 @@ import org.apache.log4j.Logger;
  * @version %I%, %G%
  */
 public class GTextAreaWindow {
-    protected static final Logger klog = XLogger.getLogger(GTextAreaWindow.class);
+    protected static final Logger klog = Logger.getLogger(GTextAreaWindow.class);
 
     private final JTextArea taEntry;
 

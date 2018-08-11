@@ -13,11 +13,10 @@ import com.enterprisedt.net.ftp.EventAdapter;
 import com.enterprisedt.net.ftp.EventListener;
 import com.enterprisedt.net.ftp.FTPException;
 
-import edu.mit.broad.genome.XLogger;
 import edu.mit.broad.xbench.core.api.Application;
 
 public class FtpProgressMonitor extends ProgressMonitor implements EventListener {
-    private static final Logger klog = XLogger.getLogger(FtpProgressMonitor.class);
+    private static final Logger klog = Logger.getLogger(FtpProgressMonitor.class);
 
     // Default handler for EventListener events (other than those we care about)
     private final EventAdapter eventDelegate = new EventAdapter();

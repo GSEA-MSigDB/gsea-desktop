@@ -3,8 +3,6 @@
  *******************************************************************************/
 package edu.mit.broad.genome.utils;
 
-import edu.mit.broad.genome.XLogger;
-
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
@@ -24,7 +22,7 @@ public class FileUtils {
     /**
      * For logging support
      */
-    private final static Logger klog = XLogger.getLogger(FileUtils.class);
+    private final static Logger klog = Logger.getLogger(FileUtils.class);
 
     /**
      * The file is opened and closed after counting

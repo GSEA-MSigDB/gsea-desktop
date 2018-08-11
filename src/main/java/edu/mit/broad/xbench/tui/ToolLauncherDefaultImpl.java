@@ -3,7 +3,6 @@
  *******************************************************************************/
 package edu.mit.broad.xbench.tui;
 
-import edu.mit.broad.genome.XLogger;
 import edu.mit.broad.genome.reports.api.Report;
 import edu.mit.broad.genome.swing.GseaSimpleInternalFrame;
 import edu.mit.broad.genome.swing.GuiHelper;
@@ -41,7 +40,7 @@ public class ToolLauncherDefaultImpl extends JPanel implements ToolLauncher, Mou
 
     private String fTitle;
     private Icon fIcon;
-    private static final Logger klog = XLogger.getLogger(ToolLauncherDefaultImpl.class);
+    private static final Logger klog = Logger.getLogger(ToolLauncherDefaultImpl.class);
     private Tool[] fTools;
     private final JSplitPane splitPane;
     private ToolSelectorTree fToolSelectorTree;

@@ -3,7 +3,6 @@
  *******************************************************************************/
 package edu.mit.broad.genome.swing.fields;
 
-import edu.mit.broad.genome.XLogger;
 import edu.mit.broad.genome.swing.GuiHelper;
 import edu.mit.broad.genome.swing.windows.GListWindow;
 import org.apache.log4j.Logger;
@@ -26,7 +25,7 @@ import java.awt.event.ActionListener;
  */
 public class GOptionsFieldPlusChooser extends JPanel implements GFieldPlusChooser {
 
-    protected final Logger log = XLogger.getLogger(GOptionsFieldPlusChooser.class);
+    protected final Logger log = Logger.getLogger(GOptionsFieldPlusChooser.class);
     protected JTextField tfEntry = new JTextField(40);
     protected JButton bEntry = new JButton(GuiHelper.ICON_ELLIPSIS);
     protected GListWindow fWindow;

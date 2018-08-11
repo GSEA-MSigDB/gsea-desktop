@@ -13,7 +13,6 @@ import org.apache.log4j.Logger;
 
 import edu.mit.broad.genome.Constants;
 import edu.mit.broad.genome.Printf;
-import edu.mit.broad.genome.XLogger;
 import edu.mit.broad.genome.objects.Dataset;
 import edu.mit.broad.genome.objects.Template;
 import edu.mit.broad.genome.objects.TemplateFactory;
@@ -37,7 +36,7 @@ public class TemplateSingleChooserParam extends StringMultiChooserParam implemen
     protected TemplateMode fMode;
     private TemplateChooserUI fTemplateChooser;
     private TemplateSelection fCurrBag;
-    private Logger log = XLogger.getLogger(TemplateSingleChooserParam.class);
+    private Logger log = Logger.getLogger(TemplateSingleChooserParam.class);
 
     public TemplateSingleChooserParam(String name, String nameEnglish, TemplateMode mode, boolean reqd) {
         super(name, nameEnglish, CLS_DESC, new String[]{}, new String[]{}, reqd);

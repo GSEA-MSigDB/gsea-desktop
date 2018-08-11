@@ -56,8 +56,8 @@ import java.util.*;
 // dont extend abstractobject -- easier to impl ourselves here as impl not pob but reports
 public class ToolReport implements Report {
 
-    private transient Logger log = XLogger.getLogger(this.getClass());
-    private transient static Logger klog = XLogger.getLogger(ToolReport.class);
+    private transient Logger log = Logger.getLogger(this.getClass());
+    private transient static Logger klog = Logger.getLogger(ToolReport.class);
 
     /**
      * @maint ALL OF THE OBJECTS STORED NEED TO BE SERIALIZABLE (as stored in http session)

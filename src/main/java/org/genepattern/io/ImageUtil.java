@@ -4,7 +4,6 @@
 package org.genepattern.io;
 
 import edu.mit.broad.genome.StandardException;
-import edu.mit.broad.genome.XLogger;
 
 import javax.imageio.ImageIO;
 
@@ -42,7 +41,7 @@ import java.util.Set;
 import java.util.zip.GZIPOutputStream;
 
 public class ImageUtil {
-    private static final Logger klog = XLogger.getLogger(ImageUtil.class);
+    private static final Logger klog = Logger.getLogger(ImageUtil.class);
 
     private ImageUtil() {
     }

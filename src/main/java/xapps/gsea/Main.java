@@ -11,7 +11,6 @@ import com.jidesoft.comparator.ObjectComparatorManager;
 import com.jidesoft.swing.SplashScreen;
 
 import edu.mit.broad.genome.JarResources;
-import edu.mit.broad.genome.XLogger;
 import edu.mit.broad.genome.utils.SystemUtils;
 import edu.mit.broad.xbench.ComparatorFactory2;
 
@@ -51,7 +50,7 @@ public class Main {
         }
     }
 
-    private static final Logger klog = XLogger.getLogger(Main.class);
+    private static final Logger klog = Logger.getLogger(Main.class);
 
     /**
      * Class Constructor.

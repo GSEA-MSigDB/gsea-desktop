@@ -16,14 +16,13 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
-import edu.mit.broad.genome.XLogger;
 import edu.mit.broad.xbench.prefs.XPreferencesFactory;
 
 public class UpdateChecker {
 
     private static final String GSEA_UPDATE_CHECK_URL = GseaWebResources.getGseaBaseURL() + "/gseaUpdate";
 
-    private static final transient Logger klog = XLogger.getLogger(UpdateChecker.class);
+    private static final transient Logger klog = Logger.getLogger(UpdateChecker.class);
 
     private static boolean MAKE_GSEA_UPDATE_CHECK = BooleanUtils.toBoolean(System.getProperty("MAKE_GSEA_UPDATE_CHECK", "true"))
             && XPreferencesFactory.kMakeGseaUpdateCheck.getBoolean();

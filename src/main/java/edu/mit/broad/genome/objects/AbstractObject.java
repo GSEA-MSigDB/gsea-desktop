@@ -3,8 +3,6 @@
  *******************************************************************************/
 package edu.mit.broad.genome.objects;
 
-import edu.mit.broad.genome.XLogger;
-
 import org.apache.log4j.Logger;
 
 import java.util.Properties;
@@ -60,7 +58,7 @@ public abstract class AbstractObject implements PersistentObject {
      * the object. See note above about serialization.
      */
     protected AbstractObject() {
-        this.log = XLogger.getLogger(this.getClass());
+        this.log = Logger.getLogger(this.getClass());
     }
 
     /**
@@ -94,7 +92,7 @@ public abstract class AbstractObject implements PersistentObject {
         }
         */
 
-        this.log = XLogger.getLogger(this.getClass());
+        this.log = Logger.getLogger(this.getClass());
         this.fId = id;
         this.fName = removeExtension(name);
         if (nameEnglish != null) {

@@ -8,38 +8,32 @@ import com.jidesoft.status.*;
 import com.jidesoft.swing.JideBoxLayout;
 import edu.mit.broad.genome.Conf;
 import edu.mit.broad.genome.JarResources;
-import edu.mit.broad.genome.XLogger;
 import edu.mit.broad.genome.viewers.SystemConsoleViewer;
-import org.apache.log4j.AppenderSkeleton;
-import org.apache.log4j.Level;
-import org.apache.log4j.spi.LoggingEvent;
 
 import javax.swing.*;
+
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.core.Filter;
+import org.apache.logging.log4j.core.Layout;
+import org.apache.logging.log4j.core.LogEvent;
+import org.apache.logging.log4j.core.appender.AbstractAppender;
+
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.Serializable;
 
-/**
- * @author Aravind Subramanian
- */
-public class StatusBarJideImpl extends AppenderSkeleton implements edu.mit.broad.xbench.core.StatusBar {
+public class StatusBarAppender extends AbstractAppender {
 
     private StatusBar fJideStatusBar;
 
     private LabelStatusBarItem fStatusBarLabelItem;
 
-    // Because i init and set the system consle at startup, the logging is auto in it
-    //private java.util.List fLogObjects;
-
-    //private static int MAX_SIZE = 50;
-
     private SystemConsoleViewer fSystemConsoleComp;
-
-    /**
-     * Class constructor
-     */
-    public StatusBarJideImpl() {
-
+    
+    public StatusBarAppender(String name, Filter filter, Layout<? extends Serializable> layout) {
+        super(name, filter, layout);
+        
         this.fJideStatusBar = new StatusBar();
         this.fSystemConsoleComp = new SystemConsoleViewer();
         //fSystemConsoleComp.setBorder(BorderFactory.createTitledBorder("Process messages (for # of permutations)"));
@@ -50,7 +44,7 @@ public class StatusBarJideImpl extends AppenderSkeleton implements edu.mit.broad
         //this.fLogObjects = new ArrayList(MAX_SIZE);
         this.fStatusBarLabelItem = new LabelStatusBarItem();
         fStatusBarLabelItem.setIcon(JarResources.getIcon("expandall.png"));
-        fStatusBarLabelItem.setToolTip("Click for application messages (such as # of permutations complete)");
+        fStatusBarLabelItem.setToolTipText("Click for application messages (such as # of permutations complete)");
 
         fJideStatusBar.add(fStatusBarLabelItem, JideBoxLayout.FLEXIBLE);
 
@@ -77,8 +71,6 @@ public class StatusBarJideImpl extends AppenderSkeleton implements edu.mit.broad
             }
 
         });
-
-
     }
 
     public JComponent getAsComponent() {
@@ -92,31 +84,6 @@ public class StatusBarJideImpl extends AppenderSkeleton implements edu.mit.broad
         popup.setMovable(true);
         popup.getContentPane().setLayout(new BorderLayout());
 
-        /*
-        JTextArea logOutput = new JTextArea();
-        logOutput.setRows(25);
-        logOutput.setColumns(80);
-        logOutput.setBorder(BorderFactory.createTitledBorder("Application messages"));
-         for (int i = 0; i < msgs.size(); i++) {
-            logOutput.append(msgs.get(i).toString());
-        }
-
-        logOutput.setEditable(false);
-        //popup.getContentPane().add(new JScrollPane(logOutput), BorderLayout.CENTER);
-        */
-
-        /*        
-        JideSplitPane split = new JideSplitPane(JideSplitPane.HORIZONTAL_SPLIT);
-        split.add(new JScrollPane(logOutput));
-        split.add(new JScrollPane(fSystemConsoleComp));
-        split.setInitiallyEven(true);
-        split.setPreferredSize(new Dimension(700, 350));
-        popup.getContentPane().add(split);
-        popup.setDefaultFocusComponent(logOutput);
-        */
-
-        //JScrollPane sp = new JScrollPane(fSystemConsoleComp);
-        //sp.setPreferredSize(new Dimension(700, 350));
         fSystemConsoleComp.setPreferredSize(new Dimension(700, 350));
         popup.getContentPane().add(fSystemConsoleComp);
         popup.setDefaultFocusComponent(fSystemConsoleComp);
@@ -131,16 +98,10 @@ public class StatusBarJideImpl extends AppenderSkeleton implements edu.mit.broad
 
     }
 
-    // -------------------------------------------------------------------------------------------- //
-    // ------------------------------LOG4J APPENDER IMPL--------------------------------------- //
-    // -------------------------------------------------------------------------------------------- //
-
-    public void append(final LoggingEvent event) {
-
-        String txt = XLogger.getSimpleLayout().format(event);
-
+    @Override
+    public void append(LogEvent event) {
+        String txt = new String(getLayout().toByteArray(event));
         Level level = event.getLevel();
-
 
         if (level == Level.INFO) {
             fStatusBarLabelItem.setForeground(Color.BLACK);
@@ -151,27 +112,6 @@ public class StatusBarJideImpl extends AppenderSkeleton implements edu.mit.broad
         } else if (level == Level.WARN) {
             fStatusBarLabelItem.setForeground(Color.ORANGE);
             fStatusBarLabelItem.setText(txt);
-        } else if (level == Level.FATAL || level == Level.ERROR) {
-            // @note dont show it scares people
-            // /fStatusBarLabelItem.setForeground(Color.RED);
-            //fStatusBarLabelItem.setForeground(Color.RED);
-            //fStatusBarLabelItem.setText(txt);
         }
-
-        /*
-        fLogObjects.add(txt);
-        if (fLogObjects.size() >= MAX_SIZE) {
-            fLogObjects.remove(0);
-        }
-        */
-
     }
-
-    public void close() {
-    }
-
-    public boolean requiresLayout() {
-        return false;
-    }
-
-} // End class StatusBarJideImpl
+}

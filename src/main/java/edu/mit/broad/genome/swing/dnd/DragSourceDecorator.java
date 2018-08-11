@@ -3,7 +3,6 @@
  *******************************************************************************/
 package edu.mit.broad.genome.swing.dnd;
 
-import edu.mit.broad.genome.XLogger;
 import org.apache.log4j.Logger;
 
 import java.awt.datatransfer.Transferable;
@@ -21,7 +20,7 @@ import java.awt.dnd.*;
  */
 public class DragSourceDecorator implements DragGestureListener, DragSourceListener {
 
-    private final Logger log = XLogger.getLogger(DragSourceDecorator.class);
+    private final Logger log = Logger.getLogger(DragSourceDecorator.class);
     private DragSource fDragSource;
     private final int fDragAction = DnDConstants.ACTION_COPY_OR_MOVE;
     private DndSource fSource;

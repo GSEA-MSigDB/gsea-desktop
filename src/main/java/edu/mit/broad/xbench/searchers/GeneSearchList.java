@@ -8,7 +8,6 @@ import com.jidesoft.swing.JideTitledBorder;
 import com.jidesoft.swing.PartialEtchedBorder;
 import com.jidesoft.swing.PartialSide;
 import com.jidesoft.swing.SearchableUtils;
-import edu.mit.broad.genome.XLogger;
 import org.apache.log4j.Logger;
 
 import javax.swing.*;
@@ -33,7 +32,7 @@ public class GeneSearchList {
 
     private DefaultListModel listModel;
 
-    private Logger log = XLogger.getLogger(GeneSearchList.class);
+    private Logger log = Logger.getLogger(GeneSearchList.class);
 
 
     public GeneSearchList() {

@@ -4,7 +4,6 @@
 package edu.mit.broad.genome.reports.pages;
 
 import edu.mit.broad.genome.Constants;
-import edu.mit.broad.genome.XLogger;
 import edu.mit.broad.genome.objects.strucs.Hyperlink;
 import edu.mit.broad.genome.objects.strucs.Linked;
 import org.apache.ecs.Doctype;
@@ -22,7 +21,7 @@ import java.io.File;
  */
 public class HtmlFormat {
 
-    private static final Logger klog = XLogger.getLogger(HtmlFormat.class);
+    private static final Logger klog = Logger.getLogger(HtmlFormat.class);
 
     private static final String CENTER = "center";
 

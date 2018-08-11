@@ -122,7 +122,7 @@ public class HtmlPage implements Page {
 
     private Document fDoc;
 
-    private Logger log = XLogger.getLogger(HtmlPage.class);
+    private Logger log = Logger.getLogger(HtmlPage.class);
 
     private int fPicCnt = 1;
 

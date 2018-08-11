@@ -4,7 +4,6 @@
 package edu.mit.broad.xbench.explorer.filemgr;
 
 import edu.mit.broad.genome.JarResources;
-import edu.mit.broad.genome.XLogger;
 import edu.mit.broad.genome.io.FileTransferable;
 import edu.mit.broad.genome.parsers.DataFormat;
 import edu.mit.broad.genome.parsers.ParserWorker;
@@ -44,7 +43,7 @@ import java.io.File;
  */
 public class JRecentFilesList extends JList implements DndSource, FilesSelectable {
 
-    private final Logger log = XLogger.getLogger(JRecentFilesList.class);
+    private final Logger log = Logger.getLogger(JRecentFilesList.class);
     private JRecentFilesList fInstance;
     public static final String DEFAULT_TITLE = "Recent files";
     public static final Icon ICON = JarResources.getIcon("History24.gif");

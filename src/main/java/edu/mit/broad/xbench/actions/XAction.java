@@ -10,8 +10,6 @@ import javax.swing.Icon;
 
 import org.apache.log4j.Logger;
 
-import edu.mit.broad.genome.XLogger;
-
 /**
  * Base action-pattern class for all xomics actions.
  *
@@ -47,7 +45,7 @@ public abstract class XAction extends AbstractAction {
         return (Icon)action.getValue(SMALL_ICON);
     }
 
-    protected final Logger log = XLogger.getLogger(XAction.class);
+    protected final Logger log = Logger.getLogger(XAction.class);
 
 
     public XAction(String id, String name, String description) {

@@ -3,7 +3,6 @@
  *******************************************************************************/
 package edu.mit.broad.genome.parsers;
 
-import edu.mit.broad.genome.XLogger;
 import edu.mit.broad.genome.swing.NotSpecified;
 import org.apache.log4j.Logger;
 
@@ -23,7 +22,7 @@ public class NotSpecifiedBoxWrapper extends DefaultComboBoxModel {
 
     private PobBoxModels fRealModel;
 
-    private Logger log = XLogger.getLogger(NotSpecifiedBoxWrapper.class);
+    private Logger log = Logger.getLogger(NotSpecifiedBoxWrapper.class);
 
 
     /**

@@ -3,7 +3,6 @@
  *******************************************************************************/
 package edu.mit.broad.genome.parsers;
 
-import edu.mit.broad.genome.XLogger;
 import org.apache.log4j.Logger;
 
 import javax.swing.*;
@@ -22,7 +21,7 @@ public class PobBoxModels implements ComboBoxModel {
 
     private PobBoxModel[] fModels;
 
-    private Logger log = XLogger.getLogger(PobBoxModels.class);
+    private Logger log = Logger.getLogger(PobBoxModels.class);
 
     /**
      * This is the comboination of model / no-selection sharing magic

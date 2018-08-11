@@ -11,17 +11,15 @@ import java.net.URL;
 
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
-import javax.swing.SwingWorker;
 
 import org.apache.log4j.Logger;
 
-import edu.mit.broad.genome.XLogger;
 import edu.mit.broad.xbench.core.api.Application;
 import edu.mit.broad.xbench.prefs.XPreferencesFactory;
 
 public class CytoscapeLocationSingleton {
 	
-    private static final Logger klog = XLogger.getLogger(CytoscapeLocationSingleton.class);
+    private static final Logger klog = Logger.getLogger(CytoscapeLocationSingleton.class);
 	private static CytoscapeLocationSingleton locationInfo = null;
 	
 	private String cytoscapeRootLocation = null;

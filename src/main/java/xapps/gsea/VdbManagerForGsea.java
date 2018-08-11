@@ -6,7 +6,6 @@ package xapps.gsea;
 import edu.mit.broad.genome.Conf;
 import edu.mit.broad.genome.NamingConventions;
 import edu.mit.broad.genome.TraceUtils;
-import edu.mit.broad.genome.XLogger;
 import edu.mit.broad.xbench.core.api.VdbManager;
 import edu.mit.broad.xbench.prefs.XPreferencesFactory;
 import org.apache.log4j.Logger;
@@ -20,7 +19,7 @@ public class VdbManagerForGsea implements VdbManager {
 
     private String fCacheDate;
 
-    private static final Logger klog = XLogger.getLogger(VdbManagerForGsea.class);
+    private static final Logger klog = Logger.getLogger(VdbManagerForGsea.class);
 
     /**
      * Class constructor

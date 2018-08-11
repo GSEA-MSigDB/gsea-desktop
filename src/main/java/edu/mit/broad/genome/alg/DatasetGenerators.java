@@ -15,7 +15,6 @@ import org.apache.log4j.Logger;
 
 import xtools.api.param.BadParamException;
 import edu.mit.broad.genome.NamingConventions;
-import edu.mit.broad.genome.XLogger;
 import edu.mit.broad.genome.alg.distrib.RangeFactory;
 import edu.mit.broad.genome.math.ColorScheme;
 import edu.mit.broad.genome.math.Matrix;
@@ -52,7 +51,7 @@ import edu.mit.broad.vdb.chip.NullSymbolMode;
  */
 public class DatasetGenerators {
 
-    private final Logger log = XLogger.getLogger(DatasetGenerators.class);
+    private final Logger log = Logger.getLogger(DatasetGenerators.class);
 
     /**
      * Class constructor

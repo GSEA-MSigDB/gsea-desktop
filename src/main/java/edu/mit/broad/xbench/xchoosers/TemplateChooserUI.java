@@ -5,7 +5,6 @@ package edu.mit.broad.xbench.xchoosers;
 
 import com.jidesoft.dialog.ButtonPanel;
 import edu.mit.broad.genome.JarResources;
-import edu.mit.broad.genome.XLogger;
 import edu.mit.broad.genome.alg.ComparatorFactory;
 import edu.mit.broad.genome.objects.*;
 import edu.mit.broad.genome.parsers.ParserFactory;
@@ -45,7 +44,7 @@ public class TemplateChooserUI {
 
     protected JComboBox cbTemplates;
 
-    private Logger log = XLogger.getLogger(TemplateChooserUI.class);
+    private Logger log = Logger.getLogger(TemplateChooserUI.class);
 
     private boolean fIsMultiAllowed;
 

@@ -3,7 +3,6 @@
  *******************************************************************************/
 package edu.mit.broad.xbench.xchoosers;
 
-import edu.mit.broad.genome.XLogger;
 import edu.mit.broad.genome.objects.Template;
 import edu.mit.broad.genome.objects.TemplateDerivative;
 import edu.mit.broad.genome.parsers.AuxUtils;
@@ -24,7 +23,7 @@ public class TemplateSelection {
 
     protected Set fTemplateNamesOrPaths;
 
-    private Logger log = XLogger.getLogger(TemplateSelection.class);
+    private Logger log = Logger.getLogger(TemplateSelection.class);
 
     protected TemplateSelection() {
     }

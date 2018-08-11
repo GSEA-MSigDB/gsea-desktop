@@ -3,7 +3,6 @@
  *******************************************************************************/
 package edu.mit.broad.genome.reports.api;
 
-import edu.mit.broad.genome.XLogger;
 import org.apache.ecs.html.LI;
 import org.apache.ecs.html.UL;
 import org.apache.log4j.Logger;
@@ -19,7 +18,7 @@ public class ToolComments {
 
     private List fComments;
 
-    private Logger log = XLogger.getLogger(ToolComments.class);
+    private Logger log = Logger.getLogger(ToolComments.class);
 
     public ToolComments() {
         this.fComments = new ArrayList();

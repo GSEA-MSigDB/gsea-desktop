@@ -5,7 +5,6 @@ package edu.mit.broad.genome.viewers;
 
 import com.jidesoft.grid.SortableTable;
 
-import edu.mit.broad.genome.XLogger;
 import edu.mit.broad.genome.models.NumberedProxyModel;
 import edu.mit.broad.genome.objects.PersistentObject;
 import edu.mit.broad.genome.swing.GuiHelper;
@@ -27,7 +26,7 @@ public abstract class AbstractViewer extends JPanel implements Widget {
 
     protected Logger log;
 
-    protected static final Logger klog = XLogger.getLogger(AbstractViewer.class);
+    protected static final Logger klog = Logger.getLogger(AbstractViewer.class);
 
     private Icon fIcon;
 
@@ -50,7 +49,7 @@ public abstract class AbstractViewer extends JPanel implements Widget {
 
     // Users of this method must call init
     protected AbstractViewer() {
-        this.log = XLogger.getLogger(this.getClass());
+        this.log = Logger.getLogger(this.getClass());
     }
 
     /**
@@ -89,7 +88,7 @@ public abstract class AbstractViewer extends JPanel implements Widget {
         this.fName = name;
         this.fTitle = title;
         if (log == null) {
-            this.log = XLogger.getLogger(this.getClass());
+            this.log = Logger.getLogger(this.getClass());
         }
 
     }

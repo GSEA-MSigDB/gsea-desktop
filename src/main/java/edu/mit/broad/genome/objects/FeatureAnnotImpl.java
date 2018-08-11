@@ -4,7 +4,6 @@
 package edu.mit.broad.genome.objects;
 
 import edu.mit.broad.genome.MismatchedSizeException;
-import edu.mit.broad.genome.XLogger;
 import edu.mit.broad.vdb.chip.Chip;
 import org.apache.log4j.Logger;
 
@@ -18,7 +17,7 @@ import java.util.List;
  */
 public class FeatureAnnotImpl extends AbstractObject implements FeatureAnnot {
 
-    private Logger log = XLogger.getLogger(getClass());
+    private Logger log = Logger.getLogger(getClass());
 
     private Object fDataset_or_FeatureNamesList;
 

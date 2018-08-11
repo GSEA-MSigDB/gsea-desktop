@@ -4,7 +4,6 @@
 package edu.mit.broad.xbench.tui;
 
 import edu.mit.broad.genome.JarResources;
-import edu.mit.broad.genome.XLogger;
 import edu.mit.broad.genome.reports.api.Report;
 import edu.mit.broad.genome.swing.GuiHelper;
 import edu.mit.broad.xbench.actions.XDCAction;
@@ -43,7 +42,7 @@ import java.util.Properties;
  */
 public class TaskManager {
 
-    private static final Logger klog = XLogger.getLogger(TaskManager.class);
+    private static final Logger klog = Logger.getLogger(TaskManager.class);
 
     /**
      * Column headers for table model

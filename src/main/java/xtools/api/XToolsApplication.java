@@ -4,8 +4,8 @@
 package xtools.api;
 
 import edu.mit.broad.genome.NotImplementedException;
-import edu.mit.broad.xbench.core.StatusBar;
 import edu.mit.broad.xbench.core.api.*;
+import xapps.api.frameworks.fiji.StatusBarAppender;
 
 import java.awt.*;
 
@@ -35,7 +35,7 @@ public class XToolsApplication implements Application.Handler {
         throw new NotImplementedException();
     }
 
-    public StatusBar getStatusBar() {
+    public StatusBarAppender getStatusBarAppender() {
         return null;
     }
 

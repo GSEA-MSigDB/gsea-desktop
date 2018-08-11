@@ -3,7 +3,6 @@
  *******************************************************************************/
 package edu.mit.broad.xbench.prefs;
 
-import edu.mit.broad.genome.XLogger;
 import org.apache.log4j.Logger;
 
 /**
@@ -19,7 +18,7 @@ abstract class AbstractPreference implements Preference {
 
     private boolean fNeedsRestart;
 
-    protected static final Logger klog = XLogger.getLogger(AbstractPreference.class);
+    protected static final Logger klog = Logger.getLogger(AbstractPreference.class);
 
 
     /**

@@ -6,7 +6,6 @@ package edu.mit.broad.genome.parsers;
 import edu.mit.broad.genome.Constants;
 import edu.mit.broad.genome.JarResources;
 import edu.mit.broad.genome.NamingConventions;
-import edu.mit.broad.genome.XLogger;
 import edu.mit.broad.genome.math.Matrix;
 import edu.mit.broad.genome.objects.*;
 import edu.mit.broad.genome.objects.esmatrix.db.EnrichmentDb;
@@ -44,7 +43,7 @@ public class DataFormat extends DataType implements Constants {
     /**
      * For logging support
      */
-    private static final Logger klog = XLogger.getLogger(DataFormat.class);
+    private static final Logger klog = Logger.getLogger(DataFormat.class);
 
     public static final DataFormat XLS_FORMAT = new DataFormat(ExtFormat.class, "Excel",
             "Microsoft Excel", Constants.XLS,

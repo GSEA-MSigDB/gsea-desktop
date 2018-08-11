@@ -4,7 +4,6 @@
 package edu.mit.broad.genome.alg;
 
 import edu.mit.broad.genome.NamingConventions;
-import edu.mit.broad.genome.XLogger;
 import edu.mit.broad.genome.math.*;
 import edu.mit.broad.genome.objects.*;
 
@@ -17,7 +16,7 @@ import java.util.*;
  */
 public class GeneSetGenerators {
 
-    private static Logger klog = XLogger.getLogger(GeneSetGenerators.class);
+    private static Logger klog = Logger.getLogger(GeneSetGenerators.class);
 
     /**
      * Privatized class constructor

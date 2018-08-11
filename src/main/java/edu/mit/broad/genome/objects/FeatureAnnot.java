@@ -4,7 +4,6 @@
 package edu.mit.broad.genome.objects;
 
 import edu.mit.broad.genome.TraceUtils;
-import edu.mit.broad.genome.XLogger;
 import edu.mit.broad.vdb.chip.Chip;
 import edu.mit.broad.vdb.meg.Gene;
 import org.apache.log4j.Logger;
@@ -42,7 +41,7 @@ public interface FeatureAnnot extends PersistentObject {
 
         private boolean fReportedError = false;
 
-        private static final Logger klog = XLogger.getLogger(Helper.class);
+        private static final Logger klog = Logger.getLogger(Helper.class);
 
         public Helper() {
 

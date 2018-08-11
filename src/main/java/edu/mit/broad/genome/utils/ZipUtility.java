@@ -19,16 +19,13 @@ import java.util.zip.ZipOutputStream;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.SystemUtils;
 import org.apache.log4j.Logger;
-
-import edu.mit.broad.genome.XLogger;
 
 /**
  * Zip utilities
  */
 public class ZipUtility {
-    private static final Logger klog = XLogger.getLogger(ZipUtility.class);
+    private static final Logger klog = Logger.getLogger(ZipUtility.class);
 
     /**
      * A method for unzipping of a directory archive; see org.genepattern.gsea.LeadingEdgeWidget.main This supports GenePattern Module

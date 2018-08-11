@@ -3,7 +3,6 @@
  *******************************************************************************/
 package edu.mit.broad.genome.math;
 
-import edu.mit.broad.genome.XLogger;
 import edu.mit.broad.genome.objects.LabelledVector;
 import gnu.trove.TFloatArrayList;
 import org.apache.log4j.Logger;
@@ -21,7 +20,7 @@ public class LabelledVectorProcessors {
     /**
      * For logging support
      */
-    protected static final transient Logger klog = XLogger.getLogger(LabelledVectorProcessors.class);
+    protected static final transient Logger klog = Logger.getLogger(LabelledVectorProcessors.class);
 
     // @maint add a metric and this array might need updating
     public static LabelledVectorProcessor[] createAllProcessors() {

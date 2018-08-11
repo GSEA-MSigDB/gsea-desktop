@@ -3,7 +3,6 @@
  *******************************************************************************/
 package edu.mit.broad.xbench.actions;
 
-import edu.mit.broad.genome.XLogger;
 import org.apache.log4j.Logger;
 
 /**
@@ -11,7 +10,7 @@ import org.apache.log4j.Logger;
  */
 public class PobActions {
 
-    private static final Logger klog = XLogger.getLogger(PobActions.class);
+    private static final Logger klog = Logger.getLogger(PobActions.class);
 
     public XAction[] allActions;
     public int defObjectActionIndex;

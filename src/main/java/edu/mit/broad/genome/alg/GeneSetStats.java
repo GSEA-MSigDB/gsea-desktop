@@ -3,7 +3,6 @@
  *******************************************************************************/
 package edu.mit.broad.genome.alg;
 
-import edu.mit.broad.genome.XLogger;
 import edu.mit.broad.genome.math.*;
 import edu.mit.broad.genome.math.Vector;
 import edu.mit.broad.genome.objects.*;
@@ -19,7 +18,7 @@ import java.util.*;
  */
 public class GeneSetStats {
 
-    private final Logger log = XLogger.getLogger(GeneSetStats.class);
+    private final Logger log = Logger.getLogger(GeneSetStats.class);
 
     public static TObjectIntHashMap featureFreq(String[] feats) {
     

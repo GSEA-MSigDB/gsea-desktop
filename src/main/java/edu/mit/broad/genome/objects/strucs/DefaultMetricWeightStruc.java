@@ -4,7 +4,6 @@
 package edu.mit.broad.genome.objects.strucs;
 
 import edu.mit.broad.genome.TraceUtils;
-import edu.mit.broad.genome.XLogger;
 import edu.mit.broad.genome.math.XMath;
 import edu.mit.broad.genome.objects.LabelledVector;
 import edu.mit.broad.genome.objects.MetricWeightStruc;
@@ -24,7 +23,7 @@ public class DefaultMetricWeightStruc implements MetricWeightStruc {
 
     private String fMetricName;
 
-    private static final Logger klog = XLogger.getLogger(DefaultMetricWeightStruc.class);
+    private static final Logger klog = Logger.getLogger(DefaultMetricWeightStruc.class);
 
     /**
      * Class constructor

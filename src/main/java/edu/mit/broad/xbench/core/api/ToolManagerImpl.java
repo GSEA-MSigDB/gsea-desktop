@@ -4,7 +4,6 @@
 package edu.mit.broad.xbench.core.api;
 
 import edu.mit.broad.genome.NamingConventions;
-import edu.mit.broad.genome.XLogger;
 import edu.mit.broad.genome.parsers.DataFormat;
 import edu.mit.broad.genome.utils.ClassUtils;
 import edu.mit.broad.xbench.prefs.XPreferencesFactory;
@@ -25,7 +24,7 @@ import java.util.Map;
  */
 public class ToolManagerImpl implements ToolManager {
 
-    private static final Logger klog = XLogger.getLogger(ToolManagerImpl.class);
+    private static final Logger klog = Logger.getLogger(ToolManagerImpl.class);
 
     // both for opt and because we dont want to pick up this instances report stub
     private static Map kToolNameReporStubMap;

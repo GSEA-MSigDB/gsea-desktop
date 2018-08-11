@@ -3,7 +3,6 @@
  *******************************************************************************/
 package edu.mit.broad.genome.alg;
 
-import edu.mit.broad.genome.XLogger;
 import edu.mit.broad.genome.math.Vector;
 import edu.mit.broad.genome.objects.*;
 import org.apache.log4j.Logger;
@@ -19,7 +18,7 @@ import java.util.*;
  */
 public class DatasetStatsCore {
 
-    private Logger log = XLogger.getLogger(DatasetStatsCore.class);
+    private Logger log = Logger.getLogger(DatasetStatsCore.class);
 
     /**
      * Class constructor

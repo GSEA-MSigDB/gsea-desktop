@@ -3,7 +3,6 @@
  *******************************************************************************/
 package edu.mit.broad.genome.alg.gsea;
 
-import edu.mit.broad.genome.XLogger;
 import edu.mit.broad.genome.math.XMath;
 import edu.mit.broad.genome.objects.GeneSet;
 import edu.mit.broad.genome.objects.RankedList;
@@ -14,7 +13,7 @@ import org.apache.log4j.Logger;
  */
 public class GeneSetScoringTables {
 
-    private static final Logger klog = XLogger.getLogger(GeneSetScoringTables.class);
+    private static final Logger klog = Logger.getLogger(GeneSetScoringTables.class);
 
     public static GeneSetScoringTable[] createAllScoringTables() {
         return new GeneSetScoringTable[]{

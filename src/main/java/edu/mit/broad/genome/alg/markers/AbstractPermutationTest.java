@@ -4,7 +4,6 @@
 package edu.mit.broad.genome.alg.markers;
 
 import edu.mit.broad.genome.StandardException;
-import edu.mit.broad.genome.XLogger;
 import edu.mit.broad.genome.alg.Metric;
 import edu.mit.broad.genome.math.*;
 import edu.mit.broad.genome.objects.Dataset;
@@ -22,7 +21,7 @@ import java.util.Map;
  */
 public abstract class AbstractPermutationTest implements PermutationTest {
 
-    private final Logger log = XLogger.getLogger(this.getClass());
+    private final Logger log = Logger.getLogger(this.getClass());
 
     // The original dataset, untouched
     private Dataset fDataset;

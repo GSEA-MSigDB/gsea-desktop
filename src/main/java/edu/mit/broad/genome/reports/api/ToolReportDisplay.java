@@ -5,7 +5,6 @@ package edu.mit.broad.genome.reports.api;
 
 import edu.mit.broad.genome.Constants;
 import edu.mit.broad.genome.NamingConventions;
-import edu.mit.broad.genome.XLogger;
 import edu.mit.broad.genome.charts.XChart;
 import edu.mit.broad.genome.parsers.DataFormat;
 import edu.mit.broad.genome.swing.GPopupChecker;
@@ -48,7 +47,7 @@ public class ToolReportDisplay {
      */
     private JList jlDisplay;
     private ToolReport fReport;
-    private final Logger log = XLogger.getLogger(this.getClass());
+    private final Logger log = Logger.getLogger(this.getClass());
     private JFrame fFrame;
     private static final Dimension DEFAULT_DIM = new Dimension(500, 325);
 

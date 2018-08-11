@@ -3,7 +3,6 @@
  *******************************************************************************/
 package edu.mit.broad.genome.objects;
 
-import edu.mit.broad.genome.XLogger;
 import edu.mit.broad.genome.math.RandomSeedGenerator;
 import edu.mit.broad.genome.math.Vector;
 import edu.mit.broad.genome.math.XMath;
@@ -15,7 +14,7 @@ import org.apache.log4j.Logger;
  */
 public class TemplateFactoryRandomizer {
 
-    private static final Logger klog = XLogger.getLogger(TemplateFactoryRandomizer.class);
+    private static final Logger klog = Logger.getLogger(TemplateFactoryRandomizer.class);
 
     public static Template[] createRandomTemplates(final int num,
                                                    final Template origTemplate,

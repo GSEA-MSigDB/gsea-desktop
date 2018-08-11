@@ -3,7 +3,6 @@
  *******************************************************************************/
 package edu.mit.broad.genome.math;
 
-import edu.mit.broad.genome.XLogger;
 import org.apache.log4j.Logger;
 
 import java.util.Random;
@@ -13,7 +12,7 @@ import java.util.Random;
  */
 public class RandomSeedGenerators {
 
-    private static final Logger klog = XLogger.getLogger(RandomSeedGenerators.class);
+    private static final Logger klog = Logger.getLogger(RandomSeedGenerators.class);
 
 
     // @maint

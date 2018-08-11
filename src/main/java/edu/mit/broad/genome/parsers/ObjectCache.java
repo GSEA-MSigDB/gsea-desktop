@@ -3,7 +3,6 @@
  *******************************************************************************/
 package edu.mit.broad.genome.parsers;
 
-import edu.mit.broad.genome.XLogger;
 import edu.mit.broad.genome.objects.GeneSetMatrix;
 import edu.mit.broad.genome.objects.PersistentObject;
 import edu.mit.broad.genome.objects.Template;
@@ -28,7 +27,7 @@ import java.util.*;
  */
 public class ObjectCache {
 
-    private final Logger log = XLogger.getLogger(ObjectCache.class);
+    private final Logger log = Logger.getLogger(ObjectCache.class);
 
     /**
      * key-> class names, value -> DefaultMutableTreeNode

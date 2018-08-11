@@ -3,7 +3,6 @@
  *******************************************************************************/
 package edu.mit.broad.xbench.explorer.objmgr;
 
-import edu.mit.broad.genome.XLogger;
 import edu.mit.broad.genome.io.FileTransferable;
 import edu.mit.broad.genome.io.PobTransferable;
 import edu.mit.broad.genome.objects.PersistentObject;
@@ -41,7 +40,7 @@ import java.util.List;
  */
 public class ObjectTree extends JTree implements DndSource, FilesSelectable {
 
-    private static final Logger klog = XLogger.getLogger(ObjectTree.class);
+    private static final Logger klog = Logger.getLogger(ObjectTree.class);
 
     /**
      * Class Constructor.

@@ -3,7 +3,6 @@
  *******************************************************************************/
 package edu.mit.broad.genome.models;
 
-import edu.mit.broad.genome.XLogger;
 import org.apache.log4j.Logger;
 
 import javax.swing.table.AbstractTableModel;
@@ -17,7 +16,7 @@ import javax.swing.table.TableModel;
  */
 public class NumberedProxyModel extends AbstractTableModel {
 
-    private final Logger log = XLogger.getLogger(NumberedProxyModel.class);
+    private final Logger log = Logger.getLogger(NumberedProxyModel.class);
     private TableModel fRealModel;
     private int fStartNumberingFromRowIndex;
 

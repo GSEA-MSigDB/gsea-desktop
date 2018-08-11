@@ -4,7 +4,6 @@
 package xapps.gsea;
 
 import edu.mit.broad.genome.Constants;
-import edu.mit.broad.genome.XLogger;
 import edu.mit.broad.genome.objects.*;
 import edu.mit.broad.genome.parsers.ParserWorker;
 import edu.mit.broad.genome.reports.api.Report;
@@ -42,7 +41,7 @@ import java.util.List;
  */
 class GseaActionRegistry extends AbstractActionLookup implements Constants {
 
-    static final Logger klog = XLogger.getLogger(GseaActionRegistry.class);
+    static final Logger klog = Logger.getLogger(GseaActionRegistry.class);
 
     static {
         klog.debug("Initializing GseaActionRegistry");

@@ -3,7 +3,6 @@
  *******************************************************************************/
 package edu.mit.broad.genome.swing.windows;
 
-import edu.mit.broad.genome.XLogger;
 import edu.mit.broad.genome.swing.GuiHelper;
 import edu.mit.broad.xbench.core.api.Application;
 import edu.mit.broad.xbench.core.api.DialogDescriptor;
@@ -21,7 +20,7 @@ import java.awt.*;
  * @version %I%, %G%
  */
 public class GListWindow {
-    protected static final Logger klog = XLogger.getLogger(GListWindow.class);
+    protected static final Logger klog = Logger.getLogger(GListWindow.class);
 
     private final JList jlOptions = new JList();
     private DefaultListModel fModel = new DefaultListModel();

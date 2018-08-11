@@ -4,7 +4,6 @@
 package xapps.api.frameworks;
 
 import edu.mit.broad.genome.NamingConventions;
-import edu.mit.broad.genome.XLogger;
 import edu.mit.broad.genome.objects.PersistentObject;
 import edu.mit.broad.genome.parsers.ParserFactory;
 import edu.mit.broad.xbench.actions.*;
@@ -26,7 +25,7 @@ import java.util.Map;
  */
 public abstract class AbstractActionLookup {
 
-    private static final Logger klog = XLogger.getLogger(AbstractActionLookup.class);
+    private static final Logger klog = Logger.getLogger(AbstractActionLookup.class);
 
     /**
      * key -> ext, value -> Actions that are possible on the ext

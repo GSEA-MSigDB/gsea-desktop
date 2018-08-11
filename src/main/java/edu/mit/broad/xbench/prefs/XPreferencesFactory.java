@@ -4,7 +4,6 @@
 package edu.mit.broad.xbench.prefs;
 
 import edu.mit.broad.genome.Conf;
-import edu.mit.broad.genome.XLogger;
 import edu.mit.broad.genome.swing.GuiHelper;
 import edu.mit.broad.genome.swing.fields.GFieldPlusChooser;
 import edu.mit.broad.genome.utils.SystemUtils;
@@ -30,7 +29,7 @@ import java.util.prefs.BackingStoreException;
  */
 public class XPreferencesFactory {
 
-    private static final Logger klog = XLogger.getLogger(XPreferencesFactory.class);
+    private static final Logger klog = Logger.getLogger(XPreferencesFactory.class);
 
     /**
      * runtime home directory (i.e user's home for the application

@@ -3,7 +3,6 @@
  *******************************************************************************/
 package edu.mit.broad.xbench.xchoosers;
 
-import edu.mit.broad.genome.XLogger;
 import org.apache.log4j.Logger;
 
 /**
@@ -11,7 +10,7 @@ import org.apache.log4j.Logger;
  */
 public class TemplateSelectionMultiSource extends TemplateSelection {
 
-    protected Logger log = XLogger.getLogger(TemplateSelectionMultiSource.class);
+    protected Logger log = Logger.getLogger(TemplateSelectionMultiSource.class);
 
     // IMP IMP IMP
     // Override sub-class as we want the full paths for ALL templates

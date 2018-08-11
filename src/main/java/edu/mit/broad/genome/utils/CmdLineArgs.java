@@ -3,7 +3,6 @@
  *******************************************************************************/
 package edu.mit.broad.genome.utils;
 
-import edu.mit.broad.genome.XLogger;
 import edu.mit.broad.genome.parsers.ParseUtils;
 import org.apache.log4j.Logger;
 
@@ -14,7 +13,7 @@ import java.util.*;
  */
 public class CmdLineArgs {
 
-    private static final Logger klog = XLogger.getLogger(CmdLineArgs.class);
+    private static final Logger klog = Logger.getLogger(CmdLineArgs.class);
 
     public static String toString(String[] args) {
         // first recreate the arg line -- its easier to parse

@@ -5,7 +5,6 @@ package edu.mit.broad.genome.alg.gsea;
 
 import edu.mit.broad.genome.MismatchedSizeException;
 import edu.mit.broad.genome.NamingConventions;
-import edu.mit.broad.genome.XLogger;
 import edu.mit.broad.genome.alg.*;
 import edu.mit.broad.genome.alg.markers.PermutationTestBuilder;
 import edu.mit.broad.genome.math.*;
@@ -32,7 +31,7 @@ import java.util.Map;
  */
 public class KSTests {
 
-    private final Logger log = XLogger.getLogger(this.getClass());
+    private final Logger log = Logger.getLogger(this.getClass());
 
     private final KSCore core;
 

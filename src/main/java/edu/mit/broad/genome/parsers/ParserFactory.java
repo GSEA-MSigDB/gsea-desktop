@@ -45,7 +45,7 @@ public class ParserFactory implements Constants {
         }
     }
     
-    private static final Logger klog = XLogger.getLogger(ParserFactory.class);
+    private static final Logger klog = Logger.getLogger(ParserFactory.class);
 
     /**
      * Privatized Class constructor

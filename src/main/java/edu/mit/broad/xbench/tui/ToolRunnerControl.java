@@ -4,7 +4,6 @@
 package edu.mit.broad.xbench.tui;
 
 import edu.mit.broad.genome.JarResources;
-import edu.mit.broad.genome.XLogger;
 import edu.mit.broad.genome.parsers.ParserFactory;
 import edu.mit.broad.genome.swing.GuiHelper;
 import edu.mit.broad.xbench.actions.ext.BrowserAction;
@@ -34,7 +33,7 @@ import java.util.Properties;
 public class ToolRunnerControl extends JPanel {
 
 
-    private static final Logger klog = XLogger.getLogger(ToolRunnerControl.class);
+    private static final Logger klog = Logger.getLogger(ToolRunnerControl.class);
     private JButton bRun;
     private JButton bResetDefaults;
     private JButton bCmd;

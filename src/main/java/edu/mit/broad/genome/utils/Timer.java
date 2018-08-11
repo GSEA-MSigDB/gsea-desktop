@@ -3,7 +3,6 @@
  *******************************************************************************/
 package edu.mit.broad.genome.utils;
 
-import edu.mit.broad.genome.XLogger;
 import org.apache.log4j.Logger;
 
 /**
@@ -27,7 +26,7 @@ import org.apache.log4j.Logger;
  */
 public class Timer {
 
-    protected static final Logger klog = XLogger.getLogger(Timer.class);
+    protected static final Logger klog = Logger.getLogger(Timer.class);
     private long fStart = 0;
     private long fStop = 0;
     private boolean stopped = false;

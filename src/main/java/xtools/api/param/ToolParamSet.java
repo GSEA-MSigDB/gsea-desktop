@@ -4,7 +4,6 @@
 package xtools.api.param;
 
 import edu.mit.broad.genome.NamingConventions;
-import edu.mit.broad.genome.XLogger;
 import edu.mit.broad.genome.parsers.AuxUtils;
 import edu.mit.broad.genome.utils.SystemUtils;
 import org.apache.log4j.Logger;
@@ -23,7 +22,7 @@ public class ToolParamSet implements ParamSet {
 
     private final List fReqdParams;
     private final List fOptParams;
-    private final Logger log = XLogger.getLogger(ToolParamSet.class);
+    private final Logger log = Logger.getLogger(ToolParamSet.class);
 
     /**
      * Class constructor

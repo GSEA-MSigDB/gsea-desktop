@@ -4,7 +4,6 @@
 package edu.mit.broad.genome.alg;
 
 import edu.mit.broad.genome.Headers;
-import edu.mit.broad.genome.XLogger;
 import edu.mit.broad.genome.math.*;
 import edu.mit.broad.genome.objects.*;
 import edu.mit.broad.xbench.prefs.XPreferencesFactory;
@@ -18,7 +17,7 @@ import java.util.*;
  */
 public class DatasetMetrics {
 
-    private final Logger log = XLogger.getLogger(this.getClass());
+    private final Logger log = Logger.getLogger(this.getClass());
 
     /**
      * Class Constructor.

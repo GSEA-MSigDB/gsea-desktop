@@ -4,8 +4,7 @@
 package edu.mit.broad.xbench.core.api;
 
 import edu.mit.broad.genome.TraceUtils;
-import edu.mit.broad.genome.XLogger;
-import edu.mit.broad.xbench.core.StatusBar;
+import xapps.api.frameworks.fiji.StatusBarAppender;
 
 import java.awt.*;
 
@@ -28,21 +27,11 @@ public class Application {
     }
 
     public static void registerHandler(final Handler appHandler) {
-        //TraceUtils.showTrace();
-
         if (appHandler == null) {
             throw new IllegalArgumentException("Param appHandler cannot be null");
         }
 
-        //klog.info("Setting Application Handler: " + appHandler.getClass());
         kAppHandler = appHandler;
-
-        //TraceUtils.showTrace();
-
-        if (appHandler.getStatusBar() != null) {
-            XLogger.addAppender(appHandler.getStatusBar());
-        }
-
     }
 
     private static void _check() {
@@ -77,7 +66,7 @@ public class Application {
 
     public interface Handler {
 
-        public StatusBar getStatusBar() throws HeadlessException;
+        public StatusBarAppender getStatusBarAppender() throws HeadlessException;
 
         public ToolManager getToolManager();
 

@@ -3,7 +3,6 @@
  *******************************************************************************/
 package edu.mit.broad.genome.alg.gsea;
 
-import edu.mit.broad.genome.XLogger;
 import edu.mit.broad.genome.objects.GeneSet;
 import edu.mit.broad.genome.objects.RankedList;
 import org.apache.log4j.Logger;
@@ -68,7 +67,7 @@ public class DefaultGeneSetCohort extends AbstractGeneSetCohort {
      */
     public static class Generator implements GeneSetCohortGenerator {
 
-        private Logger log = XLogger.getLogger(Generator.class);
+        private Logger log = Logger.getLogger(Generator.class);
 
         private boolean fSilent;
         private GeneSetScoringTable fOrigTable;

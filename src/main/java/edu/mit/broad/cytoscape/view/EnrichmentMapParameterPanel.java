@@ -49,7 +49,6 @@ import edu.mit.broad.cytoscape.CytoscapeLaunch;
 import edu.mit.broad.cytoscape.EnrichmentMapParameters;
 import edu.mit.broad.cytoscape.view.CollapsiblePanel;
 import edu.mit.broad.genome.JarResources;
-import edu.mit.broad.genome.XLogger;
 import edu.mit.broad.xbench.core.api.Application;
 
 //Panel used to access Enrichment map.  Can either access it through the Results table(bottom left of GSEA frame)
@@ -57,7 +56,7 @@ import edu.mit.broad.xbench.core.api.Application;
 
 public class EnrichmentMapParameterPanel extends JPanel {
 
-	private static final Logger klog = XLogger.getLogger(CytoscapeLaunch.class);
+	private static final Logger klog = Logger.getLogger(CytoscapeLaunch.class);
 
 	
 	CollapsiblePanel Parameters;

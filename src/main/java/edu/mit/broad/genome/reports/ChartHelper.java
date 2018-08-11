@@ -3,7 +3,6 @@
  *******************************************************************************/
 package edu.mit.broad.genome.reports;
 
-import edu.mit.broad.genome.XLogger;
 import org.apache.log4j.Logger;
 
 import java.awt.*;
@@ -14,7 +13,7 @@ import java.awt.geom.Ellipse2D;
  */
 public class ChartHelper {
 
-    protected static final transient Logger klog = XLogger.getLogger(ChartHelper.class);
+    protected static final transient Logger klog = Logger.getLogger(ChartHelper.class);
 
     public static Shape createCircleShape() {
         return new Ellipse2D.Float(2f, 2f, 2f, 2f);

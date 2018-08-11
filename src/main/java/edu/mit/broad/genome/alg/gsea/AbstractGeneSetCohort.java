@@ -4,7 +4,6 @@
 package edu.mit.broad.genome.alg.gsea;
 
 import edu.mit.broad.genome.TraceUtils;
-import edu.mit.broad.genome.XLogger;
 import edu.mit.broad.genome.objects.GeneSet;
 import edu.mit.broad.genome.objects.RankedList;
 import gnu.trove.THashSet;
@@ -22,7 +21,7 @@ abstract class AbstractGeneSetCohort implements GeneSetCohort {
     private RankedList fRankedList;
     private Map fGeneSetNameGeneSetMap;
 
-    protected Logger log = XLogger.getLogger(AbstractGeneSetCohort.class);
+    protected Logger log = Logger.getLogger(AbstractGeneSetCohort.class);
 
     protected boolean fSilent;
 

@@ -22,7 +22,6 @@ import com.enterprisedt.net.ftp.FTPTransferType;
 import com.enterprisedt.net.ftp.FileTransferClient;
 import com.enterprisedt.net.ftp.FileTransferInputStream;
 
-import edu.mit.broad.genome.XLogger;
 import edu.mit.broad.xbench.core.api.Application;
 
 /**
@@ -32,7 +31,7 @@ import edu.mit.broad.xbench.core.api.Application;
  * @author David Eby
  */
 public class FtpSingleUrlTransferCommand {
-    private static final Logger klog = XLogger.getLogger(FtpSingleUrlTransferCommand.class);
+    private static final Logger klog = Logger.getLogger(FtpSingleUrlTransferCommand.class);
 
     private final FileTransferClient client;
     private final URL ftpURL;
