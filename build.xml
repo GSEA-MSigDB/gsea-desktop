@@ -45,6 +45,7 @@
             fork="true" includes="**" failonerror="true" includeantruntime="false">
             <classpath>
                 <fileset dir="lib" includes="*.jar" />
+                <fileset dir="modules" includes="*.jar" />
             </classpath>
         </javac>
     </target>

@@ -32,19 +32,15 @@
         <!-- temporarily skipping 'update-build-props' to avoid build # updates -->
         <property name="MINIMAL_JAR" value="gsea-minimal-DEV_java9.jar" />
         <mkdir dir="${dist.dir}/classes" />
-        <javac target="1.9" source="1.9" debug="true" defaultexcludes="true" deprecation="false" destdir="${dist.dir}/classes" optimize="false" memoryMaximumSize="1024M" fork="true" includes="**" failonerror="true" includeantruntime="false">
+        <javac target="1.9" source="1.9" debug="true" defaultexcludes="true" deprecation="false" destdir="${dist.dir}/classes" 
+            optimize="false" memoryMaximumSize="1024M" fork="true" includes="**" failonerror="true" includeantruntime="false"
+            modulepath="modules">
             <compilerarg value="--patch-module=jide.common=lib/jide-components-3.7.4.jar:lib/jide-dock-3.7.4.jar:lib/jide-grids-3.7.4.jar" />
-            <compilerarg line="--add-exports=jide.common/com.jidesoft.grid=xtools.gsea --add-exports=jide.common/com.jidesoft.docking=xtools.gsea --add-exports=jide.common/com.jidesoft.status=xtools.gsea" />
+            <compilerarg line="--add-exports=jide.common/com.jidesoft.grid=org.broad.gsea --add-exports=jide.common/com.jidesoft.docking=org.broad.gsea --add-exports=jide.common/com.jidesoft.status=org.broad.gsea" />
             <compilerarg line="--add-exports=java.desktop/com.sun.java.swing.plaf.windows=jide.common --add-exports=java.desktop/javax.swing.plaf.synth=jide.common --add-exports=java.desktop/sun.swing=jide.common --add-exports=java.desktop/sun.awt=jide.common --add-exports=java.desktop/sun.awt.image=jide.common --add-exports=java.desktop/sun.awt.shell=jide.common --add-exports=java.desktop/sun.awt.dnd=jide.common --add-exports=java.desktop/sun.awt.windows=jide.common --add-exports=java.base/sun.security.action=jide.common" />
             <src path="src/main/java" />
             <src path="src/main/java9" />
-            <modulepath>
-                <fileset dir="lib">
-                    <exclude name="jide-components*.jar" />
-                    <exclude name="jide-dock*.jar" />
-                    <exclude name="jide-grid*.jar" />
-                </fileset>
-            </modulepath>
+            <!--modulepath path="modules" / -->
         </javac>
     </target>
 
