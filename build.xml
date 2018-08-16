@@ -54,6 +54,7 @@
         <copy todir="${dist.dir}/classes/edu/mit/broad/genome/resources">
             <fileset dir="src/main/java/edu/mit/broad/genome/resources" />
         </copy>
+        <copy file="src/main/java/log4j2.xml" todir="${dist.dir}/classes" />
     </target>
 
     <!-- Restructure one-jar and the build task: ProGuard doesn't need an all-in-one full jar to do its
@@ -66,6 +67,10 @@
 
         <jar destfile="${dist.dir}/tmp.jar">
             <zipgroupfileset dir="lib">
+                <include name="*.jar" />
+                <exclude name="META-INF/**" />
+            </zipgroupfileset>
+            <zipgroupfileset dir="modules">
                 <include name="*.jar" />
                 <exclude name="META-INF/**" />
             </zipgroupfileset>

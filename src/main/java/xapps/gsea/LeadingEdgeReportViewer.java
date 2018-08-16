@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2018 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  *******************************************************************************/
 package xapps.gsea;
 
@@ -14,9 +14,8 @@ import edu.mit.broad.genome.swing.fields.GDirFieldPlusChooser;
 import edu.mit.broad.genome.swing.fields.GFieldPlusChooser;
 import edu.mit.broad.genome.viewers.AbstractViewer;
 import edu.mit.broad.xbench.core.api.Application;
-import foxtrot.Task;
-import foxtrot.Worker;
 import org.genepattern.gsea.LeadingEdgeWidget;
+
 import xapps.api.vtools.ParamSetFormForAFew;
 import xtools.api.param.DirParam;
 import xtools.api.param.Param;
@@ -72,9 +71,9 @@ public class LeadingEdgeReportViewer extends AbstractViewer {
                     Application.getWindowManager().showMessage("No GSEA result folder was specified. Specify one and try again");
                 } else {
                     try {
-                        Worker.post(new Task() {
-                            public Object run() throws Exception {
-
+                        SwingWorker<Object, Void> worker = new SwingWorker<Object, Void>() {
+                            @Override
+                            protected Object doInBackground() throws Exception {
                                 Application.getWindowManager().getRootFrame().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 
                                 if (fReportParam.isSpecified()) {
@@ -114,7 +113,8 @@ public class LeadingEdgeReportViewer extends AbstractViewer {
 
                                 return null;
                             }
-                        });
+                        };
+                        worker.execute();
                     } catch (Throwable t) {
                         Application.getWindowManager().showError("Trouble loading enrichment database", t);
                     } finally {

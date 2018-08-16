@@ -1,4 +1,4 @@
-module xtools.gsea {
+module org.broad.gsea {
     exports apple.dts.samplecode.osxadapter;
     exports edu.mit.broad.cytoscape;
     exports edu.mit.broad.cytoscape.action;
@@ -89,7 +89,6 @@ module xtools.gsea {
     requires ecs;
     requires edtftpj;
     requires forms;
-    requires foxtrot;
     requires httpclient;
     requires httpcore;
     requires java.datatransfer;
@@ -97,12 +96,10 @@ module xtools.gsea {
     requires java.prefs;
     requires java.xml;
     requires jcommon;
+    requires jdk.xml.dom;
     requires jfreechart;
     requires jgoodies.uif.lite;
     requires jide.common;
-    requires jide.components;
-    requires jide.dock;
-    requires jide.grids;
     requires json.simple;
     requires jxl;
     requires log4j;

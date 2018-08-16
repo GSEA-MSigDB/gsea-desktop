@@ -15,7 +15,7 @@ import javax.swing.JLabel;
 import javax.swing.JMenuBar;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-
+import javax.swing.SwingWorker;
 
 import xapps.api.vtools.ParamSetFormForAFew;
 import xtools.api.param.DirParam;
@@ -33,8 +33,6 @@ import edu.mit.broad.genome.swing.fields.GDirFieldPlusChooser;
 import edu.mit.broad.genome.swing.fields.GFieldPlusChooser;
 import edu.mit.broad.genome.viewers.AbstractViewer;
 import edu.mit.broad.xbench.core.api.Application;
-import foxtrot.Task;
-import foxtrot.Worker;
 
 public class EnrichmentMapInputPanel extends AbstractViewer {
 	public static final String NAME = "EnrichmentMapVisualizationWidget";
@@ -85,9 +83,9 @@ public class EnrichmentMapInputPanel extends AbstractViewer {
                     Application.getWindowManager().showMessage("No GSEA result folder was specified. Specify one and try again");
                 } else {
                     try {
-                        Worker.post(new Task() {
-                            public Object run() throws Exception {
-
+                        SwingWorker<Object, Void> worker = new SwingWorker<Object, Void>() {
+                            @Override
+                            protected Object doInBackground() throws Exception {
                                 Application.getWindowManager().getRootFrame().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
                                 String current_results = "";
                                 if (fReportParam.isSpecified()) {
@@ -137,7 +135,8 @@ public class EnrichmentMapInputPanel extends AbstractViewer {
                                 return null;
 
                             }
-                        });
+                        };
+                        worker.execute();
                     } catch (Throwable t) {
                         Application.getWindowManager().showError("Trouble loading enrichment database", t);
                     } finally {

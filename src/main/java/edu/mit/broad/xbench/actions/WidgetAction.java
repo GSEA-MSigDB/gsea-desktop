@@ -1,20 +1,20 @@
 /*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2018 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  *******************************************************************************/
 package edu.mit.broad.xbench.actions;
 
-import edu.mit.broad.xbench.core.Widget;
-import edu.mit.broad.xbench.core.api.Application;
-import foxtrot.Job;
-import foxtrot.Worker;
-
-import javax.swing.*;
-import javax.swing.event.InternalFrameListener;
-
-import java.awt.*;
+import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+
+import javax.swing.Icon;
+import javax.swing.JInternalFrame;
+import javax.swing.SwingWorker;
+import javax.swing.event.InternalFrameListener;
+
+import edu.mit.broad.xbench.core.Widget;
+import edu.mit.broad.xbench.core.api.Application;
 
 /**
  * Base action class for actions that result in opening up a widget in a new window.
@@ -74,53 +74,19 @@ public abstract class WidgetAction extends XAction implements MouseListener {
 
     }
 
-    /**
-     * as modified amber to run under foxtrot
-     *
-     * @param evt
-     */
-
-    //sometimes FOXTROT detects null pointer exceptions when this is used??
-    // but seem to have got over it mostly -- so use
     public void actionPerformed(final ActionEvent evt) {
 
         if (fOnlyDc) {
             return;
         }
-
-        //log.debug("actionPerformed: " + evt);
-        Worker.post(new Job() {
-            public Object run() {
-                Runnable r = createTask(evt);
-                Thread t = new Thread(r);
-                // @note else the action makes the vdbgui hang
-                t.setPriority(Thread.MIN_PRIORITY);
-                t.start();
-                //log.debug("started thread");
-                return null;
-            }
-        });
-
+        
+        createTask();
     }
-
-    /*
-     * WITHOUT FOXTROT - orig amber style impl.
-     *  DONT DELETE YET
-     * public void actionPerformed(ActionEvent evt) {
-     *   //log.debug("actionPerformed: " + evt);
-     *
-     *   Runnable r = createTask(evt);
-     *   Thread t = new Thread(r);
-     *   t.start();
-     *   //log.debug("started thread");
-     * }
-     */
-    public Runnable createTask(final ActionEvent evt) {
-
-        return new Runnable() {
-
-            public void run() {
-
+    
+    public void createTask() {
+        SwingWorker<Object, Void> worker = new SwingWorker<Object, Void>() {
+            @Override
+            protected Object doInBackground() throws Exception {
                 try {
                     //log.debug("Waiting for action");
                     Widget widget = getWidget();
@@ -149,8 +115,10 @@ public abstract class WidgetAction extends XAction implements MouseListener {
                 } catch (Throwable t) {
                     Application.getWindowManager().showError("Trouble making widget", t);
                 }
+                return null;
             }
         };
+        worker.execute();
     }
 
     /**

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2018 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  *******************************************************************************/
 package edu.mit.broad.xbench.tui;
 
@@ -9,10 +9,8 @@ import edu.mit.broad.genome.swing.GuiHelper;
 import edu.mit.broad.xbench.actions.ext.BrowserAction;
 import edu.mit.broad.xbench.core.ApplicationDialog;
 import edu.mit.broad.xbench.core.api.Application;
-import foxtrot.Job;
-import foxtrot.Task;
-import foxtrot.Worker;
 import org.apache.log4j.Logger;
+
 import xtools.api.Tool;
 import xtools.api.param.ParamSet;
 
@@ -134,9 +132,9 @@ public class ToolRunnerControl extends JPanel {
             public void actionPerformed(ActionEvent e) {
 
                 try {
-                    Worker.post(new Task() {
-
-                        public Object run() throws Exception {
+                    SwingWorker<Object, Void> worker = new SwingWorker<Object, Void>() {
+                        @Override
+                        protected Object doInBackground() throws Exception {
 
                             Tool tool = fHook.getCurrentTool();
                             ParamSet pset = fHook.getCurrentParamSet();
@@ -157,7 +155,9 @@ public class ToolRunnerControl extends JPanel {
 
                             return null;
                         }
-                    }); // The exception stuff below for a nice popup dispaly rather than a error red tbing
+                    };
+                    worker.execute();
+                 // The exception stuff below for a nice popup dispaly rather than a error red tbing
                 } catch (Throwable t) {
                     Application.getWindowManager().showError(t);
                 }
@@ -182,9 +182,9 @@ public class ToolRunnerControl extends JPanel {
 
             public void actionPerformed(ActionEvent e) {
 
-                Worker.post(new Job() {
-                    public Object run() {
-
+                SwingWorker<Object, Void> worker = new SwingWorker<Object, Void>() {
+                    @Override
+                    protected Object doInBackground() throws Exception {
                         final ReportStub rs = Application.getToolManager().getLastReportStub(fHook.getCurrentTool().getName());
 
                         if (rs == null) {
@@ -223,7 +223,8 @@ public class ToolRunnerControl extends JPanel {
 
                         return null;
                     }
-                });
+                };
+                worker.execute();
             }
         });
 
@@ -383,7 +384,7 @@ public class ToolRunnerControl extends JPanel {
 
                     if (launchANewToolWindow) {
                         SingleToolLauncherAction a = new SingleToolLauncherAction(fill_this_tool, fill_this_tool.getParamSet(), rptName);
-                        a.createTask(null).run();
+                        a.createTask();
                         Application.getWindowManager().showMessage("Created a new ToolRunner with parameters from the earlier run. Data files (when found) were automagically imported");
                     }
 

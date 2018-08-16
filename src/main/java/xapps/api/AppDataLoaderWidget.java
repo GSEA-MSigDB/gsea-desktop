@@ -1,13 +1,37 @@
 /*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2018 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  *******************************************************************************/
 package xapps.api;
 
-import au.com.pegasustech.demos.layout.SRLayout;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Properties;
+import java.util.Set;
+
+import javax.swing.BorderFactory;
+import javax.swing.Icon;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JMenuBar;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
+import javax.swing.SwingWorker;
 
 import com.jidesoft.swing.JideButton;
 import com.jidesoft.swing.JideSplitPane;
 
+import au.com.pegasustech.demos.layout.SRLayout;
 import edu.mit.broad.genome.JarResources;
 import edu.mit.broad.genome.parsers.AuxUtils;
 import edu.mit.broad.genome.parsers.ParserWorker;
@@ -25,24 +49,10 @@ import edu.mit.broad.xbench.explorer.objmgr.ObjectTree;
 import edu.mit.broad.xbench.tui.ReportStub;
 import edu.mit.broad.xbench.tui.TaskManager;
 import edu.mit.broad.xbench.tui.ToolRunnerControl;
-import foxtrot.Job;
-import foxtrot.Worker;
 import xapps.gsea.GseaAppConf;
 import xapps.gsea.GseaWebResources;
 import xtools.api.Tool;
 import xtools.gsea.Gsea;
-
-import javax.swing.*;
-
-import java.awt.*;
-import java.awt.datatransfer.DataFlavor;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.io.File;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Properties;
-import java.util.Set;
 
 /**
  * Widget that builds the in a JTabbedPane:
@@ -341,10 +351,9 @@ public class AppDataLoaderWidget extends GseaSimpleInternalFrame implements Widg
         }
 
         public void actionPerformed(ActionEvent e) {
-
-            Worker.post(new Job() {
-                public Object run() {
-
+            SwingWorker<Object, Void> worker = new SwingWorker<Object, Void>() {
+                @Override
+                protected Object doInBackground() throws Exception {
                     final ReportStub rs = Application.getToolManager().getLastReportStub(new Gsea().getName());
 
                     if (rs == null) {
@@ -372,7 +381,8 @@ public class AppDataLoaderWidget extends GseaSimpleInternalFrame implements Widg
 
                     return null;
                 }
-            });
+            };
+            worker.execute();
         }
-    }    // End FileOpenAction
-}    // End AppFileExplorerWidget
+    }
+}

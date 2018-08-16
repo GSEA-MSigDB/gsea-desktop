@@ -22,22 +22,28 @@
             in Help->About -->
         <propertyfile file="src/main/java/edu/mit/broad/genome/resources/build.properties">
             <entry key="build.number" type="int" operation="+" pattern="0000" default="0001" />
-            <entry key="build.timestamp" type="date" operation="=" value="${time.stamp}"
-                pattern="EEE, d MMM yyyy HH:mm:ss Z" />
+            <entry key="build.timestamp" type="date" operation="=" value="${time.stamp}" pattern="EEE, d MMM yyyy HH:mm:ss Z" />
         </propertyfile>
         <property file="src/main/java/edu/mit/broad/genome/resources/build.properties" />
         <property name="MINIMAL_JAR" value="gsea-minimal-${build.version}_java9.jar" />
     </target>
 
-    <target name="compile" depends="-init"> <!-- temporarily skipping 'update-build-props' to avoid build # updates -->
+    <target name="compile" depends="-init">
+        <!-- temporarily skipping 'update-build-props' to avoid build # updates -->
         <property name="MINIMAL_JAR" value="gsea-minimal-DEV_java9.jar" />
         <mkdir dir="${dist.dir}/classes" />
-        <javac target="1.9" source="1.9" debug="true" defaultexcludes="true" deprecation="false"
-            destdir="${dist.dir}/classes" optimize="false" srcdir="src/main/java" memoryMaximumSize="1024M"
-            fork="true" includes="**" failonerror="true" includeantruntime="false">
+        <javac target="1.9" source="1.9" debug="true" defaultexcludes="true" deprecation="false" destdir="${dist.dir}/classes" optimize="false" memoryMaximumSize="1024M" fork="true" includes="**" failonerror="true" includeantruntime="false">
+            <compilerarg value="--patch-module=jide.common=lib/jide-components-3.7.4.jar:lib/jide-dock-3.7.4.jar:lib/jide-grids-3.7.4.jar" />
+            <compilerarg line="--add-exports=jide.common/com.jidesoft.grid=xtools.gsea --add-exports=jide.common/com.jidesoft.docking=xtools.gsea --add-exports=jide.common/com.jidesoft.status=xtools.gsea" />
+            <compilerarg line="--add-exports=java.desktop/com.sun.java.swing.plaf.windows=jide.common --add-exports=java.desktop/javax.swing.plaf.synth=jide.common --add-exports=java.desktop/sun.swing=jide.common --add-exports=java.desktop/sun.awt=jide.common --add-exports=java.desktop/sun.awt.image=jide.common --add-exports=java.desktop/sun.awt.shell=jide.common --add-exports=java.desktop/sun.awt.dnd=jide.common --add-exports=java.desktop/sun.awt.windows=jide.common --add-exports=java.base/sun.security.action=jide.common" />
+            <src path="src/main/java" />
+            <src path="src/main/java9" />
             <modulepath>
-                <fileset dir="lib" includes="*.jar" />
-                <fileset dir="lib_java9" includes="*.jar" />
+                <fileset dir="lib">
+                    <exclude name="jide-components*.jar" />
+                    <exclude name="jide-dock*.jar" />
+                    <exclude name="jide-grid*.jar" />
+                </fileset>
             </modulepath>
         </javac>
     </target>
@@ -47,10 +53,10 @@
         <copy todir="${dist.dir}/classes/edu/mit/broad/genome/resources">
             <fileset dir="src/main/java/edu/mit/broad/genome/resources" />
         </copy>
+        <copy file="src/main/java/log4j2.xml" todir="${dist.dir}/classes" />
     </target>
 
-    <target name="create-jar" depends="-init, clean, compile, copy-resources"
-        description="Builds minimal (GSEA-only) JAR">
+    <target name="create-jar" depends="-init, clean, compile, copy-resources" description="Builds minimal (GSEA-only) JAR">
 
         <jar basedir="${dist.dir}/classes" defaultexcludes="true" jarfile="${dist.dir}/${MINIMAL_JAR}">
             <fileset file="LICENSE.txt" />
@@ -62,8 +68,7 @@
                 <attribute name="GSEA-Build-Date" value="${TODAY}" />
                 <attribute name="Permissions" value="all-permissions" />
                 <attribute name="Application-Name" value="GSEA" />
-                <attribute name="Codebase"
-                    value="http://*.broadinstitute.org/gsea/software https://*.broadinstitute.org/gsea/software http://*.broadinstitute.org:8080/gsea/software https://*.broadinstitute.org:8080/gsea/software http://*.gsea-msigdb.org/gsea/software https://*.gsea-msigdb.org/gsea/software http://*.msigdb.org/gsea/software https://*.msigdb.org/gsea/software" />
+                <attribute name="Codebase" value="http://*.broadinstitute.org/gsea/software https://*.broadinstitute.org/gsea/software http://*.broadinstitute.org:8080/gsea/software https://*.broadinstitute.org:8080/gsea/software http://*.gsea-msigdb.org/gsea/software https://*.gsea-msigdb.org/gsea/software http://*.msigdb.org/gsea/software https://*.msigdb.org/gsea/software" />
             </manifest>
         </jar>
     </target>
@@ -73,11 +78,9 @@
             provide the keystore password as a Java command-line property, like "ant -Dstore-password=FOO..." 
             *NOTE*: this step may not be necessary for Java 9.    
         -->
-        <signjar jar="${dist.dir}/${MINIMAL_JAR}" keystore="${keystore}" maxmemory="1024M"
-            alias="codesign" tsaurl="http://timestamp.comodoca.com/rfc3161" storepass="${store-password}" />
+        <signjar jar="${dist.dir}/${MINIMAL_JAR}" keystore="${keystore}" maxmemory="1024M" alias="codesign" tsaurl="http://timestamp.comodoca.com/rfc3161" storepass="${store-password}" />
     </target>
 
-    <target name="build-release" depends="create-jar, sign-jar"
-        description="Builds and signs the JAR with an updated build date and number" />
+    <target name="build-release" depends="create-jar, sign-jar" description="Builds and signs the JAR with an updated build date and number" />
 
 </project>

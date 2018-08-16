@@ -58,7 +58,7 @@ public class JarResources {
     /**
      * The base genome package's hierarchy - dont use leading /
      */
-    private static final String PKG_GENOME = "edu/mit/broad/genome/";
+    private static final String PKG_GENOME = "/edu/mit/broad/genome/";
     private static final String PKG_RESOURCE = PKG_GENOME + "resources/";
 
     /**
@@ -66,7 +66,7 @@ public class JarResources {
      */
     private static Logger klog;
 
-    private static ClassLoader kClassLoader;
+//    private static ClassLoader kClassLoader;
 
     /**
      * Ensure that "not founds" are present
@@ -74,7 +74,7 @@ public class JarResources {
     static {
         try {
 
-            kClassLoader = JarResources.class.getClassLoader();
+//            kClassLoader = JarResources.class.getClassLoader();
             klog = Logger.getLogger(JarResources.class);
 
             /* strangely this seems to not work for the initial loading when running off off a jar file.
@@ -87,7 +87,7 @@ public class JarResources {
             if (!GraphicsEnvironment.isHeadless()) {
                 //TraceUtils.showTrace();
                 klog.debug("Loading basic icons ...");
-                URL nf_url = kClassLoader.getResource(PKG_RESOURCE + "IconNotFound.gif");
+                URL nf_url = JarResources.class.getResource(PKG_RESOURCE + "IconNotFound.gif");
 
                 if (nf_url == null) {
                     System.err.println("FATAL resources error ICON_NOT_FOUND not found!");
@@ -105,7 +105,7 @@ public class JarResources {
 
                     //ICON_NOT_FOUND = new ImageIcon(nfu); // doesnt work -- see note above
 
-                    URL qu = kClassLoader.getResource(PKG_RESOURCE + "UnknownDataFormat16.gif");
+                    URL qu = JarResources.class.getResource(PKG_RESOURCE + "UnknownDataFormat16.gif");
                     if (qu != null) { // must check else app may not start
                         image = Toolkit.getDefaultToolkit().getImage(qu);
                         ICON_UNKNOWN_DATA_FORMAT = new ImageIcon(image);
@@ -163,7 +163,7 @@ public class JarResources {
     public static URL toURL(final String filename) {
         // webstarting barfs if the system class loader is used
         //URL url = ClassLoader.getSystemClassLoader().getResource(PKG_RESOURCE + filename);
-        return kClassLoader.getResource(PKG_RESOURCE + filename);
+        return JarResources.class.getResource(PKG_RESOURCE + filename);
     }
 
     public static String getHelpURL(String keyName) {

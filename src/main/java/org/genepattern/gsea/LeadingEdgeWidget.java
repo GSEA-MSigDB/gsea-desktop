@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2018 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  *******************************************************************************/
 package org.genepattern.gsea;
 
@@ -16,8 +16,6 @@ import edu.mit.broad.genome.reports.EnrichmentReports;
 import edu.mit.broad.genome.utils.ZipUtility;
 import edu.mit.broad.xbench.core.Widget;
 import edu.mit.broad.xbench.tui.TaskManager;
-import foxtrot.Task;
-import foxtrot.Worker;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -203,8 +201,9 @@ public class LeadingEdgeWidget implements Widget {
         final File _outputDir = outputDir;
         tabbedPane.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         try {
-            Worker.post(new Task() {
-                public Object run() throws Exception {
+            SwingWorker<Object, Void> worker = new SwingWorker<Object, Void>() {
+                @Override
+                protected Object doInBackground() throws Exception {
                     LeadingEdgeTool tool = new LeadingEdgeTool();
                     ToolParamSet paramSet = (ToolParamSet)tool.getParamSet();
                     if (runningInGenePattern) {
@@ -231,7 +230,8 @@ public class LeadingEdgeWidget implements Widget {
                     }
                     return null;
                 }
-            });
+            };
+            worker.execute();
         } catch (Throwable t) {
             t.printStackTrace();
             tabbedPane.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
@@ -346,15 +346,17 @@ public class LeadingEdgeWidget implements Widget {
     private void runAnalysis() {
         tabbedPane.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         try {
-            LeadingEdgeAnalysis analysis = (LeadingEdgeAnalysis) Worker
-                    .post(new Task() {
-                        public Object run() throws Exception {
-                            runs++;
-                            return LeadingEdgeAnalysis.runAnalysis(edb, 
-                                    viewAndSearchComponent.getSelectedColumnArray(GENE_SET_INDEX), 
-                                    (Frame) tabbedPane.getTopLevelAncestor());
-                        }
-                    });
+            SwingWorker<LeadingEdgeAnalysis, Void> worker = new SwingWorker<LeadingEdgeAnalysis, Void>() {
+                @Override
+                protected LeadingEdgeAnalysis doInBackground() throws Exception {
+                    runs++;
+                    return LeadingEdgeAnalysis.runAnalysis(edb, 
+                            viewAndSearchComponent.getSelectedColumnArray(GENE_SET_INDEX), 
+                            (Frame) tabbedPane.getTopLevelAncestor());
+                }
+            };
+            LeadingEdgeAnalysis analysis = worker.get();
+
             tabbedPane.addTab("Leading Edge Analysis-" + runs, analysis
                     .getComponent());
             tabbedPane.setSelectedComponent(analysis.getComponent());

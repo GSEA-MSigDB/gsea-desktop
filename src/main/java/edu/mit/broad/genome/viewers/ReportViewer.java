@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2018 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  *******************************************************************************/
 package edu.mit.broad.genome.viewers;
 
@@ -8,6 +8,7 @@ import au.com.pegasustech.demos.layout.SCLayout;
 import com.jidesoft.grid.SortableTable;
 
 import edu.mit.broad.genome.JarResources;
+import edu.mit.broad.genome.StandardException;
 import edu.mit.broad.genome.reports.api.Report;
 import edu.mit.broad.genome.swing.GuiHelper;
 import edu.mit.broad.xbench.core.JObjectsList;
@@ -15,12 +16,13 @@ import edu.mit.broad.xbench.core.api.Application;
 import edu.mit.broad.xbench.tui.SingleToolLauncher;
 import edu.mit.broad.xbench.tui.TaskManager;
 import edu.mit.broad.xbench.tui.ToolRunnerControl;
-import foxtrot.Job;
-import foxtrot.Worker;
 import xtools.api.Tool;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
+
+import org.genepattern.io.ImageUtil;
+import org.genepattern.uiutil.UIUtil;
 
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -123,9 +125,9 @@ public class ReportViewer extends AbstractViewer {
         JButton bRelaunch = new JButton("Show in ToolRunner", SingleToolLauncher.ICON);
         bRelaunch.addActionListener(new ActionListener() {
             public void actionPerformed(final ActionEvent e) {
-                Worker.post(new Job() {
-                    public Object run() {
-
+                SwingWorker<Object, Void> worker = new SwingWorker<Object, Void>() {
+                    @Override
+                    protected Object doInBackground() throws Exception {
                         // @note IMP make assumption that an xtool
                         try {
                             final Tool tool = TaskManager.createTool(fReport.getProducer().getName());
@@ -141,7 +143,8 @@ public class ReportViewer extends AbstractViewer {
 
                         return null;
                     }
-                });
+                };
+                worker.execute();
             }
 
         });
