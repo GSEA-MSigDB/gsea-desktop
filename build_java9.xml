@@ -20,11 +20,11 @@
     <target name="update-build-props" depends="-init">
         <!-- Increment the build properties. The application reads these from build.properties for display 
             in Help->About -->
-        <propertyfile file="src/main/java/edu/mit/broad/genome/resources/build.properties">
+        <propertyfile file="src/main/resources/edu/mit/broad/genome/resources/build.properties">
             <entry key="build.number" type="int" operation="+" pattern="0000" default="0001" />
             <entry key="build.timestamp" type="date" operation="=" value="${time.stamp}" pattern="EEE, d MMM yyyy HH:mm:ss Z" />
         </propertyfile>
-        <property file="src/main/java/edu/mit/broad/genome/resources/build.properties" />
+        <property file="src/main/resources/edu/mit/broad/genome/resources/build.properties" />
         <property name="MINIMAL_JAR" value="gsea-minimal-${build.version}_java9.jar" />
     </target>
 
@@ -37,7 +37,6 @@
             modulepath="modules">
             <compilerarg value="--patch-module=jide.common=lib/jide-components-3.7.4.jar:lib/jide-dock-3.7.4.jar:lib/jide-grids-3.7.4.jar" />
             <compilerarg line="--add-exports=jide.common/com.jidesoft.grid=org.broad.gsea --add-exports=jide.common/com.jidesoft.docking=org.broad.gsea --add-exports=jide.common/com.jidesoft.status=org.broad.gsea" />
-            <compilerarg line="--add-exports=java.desktop/com.sun.java.swing.plaf.windows=jide.common --add-exports=java.desktop/javax.swing.plaf.synth=jide.common --add-exports=java.desktop/sun.swing=jide.common --add-exports=java.desktop/sun.awt=jide.common --add-exports=java.desktop/sun.awt.image=jide.common --add-exports=java.desktop/sun.awt.shell=jide.common --add-exports=java.desktop/sun.awt.dnd=jide.common --add-exports=java.desktop/sun.awt.windows=jide.common --add-exports=java.base/sun.security.action=jide.common" />
             <src path="src/main/java" />
             <src path="src/main/java9" />
         </javac>
@@ -46,9 +45,9 @@
     <target name="copy-resources" depends="compile" description="Copies resources into build tree">
         <mkdir dir="${dist.dir}/classes/edu/mit/broad/geneome/resources" />
         <copy todir="${dist.dir}/classes/edu/mit/broad/genome/resources">
-            <fileset dir="src/main/java/edu/mit/broad/genome/resources" />
+            <fileset dir="src/main/resources/edu/mit/broad/genome/resources" />
         </copy>
-        <copy file="src/main/java/log4j2.xml" todir="${dist.dir}/classes" />
+        <copy file="src/main/resources/log4j2.xml" todir="${dist.dir}/classes" />
     </target>
 
     <target name="create-jar" depends="-init, clean, compile, copy-resources" description="Builds minimal (GSEA-only) JAR">

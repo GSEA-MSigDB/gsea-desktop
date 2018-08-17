@@ -24,12 +24,12 @@
     <target name="update-build-props" depends="-init">
         <!-- Increment the build properties. The application reads these from build.properties for display 
             in Help->About -->
-        <propertyfile file="src/main/java/edu/mit/broad/genome/resources/build.properties">
+        <propertyfile file="src/main/resources/edu/mit/broad/genome/resources/build.properties">
             <entry key="build.number" type="int" operation="+" pattern="0000" default="0001" />
             <entry key="build.timestamp" type="date" operation="=" value="${time.stamp}"
                 pattern="EEE, d MMM yyyy HH:mm:ss Z" />
         </propertyfile>
-        <property file="src/main/java/edu/mit/broad/genome/resources/build.properties" />
+        <property file="src/main/resources/edu/mit/broad/genome/resources/build.properties" />
         <property name="MINIMAL_JAR" value="gsea-minimal-${build.version}.jar" />
         <property name="ALL_DEPS_JAR" value="gsea-all_deps-${build.version}.jar" />
         <property name="RELEASE_JAR" value="gsea-${build.version}.jar" />
@@ -55,9 +55,9 @@
     <target name="copy-resources" depends="compile" description="Copies resources into build tree">
         <mkdir dir="${dist.dir}/classes/edu/mit/broad/geneome/resources" />
         <copy todir="${dist.dir}/classes/edu/mit/broad/genome/resources">
-            <fileset dir="src/main/java/edu/mit/broad/genome/resources" />
+            <fileset dir="src/main/resources/edu/mit/broad/genome/resources" />
         </copy>
-        <copy file="src/main/java/log4j2.xml" todir="${dist.dir}/classes" />
+        <copy file="src/main/resources/log4j2.xml" todir="${dist.dir}/classes" />
     </target>
 
     <!-- Restructure one-jar and the build task: ProGuard doesn't need an all-in-one full jar to do its

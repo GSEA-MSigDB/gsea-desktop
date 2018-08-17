@@ -1,0 +1,233 @@
+// Copyright (c) 2003-2018 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents 
+// of the University of California. All rights reserved.
+apply plugin: 'java'
+import org.apache.tools.ant.filters.ReplaceTokens
+
+// Define the main class for the application
+ext.mainClassName = 'xapp.gsea.GSEA'
+
+// Set up the ProGuard optimizing task
+buildscript {
+    repositories {
+        flatDir dirs: 'lib_build'
+    }
+    dependencies {
+        classpath ':proguard:'
+    }
+}
+
+sourceSets {
+    main {
+        java {
+            srcDirs = ['src/main/java', 'src/main/java8']
+        }
+    }
+}
+
+configurations {
+    jarsToShipUntouched
+    compile.extendsFrom jarsToShipUntouched
+}
+
+dependencies {
+    jarsToShipUntouched fileTree(dir: 'modules', include: ['batik-codec-1.10.jar', 'log4j-core-2.11.0.jar'])
+    compile fileTree(dir: 'modules', include: '*.jar') + fileTree(dir: 'lib', include: '*.jar')
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '4.4.1'
+}
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+processResources {
+    // Set the current timestamp for release builds; pass in a blank property to enable (i.e. -Ptimestamp="" at CLI)
+    if (timestamp.equals("")) {
+       ext.date = new Date() 
+       timestamp = date.format("MM/dd/yyyy hh:mm aa")
+       // This is a more filesystem-friendly date format.
+       timestamp_fs = date.format("yyyy-MM-dd_HHmmss")
+    }
+
+    filesMatching('resources/about.properties') {
+        filter (ReplaceTokens,
+                tokens: [ VERSION: version, BUILD: buildNumber, DEFAULT_MASTER_RESOURCE_URL: dataServerUrl,
+                          TIMESTAMP: timestamp, DEVELOPMENT: development ])
+    }
+}
+
+jar {
+    archiveName = "gsea-minimal-${version}.jar"
+    manifest {
+        attributes(
+            "Permissions": "all-permissions",
+            "Application-Name": "GSEA",
+            "Built-By": System.getProperty('user.name'),
+            "Main-Class": mainClassName,
+            "GSEA-Build-Date": timestamp,
+            "Codebase": "http://*.broadinstitute.org/gsea/software https://*.broadinstitute.org/gsea/software http://*.broadinstitute.org:8080/gsea/software https://*.broadinstitute.org:8080/gsea/software http://*.gsea-msigdb.org/gsea/software https://*.gsea-msigdb.org/gsea/software http://*.msigdb.org/gsea/software https://*.msigdb.org/gsea/software"
+            "Class-Path": configurations.compile.collect { it.getName() }.join(' '),
+        )
+    }
+}
+
+task fullJar(type: Jar, dependsOn: jar) {
+    // Based on https://discuss.gradle.org/t/removing-dependencies-from-a-jar-file-during-jar-task/5521/3
+    archiveName = "gsea-all_deps-${version}.jar"
+    from {
+        ((configurations.compile - configurations.jarsToShipUntouched) + "${buildDir}/libs/gsea-minimal-${version}.jar").collect {
+            zipTree(it)
+        }
+    } {
+        exclude "META-INF/**"
+    }
+    
+    manifest {
+        attributes(
+            "Permissions": "all-permissions",
+            "Application-Name": "GSEA",
+            "Built-By": System.getProperty('user.name'),
+            "Main-Class": mainClassName,
+            "GSEA-Build-Date": timestamp,
+            "Codebase": "http://*.broadinstitute.org/gsea/software https://*.broadinstitute.org/gsea/software http://*.broadinstitute.org:8080/gsea/software https://*.broadinstitute.org:8080/gsea/software http://*.gsea-msigdb.org/gsea/software https://*.gsea-msigdb.org/gsea/software http://*.msigdb.org/gsea/software https://*.msigdb.org/gsea/software"
+            "Class-Path": configurations.jarsToShipUntouched.collect { it.getName() }.join(' ')
+        )
+    }
+}
+
+task optimizeFullJar(type: proguard.gradle.ProGuardTask, dependsOn: fullJar) {
+    // EXPERIMENTAL: Optimize the fullJar to remove unused classes.
+    // This still needs tuning for correctness, and as a result we are not distributing the
+    // jar it creates.  It is still useful because of the reports it generates, however.
+    doFirst { mkdir "proguard_log" }
+    
+    verbose
+    injars "${buildDir}/libs/gsea-all_deps-${version}.jar"
+    outjars "${buildDir}/libs/gsea-${version}.jar"
+
+    // Note that this points to the *JRE* jars.
+    libraryjars "${System.getProperty('java.home')}/lib", 
+                jarfilter: 'rt.jar,charsets.jar,jce.jar,jfr.jar,jsse.jar,resources.jar,ext/jfxrt.jar'
+    libraryjars "modules", jarfilter: configurations.jarsToShipUntouched.collect { it.getName() }.join(',')
+    configuration "lib_build/proguard_full_client.cfg"
+    printusage "proguard_log/proguard_full_client_log_${timestamp_fs}.txt"
+    printseeds "proguard_log/proguard_full_client_seeds_${timestamp_fs}.txt"
+}
+
+task optimizeMinJar(type: proguard.gradle.ProGuardTask, dependsOn: jar) {
+    // EXPERIMENTAL: Optimize the minimal jar to remove unused classes (that is, our code base only).
+    // As above, needs tuning for correctness.  The GSEA-focused report it produces is more useful.
+    doFirst { mkdir "proguard_log" }
+    
+    verbose
+    injars "${buildDir}/libs/gsea-minimal-${version}.jar"
+    outjars "${buildDir}/libs/gsea-${version}.jar"
+
+    libraryjars "${System.getProperty('java.home')}/lib", 
+                jarfilter: 'rt.jar,charsets.jar,jce.jar,jfr.jar,jsse.jar,resources.jar,ext/jfxrt.jar'
+    // This is the difference from the above: consider all dependencies as libraryjars
+    libraryjars "modules", filter: '!META-INF/**/module-info.class'
+    libraryjars "lib", filter: '!META-INF/**/module-info.class'
+    configuration "lib_build/proguard_min_client.cfg"
+    printusage "proguard_log/proguard_min_client_log_${timestamp_fs}.txt"
+    printseeds "proguard_log/proguard_min_client_seeds_${timestamp_fs}.txt"
+}
+
+task createDist(type: Copy, dependsOn: fullJar)  {
+    from ("scripts") {
+        include 'gsea.bat'
+        include 'gsea.command'
+        include 'gsea.sh'
+        include 'readme.txt'
+    }
+    with copySpec {
+        from ("${buildDir}/libs") {
+            include "gsea-${version}.jar"
+        }
+        from (configurations.jarsToShipUntouched) { }
+        into "lib"
+    }
+
+    into "${buildDir}/GSEA-dist"
+}
+
+task signJars(dependsOn: createDist) {
+    doLast {
+        // Only sign if the keystoreFile exists 
+        ext.keystoreFile = file("${keystore}")
+        if (keystoreFile.exists()) {
+            ant.jar( update: true, file: "build/GSEA-dist/lib/batik-codec-1.10.jar") {
+                delegate.manifest { attribute(name: 'Permissions', value: 'all-permissions') }
+            }
+            ant.jar( update: true, file: "build/GSEA-dist/lib/log4j-core-2.11.0.jar") {
+                delegate.manifest { attribute(name: 'Permissions', value: 'all-permissions') }
+            }
+            ant.signjar( jar: 'build/GSEA-dist/lib/*.jar', keystore:"${keystoreFile.absolutePath}",
+                         alias: "${alias}", keypass: "${keyPassword}", storepass: "${storePassword}", tsaurl: "${tsaurl}"
+            )
+        }
+    }
+}
+
+task createDistZip(type: Zip, dependsOn: [createDist, signJars]) {
+    archiveName = "GSEA_${version}.zip"
+    destinationDir = file("${buildDir}/distZip")
+    baseName = "GSEA"
+    from "${buildDir}/GSEA-dist" exclude "gsea.bat"
+    into createDistZip.baseName + "_${version}"
+
+    doLast {
+        project.exec { commandLine('chmod', '775', createDistZip.archivePath ) }
+    }
+}
+
+task createMacDist(type: Copy, dependsOn: [createDist, signJars]) {
+    with copySpec {
+        from ("scripts/mac.app") exclude "Contents/Info.plist.template"
+        into "GSEA_${version}.app"
+    }
+    with copySpec {
+        from ("scripts/mac.app/Contents/Info.plist.template")
+        filter (ReplaceTokens, tokens: [ VERSION: version ])
+        rename "Info.plist.template", "Info.plist"
+        into "GSEA_${version}.app/Contents"
+    }
+    with copySpec {
+        from ("${buildDir}/GSEA-dist/lib") include '*.jar'
+        into "GSEA_${version}.app/Contents/Java"
+    }
+
+    into "${buildDir}/GSEA-Mac-dist"
+
+    doLast {
+        project.exec { commandLine('chmod', '775', "${buildDir}/GSEA-Mac-dist/GSEA_${version}.app" ) }
+    }
+}
+
+task createMacDistZip(type: Zip, dependsOn: createMacDist) {
+    archiveName = "GSEA_${version}.app.zip"
+    destinationDir = file("${buildDir}/distZip")
+    from "${buildDir}/GSEA-Mac-dist"
+    
+    doLast {
+        project.exec { commandLine('chmod', '775', createMacDistZip.archivePath ) }
+    }
+}
+
+task createWinDistZip(type: Zip, dependsOn: [createDist, signJars]) {
+    archiveName = "GSEA_Win_${version}.zip"
+    destinationDir = file("${buildDir}/distZip")
+    baseName = "GSEA_Win"
+    from("${buildDir}/GSEA-dist") {
+        exclude "gsea.sh"
+        exclude "gsea.command"
+    }
+    into createWinDistZip.baseName + "_${version}"
+
+    doLast {
+        project.exec { commandLine('chmod', '775', createWinDistZip.archivePath ) }
+    }
+}
+
+build.dependsOn createDistZip,createMacDistZip,createWinDistZip

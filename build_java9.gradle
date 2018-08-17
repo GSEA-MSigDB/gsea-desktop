@@ -1,0 +1,161 @@
+// Copyright (c) 2003-2018 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents 
+// of the University of California. All rights reserved.
+apply plugin: 'java'
+import org.apache.tools.ant.filters.ReplaceTokens
+
+ext.moduleName = 'org.broad.gsea'
+ext.mainClassName = 'xapp.gsea.GSEA'
+
+// Put the Java 9 build into a special dir to avoid accidental collisions.
+// Despite this, it is recommended that Java 8 vs. 9 builds be run in different locations.
+buildDir = 'build_java9' 
+
+sourceSets {
+    main {
+        java {
+            srcDirs = ['src/main/java', 'src/main/java9']
+        }
+    }
+}
+
+dependencies {
+    compile fileTree(dir: 'modules', include: '*.jar')
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '4.4.1'
+}
+
+sourceCompatibility = 1.9
+targetCompatibility = 1.9
+
+processResources {
+    // Set the current timestamp for release builds; pass in a blank property to enable (i.e. -Ptimestamp="" at CLI)
+    if (timestamp.equals("")) { timestamp = new Date().format("MM/dd/yyyy hh:mm aa") }
+
+    filesMatching('resources/about.properties') {
+        filter (ReplaceTokens,
+                tokens: [ VERSION: version, BUILD: buildNumber, DEFAULT_MASTER_RESOURCE_URL: dataServerUrl,
+                          TIMESTAMP: timestamp, DEVELOPMENT: development ])
+    }
+}
+
+jar {
+    archiveName = "gsea-minimal-${version}.jar"
+    manifest {
+        attributes(
+            "Permissions": "all-permissions",
+            "Application-Name": "GSEA",
+            "Built-By": System.getProperty('user.name'),
+            "GSEA-Build-Date": timestamp,
+            "Main-Class": mainClassName,
+        )
+    }
+}
+
+compileJava {
+    inputs.property("moduleName", moduleName)
+    doFirst {
+        options.compilerArgs = [
+            '--module-path', classpath.asPath,
+            '--patch-module', 'jide.common=lib/jide-components-3.7.4.jar:lib/jide-dock-3.7.4.jar:lib/jide-grids-3.7.4.jar",
+            '--add-exports', 'jide.common/com.jidesoft.grid=org.broad.gsea',
+            '--add-exports', 'jide.common/com.jidesoft.docking=org.broad.gsea',
+            '--add-exports', 'jide.common/com.jidesoft.status=org.broad.gsea'
+        ]
+        classpath = files()
+    }
+}
+
+task createDist(type: Copy, dependsOn: jar)  {
+    from ('scripts/java9') {
+        include 'gsea.bat'
+        include 'gsea.command'
+        include 'gsea.sh'
+        include 'gsea_hidpi.sh'
+        include 'gsea.args'
+        include 'readme.txt'
+    }
+    
+    with copySpec {
+        from ("modules") {
+            include '*.jar'
+        }
+        from ("${buildDir}/libs") {
+            include "gsea-minimal-${version}.jar"
+        }
+        into "modules"
+    }
+    with copySpec {
+        from ("lib") {
+            include '*.jar'
+        }
+        into "lib"
+    }
+
+    into "${buildDir}/GSEA-dist"
+}
+
+task createDistZip(type: Zip, dependsOn: createDist) {
+    archiveName = "GSEA_${version}.zip"
+    destinationDir = file("${buildDir}/distZip")
+    baseName = "GSEA"
+    from "${buildDir}/GSEA-dist" exclude "*.bat"
+    into createDistZip.baseName + "_${version}"
+
+    doLast {
+        project.exec { commandLine('chmod', '775', createDistZip.archivePath ) }
+    }
+}
+
+task createMacDist(type: Copy, dependsOn: createDist) {
+    with copySpec {
+        from ("scripts/mac.app") exclude "Contents/Info.plist.template"
+        into "GSEA_${version}.app"
+    }
+    with copySpec {
+        from ("scripts/java9/Info.plist.template")
+        filter (ReplaceTokens, tokens: [ VERSION: version ])
+        rename "Info.plist.template", "Info.plist"
+        into "GSEA_${version}.app/Contents"
+    }
+    with copySpec {
+        from ("${buildDir}/GSEA-dist/modules") include '*.jar'
+        into "GSEA_${version}.app/Contents/Java/modules"
+        from ("${buildDir}/GSEA-dist/lib") include '*.jar'
+        into "GSEA_${version}.app/Contents/Java/lib"
+    }
+
+    into "${buildDir}/GSEA-Mac-dist"
+
+    doLast {
+        project.exec { commandLine('chmod', '775', "${buildDir}/GSEA-Mac-dist/GSEA_${version}.app" ) }
+    }
+}
+
+task createMacDistZip(type: Zip, dependsOn: createMacDist) {
+    archiveName = "GSEA_${version}.app.zip"
+    destinationDir = file("${buildDir}/distZip")
+    from "${buildDir}/GSEA-Mac-dist"
+    
+    doLast {
+        project.exec { commandLine('chmod', '775', createMacDistZip.archivePath ) }
+    }
+}
+
+task createWinDistZip(type: Zip, dependsOn: createDist) {
+    archiveName = "GSEA_Win_${version}.zip"
+    destinationDir = file("${buildDir}/distZip")
+    baseName = "GSEA_Win"
+    from("${buildDir}/GSEA-dist") {
+        exclude "*.sh"
+        exclude "gsea.command"
+    }
+    into createWinDistZip.baseName + "_${version}"
+
+    doLast {
+        project.exec { commandLine('chmod', '775', createWinDistZip.archivePath ) }
+    }
+}
+
+build.dependsOn createDistZip,createMacDistZip,createWinDistZip
