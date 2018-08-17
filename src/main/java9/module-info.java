@@ -1,5 +1,4 @@
 module org.broad.gsea {
-    exports apple.dts.samplecode.osxadapter;
     exports edu.mit.broad.cytoscape;
     exports edu.mit.broad.cytoscape.action;
     exports edu.mit.broad.cytoscape.view;
@@ -48,6 +47,7 @@ module org.broad.gsea {
     exports edu.mit.broad.xbench.searchers;
     exports edu.mit.broad.xbench.tui;
     exports edu.mit.broad.xbench.xchoosers;
+    exports org.broad.gsea.ui;
     exports org.genepattern.annotation;
     exports org.genepattern.data.expr;
     exports org.genepattern.data.matrix;

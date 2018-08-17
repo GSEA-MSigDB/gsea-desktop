@@ -15,6 +15,7 @@ import edu.mit.broad.genome.utils.SystemUtils;
 import edu.mit.broad.xbench.ComparatorFactory2;
 
 import org.apache.log4j.Logger;
+import org.broad.gsea.ui.DesktopIntegration;
 
 import javax.swing.*;
 
@@ -39,14 +40,10 @@ public class Main {
                 "Gene set  enrichment analysis java desktop application",
                 "YSjBO6OJfF9WbavzI73Jt1HgDI4x9L21");
 
+        DesktopIntegration.verifyJavaPlatform();
+        
         if (SystemUtils.isMac()) {
             System.setProperty("apple.laf.useScreenMenuBar", "true");
-            
-            // TODO: examine whether to reinstate this code.
-            // Skipping for now to keep Apple JAR dependencies out of the build.
-            // Disable the 'About' until we build full support.
-            // This is not the preferred way to do it - it will suffice for now.
-            //com.apple.eawt.Application.getApplication().setEnabledAboutMenu(false);
         }
     }
 

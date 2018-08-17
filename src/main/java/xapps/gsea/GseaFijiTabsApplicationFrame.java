@@ -1,9 +1,7 @@
 /*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2018 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  *******************************************************************************/
 package xapps.gsea;
-
-import apple.dts.samplecode.osxadapter.OSXAdapter;
 
 import com.jgoodies.looks.HeaderStyle;
 import com.jgoodies.looks.Options;
@@ -44,6 +42,7 @@ import javax.swing.*;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
+import org.broad.gsea.ui.DesktopIntegration;
 import org.jfree.ui.about.AboutPanel;
 
 import java.awt.*;
@@ -106,8 +105,8 @@ public class GseaFijiTabsApplicationFrame extends DefaultDockableHolder implemen
 
         if (SystemUtils.IS_OS_MAC_OSX) {
             try {
-                OSXAdapter.setAboutHandler(this, getClass().getDeclaredMethod("showAboutDialog", (Class[]) null));
-                OSXAdapter.setQuitHandler(this, getClass().getDeclaredMethod("exitApplication", (Class[]) null));
+                DesktopIntegration.setAboutHandler(this);
+                DesktopIntegration.setQuitHandler(this);
             } catch (Exception e) {
                 e.printStackTrace(System.out);
                 System.out.println("Error setting apple-specific about and quit handlers");

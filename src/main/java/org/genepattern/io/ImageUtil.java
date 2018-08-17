@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2018 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  *******************************************************************************/
 package org.genepattern.io;
 
@@ -17,12 +17,6 @@ import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
 import org.w3c.dom.DOMImplementation;
 import org.w3c.dom.Document;
-
-//import de.erichseifert.vectorgraphics2d.Document;
-//import de.erichseifert.vectorgraphics2d.VectorGraphics2D;
-//import de.erichseifert.vectorgraphics2d.intermediate.CommandSequence;
-//import de.erichseifert.vectorgraphics2d.svg.SVGProcessor;
-//import de.erichseifert.vectorgraphics2d.util.PageSize;
 
 import java.awt.Dimension;
 import java.awt.Graphics2D;
@@ -121,79 +115,49 @@ public class ImageUtil {
     
     public static final File saveAsSVG(JFreeChart chart, File outputFile, int width, int height, boolean gZip)
             throws IOException {
-        gZip = false;
-        // Make sure we have a ".gz" extension if compressing.
-        if (gZip && !StringUtils.endsWithIgnoreCase(outputFile.getName(), ".gz")) {
-            outputFile = getSvgFileFromImgFile(outputFile, true);
-        }
-        
-//        Graphics2D vg2d = new VectorGraphics2D();
-        // Create an instance of org.w3c.dom.Document.
-        DOMImplementation domImpl = GenericDOMImplementation.getDOMImplementation();
-        String svgNS = "http://www.w3.org/2000/svg";
-        Document document = domImpl.createDocument(svgNS, "svg", null);
-
-        // Write image data into document                                                                                                   
-        SVGGraphics2D svgGenerator = new SVGGraphics2D(document);
+        outputFile = ensureGzipExtIfNecessary(outputFile, gZip);
+        SVGGraphics2D svgGenerator = setupSVGGenerator(outputFile, gZip);
         drawChartPlot(chart, svgGenerator, width, height);
-//        CommandSequence commands = ((VectorGraphics2D) vg2d).getCommands();
-//        SVGProcessor processor = new SVGProcessor();
-//        Document document = processor.getDocument(commands, new PageSize(width, height));
-        // TODO: support for GZ?
-        //OutputStream out  = (gZip) ? new GZIPOutputStream(new FileOutputStream(outputFile)) : new FileOutputStream(outputFile);
-//        document.writeTo(new FileOutputStream(outputFile));
-        Writer out = null;
-        try {
-            // Finally, stream out SVG to the standard output using                                                                         
-            // UTF-8 encoding.                                                                                                              
-            boolean useCSS = true; // we want to use CSS style attributes                                                                   
-            out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outputFile), "UTF-8"));
-            svgGenerator.stream(out, useCSS);
-        } finally {
-            if (out != null) try {
-                out.close();
-            } catch (IOException e) {
-//                log.error("Error closing svg file", e);
-            }
-        }
-        return outputFile;
+        return streamToSvg(svgGenerator, outputFile, gZip);
     }
 
     private static final File saveAsSVG(HeatMap heatMap, File outputFile, boolean gZip)
             throws IOException {
-        gZip = false;
+        outputFile = ensureGzipExtIfNecessary(outputFile, gZip);
+        SVGGraphics2D svgGenerator = setupSVGGenerator(outputFile, gZip);
+        heatMap.drawSnapshot(svgGenerator);
+        return streamToSvg(svgGenerator, outputFile, gZip);
+    }
+    
+    private static final File ensureGzipExtIfNecessary(File outputFile, boolean gZip) {
         // Make sure we have a ".gz" extension if compressing.
         if (gZip && !StringUtils.endsWithIgnoreCase(outputFile.getName(), ".gz")) {
             outputFile = getSvgFileFromImgFile(outputFile, true);
         }
-        
-//        Graphics2D vg2d = new VectorGraphics2D();
+        return outputFile;
+    }
+    
+    private static final SVGGraphics2D setupSVGGenerator(File outputFile, boolean gZip) {
         // Create an instance of org.w3c.dom.Document.
         DOMImplementation domImpl = GenericDOMImplementation.getDOMImplementation();
         String svgNS = "http://www.w3.org/2000/svg";
         Document document = domImpl.createDocument(svgNS, "svg", null);
-
-        // Write image data into document                                                                                                   
-        SVGGraphics2D svgGenerator = new SVGGraphics2D(document);
-        heatMap.drawSnapshot(svgGenerator);
-//        CommandSequence commands = ((VectorGraphics2D) vg2d).getCommands();
-//        SVGProcessor processor = new SVGProcessor();
-//        Document document = processor.getDocument(commands, new PageSize(heatMap.getContentWidth(), heatMap.getHeightWithHeader()));
-        // TODO: support for GZ?
-        //OutputStream out  = (gZip) ? new GZIPOutputStream(new FileOutputStream(outputFile)) : new FileOutputStream(outputFile);
-//        document.writeTo(new FileOutputStream(outputFile));
+        return new SVGGraphics2D(document);
+    }
+    
+    private static final File streamToSvg(SVGGraphics2D svgGenerator, File outputFile, boolean gZip)
+            throws IOException {
         Writer out = null;
         try {
-            // Finally, stream out SVG to the standard output using                                                                         
-            // UTF-8 encoding.                                                                                                              
-            boolean useCSS = true; // we want to use CSS style attributes                                                                   
-            out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outputFile), "UTF-8"));
+            boolean useCSS = true; // we want to use CSS style attributes
+            OutputStream outputStream  = (gZip) ? new GZIPOutputStream(new FileOutputStream(outputFile)) : new FileOutputStream(outputFile);
+            out = new BufferedWriter(new OutputStreamWriter(outputStream, "UTF-8"));
             svgGenerator.stream(out, useCSS);
         } finally {
             if (out != null) try {
                 out.close();
             } catch (IOException e) {
-//                log.error("Error closing svg file", e);
+                klog.error("Error closing svg file", e);
             }
         }
         return outputFile;

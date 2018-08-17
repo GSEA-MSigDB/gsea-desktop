@@ -41,12 +41,14 @@
         <property name="RELEASE_JAR" value="gsea-DEV.jar" />
         <mkdir dir="${dist.dir}/classes" />
         <javac target="1.8" source="1.8" debug="true" defaultexcludes="true" deprecation="false"
-            destdir="${dist.dir}/classes" optimize="false" srcdir="src/main/java" memoryMaximumSize="1024M"
+            destdir="${dist.dir}/classes" optimize="false" memoryMaximumSize="1024M"
             fork="true" includes="**" failonerror="true" includeantruntime="false">
             <classpath>
                 <fileset dir="lib" includes="*.jar" />
                 <fileset dir="modules" includes="*.jar" />
             </classpath>
+            <src path="src/main/java" />
+            <src path="src/main/java8" />
         </javac>
     </target>
 
