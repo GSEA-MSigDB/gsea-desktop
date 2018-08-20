@@ -13,7 +13,7 @@ Instructions:
 
 2. To start GSEA execute the following from the command line,
 
-     java -Xmx4g -jar gsea.jar
+     java -Xmx4g -jar gsea-@VERSION@.jar
 
 Alternatively, you can start GSEA with one of the following scripts.  You 
 might have to make the script executable (chmod a+x gsea.sh).

@@ -6,4 +6,4 @@
 prefix=`dirname $(readlink $0 || echo $0)`
 exec java -Xmx4g \
     -Dapple.laf.useScreenMenuBar=true \
-    -jar "$prefix"/lib/gsea.jar "$@"
+    -jar "$prefix"/lib/gsea-@VERSION@.jar "$@"

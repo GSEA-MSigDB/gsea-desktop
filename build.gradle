@@ -66,8 +66,8 @@ jar {
             "Built-By": System.getProperty('user.name'),
             "Main-Class": mainClassName,
             "GSEA-Build-Date": timestamp,
-            "Codebase": "http://*.broadinstitute.org/gsea/software https://*.broadinstitute.org/gsea/software http://*.broadinstitute.org:8080/gsea/software https://*.broadinstitute.org:8080/gsea/software http://*.gsea-msigdb.org/gsea/software https://*.gsea-msigdb.org/gsea/software http://*.msigdb.org/gsea/software https://*.msigdb.org/gsea/software"
-            "Class-Path": configurations.compile.collect { it.getName() }.join(' '),
+            "Codebase": "http://*.broadinstitute.org/gsea/software https://*.broadinstitute.org/gsea/software http://*.broadinstitute.org:8080/gsea/software https://*.broadinstitute.org:8080/gsea/software http://*.gsea-msigdb.org/gsea/software https://*.gsea-msigdb.org/gsea/software http://*.msigdb.org/gsea/software https://*.msigdb.org/gsea/software",
+            "Class-Path": configurations.compile.collect { it.getName() }.join(' ')
         )
     }
 }
@@ -90,60 +90,40 @@ task fullJar(type: Jar, dependsOn: jar) {
             "Built-By": System.getProperty('user.name'),
             "Main-Class": mainClassName,
             "GSEA-Build-Date": timestamp,
-            "Codebase": "http://*.broadinstitute.org/gsea/software https://*.broadinstitute.org/gsea/software http://*.broadinstitute.org:8080/gsea/software https://*.broadinstitute.org:8080/gsea/software http://*.gsea-msigdb.org/gsea/software https://*.gsea-msigdb.org/gsea/software http://*.msigdb.org/gsea/software https://*.msigdb.org/gsea/software"
+            "Codebase": "http://*.broadinstitute.org/gsea/software https://*.broadinstitute.org/gsea/software http://*.broadinstitute.org:8080/gsea/software https://*.broadinstitute.org:8080/gsea/software http://*.gsea-msigdb.org/gsea/software https://*.gsea-msigdb.org/gsea/software http://*.msigdb.org/gsea/software https://*.msigdb.org/gsea/software",
             "Class-Path": configurations.jarsToShipUntouched.collect { it.getName() }.join(' ')
         )
     }
 }
 
-task optimizeFullJar(type: proguard.gradle.ProGuardTask, dependsOn: fullJar) {
-    // EXPERIMENTAL: Optimize the fullJar to remove unused classes.
-    // This still needs tuning for correctness, and as a result we are not distributing the
-    // jar it creates.  It is still useful because of the reports it generates, however.
+task optimizeJar(type: proguard.gradle.ProGuardTask, dependsOn: fullJar) {
     doFirst { mkdir "proguard_log" }
     
     verbose
     injars "${buildDir}/libs/gsea-all_deps-${version}.jar"
     outjars "${buildDir}/libs/gsea-${version}.jar"
 
-    // Note that this points to the *JRE* jars.
     libraryjars "${System.getProperty('java.home')}/lib", 
                 jarfilter: 'rt.jar,charsets.jar,jce.jar,jfr.jar,jsse.jar,resources.jar,ext/jfxrt.jar'
     libraryjars "modules", jarfilter: configurations.jarsToShipUntouched.collect { it.getName() }.join(',')
-    configuration "lib_build/proguard_full_client.cfg"
-    printusage "proguard_log/proguard_full_client_log_${timestamp_fs}.txt"
-    printseeds "proguard_log/proguard_full_client_seeds_${timestamp_fs}.txt"
+    configuration "lib_build/proguard_opt.cfg"
+    printusage "proguard_log/proguard_opt_log_${timestamp_fs}.txt"
+    printseeds "proguard_log/proguard_opt_seeds_${timestamp_fs}.txt"
 }
 
-task optimizeMinJar(type: proguard.gradle.ProGuardTask, dependsOn: jar) {
-    // EXPERIMENTAL: Optimize the minimal jar to remove unused classes (that is, our code base only).
-    // As above, needs tuning for correctness.  The GSEA-focused report it produces is more useful.
-    doFirst { mkdir "proguard_log" }
-    
-    verbose
-    injars "${buildDir}/libs/gsea-minimal-${version}.jar"
-    outjars "${buildDir}/libs/gsea-${version}.jar"
-
-    libraryjars "${System.getProperty('java.home')}/lib", 
-                jarfilter: 'rt.jar,charsets.jar,jce.jar,jfr.jar,jsse.jar,resources.jar,ext/jfxrt.jar'
-    // This is the difference from the above: consider all dependencies as libraryjars
-    libraryjars "modules", filter: '!META-INF/**/module-info.class'
-    libraryjars "lib", filter: '!META-INF/**/module-info.class'
-    configuration "lib_build/proguard_min_client.cfg"
-    printusage "proguard_log/proguard_min_client_log_${timestamp_fs}.txt"
-    printseeds "proguard_log/proguard_min_client_seeds_${timestamp_fs}.txt"
-}
-
-task createDist(type: Copy, dependsOn: fullJar)  {
+task createDist(type: Copy, dependsOn: optimizeJar)  {
     from ("scripts") {
         include 'gsea.bat'
         include 'gsea.command'
         include 'gsea.sh'
         include 'readme.txt'
+        filter (ReplaceTokens, tokens: [ VERSION: version ])
     }
     with copySpec {
         from ("${buildDir}/libs") {
-            include "gsea-${version}.jar"
+            // Use the fullJar for now, until PG is set
+            // include "gsea-${version}.jar"
+            include "gsea-all_deps-${version}.jar"
         }
         from (configurations.jarsToShipUntouched) { }
         into "lib"

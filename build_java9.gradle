@@ -18,8 +18,13 @@ sourceSets {
     }
 }
 
+configurations {
+    jidePatchModuleLibs
+}
+
 dependencies {
     compile fileTree(dir: 'modules', include: '*.jar')
+    jidePatchModuleLibs fileTree(dir: 'lib', include: '*.jar')
 }
 
 task wrapper(type: Wrapper) {
@@ -58,10 +63,10 @@ compileJava {
     doFirst {
         options.compilerArgs = [
             '--module-path', classpath.asPath,
-            '--patch-module', 'jide.common=lib/jide-components-3.7.4.jar:lib/jide-dock-3.7.4.jar:lib/jide-grids-3.7.4.jar",
-            '--add-exports', 'jide.common/com.jidesoft.grid=org.broad.gsea',
-            '--add-exports', 'jide.common/com.jidesoft.docking=org.broad.gsea',
-            '--add-exports', 'jide.common/com.jidesoft.status=org.broad.gsea'
+            '--patch-module=jide.common=' + configurations.jidePatchModuleLibs.asPath,
+            '--add-exports=jide.common/com.jidesoft.grid=org.broad.gsea',
+            '--add-exports=jide.common/com.jidesoft.docking=org.broad.gsea',
+            '--add-exports=jide.common/com.jidesoft.status=org.broad.gsea'
         ]
         classpath = files()
     }
@@ -122,6 +127,8 @@ task createMacDist(type: Copy, dependsOn: createDist) {
     with copySpec {
         from ("${buildDir}/GSEA-dist/modules") include '*.jar'
         into "GSEA_${version}.app/Contents/Java/modules"
+    }
+    with copySpec {
         from ("${buildDir}/GSEA-dist/lib") include '*.jar'
         into "GSEA_${version}.app/Contents/Java/lib"
     }
