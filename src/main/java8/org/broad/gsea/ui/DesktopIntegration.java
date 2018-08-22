@@ -11,6 +11,7 @@ import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
 
 import apple.dts.samplecode.osxadapter.OSXAdapter;
+import edu.mit.broad.genome.utils.SystemUtils;
 import xapps.gsea.GseaFijiTabsApplicationFrame;
 
 /**
@@ -36,10 +37,13 @@ public class DesktopIntegration {
     }
     
     public static void setDockIcon(Image image) {
-        OSXAdapter.setDockIconImage(image);
+        if (SystemUtils.isMac()) {
+            OSXAdapter.setDockIconImage(image);
+        }
     }
 
     public static void setAboutHandler(GseaFijiTabsApplicationFrame applicationFrame) {
+        if (!SystemUtils.isMac()) return;
         try {
             OSXAdapter.setAboutHandler(applicationFrame, applicationFrame.getClass().getDeclaredMethod("showAboutDialog", (Class[]) null));
         } catch (Exception e) {
@@ -48,6 +52,7 @@ public class DesktopIntegration {
     }
     
     public static void setQuitHandler(GseaFijiTabsApplicationFrame applicationFrame) {
+        if (!SystemUtils.isMac()) return;
         try {
             OSXAdapter.setQuitHandler(applicationFrame, applicationFrame.getClass().getDeclaredMethod("exitApplication", (Class[]) null));
         } catch (Exception e) {

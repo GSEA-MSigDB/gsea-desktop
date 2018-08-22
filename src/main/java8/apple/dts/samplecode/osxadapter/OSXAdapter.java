@@ -245,15 +245,4 @@ public class OSXAdapter implements InvocationHandler {
             throw new RuntimeException(ex);
         }
     }
-
-    public static void main(String[] args) {
-
-        //Note: may not exist
-        String path = "resources/IGV_64.png";
-        URL url = OSXAdapter.class.getResource(path);
-        Image image = new ImageIcon(url).getImage();
-        setDockIconImage(image);
-
-        //System.out.println(getDockIconImage());
-    }
 }
