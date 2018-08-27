@@ -45,15 +45,15 @@ processResources {
     // Set the current timestamp for release builds; pass in a blank property to enable (i.e. -Ptimestamp="" at CLI)
     if (timestamp.equals("")) {
        ext.date = new Date() 
-       timestamp = date.format("MM/dd/yyyy hh:mm aa")
+       timestamp = date.format("EEE, d MMM yyyy HH:mm:ss Z")
        // This is a more filesystem-friendly date format.
        timestamp_fs = date.format("yyyy-MM-dd_HHmmss")
     }
 
-    filesMatching('resources/about.properties') {
+    filesMatching('resources/edu/mit/broad/genome/resources/build.properties') {
         filter (ReplaceTokens,
-                tokens: [ VERSION: version, BUILD: buildNumber, DEFAULT_MASTER_RESOURCE_URL: dataServerUrl,
-                          TIMESTAMP: timestamp, DEVELOPMENT: development ])
+                tokens: [ VERSION: version, VERSION.MAJOR: version.major, VERSION.MINOR: version.minor, VERSION.PATCH: version.patch,
+                          BUILD: buildNumber, TIMESTAMP: timestamp ])
     }
 }
 

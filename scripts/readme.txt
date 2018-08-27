@@ -1,5 +1,5 @@
 =======================
-GSEA BINARY DISTRIBUTION
+GSEA Binary Distribution
 =======================
 
 Prerequisites:
@@ -15,8 +15,9 @@ Instructions:
 
      java -Xmx4g -jar gsea-@VERSION@.jar
 
-Alternatively, you can start GSEA with one of the following scripts.  You 
-might have to make the script executable (chmod a+x gsea.sh).
+Alternatively, you can start GSEA with one of the following scripts.  Some
+of these may not be present depending on the distribution you downloaded.
+You might have to make the script executable (chmod a+x gsea.sh).
 
 
 gsea.bat       (for Windows)
@@ -24,11 +25,11 @@ gsea.sh        (for Linux and macOS)
 gsea.command   (for macOS, double-click to start)
 
 The shell scripts are configured to start GSEA with 4GB of memory.  
-This is a reasonable default for most machines.  If 
-you are working with very large datasets you can increase the amount of 
-memory available to GSEA by editing the first line of the startup script.
+This is a reasonable default for most machines.  If  you are working 
+with very large datasets you can increase the amount of memory 
+available to GSEA by editing the first line of the startup script.
 Specifically change the value of the "-Xmx" parameter.  For example,
-to start GSEA with 8 GB of memory  change the value
+to start GSEA with 8 GB of memory, change the value
 
    -Xmx4g
 

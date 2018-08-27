@@ -36,7 +36,7 @@
             optimize="false" memoryMaximumSize="1024M" fork="true" includes="**" failonerror="true" includeantruntime="false"
             modulepath="modules">
             <compilerarg value="--patch-module=jide.common=lib/jide-components-3.7.4.jar:lib/jide-dock-3.7.4.jar:lib/jide-grids-3.7.4.jar" />
-            <compilerarg line="--add-exports=jide.common/com.jidesoft.grid=org.broad.gsea --add-exports=jide.common/com.jidesoft.docking=org.broad.gsea --add-exports=jide.common/com.jidesoft.status=org.broad.gsea" />
+            <compilerarg line="--add-exports=jide.common/com.jidesoft.grid=org.gsea-msigdb.gsea --add-exports=jide.common/com.jidesoft.docking=org.gsea-msigdb.gsea --add-exports=jide.common/com.jidesoft.status=org.gsea-msigdb.gsea" />
             <src path="src/main/java" />
             <src path="src/main/java9" />
         </javac>

@@ -7,4 +7,4 @@
 prefix=`dirname $(readlink $0 || echo $0)`
 exec java --module-path="$prefix"/modules -Xmx4g \
     @gsea.args \
-	--module org.broad.gsea/xapps.gsea.GSEA "$@"
+	--module org.gsea-msigdb.gsea/xapps.gsea.GSEA "$@"

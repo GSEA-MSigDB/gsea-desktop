@@ -7,7 +7,7 @@
 	<key>CFBundleExecutable</key>
 	<string>JavaAppLauncher</string>
 	<key>CFBundleIconFile</key>
-	<string>igv_icon.icns</string>
+	<string>gsea_icon.icns</string>
 	<key>CFBundleIdentifier</key>
 	<string>xapps.gsea.GSEA</string>
 	<key>CFBundleDisplayName</key>

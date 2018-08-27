@@ -3,7 +3,7 @@
 apply plugin: 'java'
 import org.apache.tools.ant.filters.ReplaceTokens
 
-ext.moduleName = 'org.broad.gsea'
+ext.moduleName = 'org.gsea-msigdb.gsea'
 ext.mainClassName = 'xapp.gsea.GSEA'
 
 // Put the Java 9 build into a special dir to avoid accidental collisions.
@@ -36,12 +36,12 @@ targetCompatibility = 1.9
 
 processResources {
     // Set the current timestamp for release builds; pass in a blank property to enable (i.e. -Ptimestamp="" at CLI)
-    if (timestamp.equals("")) { timestamp = new Date().format("MM/dd/yyyy hh:mm aa") }
+    if (timestamp.equals("")) { timestamp = date.format("EEE, d MMM yyyy HH:mm:ss Z") }
 
-    filesMatching('resources/about.properties') {
+    filesMatching('resources/edu/mit/broad/genome/resources/build.properties') {
         filter (ReplaceTokens,
-                tokens: [ VERSION: version, BUILD: buildNumber, DEFAULT_MASTER_RESOURCE_URL: dataServerUrl,
-                          TIMESTAMP: timestamp, DEVELOPMENT: development ])
+                tokens: [ VERSION: version, VERSION.MAJOR: version.major, VERSION.MINOR: version.minor, VERSION.PATCH: version.patch,
+                          BUILD: buildNumber, TIMESTAMP: timestamp ])
     }
 }
 
@@ -64,9 +64,9 @@ compileJava {
         options.compilerArgs = [
             '--module-path', classpath.asPath,
             '--patch-module=jide.common=' + configurations.jidePatchModuleLibs.asPath,
-            '--add-exports=jide.common/com.jidesoft.grid=org.broad.gsea',
-            '--add-exports=jide.common/com.jidesoft.docking=org.broad.gsea',
-            '--add-exports=jide.common/com.jidesoft.status=org.broad.gsea'
+            "--add-exports=jide.common/com.jidesoft.grid=${moduleName}",
+            "--add-exports=jide.common/com.jidesoft.docking=${moduleName}",
+            "--add-exports=jide.common/com.jidesoft.status=${moduleName}"
         ]
         classpath = files()
     }
