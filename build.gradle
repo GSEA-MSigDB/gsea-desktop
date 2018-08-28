@@ -107,8 +107,8 @@ task optimizeJar(type: proguard.gradle.ProGuardTask, dependsOn: fullJar) {
                 jarfilter: 'rt.jar,charsets.jar,jce.jar,jfr.jar,jsse.jar,resources.jar,ext/jfxrt.jar'
     libraryjars "modules", jarfilter: configurations.jarsToShipUntouched.collect { it.getName() }.join(',')
     configuration "lib_build/proguard_opt.cfg"
-    printusage "proguard_opt_log/proguard_opt_log_${timestamp_fs}.txt"
-    printseeds "proguard_opt_log/proguard_opt_seeds_${timestamp_fs}.txt"
+    printusage "proguard_log/proguard_opt_log_${timestamp_fs}.txt"
+    printseeds "proguard_log/proguard_opt_seeds_${timestamp_fs}.txt"
 }
 
 task createDist(type: Copy, dependsOn: optimizeJar)  {

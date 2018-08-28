@@ -1,7 +1,7 @@
 /dist/
 /dist_java9/
 /bin/
-/proguard_opt_log/
+/proguard_log/
 .DS_Store
 *~
 .classpath
