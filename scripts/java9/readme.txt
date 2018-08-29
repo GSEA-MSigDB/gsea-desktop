@@ -13,7 +13,7 @@ Instructions:
 
 2. To start GSEA execute the following from the command line,
 
-     java --module-path=modules -Xmx4g @gsea.args --module org.gsea-msigdb.gsea/xapps.gsea.GSEA
+     java --module-path=modules -Xmx4g @gsea.args --module org.gsea_msigdb.gsea/xapps.gsea.GSEA
 
 Alternatively, you can start GSEA with one of the following scripts.  Some
 of these may not be present depending on the distribution you downloaded.

@@ -1,4 +1,4 @@
-module org.broad.gsea {
+module org.gsea_msigdb.gsea {
     exports edu.mit.broad.cytoscape;
     exports edu.mit.broad.cytoscape.action;
     exports edu.mit.broad.cytoscape.view;
