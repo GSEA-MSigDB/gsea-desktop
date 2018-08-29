@@ -36,7 +36,7 @@ targetCompatibility = 1.9
 
 processResources {
     // Set the current timestamp for release builds; pass in a blank property to enable (i.e. -Ptimestamp="" at CLI)
-    if (timestamp.equals("")) { timestamp = date.format("EEE, d MMM yyyy HH:mm:ss Z") }
+    if (timestamp.equals("")) { timestamp = new Date().format("EEE, d MMM yyyy HH:mm:ss Z") }
 
     filesMatching('edu/mit/broad/genome/resources/build.properties') {
         filter (ReplaceTokens,
