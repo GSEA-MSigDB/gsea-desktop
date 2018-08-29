@@ -52,7 +52,7 @@ processResources {
 
     filesMatching('edu/mit/broad/genome/resources/build.properties') {
         filter (ReplaceTokens,
-                tokens: [ VERSION: version, VERSION_MAJOR: version_major, VERSION_MINOR: version_minor, VERSION_PATCH: version_patch,
+                tokens: [ VERSION: version, VERSION_MAJOR: versionMajor, VERSION_MINOR: versionMinor, VERSION_PATCH: versionPatch,
                           BUILD: buildNumber, TIMESTAMP: timestamp ])
     }
 }
