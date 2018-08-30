@@ -10,6 +10,7 @@ import java.awt.Taskbar;
 
 import javax.swing.JOptionPane;
 
+import edu.mit.broad.genome.utils.SystemUtils;
 import xapps.gsea.GseaFijiTabsApplicationFrame;
 
 /**
@@ -34,7 +35,9 @@ public class DesktopIntegration {
     }
     
     public static void setDockIcon(Image image) {
-        Taskbar.getTaskbar().setIconImage(image);
+        if (SystemUtils.isMac()) {
+            Taskbar.getTaskbar().setIconImage(image);
+        }
     }
 
     public static void setAboutHandler(GseaFijiTabsApplicationFrame applicationFrame) {

@@ -121,9 +121,7 @@ task createDist(type: Copy, dependsOn: optimizeJar)  {
     }
     with copySpec {
         from ("${buildDir}/libs") {
-            // Use the fullJar for now, until PG is set
-            // include "gsea-${version}.jar"
-            include "gsea-all_deps-${version}.jar"
+            include "gsea-${version}.jar"
         }
         from (configurations.jarsToShipUntouched) { }
         into "lib"
