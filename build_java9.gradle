@@ -102,11 +102,11 @@ task createDist(type: Copy, dependsOn: jar)  {
 }
 
 task createDistZip(type: Zip, dependsOn: createDist) {
-    archiveName = "GSEA_${version}.zip"
+    archiveName = "GSEA_${version}_java10.zip"
     destinationDir = file("${buildDir}/distZip")
     baseName = "GSEA"
     from "${buildDir}/GSEA-dist" exclude "*.bat"
-    into createDistZip.baseName + "_${version}"
+    into createDistZip.baseName + "_${version}_java10"
 
     doLast {
         project.exec { commandLine('chmod', '775', createDistZip.archivePath ) }
@@ -116,32 +116,32 @@ task createDistZip(type: Zip, dependsOn: createDist) {
 task createMacDist(type: Copy, dependsOn: createDist) {
     with copySpec {
         from ("scripts/mac.app") exclude "Contents/Info.plist.template"
-        into "GSEA_${version}.app"
+        into "GSEA_${version}_java10.app"
     }
     with copySpec {
         from ("scripts/java9/Info.plist.template")
         filter (ReplaceTokens, tokens: [ VERSION: version ])
         rename "Info.plist.template", "Info.plist"
-        into "GSEA_${version}.app/Contents"
+        into "GSEA_${version}_java10.app/Contents"
     }
     with copySpec {
         from ("${buildDir}/GSEA-dist/modules") include '*.jar'
-        into "GSEA_${version}.app/Contents/Java/modules"
+        into "GSEA_${version}_java10.app/Contents/Java/modules"
     }
     with copySpec {
         from ("${buildDir}/GSEA-dist/lib") include '*.jar'
-        into "GSEA_${version}.app/Contents/Java/lib"
+        into "GSEA_${version}_java10.app/Contents/Java/lib"
     }
 
     into "${buildDir}/GSEA-Mac-dist"
 
     doLast {
-        project.exec { commandLine('chmod', '775', "${buildDir}/GSEA-Mac-dist/GSEA_${version}.app" ) }
+        project.exec { commandLine('chmod', '775', "${buildDir}/GSEA-Mac-dist/GSEA_${version}_java10.app" ) }
     }
 }
 
 task createMacDistZip(type: Zip, dependsOn: createMacDist) {
-    archiveName = "GSEA_${version}.app.zip"
+    archiveName = "GSEA_${version}_java10.app.zip"
     destinationDir = file("${buildDir}/distZip")
     from "${buildDir}/GSEA-Mac-dist"
     
@@ -151,14 +151,14 @@ task createMacDistZip(type: Zip, dependsOn: createMacDist) {
 }
 
 task createWinDistZip(type: Zip, dependsOn: createDist) {
-    archiveName = "GSEA_Win_${version}.zip"
+    archiveName = "GSEA_Win_${version}_java10.zip"
     destinationDir = file("${buildDir}/distZip")
     baseName = "GSEA_Win"
     from("${buildDir}/GSEA-dist") {
         exclude "*.sh"
         exclude "gsea.command"
     }
-    into createWinDistZip.baseName + "_${version}"
+    into createWinDistZip.baseName + "_${version}_java10"
 
     doLast {
         project.exec { commandLine('chmod', '775', createWinDistZip.archivePath ) }
