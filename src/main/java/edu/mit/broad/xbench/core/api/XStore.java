@@ -133,10 +133,19 @@ public class XStore extends AbstractListModel implements ComboBoxModel {
      * @param text
      */
 
-    // do in thread so that we dont need to wait
     public void save() {
-        Thread thread = new Thread(append());
-        thread.start();
+        try {
+            if (!fFile.exists()) {
+                fFile.createNewFile();
+            }
+
+            if (fFile.canWrite()) {
+                FileUtils.write(fLines, fFile);
+            }
+
+        } catch (Throwable t) {
+            klog.error("Trouble saving store", t);
+        }
     }
 
     // This trimming is messed up because we sort and hence the order can be anything (and hence those that are trimmed can be anything)
@@ -183,29 +192,6 @@ public class XStore extends AbstractListModel implements ComboBoxModel {
         this.add(text);
         this.save();
         this.sort();
-    }
-
-    private Runnable append() {
-
-        return new Runnable() {
-
-            public void run() {
-
-                try {
-
-                    if (fFile.exists() == false) {
-                        fFile.createNewFile();
-                    }
-
-                    if (fFile.canWrite()) {
-                        FileUtils.write(fLines, fFile);
-                    }
-
-                } catch (Throwable t) {
-                    klog.error("Trouble saving store", t);
-                }
-            }
-        };
     }
 
     /**
