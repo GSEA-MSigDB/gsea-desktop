@@ -4,7 +4,7 @@ apply plugin: 'java'
 import org.apache.tools.ant.filters.ReplaceTokens
 
 ext.moduleName = 'org.gsea_msigdb.gsea'
-ext.mainClassName = 'xapp.gsea.GSEA'
+ext.mainClassName = 'xapps.gsea.GSEA'
 
 // Put the Java 9 build into a special dir to avoid accidental collisions.
 // Despite this, it is recommended that Java 8 vs. 9 builds be run in different locations.
