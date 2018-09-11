@@ -48,6 +48,8 @@ public class Chip2Chip extends AbstractTool {
     private final StringInputParam fAltDelimParam = new StringInputParam("altDelim", "Alternate delimiter", 
             "Optional alternate delimiter character for gene set names instead of comma", null, false, new char[] { ';' }, Param.ADVANCED);
 
+    private final BooleanParam fMakeZippedReportParam = ParamFactory.createZipReportParam(false);
+
     public static String createHeader() {
         StringBuffer buf = new StringBuffer();
         buf.append("<div id=\"footer\" style=\"width: 905; height: 35\">\n").append(
@@ -169,6 +171,12 @@ public class Chip2Chip extends AbstractTool {
 
         doMapping(mappers, gm, fShowEtiology.isTrue(), fGmFormatParam, fReport);
 
+        if (fMakeZippedReportParam.isTrue()) {
+            // custom close before zipping
+            fReport.closeReport(true);
+            fReport.zipReport();
+        }
+
         doneExec();
     }
 
@@ -182,6 +190,7 @@ public class Chip2Chip extends AbstractTool {
         fParamSet.addParam(fShowEtiology);
         fParamSet.addParam(fChipsTargetParam);
         fParamSet.addParam(fAltDelimParam);
+        fParamSet.addParam(fMakeZippedReportParam);
     }
 
     public ToolCategory getCategory() {

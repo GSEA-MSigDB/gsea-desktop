@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2018 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  *******************************************************************************/
 package xtools.gsea;
 
@@ -29,6 +29,7 @@ import xtools.api.ToolCategory;
 import xtools.api.param.BooleanParam;
 import xtools.api.param.DirParam;
 import xtools.api.param.Param;
+import xtools.api.param.ParamFactory;
 import xtools.api.param.StringInputParam;
 import xtools.api.param.StringMultiInputParam;
 
@@ -56,6 +57,8 @@ public class LeadingEdgeTool extends AbstractTool {
 
     private BooleanParam fCreateExtraPlotsParam = new BooleanParam("extraPlots", 
             "create extra LEV plots", false, false);
+
+    private final BooleanParam fMakeZippedReportParam = ParamFactory.createZipReportParam(false);
 
     /**
      * Class constructor
@@ -277,6 +280,12 @@ public class LeadingEdgeTool extends AbstractTool {
 
         reportIndexPage.setAddBrowseFooter(false); // turn off the little browse footer
 
+        if (fMakeZippedReportParam.isTrue()) {
+            // custom close before zipping
+            fReport.closeReport(true);
+            fReport.zipReport();
+        }
+
         doneExec();
     }
 
@@ -291,6 +300,7 @@ public class LeadingEdgeTool extends AbstractTool {
         fParamSet.addParam(fGeneSetNamesParam);
         fParamSet.addParam(fImageFormat);
         fParamSet.addParam(fCreateExtraPlotsParam);
+        fParamSet.addParam(fMakeZippedReportParam);
     }
 
     public static void main(String[] args) {
