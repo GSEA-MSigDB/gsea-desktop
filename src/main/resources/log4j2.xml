@@ -6,17 +6,10 @@
   -->
 
 <!-- Specify the properties file by setting the "log4j.configuration" property at runtime.
-  e.g. java -jar -Xmx2g -Dlog4j.configurationFile=log4j_debug.xml igv.jar -->
+  e.g. java -jar -Xmx2g -Dlog4j.configurationFile=log4j_debug.xml gsea.jar -->
 <Configuration>
   <Appenders>
     <Console name="stdout" target="SYSTEM_OUT">
-      <!-- Not quite correct compared to existing.  Maybe "%d{ssSSS} [%-6p] - %m%n"
-           IMO it's silly to lead with TS millis as in current.  Maybe lead with a
-           counter instead: "%-6sn [%-6p] - %m%n"
-           or millis since start: "%-8r [%-6p] - %m%n"
-           Note that this pattern is also used in the SystemConsole class.  Any
-           change here should be duplicated there  
-      -->
       <PatternLayout pattern="%-8r [%-6p] - %m%n"/>
     </Console>
   </Appenders>

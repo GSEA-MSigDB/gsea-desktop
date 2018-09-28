@@ -1,4 +1,4 @@
-# Arguments to support JIDE on Java 9 and 10
+# Arguments to support JIDE on Java 11
 
 --patch-module=jide.common=lib/jide-components-3.7.4.jar:lib/jide-dock-3.7.4.jar:lib/jide-grids-3.7.4.jar
 --add-exports=jide.common/com.jidesoft.grid=org.gsea_msigdb.gsea --add-exports=jide.common/com.jidesoft.docking=org.gsea_msigdb.gsea --add-exports=jide.common/com.jidesoft.status=org.gsea_msigdb.gsea

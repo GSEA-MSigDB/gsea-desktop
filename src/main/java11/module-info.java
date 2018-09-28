@@ -1,3 +1,6 @@
+/*******************************************************************************
+ * Copyright (c) 2003-2018 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ *******************************************************************************/
 module org.gsea_msigdb.gsea {
     exports edu.mit.broad.cytoscape;
     exports edu.mit.broad.cytoscape.action;

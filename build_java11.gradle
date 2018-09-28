@@ -1,0 +1,203 @@
+// Copyright (c) 2003-2018 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents 
+// of the University of California. All rights reserved.
+apply plugin: 'java'
+import org.apache.tools.ant.filters.ReplaceTokens
+
+ext.moduleName = 'org.gsea_msigdb.gsea'
+ext.mainClassName = 'xapps.gsea.GSEA'
+
+// Put the Java 11 build into a special dir to avoid accidental collisions.
+// Despite this, it is recommended that Java 8 vs. 11 builds be run in different locations.
+buildDir = 'build_java11'
+
+sourceSets {
+    main {
+        java {
+            srcDirs = ['src/main/java', 'src/main/java11']
+        }
+    }
+}
+
+configurations {
+    jidePatchModuleLibs
+}
+
+dependencies {
+    compile fileTree(dir: 'modules', include: '*.jar')
+    jidePatchModuleLibs fileTree(dir: 'lib', include: '*.jar')
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '4.10.1'
+}
+
+// Gradle bug prevents us from generating Java 11 bytecode: https://github.com/gradle/gradle/issues/5120
+// Workaround is to target Java 10 for now.
+sourceCompatibility = 10
+targetCompatibility = 10
+
+processResources {
+    // Set the current timestamp for release builds; pass in a blank property to enable (i.e. -Ptimestamp="" at CLI)
+    if (timestamp.equals("")) { timestamp = new Date().format("EEE, d MMM yyyy HH:mm:ss Z") }
+
+    filesMatching('edu/mit/broad/genome/resources/build.properties') {
+        filter (ReplaceTokens,
+                tokens: [ VERSION: version, VERSION_MAJOR: versionMajor, VERSION_MINOR: versionMinor, VERSION_PATCH: versionPatch,
+                          BUILD: buildNumber, TIMESTAMP: timestamp ])
+    }
+}
+
+jar {
+    archiveName = "gsea-minimal-${version}.jar"
+    manifest {
+        attributes(
+            "Permissions": "all-permissions",
+            "Application-Name": "GSEA",
+            "Built-By": System.getProperty('user.name'),
+            "GSEA-Build-Date": timestamp,
+            "Main-Class": mainClassName,
+        )
+    }
+}
+
+compileJava {
+    inputs.property("moduleName", moduleName)
+    doFirst {
+        options.compilerArgs = [
+            '--module-path', classpath.asPath,
+            '--patch-module=jide.common=' + configurations.jidePatchModuleLibs.asPath,
+            "--add-exports=jide.common/com.jidesoft.grid=${moduleName}",
+            "--add-exports=jide.common/com.jidesoft.docking=${moduleName}",
+            "--add-exports=jide.common/com.jidesoft.status=${moduleName}"
+        ]
+        classpath = files()
+    }
+}
+
+task createDist(type: Copy, dependsOn: jar)  {
+    from ("edu/mit/broad/genome/resources/XBench64x64.gif")
+    from ('scripts/java11') {
+        include 'gsea*'
+        include 'readme.txt'
+    }
+    with copySpec {
+        from ("${buildDir}/libs")
+        from ("modules")
+        into "modules"
+    }
+    with copySpec {
+        from ("lib") into "lib"
+    }
+    into "${buildDir}/GSEA-dist"
+}
+
+task createLinuxDistZip(type: Zip, dependsOn: createDist) {
+    baseName = "GSEA_Linux"
+    archiveName = createLinuxDistZip.baseName + "_${version}_java11.zip"
+    destinationDir = file("${buildDir}/distZip")
+    if (!jdkBundleLinux.equals("")) {
+        with copySpec { from jdkBundleLinux into "jdk-11" }
+    }
+    from ("${buildDir}/GSEA-dist") {
+        exclude "*.bat"
+        exclude "*.command"
+    }
+    into createLinuxDistZip.baseName + "_${version}_java11"
+
+    doLast {
+        project.exec { commandLine('chmod', '775', createLinuxDistZip.archivePath ) }
+    }
+}
+
+task createMacDistZip(type: Zip, dependsOn: createDist) {
+    baseName = "GSEA_Mac"
+    archiveName = createMacDistZip.baseName + "_${version}_java11.zip"
+    destinationDir = file("${buildDir}/distZip")
+    if (!jdkBundleMac.equals("")) {
+        with copySpec { from jdkBundleMac into "jdk-11" }
+    }
+    from ("${buildDir}/GSEA-dist") {
+        exclude "*.bat"
+        exclude "*_hidpi.sh"
+    }
+    into createMacDistZip.baseName + "_${version}_java11"
+
+    doLast {
+        project.exec { commandLine('chmod', '775', createMacDistZip.archivePath ) }
+    }
+}
+
+task createMacAppDist(type: Copy, dependsOn: createDist) {
+    if (!jdkBundleMac.equals("")) {
+        with copySpec { from jdkBundleMac into "GSEA_${version}_java11.app/Contents/jdk-11" }
+    }
+    with copySpec {
+        from ("scripts/mac.app") {
+            exclude "Contents/Info.plist.template"
+            exclude "Contents/MacOS/JavaAppLauncher"
+        }
+        into "GSEA_${version}_java11.app"
+    }
+    with copySpec {
+        from ("scripts/java11/Info.plist.template")
+        filter (ReplaceTokens, tokens: [ VERSION: version ])
+        rename "Info.plist.template", "Info.plist"
+        into "GSEA_${version}_java11.app/Contents"
+    }
+    with copySpec {
+        from ("scripts/java11/GSEA_mac.app.command")
+        rename "GSEA_mac.app.command", "GSEA"
+        into "GSEA_${version}_java11.app/Contents/MacOS"
+    }
+    with copySpec {
+        from ("edu/mit/broad/genome/resources/XBench64x64.gif")
+        into "GSEA_${version}_java11.app/Contents/Resources"
+    }
+    with copySpec {
+        from ("${buildDir}/GSEA-dist/") include 'gsea.args'
+        into "GSEA_${version}_java11.app/Contents/Java/"
+    }
+    with copySpec {
+        from ("${buildDir}/GSEA-dist/modules") include '*.jar'
+        into "GSEA_${version}_java10.app/Contents/Java/modules"
+    }
+    with copySpec {
+        from ("${buildDir}/GSEA-dist/lib") include '*.jar'
+        into "GSEA_${version}_java10.app/Contents/Java/lib"
+    }
+    into "${buildDir}/GSEA-MacApp-dist"
+
+    doLast {
+        project.exec { commandLine('chmod', '775', "${buildDir}/GSEA-MacApp-dist/GSEA_${version}_java11.app" ) }
+    }
+}
+
+task createMacAppDistZip(type: Zip, dependsOn: createMacAppDist) {
+    archiveName = "GSEA_${version}_java11.zip"
+    destinationDir = file("${buildDir}/distZip")
+    from "${buildDir}/GSEA-MacApp-dist"
+    
+    doLast {
+        project.exec { commandLine('chmod', '775', createMacAppDistZip.archivePath ) }
+    }
+}
+
+task createWinDistZip(type: Zip, dependsOn: createDist) {
+    baseName = "GSEA_Win"
+    archiveName = createWinDistZip.baseName + "_${version}_java11.zip"
+    destinationDir = file("${buildDir}/distZip")
+    if (!jdkBundleWindows.equals("")) {
+        with copySpec { from jdkBundleWindows into "jdk-11" }
+    }
+    from("${buildDir}/GSEA-dist") {
+        exclude "*.sh"
+        exclude "*.command"
+    }
+    into createWinDistZip.baseName + "_${version}_java11"
+
+    doLast {
+        project.exec { commandLine('chmod', '775', createWinDistZip.archivePath ) }
+    }
+}
+
+build.dependsOn createLinuxDistZip,createMacDistZip,createMacAppDistZip,createWinDistZip

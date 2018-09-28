@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2018 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  *******************************************************************************/
 package edu.mit.broad.cytoscape;
 
@@ -13,6 +13,7 @@ import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLConnection;
 
+import org.apache.commons.lang3.SystemUtils;
 import org.apache.log4j.Logger;
 
 import edu.mit.broad.xbench.core.api.Application;
@@ -56,11 +57,11 @@ public class CytoscapeLaunch {
 					/*
 					 * launch cytoscape with -R option to open up rest capabilities
 					 */
-					if(this.os.startsWith("win"))
+					if(SystemUtils.IS_OS_WINDOWS)
 						cytoscape = "cmd /c start cytoscape.bat -R 1234";
 					else
-						cytoscape = CytoscapeLocationSingleton.getInstance().getCytoscapeRootLocation() + this.file_separator +"cytoscape.sh -R 1234";
-					
+						cytoscape = CytoscapeLocationSingleton.getInstance().getCytoscapeRootLocation() + this.file_separator +"cytoscape.sh -R 1234"; 
+					    
 					launch_command = cytoscape;
 					
 					//will always extract the EM jar as we package a special gsea EM with gsea.
@@ -88,52 +89,43 @@ public class CytoscapeLaunch {
 					
 					klog.info("command issued:" + launch_command );
 					Process proc;
-					if(this.os.startsWith("win")){
+					if(SystemUtils.IS_OS_WINDOWS){
 						
 						proc = Runtime.getRuntime().exec(launch_command,null,new File(CytoscapeLocationSingleton.getInstance().getCytoscapeRootLocation()));
 					}
+//					else if (SystemUtils.IS_OS_MAC_OSX) {
+//					}
 					else{
+                        String javahome = SystemUtils.JAVA_HOME;
 					    
+                        
+                        // This should all be unnecessary...
+                        
 	                       //proc = Runtime.getRuntime().exec(launch_command);
 	                       
 					    //get the path to java - can't execute command from the envp that we supply to the process so run it separately.
 					    //this would be much more elegant if I could just pass "JAVA_HOME=/usr/libexec/java_home" to the process below
 					    //but it won't recognize the command (tried with surrounding `` and ($ )
-					    Process proc_javahome = Runtime.getRuntime().exec("/usr/libexec/java_home");
-					    InputStream stdin_javahome = proc_javahome.getInputStream();
-                        InputStreamReader isi_javahome = new InputStreamReader(stdin_javahome);
-                        BufferedReader br_in_javahome = new BufferedReader(isi_javahome);
-                        String line_in_javahome = null, javahome = null;
-                        while ((line_in_javahome = br_in_javahome.readLine()) != null){
-                            klog.info("Java home:" + line_in_javahome);
-                            javahome=line_in_javahome;
-                            
-                        }
+//					    Process proc_javahome = Runtime.getRuntime().exec("/usr/libexec/java_home");
+//					    InputStream stdin_javahome = proc_javahome.getInputStream();
+//                        InputStreamReader isi_javahome = new InputStreamReader(stdin_javahome);
+//                        BufferedReader br_in_javahome = new BufferedReader(isi_javahome);
+//                        String line_in_javahome = null, javahome = null;
+//                        while ((line_in_javahome = br_in_javahome.readLine()) != null){
+//                            klog.info("Java home:" + line_in_javahome);
+//                            javahome=line_in_javahome;
+//                            
+//                        }
 
                         //if there are multiple javas installed (specifically java 7 and java 8 on a Mac 
                         //cytoscape was not launching.  specify the java version fixes it.  When launching with envp
                         //none of the environment variables seem to be defined so also pass it in the home directory which the script
                         //also needs. 
+                        
+                        // Can we hoist this above both branches?  Should work all around, I would think.
        				    String[] envp = {"JAVA_HOME="+javahome,"HOME=" + System.getProperty("user.home")};
 					    proc = Runtime.getRuntime().exec(launch_command,envp);
 						
-
-						
-					    //set up input and error streams to stop process from hanging. 
-					   /* InputStream stderr = proc.getErrorStream();
-						InputStreamReader isr = new InputStreamReader(stderr);
-						BufferedReader br = new BufferedReader(isr);
-						String line = null;
-						while ((line = br.readLine()) != null)
-							klog.info(line);
-						
-						InputStream stdin = proc.getInputStream();
-                        InputStreamReader isi = new InputStreamReader(stdin);
-                        BufferedReader br_in = new BufferedReader(isi);
-                        String line_in = null;
-                        while ((line_in = br_in.readLine()) != null)
-                            klog.info(line_in);
-						*/
 					}
 														
 					} catch(IOException e){

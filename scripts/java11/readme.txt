@@ -4,7 +4,8 @@ GSEA Binary Distribution
 
 Prerequisites:
 
-Java 9 or 10 (http://www.java.com).  Not compatible with Java 8 or Java 11 EA.
+Java 11 (http://openjdk.java.net).  This is bundled with our distributions.
+Not compatible with Java 8, 9, 10.
 
 
 Instructions:
@@ -13,11 +14,12 @@ Instructions:
 
 2. To start GSEA execute the following from the command line,
 
-     java --module-path=modules -Xmx4g @gsea.args --module org.gsea_msigdb.gsea/xapps.gsea.GSEA
+     java --module-path=modules -Xmx4g @gsea.args --patch-module=jide.common=lib/jide-components-3.7.4.jar:lib/jide-dock-3.7.4.jar:lib/jide-grids-3.7.4.jar --module=org.gsea_msigdb.gsea/xapps.gsea.GSEA
 
-Alternatively, you can start GSEA with one of the following scripts.  Some
-of these may not be present depending on the distribution you downloaded.
-You might have to make the script executable (chmod a+x gsea.sh).
+Note that the command line has become more complex with Java 11 compared to Java 8.
+Alternatively, you can start GSEA with one of the following scripts; this is 
+recommended.  Some of these may not be present depending on the distribution you 
+downloaded.  You might have to make the script executable (chmod a+x gsea.sh).
 
 
 gsea.bat       (for Windows)
