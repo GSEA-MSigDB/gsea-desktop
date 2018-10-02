@@ -116,7 +116,7 @@ public class ImageUtil {
     public static final File saveAsSVG(JFreeChart chart, File outputFile, int width, int height, boolean gZip)
             throws IOException {
         outputFile = ensureGzipExtIfNecessary(outputFile, gZip);
-        SVGGraphics2D svgGenerator = setupSVGGenerator(outputFile, gZip);
+        SVGGraphics2D svgGenerator = setupSVGGenerator(outputFile, gZip, width, height);
         drawChartPlot(chart, svgGenerator, width, height);
         return streamToSvg(svgGenerator, outputFile, gZip);
     }
@@ -124,7 +124,9 @@ public class ImageUtil {
     private static final File saveAsSVG(HeatMap heatMap, File outputFile, boolean gZip)
             throws IOException {
         outputFile = ensureGzipExtIfNecessary(outputFile, gZip);
-        SVGGraphics2D svgGenerator = setupSVGGenerator(outputFile, gZip);
+        int height = heatMap.getHeightWithHeader();
+        int width = heatMap.getContentWidth();
+        SVGGraphics2D svgGenerator = setupSVGGenerator(outputFile, gZip, width, height);
         heatMap.drawSnapshot(svgGenerator);
         return streamToSvg(svgGenerator, outputFile, gZip);
     }
@@ -137,12 +139,14 @@ public class ImageUtil {
         return outputFile;
     }
     
-    private static final SVGGraphics2D setupSVGGenerator(File outputFile, boolean gZip) {
+    private static final SVGGraphics2D setupSVGGenerator(File outputFile, boolean gZip, int width, int height) {
         // Create an instance of org.w3c.dom.Document.
         DOMImplementation domImpl = GenericDOMImplementation.getDOMImplementation();
         String svgNS = "http://www.w3.org/2000/svg";
         Document document = domImpl.createDocument(svgNS, "svg", null);
-        return new SVGGraphics2D(document);
+        SVGGraphics2D svgGenerator = new SVGGraphics2D(document);
+        svgGenerator.setSVGCanvasSize(new Dimension(width, height));
+        return svgGenerator;
     }
     
     private static final File streamToSvg(SVGGraphics2D svgGenerator, File outputFile, boolean gZip)
