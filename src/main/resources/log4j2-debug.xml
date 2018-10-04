@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 
+    Copyright (c) 2003-2018 Broad Institute, Inc., 
+    Massachusetts Institute of Technology, and Regents of the University of California.
+    All rights reserved.
+  -->
+
+<!-- Specify the properties file by setting the "log4j.configuration" property at runtime.
+  e.g. java -jar -Xmx2g -Dlog4j.configurationFile=log4j_debug.xml gsea.jar -->
+<Configuration>
+  <Appenders>
+    <Console name="stdout" target="SYSTEM_OUT">
+      <PatternLayout pattern="%-8r [%-6p] - %m%n"/>
+    </Console>
+  </Appenders>
+  <Loggers>
+    <Root level="debug" additivity="false">
+      <AppenderRef ref="stdout"/>
+    </Root>
+  </Loggers>
+</Configuration>

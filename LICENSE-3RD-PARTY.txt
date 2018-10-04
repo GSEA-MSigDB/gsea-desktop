@@ -6,6 +6,7 @@ GSEA is distributed, in part, under and subject to the provisions of licenses fo
 Ant, Copyright 2000-2014 The Apache Software Foundation. All rights reserved. (http://ant.apache.org/).
 Apache Batik, Copyright 1998-2014 The Apache Software Foundation. All rights reserved. (https://xmlgraphics.apache.org/batik/).
 Apache Commons Compress, Copyright 2002-2014 The Apache Software Foundation. All rights reserved. (http://commons.apache.org/proper/commons-compress/).
+Apache Commons Exec, Copyright 2005-2014 The Apache Software Foundation. All rights reserved. (http://commons.apache.org/proper/commons-exec/).
 Apache Commons IO, Copyright 2002-2012 The Apache Software Foundation. All rights reserved. (http://commons.apache.org/proper/commons-io/).
 Apache Commons Lang, Copyright 2001-2015 The Apache Software Foundation. All rights reserved. (http://commons.apache.org/proper/commons-lang/).
 Apache Commons Logging, Copyright 2003-2014 The Apache Software Foundation. All rights reserved. (http://commons.apache.org/proper/commons-logging/).
