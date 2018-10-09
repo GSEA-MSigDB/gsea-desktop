@@ -11,21 +11,21 @@ Apache Commons IO, Copyright 2002-2012 The Apache Software Foundation. All right
 Apache Commons Lang, Copyright 2001-2015 The Apache Software Foundation. All rights reserved. (http://commons.apache.org/proper/commons-lang/).
 Apache Commons Logging, Copyright 2003-2014 The Apache Software Foundation. All rights reserved. (http://commons.apache.org/proper/commons-logging/).
 Apache HTTP Components, Copyright 1999-2016 The Apache Software Foundation. All rights reserved. (http://hc.apache.org/index.html).
-Apache Log4j, Copyright 1999-2012 The Apache Software Foundation. All rights reserved. (http://logging.apache.org/log4j/1.2/index.html)
+Apache Log4j, Copyright 1999-2017 The Apache Software Foundation. All rights reserved. (http://logging.apache.org/log4j/2.x/).
 Apple Inc. OSXAdapter, Copyright 2003-2007 Apple, Inc., All Rights Reserved.
-edtFTPJ/Free, Copyright 2001-2007 Enterprise Distributed Technologies Ltd. All Rights Reserved. (enterprisedt.com)
+edtFTPJ/Free, Copyright 2001-2007 Enterprise Distributed Technologies Ltd. All Rights Reserved. (enterprisedt.com).
 Jakarta ECS, Copyright The Apache Software Foundation. All rights reserved. (https://attic.apache.org/projects/jakarta-ecs.html).
-JCommon, Copyright 2007-2014 Object Refinery Limited. (http://www.jfree.org/jcommon/)
-JFreeChart, Copyright 2005-2014 Object Refinery Limited. (http://www.jfree.org/jfreechart/)
-JExcelApi, Copyright 2001-2009 Andrew Khan, Copyright 1996-2000 by Elliot Joel Berk and C. Scott Ananian. (http://jexcelapi.sourceforge.net/)
-JIDE Common, Copyright 2002-2016, JIDE Software, Inc. All Rights Reserved.  (www.jidesoft.com)
-JSON Simple, (https://code.google.com/archive/p/json-simple/)
+JCommon, Copyright 2007-2014 Object Refinery Limited. (http://www.jfree.org/jcommon/).
+JFreeChart, Copyright 2005-2014 Object Refinery Limited. (http://www.jfree.org/jfreechart/).
+JExcelApi, Copyright 2001-2009 Andrew Khan, Copyright 1996-2000 by Elliot Joel Berk and C. Scott Ananian. (http://jexcelapi.sourceforge.net/).
+JIDE Common, Copyright 2002-2016, JIDE Software, Inc. All Rights Reserved.  (www.jidesoft.com).
+JSON Simple, (https://code.google.com/archive/p/json-simple/).
 Maven Artifact, Copyright 2001-2008. All rights reserved. (http://maven.apache.org/index.html).
-MeV algorithms.jar, (http://www.tm4.org/mev.html)
-ProGuard, Copyright 2002-2016 Eric Lafortune @ GuardSquare. (http://proguard.sourceforge.net/)
-SGLayout, Copyright John Redmond (John.Redmond@mq.edu.au). (http://www.javaworld.com/article/2077494/learn-java/java-tip-129--sglayout--8212-a-layout-manager-for-the-rest-of-us.html)
-Trove, Copyright 2001-2005 Eric D. Friedman. All Rights Reserved. (trove.starlight-systems.com/)
-Universal Java Matrix Package (UJMP), Copyright 2008-2016 Holger Arndt. All rights reserved. (https://ujmp.org/) 
+MeV algorithms.jar, (http://www.tm4.org/mev.html).
+ProGuard, Copyright 2002-2016 Eric Lafortune @ GuardSquare. (http://proguard.sourceforge.net/).
+SGLayout, Copyright John Redmond (John.Redmond@mq.edu.au). (http://www.javaworld.com/article/2077494/learn-java/java-tip-129--sglayout--8212-a-layout-manager-for-the-rest-of-us.html).
+Trove, Copyright 2001-2005 Eric D. Friedman. All Rights Reserved. (trove.starlight-systems.com/).
+Universal Java Matrix Package (UJMP), Copyright 2008-2016 Holger Arndt. All rights reserved. (https://ujmp.org/) .
 
 ---- 
 JIDE Components, JIDE Dock, JIDE Grids: Copyright 2002-2016, JIDE Software, Inc. All Rights Reserved. (http://www.jidesoft.com/)

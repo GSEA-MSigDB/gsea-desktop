@@ -65,6 +65,7 @@ module org.gsea_msigdb.gsea {
     exports org.genepattern.menu;
     exports org.genepattern.menu.jfree;
     exports org.genepattern.module;
+    exports org.genepattern.modules;
     exports org.genepattern.plot;
     exports org.genepattern.table;
     exports org.genepattern.uiutil;
