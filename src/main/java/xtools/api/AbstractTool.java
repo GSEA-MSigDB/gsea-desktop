@@ -420,6 +420,30 @@ public abstract class AbstractTool implements Tool {
     }
 
     /**
+     * Method to run the given tool and deal with top-level error handling, meant to be used by
+     * the GP modules.  Unlike tool_main() this does *not* handle process exit, allowing the module
+     * to safely do some post-processing after the run.
+     * 
+     * Callers should exit via Conf.exitSystem() after completion.
+     */
+    public static boolean module_main(final AbstractTool tool) {
+        if (tool == null) {
+            throw new IllegalArgumentException("Param tool cannot be null");
+        }
+        try {
+            tool.execute();
+            return true;
+        } catch (Throwable t) {
+            // if the rpt dir was made try to rename it so that easily identifiable
+            t.printStackTrace();
+            if (tool.getReport() != null) {
+                tool.getReport().setErroredOut();
+            }
+            return false;
+        }
+    }
+
+    /**
      * A number of Helper methods for dealing with params, common extractions etc
      */
     public static class Helper {
