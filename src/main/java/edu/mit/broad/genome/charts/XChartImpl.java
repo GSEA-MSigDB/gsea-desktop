@@ -1,11 +1,11 @@
 /*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2018 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  *******************************************************************************/
 package edu.mit.broad.genome.charts;
 
 import edu.mit.broad.genome.Constants;
 
-import org.jfree.chart.ChartUtilities;
+import org.jfree.chart.ChartUtils;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.Plot;
 
@@ -111,7 +111,7 @@ public class XChartImpl implements XChart {
     }
 
     public void saveAsPNG(File inFile, int width, int height) throws IOException {
-        ChartUtilities.saveChartAsPNG(inFile, this.fFreeChart, width, height);
+        ChartUtils.saveChartAsPNG(inFile, this.fFreeChart, width, height);
     }
 
     public void saveAsSVG(File toFile, int width, int height) throws IOException {

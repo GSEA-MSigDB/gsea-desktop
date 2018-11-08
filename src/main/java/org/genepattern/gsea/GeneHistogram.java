@@ -1,20 +1,24 @@
 /*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2018 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  *******************************************************************************/
 package org.genepattern.gsea;
 
 import edu.mit.broad.genome.objects.RankedList;
+import edu.mit.broad.genome.reports.EnrichmentReports;
+
 import org.jfree.chart.*;
 import org.jfree.chart.axis.NumberAxis;
 import org.jfree.chart.axis.SymbolAxis;
 import org.jfree.chart.axis.ValueAxis;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.XYPlot;
+import org.jfree.chart.renderer.xy.StandardXYBarPainter;
 import org.jfree.chart.renderer.xy.XYBarRenderer;
 import org.jfree.chart.renderer.xy.XYItemRenderer;
+import org.jfree.chart.ui.RectangleEdge;
+import org.jfree.chart.ui.RectangleInsets;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
-import org.jfree.ui.RectangleEdge;
 
 import javax.swing.*;
 import java.awt.*;
@@ -40,10 +44,18 @@ public class GeneHistogram extends JPanel {
                 "Number Of Gene Sets", null, PlotOrientation.VERTICAL, false,
                 false, false);
 
-        geneHistChart.getXYPlot().getRangeAxis().setStandardTickUnits(
-                NumberAxis.createIntegerTickUnits());
+        XYPlot plot = geneHistChart.getXYPlot();
+        plot.getRangeAxis().setStandardTickUnits(NumberAxis.createIntegerTickUnits());
+        plot.setAxisOffset(new RectangleInsets(0,0,0,0));
+        plot.setBackgroundPaint(Color.WHITE);
+        plot.setDomainGridlinesVisible(true);
+        plot.setDomainGridlinePaint(Color.LIGHT_GRAY);
+        plot.setRangeGridlinesVisible(true);
+        plot.setRangeGridlinePaint(Color.LIGHT_GRAY);
+        plot.setRangeZeroBaselineVisible(false);
+        plot.setDomainZeroBaselineVisible(false);
 
-        XYItemRenderer renderer = new XYBarRenderer() {
+        XYBarRenderer renderer = new XYBarRenderer() {
             public Paint getItemPaint(int series, int item) {
                 if (item == selectedGeneIndex) {
                     return Color.YELLOW;
@@ -57,8 +69,15 @@ public class GeneHistogram extends JPanel {
                 return super.getItemPaint(series, item);
             }
         };
+        renderer.setGradientPaintTransformer(null);
+        renderer.setBarPainter(new StandardXYBarPainter());
+        renderer.setShadowVisible(false);
 
-        geneHistChart.getXYPlot().setRenderer(renderer);
+        plot.setRenderer(renderer);
+        plot.getRangeAxis().setAxisLinePaint(Color.GRAY);
+        plot.getRangeAxis().setAxisLineStroke(new BasicStroke(1.0f,BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER));
+        plot.getRangeAxis().setTickMarkPaint(Color.GRAY);
+        plot.getRangeAxis().setTickMarkStroke(new BasicStroke(1.0f));
 
         geneHistPanel = new ChartPanel(geneHistChart, false, false, false,
                 false, false) {
@@ -68,6 +87,7 @@ public class GeneHistogram extends JPanel {
             }
         };
         ToolTipManager.sharedInstance().registerComponent(geneHistPanel);
+        geneHistChart.setBackgroundPaint(EnrichmentReports.CHART_FRAME_COLOR);
 
         ChartMouseListener listener = new ChartMouseListener() {
 
@@ -132,6 +152,11 @@ public class GeneHistogram extends JPanel {
                 .getRankedNamesArray());
 
         xAxis.setVerticalTickLabels(true);
+        xAxis.setTickLabelFont(new Font("SansSerif", Font.PLAIN, 9));
+        xAxis.setTickMarkPaint(Color.GRAY);
+        xAxis.setTickMarkStroke(new BasicStroke(1.0f));
+        xAxis.setAxisLinePaint(Color.GRAY);
+        xAxis.setAxisLineStroke(new BasicStroke(1.0f,BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER));
         geneHistChart.getXYPlot().setDomainAxis(xAxis);
         geneHistChart.getXYPlot().setDataset(coll);
     }

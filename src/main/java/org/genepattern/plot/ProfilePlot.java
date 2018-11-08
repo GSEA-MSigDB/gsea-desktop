@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2018 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  *******************************************************************************/
 package org.genepattern.plot;
 
@@ -10,26 +10,27 @@ import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.SymbolAxis;
-import org.jfree.chart.block.BlockBorder;
 import org.jfree.chart.plot.Plot;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.jfree.chart.title.LegendTitle;
+import org.jfree.chart.ui.RectangleEdge;
+import org.jfree.chart.ui.RectangleInsets;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
-import org.jfree.ui.RectangleEdge;
-import org.jfree.ui.RectangleInsets;
 
 import javax.swing.*;
 
 import java.awt.*;
+import java.awt.geom.Rectangle2D;
 
 public class ProfilePlot {
     private static final void createLegend(JFreeChart jfree) {
         Plot plot = jfree.getPlot();
         LegendTitle legend = new LegendTitle(plot);
         legend.setMargin(new RectangleInsets(1.0, 1.0, 1.0, 1.0));
-        legend.setBorder(new BlockBorder());
+        Rectangle2D bounds = legend.getBounds();
+        legend.setBorder(1.0, 1.0, 1.0, 1.0);
         legend.setBackgroundPaint(Color.white);
         legend.setPosition(RectangleEdge.BOTTOM);
         jfree.clearSubtitles();
@@ -73,7 +74,7 @@ public class ProfilePlot {
         chartPanel.setMouseZoomable(true, false);
         XYLineAndShapeRenderer lineRenderer = (XYLineAndShapeRenderer) chart
                 .getXYPlot().getRenderer();
-        lineRenderer.setLinesVisible(true);
+        lineRenderer.setDefaultLinesVisible(true);
         String[] columnNames = new String[expressionData.getColumnCount()];
         for (int j = 0, columns = expressionData.getColumnCount(); j < columns; j++) {
             columnNames[j] = expressionData.getColumnName(j);

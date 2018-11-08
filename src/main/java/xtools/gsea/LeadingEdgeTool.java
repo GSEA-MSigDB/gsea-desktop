@@ -33,6 +33,7 @@ import xtools.api.param.ParamFactory;
 import xtools.api.param.StringInputParam;
 import xtools.api.param.StringMultiInputParam;
 
+import java.awt.Dimension;
 import java.io.File;
 import java.util.Properties;
 
@@ -168,10 +169,13 @@ public class LeadingEdgeTool extends AbstractTool {
             LeadingEdgeAnalysis analysis = LeadingEdgeAnalysis.runAnalysis(edb, gsetNames, null);
     
             JaccardHistogram jaccardHistogram = analysis.getJaccardHistogram();
+            // Hard-code the preferred size to match our legacy plots; these changed with JFreeChart 1.5.0
+            jaccardHistogram.getChartPanel().setPreferredSize(new Dimension(680, 420));
             File jaccardHistFile = fReport.createFile("jaccard_histogram." + imgFormat, "Jaccard Histogram");
             jaccardHistFile = ImageUtil.saveReportPlotImage(jaccardHistogram.getChartPanel(), jaccardHistFile, imgFormat);
             
             GeneHistogram geneHistogram = analysis.getGeneHistogram();
+            geneHistogram.getChartPanel().setPreferredSize(new Dimension(680, 420));
             File geneHistFile = fReport.createFile("gene_histogram." + imgFormat, "Gene Histogram");
             geneHistFile = ImageUtil.saveReportPlotImage(geneHistogram.getChartPanel(), geneHistFile, imgFormat);
             

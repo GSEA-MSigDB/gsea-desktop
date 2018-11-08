@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2018 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  *******************************************************************************/
 package edu.mit.broad.genome.reports;
 
@@ -25,9 +25,9 @@ import org.jfree.chart.plot.Marker;
 import org.jfree.chart.plot.ValueMarker;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.xy.StandardXYItemRenderer;
+import org.jfree.chart.ui.RectangleAnchor;
+import org.jfree.chart.ui.TextAnchor;
 import org.jfree.data.xy.XYDataset;
-import org.jfree.ui.RectangleAnchor;
-import org.jfree.ui.TextAnchor;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -61,6 +61,7 @@ public class RankedListCharts {
             String cl = Printf.format(mws.getTotalPosLength_frac() * 100, 1);
             String label = "Corr. area bias to " + classAName_opt + " = " + abias_s + "% & Zero crossing at rank " + mws.getTotalPosLength() + " (" + cl + "%)";
             midLine.setLabel(label);
+            midLine.setLabelBackgroundColor(Color.WHITE);
             midLine.setLabelAnchor(RectangleAnchor.TOP_RIGHT);
             //currentEnd.setLabelTextAnchor(TextAnchor.HALF_ASCENT_CENTER);
             plot.addDomainMarker(midLine);
@@ -85,6 +86,7 @@ public class RankedListCharts {
             midLine.setStroke(new BasicStroke(0.25f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 3, new float[]{5, 3, 3, 3}, 0));
             String label = "Zero cross at " + mws.getTotalPosLength();
             midLine.setLabel(label);
+            midLine.setLabelBackgroundColor(Color.WHITE);
             midLine.setLabelAnchor(RectangleAnchor.CENTER);
             //currentEnd.setLabelTextAnchor(TextAnchor.HALF_ASCENT_CENTER);
             plot.addDomainMarker(midLine);
@@ -144,6 +146,10 @@ public class RankedListCharts {
                 target.setLabelAnchor(RectangleAnchor.LEFT);
                 target.setLabelTextAnchor(TextAnchor.CENTER_LEFT);
                 target.setLabelPaint(Color.RED);
+                target.setLabelBackgroundColor(Color.WHITE);
+                // Hide the IntervalMarker line
+                target.setOutlineStroke(new BasicStroke(0.0f));
+                target.setOutlinePaint(new Color(0, 0, 0, 0));
                 if (horizontal) {
                     plot.addRangeMarker(target);
                 } else {
@@ -159,6 +165,9 @@ public class RankedListCharts {
                 //target.setLabelAnchor(RectangleAnchor.RIGHT);
                 target.setLabelTextAnchor(TextAnchor.CENTER_LEFT);
                 target.setLabelPaint(Color.BLUE);
+                target.setLabelBackgroundColor(Color.WHITE);
+                target.setOutlineStroke(new BasicStroke(0.0f));
+                target.setOutlinePaint(new Color(0, 0, 0, 0));
                 if (horizontal) {
                     plot.addRangeMarker(target);
                 } else {

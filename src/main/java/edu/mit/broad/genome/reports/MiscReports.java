@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2018 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  *******************************************************************************/
 package edu.mit.broad.genome.reports;
 
@@ -87,6 +87,7 @@ public class MiscReports {
         }
 
         XChart xc = RankedListCharts.createRankedListChart(rl, classAName, classBName, true);
+        xc.getFreeChart().setBackgroundPaint(EnrichmentReports.CHART_FRAME_COLOR);
         htmlPage.addChart(xc, 500, 400, saveInDir, createSvgs);
 
         htmlPage.addBreak();

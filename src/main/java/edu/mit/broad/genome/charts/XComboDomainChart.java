@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2018 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  *******************************************************************************/
 package edu.mit.broad.genome.charts;
 
@@ -9,7 +9,11 @@ import org.jfree.chart.plot.CombinedDomainXYPlot;
 import org.jfree.chart.plot.Plot;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.XYPlot;
+import org.jfree.chart.ui.RectangleInsets;
 
+import edu.mit.broad.genome.reports.EnrichmentReports;
+
+import java.awt.BasicStroke;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -84,15 +88,18 @@ public class XComboDomainChart implements XComboChart {
 
         this.fCombinedXYPlot = new CombinedDomainXYPlot(new NumberAxis(domainAxisLabel));
         fCombinedXYPlot.setOrientation(PlotOrientation.VERTICAL); // @note
+        fCombinedXYPlot.setOutlineStroke(new BasicStroke(1.0f));
 
         for (int i = 0; i < xyplots.length; i++) {
             xyplots[i].setDomainAxis(null);// needed i think (yes)
             fCombinedXYPlot.add(xyplots[i], weights[i]);    // weight - amt of space to give it
+            xyplots[i].setInsets(new RectangleInsets(0.0,0.0,0.0,0.0));
         }
 
         this.fComboCaption = comboCaption;
         this.fCombinedFreeChart = new JFreeChart(comboTitle, JFreeChart.DEFAULT_TITLE_FONT, fCombinedXYPlot, true);
-
+        fCombinedFreeChart.setBackgroundPaint(EnrichmentReports.CHART_FRAME_COLOR);
+        fCombinedFreeChart.getLegend().setBorder(1.0, 1.0, 1.0, 1.0);
 
         this.fCombinedChart = new XChartImpl(name, fComboCaption, fCombinedFreeChart);
         this.fSubCharts = new ArrayList();

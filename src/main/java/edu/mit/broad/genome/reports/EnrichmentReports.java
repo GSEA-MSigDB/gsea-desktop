@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2018 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  *******************************************************************************/
 package edu.mit.broad.genome.reports;
 
@@ -35,12 +35,15 @@ import gnu.trove.TIntFloatHashMap;
 import gnu.trove.TIntIntHashMap;
 import gnu.trove.TIntObjectHashMap;
 
+import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.ecs.StringElement;
 import org.apache.ecs.html.*;
 import org.genepattern.io.ImageUtil;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.annotations.XYTextAnnotation;
+import org.jfree.chart.axis.AxisLabelLocation;
+import org.jfree.chart.axis.AxisSpace;
 import org.jfree.chart.axis.NumberAxis;
 import org.jfree.chart.block.BlockContainer;
 import org.jfree.chart.block.BorderArrangement;
@@ -51,6 +54,11 @@ import org.jfree.chart.renderer.xy.XYItemRenderer;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.jfree.chart.title.CompositeTitle;
 import org.jfree.chart.title.LegendTitle;
+import org.jfree.chart.ui.Layer;
+import org.jfree.chart.ui.RectangleAnchor;
+import org.jfree.chart.ui.RectangleEdge;
+import org.jfree.chart.ui.RectangleInsets;
+import org.jfree.chart.ui.TextAnchor;
 import org.jfree.data.DomainOrder;
 import org.jfree.data.general.DatasetChangeListener;
 import org.jfree.data.general.DatasetGroup;
@@ -58,10 +66,6 @@ import org.jfree.data.statistics.HistogramType;
 import org.jfree.data.xy.XYDataset;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
-import org.jfree.ui.Layer;
-import org.jfree.ui.RectangleAnchor;
-import org.jfree.ui.RectangleEdge;
-import org.jfree.ui.TextAnchor;
 
 import xapps.api.vtools.viewers.VizFactory;
 
@@ -90,6 +94,8 @@ public class EnrichmentReports extends ChartHelper {
     private static final int COL_FDR = 6;
     private static final int COL_FWER = 7;
     public static final String ENPLOT_ = "enplot_";
+    
+    public static final Color CHART_FRAME_COLOR = new Color(0xf2, 0xf2, 0xf2);
 
 
     public static class Ret {
@@ -1084,15 +1090,20 @@ public class EnrichmentReports extends ChartHelper {
 
 
         if (drawTicks) {
-            plot.getRenderer().setStroke(new BasicStroke(1.0f));
+            plot.getRenderer().setSeriesStroke(0, new BasicStroke(1.0f));
         } else {
-            plot.getRenderer().setStroke(new BasicStroke(0.0f));
+            plot.getRenderer().setSeriesStroke(0, new BasicStroke(0.0f));
+            plot.setOutlinePaint(Color.BLACK);
         }
-        plot.getRenderer().setPaint(Color.BLACK);
+        plot.getRenderer().setSeriesPaint(0, Color.BLACK);
 
         if (markers != null && markers.length > 0) {
             //klog.debug("# SHADING BG of interval markers: " + markers.length);
             for (int i = 0; i < markers.length; i++) {
+                markers[i].setAlpha(1.0f);
+                // Hide the IntervalMarker line
+                markers[i].setOutlineStroke(new BasicStroke(0.0f));
+                markers[i].setOutlinePaint(new Color(0, 0, 0, 0));
                 if (horizontal) {
                     plot.addDomainMarker(0, markers[i], Layer.BACKGROUND); // @note add as background
                 } else {
@@ -1121,9 +1132,18 @@ public class EnrichmentReports extends ChartHelper {
                 "FDR q-value", // y-axis title
                 nessX,
                 yss);
-
+        chart.setBackgroundPaint(CHART_FRAME_COLOR);
 
         XYPlot plot = (XYPlot) chart.getPlot();
+        
+        // Adjust plot to match our legacy settings; these changed with JFreeChart 1.5.0
+        plot.setAxisOffset(new RectangleInsets(0,0,0,0));
+        plot.setBackgroundPaint(Color.WHITE);
+        plot.setDomainGridlinesVisible(true);
+        plot.setDomainGridlinePaint(Color.LIGHT_GRAY);
+        plot.setRangeGridlinesVisible(true);
+        plot.setRangeGridlinePaint(Color.LIGHT_GRAY);
+        
         NumberAxis axis2 = new NumberAxis("Nominal P-value");
         axis2.setAutoRangeIncludesZero(false);
         plot.setRangeAxis(1, axis2);
@@ -1142,7 +1162,7 @@ public class EnrichmentReports extends ChartHelper {
         if (renderer instanceof StandardXYItemRenderer) {
             StandardXYItemRenderer rr = (StandardXYItemRenderer) renderer;
             rr.setBaseShapesVisible(true);
-            rr.setShapesFilled(true);
+            rr.setBaseShapesFilled(true);
             rr.setSeriesPaint(0, Color.MAGENTA);
         }
 
@@ -1186,8 +1206,7 @@ public class EnrichmentReports extends ChartHelper {
                 numBins,
                 HistogramType.FREQUENCY);
 
-        chart.getXYPlot().getRenderer().setStroke(new BasicStroke(2.0f)); // make it thicker
-
+        chart.getXYPlot().getRenderer().setSeriesStroke(0, new BasicStroke(2.0f)); // make it thicker
 
         return new XChartImpl("global_es_histogram", "Global histogram of ES for <b>" + phenotypeName + "</b>", chart);
     }
@@ -1210,16 +1229,17 @@ public class EnrichmentReports extends ChartHelper {
                 true,
                 numBins,
                 HistogramType.FREQUENCY);
+        chart.setBackgroundPaint(CHART_FRAME_COLOR);
 
-
-        chart.getXYPlot().getRenderer().setStroke(new BasicStroke(2.0f));
-        chart.getXYPlot().getRenderer().setPaint(Color.MAGENTA);
+        chart.getXYPlot().getRenderer().setSeriesPaint(0, Color.MAGENTA);
+        chart.getXYPlot().getRenderer().setSeriesStroke(0, new BasicStroke(2.0f));
 
         Marker midLine = new ValueMarker(realEs);
         midLine.setPaint(Color.BLACK);
         midLine.setStroke(new BasicStroke(2.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 3, new float[]{5, 3, 3, 3}, 0));
         String label = "Real ES " + Printf.format(realEs, 1);
         midLine.setLabel(label);
+        midLine.setLabelBackgroundColor(Color.WHITE);
         if (XMath.isPositive(realEs)) {
             midLine.setLabelAnchor(RectangleAnchor.BOTTOM_LEFT);
         } else {
@@ -1242,6 +1262,10 @@ public class EnrichmentReports extends ChartHelper {
             target.setLabelAnchor(RectangleAnchor.TOP_RIGHT);
             target.setLabelTextAnchor(TextAnchor.TOP_RIGHT);
             target.setLabelPaint(Color.RED);
+            target.setLabelBackgroundColor(Color.WHITE);
+            // Hide the IntervalMarker line
+            target.setOutlineStroke(new BasicStroke(0.0f));
+            target.setOutlinePaint(new Color(0, 0, 0, 0));
             chart.getXYPlot().addDomainMarker(target);
         }
 
@@ -1253,6 +1277,10 @@ public class EnrichmentReports extends ChartHelper {
             target.setLabelAnchor(RectangleAnchor.TOP_LEFT);
             target.setLabelTextAnchor(TextAnchor.TOP_LEFT);
             target.setLabelPaint(Color.BLUE);
+            target.setLabelBackgroundColor(Color.WHITE);
+            // Hide the IntervalMarker line
+            target.setOutlineStroke(new BasicStroke(0.0f));
+            target.setOutlinePaint(new Color(0, 0, 0, 0));
             chart.getXYPlot().addDomainMarker(target);
         }
 
@@ -1288,6 +1316,35 @@ public class EnrichmentReports extends ChartHelper {
         XChart chart3 = RankedListCharts.createRankedListChart(rl,
                 classAName_opt, classBName_opt, enrichmentScoreProfile.maxDevFrom0Index(), horizontal);
 
+        // Lots of tweaks to the plots to more closely match our legacy settings; these changed with JFreeChart 1.5.0
+        XYPlot plot = chart0.getFreeChart().getXYPlot();
+        plot.setAxisOffset(new RectangleInsets(-1,0,0,0));
+        plot.setOutlineStroke(new BasicStroke(0.5f,BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER));
+        plot.setOutlinePaint(Color.GRAY);
+        plot.getRangeAxis().setAxisLinePaint(Color.GRAY);
+        plot.getRangeAxis().setAxisLineStroke(new BasicStroke(1.0f,BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER));
+        plot = chart1.getFreeChart().getXYPlot();
+        plot.setAxisOffset(new RectangleInsets(-1,0,0,0));
+        plot.setOutlineStroke(new BasicStroke(0.5f,BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER));
+        plot.setOutlinePaint(Color.GRAY);
+        plot.getRangeAxis().setAxisLinePaint(Color.GRAY);
+        plot.getRangeAxis().setAxisLineStroke(new BasicStroke(1.0f,BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER));
+        plot = chart2.getFreeChart().getXYPlot();
+        plot.setAxisOffset(new RectangleInsets(-1,0,0,0));
+        plot.setOutlineStroke(new BasicStroke(0.5f,BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER));
+        plot.setOutlinePaint(Color.GRAY);
+        plot.getRangeAxis().setAxisLinePaint(Color.GRAY);
+        plot.getRangeAxis().setAxisLineStroke(new BasicStroke(1.0f,BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER));
+        plot = chart3.getFreeChart().getXYPlot();
+        plot.setAxisOffset(new RectangleInsets(-1,0,0,0));
+        plot.setOutlineStroke(new BasicStroke(0.5f,BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER));
+        plot.setOutlinePaint(Color.GRAY);        
+        plot.getDomainAxis().setAxisLineVisible(true);
+        plot.getDomainAxis().setAxisLinePaint(Color.GRAY);
+        plot.getDomainAxis().setAxisLineStroke(new BasicStroke(1.0f,BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER));
+        plot.getRangeAxis().setAxisLinePaint(Color.GRAY);
+        plot.getRangeAxis().setAxisLineStroke(new BasicStroke(1.0f,BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER));
+
         // @IMP dont chnage the prefix
         XComboChart combo;
 
@@ -1295,17 +1352,21 @@ public class EnrichmentReports extends ChartHelper {
             XComboDomainChart cd = new XComboDomainChart(ENPLOT_ + gsetName, "Enrichment plot: " + gsetName,
                     "Profile of the Running ES Score & Positions of GeneSet Members on the Rank Ordered List",
                     "Rank in Ordered Dataset", new XChart[]{chart0, chart1, chart2, chart3}, new int[]{12, 4, 1, 8});
-            cd.getCombinedXYPlot().setGap(0);
+            cd.getCombinedXYPlot().setGap(0.0f);
             cd.getCombinedXYPlot().getDomainAxis().setTickLabelsVisible(true);
             cd.getCombinedXYPlot().getDomainAxis().setTickMarksVisible(true);
+            cd.getCombinedXYPlot().getDomainAxis().setTickMarkStroke(new BasicStroke(1.0f));
+            cd.getCombinedXYPlot().getDomainAxis().setTickMarkPaint(Color.GRAY);
             combo = cd;
         } else {
             XComboRangeChart cr = new XComboRangeChart(ENPLOT_ + gsetName, "Enrichment plot: " + gsetName,
                     "Profile of the Running ES Score & Positions of GeneSet Members on the Rank Ordered List",
                     "Rank in Ordered Dataset", new XChart[]{chart0, chart1, chart2, chart3}, new int[]{12, 4, 1, 8});
-            cr.getCombinedXYPlot().setGap(0);
+            cr.getCombinedXYPlot().setGap(0.0f);
             cr.getCombinedXYPlot().getRangeAxis().setTickLabelsVisible(true);
             cr.getCombinedXYPlot().getRangeAxis().setTickMarksVisible(true);
+            cr.getCombinedXYPlot().getRangeAxis().setTickMarkStroke(new BasicStroke(1.0f));
+            cr.getCombinedXYPlot().getRangeAxis().setTickMarkPaint(Color.GRAY);
             combo = cr;
         }
 
@@ -1338,30 +1399,40 @@ public class EnrichmentReports extends ChartHelper {
                     PlotOrientation.VERTICAL, true, false, false);
         }
 
-        chart.getXYPlot().getRangeAxis().setTickLabelsVisible(true);
-        chart.getXYPlot().getRangeAxis().setTickMarksVisible(true);
-        chart.getXYPlot().getDomainAxis().setTickLabelsVisible(true);
-        chart.getXYPlot().getDomainAxis().setTickMarksVisible(true);
+        XYPlot plot = chart.getXYPlot();
+        plot.getRangeAxis().setTickLabelsVisible(true);
+        plot.getRangeAxis().setTickMarksVisible(true);
+        plot.getRangeAxis().setTickMarkStroke(new BasicStroke(1.0f));
+        plot.getRangeAxis().setTickMarkPaint(Color.GRAY);
+        plot.getDomainAxis().setTickLabelsVisible(true);
+        plot.getDomainAxis().setTickMarksVisible(true);
+
+        // Adjust plot to match our legacy settings; these changed with JFreeChart 1.5.0
+        plot.setBackgroundPaint(Color.WHITE);
+        plot.setDomainGridlinesVisible(true);
+        plot.setDomainGridlinePaint(Color.LIGHT_GRAY);
+        plot.setRangeGridlinesVisible(true);
+        plot.setRangeGridlinePaint(Color.LIGHT_GRAY);
 
         if (horizontal) {
-            chart.getXYPlot().getRangeAxis().setLabel("Enrichment score (ES)");
-            chart.getXYPlot().getDomainAxis().setLabel("Position in ranked list");
-            chart.getXYPlot().getDomainAxis().setVisible(true);
+            plot.getRangeAxis().setLabel("Enrichment score (ES)");
+            plot.getDomainAxis().setLabel("Position in ranked list");
+            plot.getDomainAxis().setVisible(true);
         } else {
-            chart.getXYPlot().getDomainAxis().setLabel("Enrichment score (ES)");
-            chart.getXYPlot().getRangeAxis().setLabel("Position in ranked list");
-            chart.getXYPlot().getRangeAxis().setVisible(true);
+            plot.getDomainAxis().setLabel("Enrichment score (ES)");
+            plot.getRangeAxis().setLabel("Position in ranked list");
+            plot.getRangeAxis().setVisible(true);
         }
 
-        chart.getXYPlot().getRenderer().setStroke(new BasicStroke(2.0f));
-        chart.getXYPlot().getRenderer().setPaint(Color.GREEN);
+        plot.getRenderer().setSeriesStroke(0, new BasicStroke(2.0f));
+        plot.getRenderer().setSeriesPaint(0, Color.GREEN);
 
         Marker midLine = new ValueMarker(0); // at y = 0
         midLine.setPaint(Color.DARK_GRAY);
         if (horizontal) {
-            chart.getXYPlot().addRangeMarker(midLine);
+            plot.addRangeMarker(midLine);
         } else {
-            chart.getXYPlot().addDomainMarker(midLine);
+            plot.addDomainMarker(midLine);
         }
 
         return new XChartImpl("Enrichment profile", "Enrichment profile", chart);
@@ -1557,17 +1628,13 @@ public class EnrichmentReports extends ChartHelper {
         }
 
         public DomainOrder getDomainOrder() {
-            throw new NotImplementedException();
+            return DomainOrder.NONE;
         }
 
-        ASComparable foo;
-
         public java.lang.Comparable getSeriesKey(int series) {
-            if (foo == null) {
-                foo = new ASComparable(fSeriesNames[0]);
-            }
+            if (fSeriesNames == null) throw new IllegalStateException("Dataset has no series");
 
-            return foo;
+            return fSeriesNames[series];
         }
 
     } // End class EsProfileDataset
@@ -1660,17 +1727,13 @@ public class EnrichmentReports extends ChartHelper {
         }
 
         public DomainOrder getDomainOrder() {
-            throw new NotImplementedException();
+            return DomainOrder.NONE;
         }
 
-        private ASComparable foo;
-
         public java.lang.Comparable getSeriesKey(int series) {
-            if (foo == null) {
-                foo = new ASComparable(fSeriesNames[0]);
-            }
+            if (fSeriesNames == null) throw new IllegalStateException("Dataset has no series");
 
-            return foo;
+            return fSeriesNames[series];
         }
 
     } // End class EsProfileDataset2
@@ -1768,9 +1831,12 @@ public class EnrichmentReports extends ChartHelper {
     
         // NOW DO SOME OPTIONAL CUSTOMISATION OF THE CHART...
         chart.setBackgroundPaint(Color.WHITE);
+        chart.getTitle().setFont(new Font("SansSerif", Font.BOLD, 16));
+        chart.getLegend().setBorder(1.0, 1.0, 1.0, 1.0);
     
         // get a reference to the plot for further customisation...
         XYPlot plot = (XYPlot) chart.getPlot();
+        plot.setAxisOffset(new RectangleInsets(0,0,0,0));
         plot.setBackgroundPaint(Color.WHITE);
         plot.setDomainGridlinePaint(Color.GRAY);
         plot.setRangeGridlinePaint(Color.GRAY);
@@ -1819,7 +1885,11 @@ public class EnrichmentReports extends ChartHelper {
             target.setLabelAnchor(RectangleAnchor.RIGHT);
             target.setLabelTextAnchor(TextAnchor.CENTER_RIGHT);
             target.setLabelPaint(Color.RED);
-            chart.getXYPlot().addRangeMarker(target);
+            target.setLabelBackgroundColor(Color.WHITE);
+            // Hide the IntervalMarker line
+            target.setOutlineStroke(new BasicStroke(0.0f));
+            target.setOutlinePaint(new Color(0, 0, 0, 0));
+            chart.getXYPlot().addRangeMarker(target);            
         }
     
         if (classBName_opt != null && classBName_opt.length() > 0) {
@@ -1829,6 +1899,9 @@ public class EnrichmentReports extends ChartHelper {
             target.setLabelAnchor(RectangleAnchor.LEFT);
             target.setLabelTextAnchor(TextAnchor.CENTER_LEFT);
             target.setLabelPaint(Color.BLUE);
+            target.setLabelBackgroundColor(Color.WHITE);
+            target.setOutlineStroke(new BasicStroke(0.0f));
+            target.setOutlinePaint(new Color(0, 0, 0, 0));
             chart.getXYPlot().addRangeMarker(target);
         }
     

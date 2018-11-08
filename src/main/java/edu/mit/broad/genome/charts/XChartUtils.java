@@ -1,8 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2018 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  *******************************************************************************/
 package edu.mit.broad.genome.charts;
 
+import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
 
@@ -13,6 +14,7 @@ import org.jfree.chart.axis.NumberAxis;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.xy.StandardXYItemRenderer;
+import org.jfree.chart.ui.RectangleInsets;
 import org.jfree.data.statistics.HistogramDataset;
 import org.jfree.data.statistics.HistogramType;
 import org.jfree.data.xy.XYDataset;
@@ -60,9 +62,7 @@ public class XChartUtils {
 
         XYDataset data = new XYDatasetMultiTmp(ytitles, xcommon, yss);
         return ChartFactory.createScatterPlot(comboTitle, xaxisTitle,
-                yaxisTitle, data,
-                PlotOrientation.VERTICAL,
-                false, false, false);
+                yaxisTitle, data, PlotOrientation.VERTICAL, false, false, false);
     }
 
     /**
@@ -147,7 +147,17 @@ public class XChartUtils {
                     false);
         }
 
-        chart.getXYPlot().setForegroundAlpha(0.75f);
+        XYPlot plot = chart.getXYPlot();
+        plot.setForegroundAlpha(0.75f);
+
+        // Adjust plot to match our legacy settings
+        plot.setAxisOffset(new RectangleInsets(0,0,0,0));
+        plot.setBackgroundPaint(Color.WHITE);
+        plot.setDomainGridlinesVisible(true);
+        plot.setDomainGridlinePaint(Color.LIGHT_GRAY);
+        plot.setRangeGridlinesVisible(true);
+        plot.setRangeGridlinePaint(Color.LIGHT_GRAY);
+        
         return chart;
     }
 

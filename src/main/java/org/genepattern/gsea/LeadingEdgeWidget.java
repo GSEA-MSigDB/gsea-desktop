@@ -350,18 +350,42 @@ public class LeadingEdgeWidget implements Widget {
                 @Override
                 protected LeadingEdgeAnalysis doInBackground() throws Exception {
                     runs++;
+                    try {
                     return LeadingEdgeAnalysis.runAnalysis(edb, 
                             viewAndSearchComponent.getSelectedColumnArray(GENE_SET_INDEX), 
                             (Frame) tabbedPane.getTopLevelAncestor());
+                    }
+                    catch (Throwable t) {
+                        t.printStackTrace();
+                        tabbedPane.setCursor(Cursor
+                                .getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+                        UIUtil.showErrorDialog(tabbedPane.getTopLevelAncestor(),
+                                "An error occurred while running leading edge analysis");
+                        return null;
+                    }
+                }
+                
+                @Override
+                protected void done() {
+                    try {
+                        LeadingEdgeAnalysis analysis = get();
+                        if (analysis == null) return;
+
+                        tabbedPane.addTab("Leading Edge Analysis-" + runs, analysis
+                                .getComponent());
+                        tabbedPane.setSelectedComponent(analysis.getComponent());
+                        tabbedPane.setCursor(Cursor
+                                .getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+                    } catch (Throwable t) {
+                        t.printStackTrace();
+                        tabbedPane.setCursor(Cursor
+                                .getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+                        UIUtil.showErrorDialog(tabbedPane.getTopLevelAncestor(),
+                                "An error occurred while running leading edge analysis");
+                    }
                 }
             };
-            LeadingEdgeAnalysis analysis = worker.get();
-
-            tabbedPane.addTab("Leading Edge Analysis-" + runs, analysis
-                    .getComponent());
-            tabbedPane.setSelectedComponent(analysis.getComponent());
-            tabbedPane.setCursor(Cursor
-                    .getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+            worker.execute();
         } catch (Throwable t) {
             t.printStackTrace();
             tabbedPane.setCursor(Cursor

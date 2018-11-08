@@ -13,8 +13,14 @@ import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.NumberAxis;
 import org.jfree.chart.plot.PlotOrientation;
+import org.jfree.chart.plot.XYPlot;
+import org.jfree.chart.renderer.xy.StandardXYBarPainter;
+import org.jfree.chart.renderer.xy.XYBarRenderer;
+import org.jfree.chart.ui.RectangleInsets;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
+
+import edu.mit.broad.genome.reports.EnrichmentReports;
 
 import javax.swing.*;
 import java.awt.*;
@@ -43,12 +49,32 @@ public class JaccardHistogram extends JPanel {
         chartPanel = new ChartPanel(jaccardChart, false, false, false, false,
                 false);
 
-        jaccardChart.getXYPlot().getRangeAxis().setStandardTickUnits(
-                NumberAxis.createIntegerTickUnits());
-        ((NumberAxis) jaccardChart.getXYPlot().getDomainAxis())
-                .setAutoRangeIncludesZero(true);
+        XYPlot plot = jaccardChart.getXYPlot();
+        plot.getRangeAxis().setStandardTickUnits(NumberAxis.createIntegerTickUnits());
+        plot.getRangeAxis().setAxisLinePaint(Color.GRAY);
+        plot.getRangeAxis().setAxisLineStroke(new BasicStroke(1.0f,BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER));
+        plot.getRangeAxis().setTickMarkPaint(Color.GRAY);
+        plot.getRangeAxis().setTickMarkStroke(new BasicStroke(1.0f));
+        plot.getDomainAxis().setAxisLinePaint(Color.GRAY);
+        plot.getDomainAxis().setAxisLineStroke(new BasicStroke(1.0f,BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER));
+        plot.getDomainAxis().setTickMarkPaint(Color.GRAY);
+        plot.getDomainAxis().setTickMarkStroke(new BasicStroke(1.0f));
+        plot.setAxisOffset(new RectangleInsets(0,0,0,0));
+        plot.setBackgroundPaint(Color.WHITE);
+        plot.setDomainGridlinesVisible(true);
+        plot.setDomainGridlinePaint(Color.LIGHT_GRAY);
+        plot.setRangeGridlinesVisible(true);
+        plot.setRangeGridlinePaint(Color.LIGHT_GRAY);
+
+        ((NumberAxis) plot.getDomainAxis()).setAutoRangeIncludesZero(true);
+        XYBarRenderer renderer = (XYBarRenderer)plot.getRenderer();
+        renderer.setGradientPaintTransformer(null);
+        renderer.setBarPainter(new StandardXYBarPainter());
+        renderer.setDrawBarOutline(true);
+        renderer.setSeriesOutlinePaint(0, Color.GRAY);
 
         chartPanel.setMouseZoomable(true, false);
+        chartPanel.getChart().setBackgroundPaint(EnrichmentReports.CHART_FRAME_COLOR);
         this.add(chartPanel);
 
         JLabel binWidthLabel = new JLabel("Bin Width:");

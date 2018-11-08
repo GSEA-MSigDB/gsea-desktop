@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2018 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  *******************************************************************************/
 package edu.mit.broad.genome.models;
 
@@ -68,18 +68,16 @@ public class XYDatasetProxy2 implements XYDataset {
         //super.setSeriesNames(new String[]{seriesname});
     }
 
-    public int indexOf(java.lang.Comparable comparable) {
+    public int indexOf(Comparable comparable) {
+        if (fSeriesName != null && fSeriesName.equals(comparable)) return 0;
         return -1;
     }
 
-    ASComparable foo;
-
-    public java.lang.Comparable getSeriesKey(int series) {
-        if (foo == null) {
-            foo = new ASComparable(getSeriesName(0));
-        }
-
-        return foo;
+    public Comparable getSeriesKey(int series) {
+        // Consider adding check...
+        //if (series != 0) throw new IllegalArgumentException("Illegal series for dataset: " + series);
+        
+        return fSeriesName;
     }
 
     public String toString() {
@@ -107,7 +105,7 @@ public class XYDatasetProxy2 implements XYDataset {
     }
 
     public DomainOrder getDomainOrder() {
-        throw new NotImplementedException();
+        return DomainOrder.NONE;
     }
 
     public int getSeriesCount() {

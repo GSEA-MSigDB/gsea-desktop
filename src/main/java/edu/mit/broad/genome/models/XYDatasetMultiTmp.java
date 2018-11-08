@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2018 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  *******************************************************************************/
 package edu.mit.broad.genome.models;
 
@@ -7,6 +7,7 @@ import edu.mit.broad.genome.MismatchedSizeException;
 import edu.mit.broad.genome.NotImplementedException;
 import edu.mit.broad.genome.math.Vector;
 import edu.mit.broad.genome.math.XYVector;
+
 import org.jfree.data.DomainOrder;
 import org.jfree.data.general.DatasetChangeListener;
 import org.jfree.data.general.DatasetGroup;
@@ -41,22 +42,22 @@ public class XYDatasetMultiTmp implements XYDataset {
         for (int i = 0; i < yss.length; i++) {
             fXYVectors[i] = new XYVector(sharedX, yss[i]);
         }
-
     }
 
-    // added dummy for jfreechart RC1 Nov 2005
-    public int indexOf(java.lang.Comparable comparable) {
+    public int indexOf(Comparable seriesKey) {
+        if (fSeriesNames == null || seriesKey == null) return -1;
+        
+        for (int i = 0; i < fSeriesNames.length; i++) {
+            if (fSeriesNames[i] != null && fSeriesNames[i].equals(seriesKey)) return i;
+        }
+        
         return -1;
     }
 
-    ASComparable foo;
+    public Comparable getSeriesKey(int series) {
+        if (fSeriesNames == null) throw new IllegalStateException("Dataset has no series");
 
-    public java.lang.Comparable getSeriesKey(int series) {
-        if (foo == null) {
-            foo = new ASComparable(getSeriesName(0));
-        }
-
-        return foo;
+        return fSeriesNames[series];
     }
 
 
@@ -106,7 +107,7 @@ public class XYDatasetMultiTmp implements XYDataset {
     }
 
     public DomainOrder getDomainOrder() {
-        throw new NotImplementedException();
+        return DomainOrder.NONE;
     }
 
 } // End class ProxyDatasetMultiTmp
