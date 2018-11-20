@@ -182,17 +182,32 @@ task createMacAppDistZip(type: Zip, dependsOn: createMacAppDist) {
     }
 }
 
-task createWinDistZip(type: Zip, dependsOn: createDist) {
+task createWinDist(type: Copy, dependsOn: createDist) {
+    if (!jdkBundleWindows.equals("")) {
+        with copySpec { from jdkBundleWindows into "GSEA_${version}/jdk-11" }
+    }
+    with copySpec {
+        from("${buildDir}/GSEA-dist") {
+            exclude "*.sh"
+            exclude "*.command"
+        }
+        from ("scripts/nsis") { include "XBench64x64.ico" }
+        into "GSEA_${version}"
+    }
+    with copySpec {
+        // Create a build-specific NSIS installer script.
+        from ("scripts/nsis/installer.nsi")
+        filter (ReplaceTokens, tokens: [ VERSION: version ])
+    }
+    from ("scripts/nsis") { include "LICENSE_WIN.txt" }
+    into "${buildDir}/GSEA-WinExe-dist"
+}
+
+task createWinDistZip(type: Zip, dependsOn: createWinDist) {
     baseName = "GSEA_Win"
     archiveName = createWinDistZip.baseName + "_${version}_java11.zip"
     destinationDir = file("${buildDir}/distZip")
-    if (!jdkBundleWindows.equals("")) {
-        with copySpec { from jdkBundleWindows into "jdk-11" }
-    }
-    from("${buildDir}/GSEA-dist") {
-        exclude "*.sh"
-        exclude "*.command"
-    }
+    from "${buildDir}/GSEA-WinExe-dist/GSEA_${version}"
     into createWinDistZip.baseName + "_${version}_java11"
 
     doLast {
@@ -200,4 +215,30 @@ task createWinDistZip(type: Zip, dependsOn: createDist) {
     }
 }
 
+task createWinExeDist(type: Exec, dependsOn: createWinDist) {
+    commandLine(makensisCommand, "-O${buildDir}/tmp/nsis-build.log",
+                "${buildDir}/GSEA-WinExe-dist/installer.nsi")
+    doLast {
+        if (makensisCommand.equals("")) {
+            throw new GradleException("Required property not set: makensisCommand");
+        }
+    }
+}
+        
+task signWinExeDist(type: Exec, dependsOn: createWinExeDist) {
+    standardInput = new ByteArrayInputStream( keyPassword.getBytes() );
+    commandLine(signcodeCommand, "-spc", spcFile, "-v", pvkFile, "-a", "sha1", 
+                "-\$", "commercial", "-n", "GSEA ${version}", "-i", "http://www.gsea-msigdb.org/",
+                "-t", tsaurl, "-tr", "10", "${buildDir}/GSEA-WinExe-dist/GSEA_${version}-installer.exe")
+    doLast {
+        if (signcodeCommand.equals("")) {
+            throw new GradleException("Required property not set: signcodeCommand");
+        }
+    }
+}
+
 build.dependsOn createLinuxDistZip,createMacDistZip,createMacAppDistZip,createWinDistZip
+
+if (!makensisCommand.equals("") && !signcodeCommand.equals("")) {
+    build.dependsOn signWinExeDist
+}
