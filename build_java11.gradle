@@ -173,7 +173,7 @@ task createMacAppDist(type: Copy, dependsOn: createDist) {
 }
 
 task createMacAppDistZip(type: Zip, dependsOn: createMacAppDist) {
-    archiveName = "GSEA_${version}_java11.zip"
+    archiveName = "GSEA_${version}_java11.app.zip"
     destinationDir = file("${buildDir}/distZip")
     from "${buildDir}/GSEA-MacApp-dist"
     
