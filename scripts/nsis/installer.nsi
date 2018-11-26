@@ -7,7 +7,7 @@ ShowInstDetails nevershow
 ShowUninstDetails nevershow
 SetCompressor /solid lzma
 AutoCloseWindow true
-Icon "GSEA_@VERSION@\GSEA_64.ico"
+Icon "GSEA_@VERSION@\XBench64x64.ico"
 LicenseData LICENSE_WIN.txt
 LicenseForceSelection radiobuttons
 
