@@ -28,7 +28,7 @@ dependencies {
 }
 
 task wrapper(type: Wrapper) {
-    gradleVersion = '4.10.1'
+    gradleVersion = '4.10.2'
 }
 
 // Gradle bug prevents us from generating Java 11 bytecode: https://github.com/gradle/gradle/issues/5120
