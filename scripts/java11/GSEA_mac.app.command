@@ -11,7 +11,7 @@ prefix=`dirname $(readlink $0 || echo $0)`
 if [ -d "${prefix}/../jdk-11" ]; then
     echo echo "Using bundled JDK."
     JAVA_HOME="${prefix}/../jdk-11"
-    PATH=$JAVA_HOME:$PATH
+    PATH=$JAVA_HOME/bin:$PATH
 else
     echo "Bundled JDK not found.  Using system JDK."
 fi
@@ -21,4 +21,5 @@ exec java --module-path="${prefix}/../Java/lib" -Xmx4g \
     --patch-module="jide.common=${prefix}/../Java/lib/jide-components-3.7.4.jar:${prefix}/../Java/lib/jide-dock-3.7.4.jar:${prefix}/../Java/lib/jide-grids-3.7.4.jar" \
     -Xdock:name="GSEA" \
     -Xdock:icon="${prefix}/../Resources/XBench64x64.gif" \
+    -Dapple.laf.useScreenMenuBar=true \
 	--module=org.gsea-msigdb.gsea/xapps.gsea.GSEA
