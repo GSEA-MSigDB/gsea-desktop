@@ -1,7 +1,8 @@
+package xapps.gsea;
 /*******************************************************************************
  * Copyright (c) 2003-2018 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  *******************************************************************************/
-package xapps.gsea;
+
 
 import com.jgoodies.forms.builder.PanelBuilder;
 import com.jgoodies.forms.layout.CellConstraints;
@@ -70,10 +71,10 @@ public class LeadingEdgeReportViewer extends AbstractViewer {
                 } else if (!fReportParam.isSpecified() && !fDirParam.isSpecified()) {
                     Application.getWindowManager().showMessage("No GSEA result folder was specified. Specify one and try again");
                 } else {
-                    try {
-                        SwingWorker<Object, Void> worker = new SwingWorker<Object, Void>() {
-                            @Override
-                            protected Object doInBackground() throws Exception {
+                    SwingWorker<Object, Void> worker = new SwingWorker<Object, Void>() {
+                        @Override
+                        protected Object doInBackground() throws Exception {
+                            try {
                                 Application.getWindowManager().getRootFrame().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 
                                 if (fReportParam.isSpecified()) {
@@ -96,12 +97,7 @@ public class LeadingEdgeReportViewer extends AbstractViewer {
                                 }
 
                                 LeadingEdgeWidget josh_widget = new LeadingEdgeWidget(sharedTabbedPane, edb);
-                                try {
-                                    sharedTabbedPane.setSelectedComponent(josh_widget.getViewAndSearchComponent());
-                                } catch (Throwable t) {
-                                    //TODO: check why we are swallowing this Throwable.
-                                    // Isn't the handler below sufficient?
-                                }
+                                sharedTabbedPane.setSelectedComponent(josh_widget.getViewAndSearchComponent());
 
                                 if (first) {
                                     fInstance.remove(fFiller);
@@ -111,15 +107,15 @@ public class LeadingEdgeReportViewer extends AbstractViewer {
 
                                 fInstance.revalidate();
 
-                                return null;
+                            } catch (Throwable t) {
+                                Application.getWindowManager().showError("Trouble loading enrichment database", t);
+                            } finally {
+                                Application.getWindowManager().getRootFrame().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
                             }
-                        };
-                        worker.execute();
-                    } catch (Throwable t) {
-                        Application.getWindowManager().showError("Trouble loading enrichment database", t);
-                    } finally {
-                        Application.getWindowManager().getRootFrame().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-                    }
+                            return null;
+                        }
+                    };
+                    worker.execute();
                 }
             }
         });

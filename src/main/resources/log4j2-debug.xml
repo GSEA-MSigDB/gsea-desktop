@@ -12,10 +12,14 @@
     <Console name="stdout" target="SYSTEM_OUT">
       <PatternLayout pattern="%-8r [%-6p] - %m%n"/>
     </Console>
+    <File name="FileLog" fileName="logs/gsea.log">
+      <PatternLayout pattern="%-8r [%-6p] - %m%n"/>
+    </File>
   </Appenders>
   <Loggers>
     <Root level="debug" additivity="false">
       <AppenderRef ref="stdout"/>
+      <AppenderRef ref="FileLog"/>
     </Root>
   </Loggers>
 </Configuration>
