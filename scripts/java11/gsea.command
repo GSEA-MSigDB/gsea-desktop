@@ -22,4 +22,4 @@ exec java --module-path="${prefix}/modules" -Xmx4g \
     -Xdock:name="GSEA" \
     -Xdock:icon="${prefix}/XBench64x64.gif" \
     -Dapple.laf.useScreenMenuBar=true \
-    --module=org.gsea-msigdb.gsea/xapps.gsea.GSEA "$@"
+    --module=org.gsea_msigdb.gsea/xapps.gsea.GSEA "$@"
