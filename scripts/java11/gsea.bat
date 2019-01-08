@@ -12,4 +12,4 @@ if exist %BatchPath%\jdk-11 (
   set JAVA_CMD=java
 )
 
-start %JAVA_CMD% --module-path=%BatchPath%\modules -Xmx4g %BatchPath%\gsea.args --patch-module=jide.common=%BatchPath%\lib\jide-components-3.7.4.jar;%BatchPath%\lib\jide-dock-3.7.4.jar;%BatchPath%\lib\jide-grids-3.7.4.jar --module=org.gsea_msigdb.gsea/xapps.gsea.GSEA  %*
+start %JAVA_CMD% --module-path=%BatchPath%\modules -Xmx4g @%BatchPath%\gsea.args --patch-module=jide.common=%BatchPath%\lib\jide-components-3.7.4.jar;%BatchPath%\lib\jide-dock-3.7.4.jar;%BatchPath%\lib\jide-grids-3.7.4.jar --module=org.gsea_msigdb.gsea/xapps.gsea.GSEA  %*

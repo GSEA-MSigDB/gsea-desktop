@@ -16,7 +16,7 @@ else
     echo "Bundled JDK not found.  Using system JDK."
 fi
 
-exec java --module-path="${prefix}/../Java/lib" -Xmx4g \
+exec java --module-path="${prefix}/../Java/modules" -Xmx4g \
     @"${prefix}/../Java/gsea.args" \
     --patch-module="jide.common=${prefix}/../Java/lib/jide-components-3.7.4.jar:${prefix}/../Java/lib/jide-dock-3.7.4.jar:${prefix}/../Java/lib/jide-grids-3.7.4.jar" \
     -Xdock:name="GSEA" \
