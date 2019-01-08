@@ -159,11 +159,11 @@ task createMacAppDist(type: Copy, dependsOn: createDist) {
     }
     with copySpec {
         from ("${buildDir}/GSEA-dist/modules") include '*.jar'
-        into "GSEA_${version}_java10.app/Contents/Java/modules"
+        into "GSEA_${version}_java11.app/Contents/Java/modules"
     }
     with copySpec {
         from ("${buildDir}/GSEA-dist/lib") include '*.jar'
-        into "GSEA_${version}_java10.app/Contents/Java/lib"
+        into "GSEA_${version}_java11.app/Contents/Java/lib"
     }
     into "${buildDir}/GSEA-MacApp-dist"
 
