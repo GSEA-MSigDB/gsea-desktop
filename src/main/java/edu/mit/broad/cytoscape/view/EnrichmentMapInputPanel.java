@@ -82,10 +82,10 @@ public class EnrichmentMapInputPanel extends AbstractViewer {
                 } else if (!fReportParam.isSpecified() && !fDirParam.isSpecified()) {
                     Application.getWindowManager().showMessage("No GSEA result folder was specified. Specify one and try again");
                 } else {
-                    try {
-                        SwingWorker<Object, Void> worker = new SwingWorker<Object, Void>() {
-                            @Override
-                            protected Object doInBackground() throws Exception {
+                    SwingWorker<Object, Void> worker = new SwingWorker<Object, Void>() {
+                        @Override
+                        protected Object doInBackground() throws Exception {
+                            try {
                                 Application.getWindowManager().getRootFrame().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
                                 String current_results = "";
                                 if (fReportParam.isSpecified()) {
@@ -131,17 +131,16 @@ public class EnrichmentMapInputPanel extends AbstractViewer {
 
 
                                 fInstance.revalidate();
-
-                                return null;
-
+                            } catch (Throwable t) {
+                                Application.getWindowManager().showError("Trouble loading enrichment database", t);
+                            } finally {
+                                Application.getWindowManager().getRootFrame().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
                             }
-                        };
-                        worker.execute();
-                    } catch (Throwable t) {
-                        Application.getWindowManager().showError("Trouble loading enrichment database", t);
-                    } finally {
-                        Application.getWindowManager().getRootFrame().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-                    }
+
+                            return null;
+                        }
+                    };
+                    worker.execute();
                 }
             }
         });
