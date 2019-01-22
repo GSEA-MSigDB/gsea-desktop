@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  *******************************************************************************/
 package xapps.gsea;
 
@@ -96,7 +96,7 @@ public class GseaPreferencesDialog extends MultiplePageDialog {
         try {
             XPreferencesFactory.kAskBeforeAppShutdown.setValueOfPref2SelectionComponentValue();
             XPreferencesFactory.kOnlineMode.setValueOfPref2SelectionComponentValue();
-            XPreferencesFactory.kCytoscapeDirectory.setValueOfPref2SelectionComponentValue();
+            XPreferencesFactory.kCytoscapeRESTPort.setValueOfPref2SelectionComponentValue();
             XPreferencesFactory.kDefaultReportsOutputDir.setValueOfPref2SelectionComponentValue();
             XPreferencesFactory.kMakeGseaUpdateCheck.setValueOfPref2SelectionComponentValue();
 
@@ -160,7 +160,7 @@ public class GseaPreferencesDialog extends MultiplePageDialog {
 
             builder.add(new JLabel("Path to Cytoscape (for Enrichment Map Visualization)"), cc.xy(1, rowCnt));
             rowCnt += 2; // because the spaces also count as a row
-            builder.add(XPreferencesFactory.kCytoscapeDirectory.getSelectionComponent().getComponent(), cc.xy(1, rowCnt));
+            builder.add(XPreferencesFactory.kCytoscapeRESTPort.getSelectionComponent().getComponent(), cc.xy(1, rowCnt));
             
             JPanel panel = builder.getPanel();
 

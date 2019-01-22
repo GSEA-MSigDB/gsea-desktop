@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  *******************************************************************************/
 package edu.mit.broad.cytoscape.view;
 
@@ -45,7 +45,6 @@ import xapps.api.vtools.ParamSetFormForAFew;
 import xtools.munge.CollapseDataset;
 
 import edu.mit.broad.cytoscape.CytoscapeCyrest;
-import edu.mit.broad.cytoscape.CytoscapeLaunch;
 import edu.mit.broad.cytoscape.EnrichmentMapParameters;
 import edu.mit.broad.cytoscape.view.CollapsiblePanel;
 import edu.mit.broad.genome.JarResources;
@@ -55,8 +54,9 @@ import edu.mit.broad.xbench.core.api.Application;
 // or from the main protocol at the top left of GSEA frame(similar to the leading edge analysis)
 
 public class EnrichmentMapParameterPanel extends JPanel {
+    public static final String LAUNCH_MSG = "Please launch Cytoscape 3.3+ with the Enrichment Map plug-in before continuing.";
 
-	private static final Logger klog = Logger.getLogger(CytoscapeLaunch.class);
+	private static final Logger klog = Logger.getLogger(EnrichmentMapParameterPanel.class);
 
 	
 	CollapsiblePanel Parameters;
@@ -589,10 +589,8 @@ public class EnrichmentMapParameterPanel extends JPanel {
     		try{
     		//make sure cytoscape rest is running and em is available
     			if(!cyto.CytoscapeRestActive()){
-    				//launch cytoscape rest service
-    		      	CytoscapeLaunch cytolaunch = new CytoscapeLaunch();
-    		      	cytolaunch.launch();
-    		      	Application.getWindowManager().showMessage("Cytoscape appears to have been closed.  Just re-launching. Once it starts please try again to load your network");
+    			    klog.info(LAUNCH_MSG);
+                    Application.getWindowManager().showConfirm(LAUNCH_MSG);
     			}
     			
     			if(cyto.CytoscapeRestActive() && cyto.CytoscapeRestCommandEM()){
@@ -604,16 +602,13 @@ public class EnrichmentMapParameterPanel extends JPanel {
     			
     		} catch (IOException e){
     			klog.info("Unable to communicate with cytoscape:"  + e.getMessage() );
-    			CytoscapeLaunch cytolaunch = new CytoscapeLaunch();
-		      	cytolaunch.launch();
-		      	Application.getWindowManager().showMessage("Cytoscape appears to have been closed.  Just re-launching. Once it starts please try again to load your network");
+                klog.info(LAUNCH_MSG);
+                Application.getWindowManager().showConfirm(LAUNCH_MSG);
 
     		} catch (URISyntaxException e) {
-				// TODO Auto-generated catch block
     			klog.info("Issue with cytoscape rest command:"  + e.getMessage() );
     			
 			}
-		
     }
     
     /**

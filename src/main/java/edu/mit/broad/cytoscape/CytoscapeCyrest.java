@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  *******************************************************************************/
 package edu.mit.broad.cytoscape;
 
@@ -30,19 +30,22 @@ import org.apache.http.message.BasicNameValuePair;
 import org.apache.log4j.Logger;
 
 import edu.mit.broad.xbench.core.api.Application;
+import edu.mit.broad.xbench.prefs.XPreferencesFactory;
 
 public class CytoscapeCyrest {
 
-	private static final Logger klog = Logger.getLogger(CytoscapeLaunch.class);
-
+	private static final Logger klog = Logger.getLogger(CytoscapeCyrest.class);
 	
-	//path to the edb directory
+    //path to the edb directory
 	private EnrichmentMapParameters params;
-	private String baseURL;
 	
 	public CytoscapeCyrest(EnrichmentMapParameters params){
 		this.params = params;
-		this.baseURL = "http://localhost:1234/v1/";
+	}
+
+	private String getRestURL() throws IOException {
+	    // Build this every time in case the user changes the cyREST port
+	    return "http://localhost:" + XPreferencesFactory.kCytoscapeRESTPort.getInt() + "/v1/";
 	}
 	
 	/*
@@ -51,7 +54,7 @@ public class CytoscapeCyrest {
 	 */
 	public boolean CytoscapeRestActive() throws IOException {
 
-			  URL url = new URL(baseURL);
+			  URL url = new URL(getRestURL());
 			  HttpURLConnection conn =
 			      (HttpURLConnection) url.openConnection();
 			  
@@ -74,7 +77,7 @@ public class CytoscapeCyrest {
 	 * Method to test if the cytoscape rest service and get a list of commands that are available
 	 */
 	public String CytoscapeRestCommands() throws IOException {
-		URL url = new URL(baseURL + "commands/");
+		URL url = new URL(getRestURL() + "commands/");
 		  HttpURLConnection conn =
 		      (HttpURLConnection) url.openConnection();
 
@@ -102,7 +105,7 @@ public class CytoscapeCyrest {
 	 * and if one of the commands listed is enrichment map
 	 */
 	public boolean CytoscapeRestCommandEM() throws IOException {
-		URL url = new URL(baseURL + "commands/");
+		URL url = new URL(getRestURL() + "commands/");
 		  HttpURLConnection conn =
 		      (HttpURLConnection) url.openConnection();
 
@@ -134,7 +137,7 @@ public class CytoscapeCyrest {
 		CloseableHttpClient httpclient = HttpClients.createDefault();
         CloseableHttpResponse response = null;
 		
-		String request = baseURL + "commands/enrichmentmap/gseabuild";
+		String request = getRestURL() + "commands/enrichmentmap/gseabuild";
 		HttpPost httpPost = new HttpPost(request);
 		
 

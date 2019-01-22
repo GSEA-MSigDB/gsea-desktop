@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  *******************************************************************************/
 package edu.mit.broad.xbench.prefs;
 
@@ -42,9 +42,9 @@ public class XPreferencesFactory {
     private static final String GSEA_HOME = "gsea_home";
     
     /*
-     * Variable to store Cytoscape directory.  Default value is null.  Only when it is needed is it set.
+     * Variable to store Cytoscape REST port.  Default value is 1234.
      */
-    public static final DirPreference kCytoscapeDirectory = new DirPreference("Cytoscape Directory", "Directory where cytoscape application is located", new File("Cytoscape not set yet"),false,false);
+    public static final IntPreference kCytoscapeRESTPort = new IntPreference("Cytoscape REST port", "Localhost network port for Cytoscape cyREST API", 1234,false,false);
     
     /**
      * This has names of files that are to be copied. This list is (re)generated every time
