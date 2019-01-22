@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  *******************************************************************************/
 package edu.mit.broad.genome;
 
@@ -64,26 +64,13 @@ public class JarResources {
     /**
      * For internal logging support
      */
-    private static Logger klog;
-
-//    private static ClassLoader kClassLoader;
+    private static Logger klog = Logger.getLogger(JarResources.class);
 
     /**
      * Ensure that "not founds" are present
      */
     static {
         try {
-
-//            kClassLoader = JarResources.class.getClassLoader();
-            klog = Logger.getLogger(JarResources.class);
-
-            /* strangely this seems to not work for the initial loading when running off off a jar file.
-               Need to do the Toolkit.getDef .. thing.
-               Works fine for subsequent access
-            URL nfu = JarResources.class.getClassLoader().getResource(
-                    PKG_RESOURCE + "IconNotFound.gif");
-            */
-
             if (!GraphicsEnvironment.isHeadless()) {
                 //TraceUtils.showTrace();
                 klog.debug("Loading basic icons ...");
@@ -102,8 +89,6 @@ public class JarResources {
                     }
 
                     ICON_NOT_FOUND = new NotFoundIcon(image);
-
-                    //ICON_NOT_FOUND = new ImageIcon(nfu); // doesnt work -- see note above
 
                     URL qu = JarResources.class.getResource(PKG_RESOURCE + "UnknownDataFormat16.gif");
                     if (qu != null) { // must check else app may not start
