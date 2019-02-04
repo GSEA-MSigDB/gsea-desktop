@@ -1,6 +1,6 @@
 Name "GSEA"
 
-OutFile "GSEA_@VERSION@-installer.exe"
+OutFile "GSEA_Win_@VERSION@-installer.exe"
 InstallDir "$PROGRAMFILES64\GSEA_@VERSION@"
 
 ShowInstDetails nevershow
