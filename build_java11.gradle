@@ -91,7 +91,7 @@ task createDist(type: Copy, dependsOn: jar)  {
     into "${buildDir}/GSEA-dist"
 }
 
-task createDistZip(type: Zip, dependsOn: [createDist, signJars]) {
+task createDistZip(type: Zip, dependsOn: createDist) {
     archiveName = "GSEA_${version}.zip"
     destinationDir = file("${buildDir}/distZip")
     baseName = "GSEA"
@@ -214,7 +214,7 @@ task createWinDist(type: Copy, dependsOn: createDist) {
     from ("scripts/nsis") { include "LICENSE_WIN.txt" }
     into "${buildDir}/GSEA-WinExe-dist"
 }
-in
+
 task createWinExeDist(type: Exec, dependsOn: createWinDist) {
     commandLine(makensisCommand, "-O${buildDir}/tmp/nsis-build.log",
                 "${buildDir}/GSEA-WinExe-dist/installer.nsi")
