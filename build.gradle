@@ -1,4 +1,4 @@
-// Copyright (c) 2003-2018 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents 
+// Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents 
 // of the University of California. All rights reserved.
 apply plugin: 'java'
 import org.apache.tools.ant.filters.ReplaceTokens
@@ -91,6 +91,7 @@ task fullJar(type: Jar, dependsOn: jar) {
             "Main-Class": mainClassName,
             "GSEA-Build-Date": timestamp,
             "Codebase": "http://*.broadinstitute.org/gsea/software https://*.broadinstitute.org/gsea/software http://*.broadinstitute.org:8080/gsea/software https://*.broadinstitute.org:8080/gsea/software http://*.gsea-msigdb.org/gsea/software https://*.gsea-msigdb.org/gsea/software http://*.msigdb.org/gsea/software https://*.msigdb.org/gsea/software",
+//            "Codebase": "http://*.broadinstitute.org/gsea-msigdb/gsea/software/test http://*.broadinstitute.org/gsea/software https://*.broadinstitute.org/gsea/software http://*.broadinstitute.org:8080/gsea/software https://*.broadinstitute.org:8080/gsea/software http://*.gsea-msigdb.org/gsea/software https://*.gsea-msigdb.org/gsea/software http://*.msigdb.org/gsea/software https://*.msigdb.org/gsea/software",
             "Class-Path": configurations.jarsToShipUntouched.collect { it.getName() }.join(' ')
         )
     }
@@ -103,8 +104,18 @@ task optimizeJar(type: proguard.gradle.ProGuardTask, dependsOn: fullJar) {
     injars "${buildDir}/libs/gsea-all_deps-${version}.jar"
     outjars "${buildDir}/libs/gsea-${version}.jar"
 
-    libraryjars "${System.getProperty('java.home')}/lib", 
-                jarfilter: 'rt.jar,charsets.jar,jce.jar,jfr.jar,jsse.jar,resources.jar,ext/jfxrt.jar'
+    // Automatically handle the Java version of this build.
+    if (System.getProperty('java.version').startsWith('1.')) {
+       // For Java 8, the JRE classes are packaged in jar files 
+       libraryjars "${System.getProperty('java.home')}/lib", 
+                   jarfilter: 'rt.jar,charsets.jar,jce.jar,jfr.jar,jsse.jar,resources.jar,ext/jfxrt.jar'
+    } else {
+        // As of Java 9, the runtime classes are packaged in modular jmod files.
+        libraryjars "${System.getProperty('java.home')}/jmods", jarfilter: '!**.jar', filter: '!module-info.class'
+    }
+
+//    libraryjars "${System.getProperty('java.home')}/lib", 
+//                jarfilter: 'rt.jar,charsets.jar,jce.jar,jfr.jar,jsse.jar,resources.jar,ext/jfxrt.jar'
     libraryjars "modules", jarfilter: configurations.jarsToShipUntouched.collect { it.getName() }.join(',')
     configuration "lib_build/proguard_opt.cfg"
     printusage "proguard_log/proguard_opt_log_${timestamp_fs}.txt"
