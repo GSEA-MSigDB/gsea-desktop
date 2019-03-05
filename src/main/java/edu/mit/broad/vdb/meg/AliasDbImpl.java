@@ -19,6 +19,7 @@ import java.util.*;
 /**
  * @author Aravind Subramanian
  */
+// NOTE: this is populated but never used.  Should be safe to remove.
 public class AliasDbImpl extends AbstractObject implements AliasDb {
 
     // Either file or chip must be specified

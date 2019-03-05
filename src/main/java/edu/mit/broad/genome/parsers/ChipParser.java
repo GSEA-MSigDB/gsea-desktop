@@ -29,6 +29,9 @@ public class ChipParser extends AbstractParser {
     private static final String PROBE_SET_ID = "Probe Set ID";
     private static final String GENE_TITLE = "Gene Title";
     private static final String GENE_SYMBOL = "Gene Symbol";
+    
+    // NOTE: the Aliases column is optional and *does* get parsed and loaded.  However, that loaded
+    // data is never used.  This could possibly be removed in the future.
     private static final String ALIASES = "Aliases";
     /**
      * Class Constructor.
@@ -205,7 +208,7 @@ public class ChipParser extends AbstractParser {
         int ps_index = indexOf(PROBE_SET_ID, colHeaders, true);
         int symbol_index = indexOf(GENE_SYMBOL, colHeaders, true);
         int title_index = indexOf(GENE_TITLE, colHeaders, true);
-        int alias_index = indexOf(ALIASES, colHeaders, false); // @note optional
+        int alias_index = indexOf(ALIASES, colHeaders, false); // @note optional UNUSED
 
         // save all rows so that we can determine how many rows exist
         List probesList = new ArrayList();
@@ -384,6 +387,8 @@ public class ChipParser extends AbstractParser {
         log.debug("# of seq probes: " + probes.size());
 
         // Then add aliases the same way
+        // NOTE: this AliasDb gets populated but IS NEVER USED.  It should be possible to remove this reference
+        // and all related code in the future.
         final AliasDb aliasdb = VdbRuntimeResources.getAliasDb();
         final Probe[] alias_probes = aliasdb.getAliasesAsProbes();
         for (int i = 0; i < alias_probes.length; i++) { // @note add an alias only if it is not already in

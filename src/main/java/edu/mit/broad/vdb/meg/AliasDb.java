@@ -8,6 +8,7 @@ import edu.mit.broad.vdb.chip.Probe;
 /**
  * @author Aravind Subramanian
  */
+// NOTE: this is never used.  Should be safe to remove.
 public interface AliasDb {
 
     public Probe[] getAliasesAsProbes() throws Exception;
