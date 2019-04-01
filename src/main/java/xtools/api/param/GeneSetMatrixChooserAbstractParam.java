@@ -213,7 +213,7 @@ abstract class GeneSetMatrixChooserAbstractParam extends AbstractParam {
             throw new IllegalArgumentException("Parameter s cannot be null");
         }
 
-        Set vals = ParseUtils.string2stringsSet(s, delimiter, false);
+        Set vals = ParseUtils.string2stringsSet(s, delimiter);
 
         System.out.println("to parse>" + s + "< got: " + vals);
 

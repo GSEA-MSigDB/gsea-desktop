@@ -16,12 +16,6 @@ public interface Headers extends Constants {
     public static final String TEMPLATE = "TEMPLATE";
     public static final String GENESET = "GENESET";
 
-    /**
-     * affy control probe name prefix
-     */
-    public static final String AFFX_CONTROL_PREFIX = "AFFX";
-    public static final String AFFX_NULL = "---";
-
     public static final String LV_PROC = "LC_PROC";
     public static final String SORT_MODE = "SORT_MODE";
     public static final String ORDER = "ORDER";

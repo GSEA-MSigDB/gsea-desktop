@@ -21,19 +21,6 @@ import java.util.*;
  */
 public class VdbRuntimeResources {
 
-    static Set affy_prefixes_hack = new HashSet();
-
-    static {
-        affy_prefixes_hack.add("HG");
-        affy_prefixes_hack.add("HC");
-        affy_prefixes_hack.add("HU");
-        affy_prefixes_hack.add("Hu");
-        affy_prefixes_hack.add("MG");
-        affy_prefixes_hack.add("MOE");
-        affy_prefixes_hack.add("Mu");
-        affy_prefixes_hack.add("Mouse");
-    }
-
     private static AliasDb kAliasDb;
 
     public static AliasDb getAliasDb() throws Exception {
@@ -48,7 +35,7 @@ public class VdbRuntimeResources {
     /**
      * @maint if a chip is added that you dont have annotations data for, add to the list here
      */
-    private static WeakHashMap kChipNameChipFileObject = new WeakHashMap();
+    private static WeakHashMap<String, Chip> kChipNameChipFileObject = new WeakHashMap<String, Chip>();
 
     public static Chip getChip_Gene_Symbol() {
         return getChip(Constants.GENE_SYMBOL);
@@ -70,44 +57,6 @@ public class VdbRuntimeResources {
     public static boolean isChipSeqAccession(String chipName) {
         chipName = _nameOrPath2Name(chipName).toUpperCase();
         return chipName.startsWith(Constants.SEQ_ACCESSION);
-    }
-
-    public static boolean isChipAffy_hacky(String name) {
-        name = _nameOrPath2Name(name);
-        name = name.toUpperCase();
-        for (Iterator iterator = affy_prefixes_hack.iterator(); iterator.hasNext();) {
-            String key = iterator.next().toString().toUpperCase();
-            if (name.startsWith(key)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    private static Chip kAffy_combo_chip;
-
-    public static Chip getChip_Affy() {
-        try {
-            if (kAffy_combo_chip == null) {
-                kAffy_combo_chip = ChipHelper.createComboChip(getChips_Affy());
-                kAffy_combo_chip.cloneShallow(Constants.AFFYMETRIX);
-            }
-
-            return kAffy_combo_chip;
-        } catch (Throwable t) {
-            throw new RuntimeException(t);
-        }
-    }
-
-    public static Chip[] getChips_Affy() {
-
-        try {
-            final String[] affy_names = ParseUtils.slurpIntoArray(JarResources.toURL("AffyChipNames.txt"), true);
-            return getChips(affy_names);
-        } catch (Throwable t) {
-            throw new RuntimeException(t);
-        }
     }
 
     public static Chip[] getChips(final String[] namesOrPaths) throws Exception {
@@ -134,22 +83,18 @@ public class VdbRuntimeResources {
             return new FileInMemoryChip(tmpf.getName(), tmpf.getPath());
         }
 
-        if (chipNameOrPath.toUpperCase().startsWith("AFFY")) {
-            return getChip_Affy();
-        }
-
         //System.out.println(">>>>" + chipName + "<");
 
         // Ok, its from a file path or ftp location
         //String chipName = _nameOrPath2Name(chipNameOrPath);
 
-        Object obj = kChipNameChipFileObject.get(chipNameOrPath);
-        if (obj == null) {
+        Chip chip = kChipNameChipFileObject.get(chipNameOrPath);
+        if (chip == null) {
             String chipFile_source = getChipFile_source(chipNameOrPath);
-            obj = new FileInMemoryChip(chipNameOrPath, chipFile_source);
-            kChipNameChipFileObject.put(chipNameOrPath, obj);
+            chip = new FileInMemoryChip(chipNameOrPath, chipFile_source);
+            kChipNameChipFileObject.put(chipNameOrPath, chip);
         }
-        return (Chip) obj;
+        return chip;
     }
 
     private static String _nameOrPath2Name(final String nop) {

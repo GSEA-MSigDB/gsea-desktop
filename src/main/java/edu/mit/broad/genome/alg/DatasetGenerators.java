@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  *******************************************************************************/
 package edu.mit.broad.genome.alg;
 
@@ -176,9 +176,8 @@ public class DatasetGenerators {
         }
 
         String name = origDs.getName() + "_collapsed_to_symbols";
-        // symbol annotations come from GENE_SYMBOL.chip, not the chip file that was used for collapsing.
         Annot annot = new AnnotImpl(new FeatureAnnotImpl(name, rowNames, null,
-                VdbRuntimeResources.getChip_Gene_Symbol()), origDs.getAnnot().getSampleAnnot_global());
+                chip), origDs.getAnnot().getSampleAnnot_global());
 
         CollapsedDataset cds = new CollapsedDataset();
         cds.orig = origDs;

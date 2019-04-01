@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2003-2018 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  *******************************************************************************/
 package edu.mit.broad.genome.reports;
 
@@ -14,7 +14,6 @@ import edu.mit.broad.genome.alg.gsea.PValueCalculatorImpls;
 import edu.mit.broad.genome.alg.markers.PermutationTest;
 import edu.mit.broad.genome.charts.*;
 import edu.mit.broad.genome.math.*;
-import edu.mit.broad.genome.models.ASComparable;
 import edu.mit.broad.genome.models.XYDatasetMultiTmp;
 import edu.mit.broad.genome.models.XYDatasetVERT;
 import edu.mit.broad.genome.objects.*;
@@ -28,14 +27,10 @@ import edu.mit.broad.genome.reports.pages.*;
 import edu.mit.broad.genome.reports.web.LinkedFactory;
 import edu.mit.broad.genome.swing.GuiHelper;
 import edu.mit.broad.genome.utils.FileUtils;
-import edu.mit.broad.vdb.VdbRuntimeResources;
-import edu.mit.broad.vdb.chip.Chip;
-import edu.mit.broad.vdb.meg.Gene;
 import gnu.trove.TIntFloatHashMap;
 import gnu.trove.TIntIntHashMap;
 import gnu.trove.TIntObjectHashMap;
 
-import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.ecs.StringElement;
 import org.apache.ecs.html.*;
 import org.genepattern.io.ImageUtil;
@@ -875,8 +870,6 @@ public class EnrichmentReports extends ChartHelper {
             throw new IllegalArgumentException("Param rl cannot be null");
         }
 
-        Chip gene_symbol_chip = VdbRuntimeResources.getChip_Gene_Symbol();
-
         final int maxminIndex = hitIndices[esProfile.maxDevFrom0Index()];
         final float maxmin = esProfile.maxDevFrom0();
         boolean pos = XMath.isPositive(maxmin);
@@ -910,15 +903,6 @@ public class EnrichmentReports extends ChartHelper {
 
         final TIntObjectHashMap cell_id_linkMap = new TIntObjectHashMap();
         final TIntObjectHashMap cell_id_colorMap = new TIntObjectHashMap();
-        boolean mightBeGeneSymbolChip = false;
-
-        if (gene_symbol_chip != null) {
-            try {
-                mightBeGeneSymbolChip = gene_symbol_chip.isProbe(rl.getRankName(hitIndices[0]));
-            } catch (Throwable t) {
-                mightBeGeneSymbolChip = false;
-            }
-        }
 
         final StringMatrix sm = new StringMatrix(hitIndices.length, colNames.length);
         for (int r = 0; r < hitIndices.length; r++) {
@@ -936,12 +920,6 @@ public class EnrichmentReports extends ChartHelper {
                     desc = fann_opt.getNativeDesc(probeName);
                     geneTitle = fann_opt.getGeneTitle(probeName);
                     geneSymbol = fann_opt.getGeneSymbol(probeName);
-                } else if (gene_symbol_chip != null && mightBeGeneSymbolChip) { // try gene symbol chip in any case
-                    Gene gene = gene_symbol_chip.getHugo(probeName);
-                    if (gene != null) {
-                        geneSymbol = gene.getSymbol();
-                        geneTitle = gene.getTitle_truncated();
-                    }
                 }
                 if (geneSymbol != null) {
                     cell_id_linkMap.put(sm.getElementPos(r, symbolIndex), LinkedFactory.createLinkedGeneSymbol(geneSymbol));

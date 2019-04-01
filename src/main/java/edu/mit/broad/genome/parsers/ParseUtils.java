@@ -154,7 +154,7 @@ public class ParseUtils {
         int i = 0;
 
         while (tok.hasMoreTokens()) {
-            ret[i] = _magic(tok.nextToken().trim(), useNullonMagicNullWord);
+            ret[i] = tok.nextToken().trim();
             i++;
         }
 
@@ -212,8 +212,7 @@ public class ParseUtils {
         return ret;
     }
 
-    public static Set string2stringsSet(String s, String delim, boolean respectNullMagicWord) throws IllegalArgumentException {
-
+    public static Set string2stringsSet(String s, String delim) throws IllegalArgumentException {
         if (null == s) {
             return new HashSet();
         }
@@ -223,35 +222,12 @@ public class ParseUtils {
 
         while (tok.hasMoreTokens()) {
             String elem = tok.nextToken().trim();
-            elem = _magic(elem, respectNullMagicWord);
             if (elem != null) {
                 ret.add(elem);
             }
         }
 
         return ret;
-    }
-
-    private static final String[] MAGIC_NULLS = new String[]{Constants.NULL, Constants.NA, Constants.HYPHEN, Headers.AFFX_NULL};
-
-    private static String _magic(String s, boolean respectNullMagicWord) {
-        return _magic(s, MAGIC_NULLS, respectNullMagicWord);
-    }
-
-    /**
-     * @noinspection ReturnOfNull
-     */
-    private static String _magic(String s, String[] magicNulls, boolean respectNullMagicWord) {
-
-        if (respectNullMagicWord) {
-            for (int i = 0; i < magicNulls.length; i++) {
-                if (s.trim().equalsIgnoreCase(magicNulls[i])) {
-                    return null;
-                }
-            }
-        }
-
-        return s;
     }
 
     /**

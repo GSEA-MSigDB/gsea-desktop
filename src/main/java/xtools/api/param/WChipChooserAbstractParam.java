@@ -111,7 +111,7 @@ abstract class WChipChooserAbstractParam extends AbstractParam {
             throw new IllegalArgumentException("Parameter s cannot be null");
         }
 
-        Set vals = ParseUtils.string2stringsSet(s, ",", false); // only commas!!
+        Set vals = ParseUtils.string2stringsSet(s, ","); // only commas!!
 
         System.out.println("to parse>" + s + "< got: " + vals);
 
@@ -303,19 +303,8 @@ abstract class WChipChooserAbstractParam extends AbstractParam {
             }
 
             if (isSelected == false && !skipRenderCheck) {
-                if (VdbRuntimeResources.isChipAffy_hacky(str)) {
-                    setForeground(Color.BLUE);
-                    setIcon(affy_icon);
-                } else if (VdbRuntimeResources.isChipGeneSymbol(str)) {
-                    setForeground(Color.MAGENTA);
-                    setIcon(null);
-                } else if (VdbRuntimeResources.isChipSeqAccession(str)) {
-                    setForeground(Color.MAGENTA);
-                    setIcon(null);
-                } else {
-                    setForeground(Color.BLACK);
-                    setIcon(null);
-                }
+                setForeground(Color.BLACK);
+                setIcon(null);
             }
 
             return this;
