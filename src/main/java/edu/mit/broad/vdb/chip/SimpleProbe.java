@@ -1,7 +1,10 @@
 /*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  *******************************************************************************/
 package edu.mit.broad.vdb.chip;
+
+import java.util.Collections;
+import java.util.Set;
 
 import edu.mit.broad.vdb.meg.DefaultGene;
 import edu.mit.broad.vdb.meg.Gene;
@@ -9,12 +12,14 @@ import edu.mit.broad.vdb.meg.Gene;
 /**
  * @author Aravind Subramanian
  */
-public class SimpleProbe implements Probe {
+public class SimpleProbe implements Probe, Gene {
 
     private String fProbeName;
     private String fSymbol;
     private String fTitle;
 
+    private static String[] EMPTY_ALIASES = new String[] {};
+    
     /**
      * Class constructor
      *
@@ -62,4 +67,28 @@ public class SimpleProbe implements Probe {
         }
     }
 
+    @Override
+    public String getSymbol() {
+        return fSymbol;
+    }
+
+    @Override
+    public String getTitle() {
+        return fTitle;
+    }
+
+    @Override
+    public String getTitle_truncated() {
+        return Helper.getTitle_truncated(fTitle);
+    }
+
+    @Override
+    public Set getAliases() {
+        return Collections.EMPTY_SET;
+    }
+
+    @Override
+    public String[] getAliasesArray() {
+        return EMPTY_ALIASES;
+    }
 } // End class SimpleProbe

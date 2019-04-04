@@ -124,6 +124,7 @@ public class DatasetGenerators {
         for (int r = 0; r < origDs.getNumRow(); r++) {
             String ps = origDs.getRowName(r);
             String symbol = chip.getSymbol(ps, nm);
+            String title = chip.getTitle(ps, nm);
 
             if (symbol != null && includeOnlySymbols && ps.equals(symbol)) {
                 // chip returned a matching symbol, we include only symbols, but that
@@ -134,7 +135,9 @@ public class DatasetGenerators {
                 if (symbol != null) {
                     Object obj = symbolStrucMap.get(symbol);
                     if (obj == null) {
-                        obj = new CollapseStruc(symbol);
+                        // Note: we only save the *first* title, so if they differ the subsequent
+                        // ones are ignored.
+                        obj = new CollapseStruc(symbol, title);
                     }
                     ((CollapseStruc) obj).add(ps);
                     symbolStrucMap.put(symbol, obj);
@@ -149,12 +152,14 @@ public class DatasetGenerators {
 
         Matrix m = new Matrix(symbolStrucMap.size(), origDs.getNumCol());
         List rowNames = new ArrayList();
+        List<String> rowDescs = new ArrayList<String>();
         Iterator it = symbolStrucMap.keySet().iterator();
         int row = 0;
         while (it.hasNext()) {
             Object o = it.next();
             CollapseStruc collapseStruc = (CollapseStruc) symbolStrucMap.get(o);
             rowNames.add(collapseStruc.symbol);
+            rowDescs.add(collapseStruc.title);
 
             final String[] pss = collapseStruc.getProbes();
             if (pss.length == 1) {
@@ -176,7 +181,7 @@ public class DatasetGenerators {
         }
 
         String name = origDs.getName() + "_collapsed_to_symbols";
-        Annot annot = new AnnotImpl(new FeatureAnnotImpl(name, rowNames, null,
+        Annot annot = new AnnotImpl(new FeatureAnnotImpl(name, rowNames, rowDescs,
                 chip), origDs.getAnnot().getSampleAnnot_global());
 
         CollapsedDataset cds = new CollapsedDataset();
@@ -212,6 +217,7 @@ public class DatasetGenerators {
         for (int r = 0; r < origRL.getSize(); r++) {
             final String ps = origRL.getRankName(r);
             final String symbol = chip.getSymbol(ps, nm);
+            String title = chip.getTitle(ps, nm);
 
             if (symbol != null && includeOnlySymbols && ps.equals(symbol)) {
                 // @todo hack as the symbol lookup isnt always removed
@@ -220,7 +226,9 @@ public class DatasetGenerators {
                 if (symbol != null) {
                     Object obj = symbolStrucMap.get(symbol);
                     if (obj == null) {
-                        obj = new CollapseStruc(symbol);
+                        // Note: we only save the *first* title, so if they differ the subsequent
+                        // ones are ignored.
+                        obj = new CollapseStruc(symbol, title);
                     }
                     ((CollapseStruc) obj).add(ps);
                     symbolStrucMap.put(symbol, obj);
@@ -275,10 +283,12 @@ public class DatasetGenerators {
     public static class CollapseStruc {
 
         String symbol;
+        String title;
         Set probes;
 
-        CollapseStruc(String symbol) {
+        CollapseStruc(String symbol, String title) {
             this.symbol = symbol;
+            this.title = title;
             this.probes = new HashSet();
         }
 

@@ -114,8 +114,6 @@ task optimizeJar(type: proguard.gradle.ProGuardTask, dependsOn: fullJar) {
         libraryjars "${System.getProperty('java.home')}/jmods", jarfilter: '!**.jar', filter: '!module-info.class'
     }
 
-//    libraryjars "${System.getProperty('java.home')}/lib", 
-//                jarfilter: 'rt.jar,charsets.jar,jce.jar,jfr.jar,jsse.jar,resources.jar,ext/jfxrt.jar'
     libraryjars "modules", jarfilter: configurations.jarsToShipUntouched.collect { it.getName() }.join(',')
     configuration "lib_build/proguard_opt.cfg"
     printusage "proguard_log/proguard_opt_log_${timestamp_fs}.txt"
