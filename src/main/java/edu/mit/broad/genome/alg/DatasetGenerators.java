@@ -1,6 +1,6 @@
-/*******************************************************************************
+/*
  * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+ */
 package edu.mit.broad.genome.alg;
 
 import java.util.ArrayList;
@@ -16,7 +16,7 @@ import org.apache.log4j.Logger;
 import xtools.api.param.BadParamException;
 import edu.mit.broad.genome.NamingConventions;
 import edu.mit.broad.genome.alg.distrib.RangeFactory;
-import edu.mit.broad.genome.math.ColorScheme;
+import edu.mit.broad.genome.math.ColorSchemes.ColorScheme;
 import edu.mit.broad.genome.math.Matrix;
 import edu.mit.broad.genome.math.Order;
 import edu.mit.broad.genome.math.Range;
@@ -24,22 +24,20 @@ import edu.mit.broad.genome.math.SortMode;
 import edu.mit.broad.genome.math.Vector;
 import edu.mit.broad.genome.math.XMath;
 import edu.mit.broad.genome.objects.Annot;
-import edu.mit.broad.genome.objects.AnnotImpl;
 import edu.mit.broad.genome.objects.ColorDataset;
 import edu.mit.broad.genome.objects.ColorDatasetImpl;
 import edu.mit.broad.genome.objects.Dataset;
 import edu.mit.broad.genome.objects.DefaultDataset;
-import edu.mit.broad.genome.objects.FSet;
-import edu.mit.broad.genome.objects.FeatureAnnotImpl;
 import edu.mit.broad.genome.objects.GeneSet;
+import edu.mit.broad.genome.objects.FeatureAnnot;
 import edu.mit.broad.genome.objects.RankedList;
 import edu.mit.broad.genome.objects.ScoredDataset;
 import edu.mit.broad.genome.objects.Template;
 import edu.mit.broad.genome.objects.TemplateFactory;
 import edu.mit.broad.genome.objects.strucs.DatasetTemplate;
-import edu.mit.broad.vdb.VdbRuntimeResources;
 import edu.mit.broad.vdb.chip.Chip;
 import edu.mit.broad.vdb.chip.NullSymbolMode;
+import edu.mit.broad.vdb.chip.NullSymbolModes;
 
 /**
  * Methods to generate datasets in various ways including:
@@ -114,12 +112,7 @@ public class DatasetGenerators {
 
         final Map symbolStrucMap = new HashMap();
 
-        NullSymbolMode nm;
-        if (includeOnlySymbols) {
-            nm = Chip.OMIT_NULLS;
-        } else {
-            nm = Chip.REPLACE_WITH_PROBEID;
-        }
+        NullSymbolMode nm = (includeOnlySymbols) ? NullSymbolModes.OmitNulls : NullSymbolModes.ReplaceWithProbeId;
 
         for (int r = 0; r < origDs.getNumRow(); r++) {
             String ps = origDs.getRowName(r);
@@ -168,7 +161,7 @@ public class DatasetGenerators {
                 m.setRow(row, origDs.getRow(ps));
             } else {
                 // multiple probes mapped to this symbol
-                Vector[] vss = origDs.getRows(new FSet("foo", "foo", pss));
+                Vector[] vss = origDs.getRows(new GeneSet("foo", "foo", pss));
                 if (collapse_gex_mode == 0) {
                     // use max of probe values
                     m.setRow(row, XMath.maxVector(vss));
@@ -181,7 +174,7 @@ public class DatasetGenerators {
         }
 
         String name = origDs.getName() + "_collapsed_to_symbols";
-        Annot annot = new AnnotImpl(new FeatureAnnotImpl(name, rowNames, rowDescs,
+        Annot annot = new Annot(new FeatureAnnot(name, rowNames, rowDescs,
                 chip), origDs.getAnnot().getSampleAnnot_global());
 
         CollapsedDataset cds = new CollapsedDataset();
@@ -207,12 +200,7 @@ public class DatasetGenerators {
 
         final Map symbolStrucMap = new HashMap();
 
-        NullSymbolMode nm;
-        if (includeOnlySymbols) {
-            nm = Chip.OMIT_NULLS;
-        } else {
-            nm = Chip.REPLACE_WITH_PROBEID;
-        }
+        NullSymbolMode nm = (includeOnlySymbols) ? NullSymbolModes.OmitNulls : NullSymbolModes.ReplaceWithProbeId;
 
         for (int r = 0; r < origRL.getSize(); r++) {
             final String ps = origRL.getRankName(r);
@@ -251,7 +239,7 @@ public class DatasetGenerators {
                 //System.out.println("checking for: " + ps);
                 cl_scores.setElement(row, origRL.getScore(ps));
             } else {
-                float[] fss = origRL.getScores(new FSet("foo", "foo", pss));
+                float[] fss = origRL.getScores(new GeneSet("foo", "foo", pss));
                 //m.setRow(row, XMath.meanVector(vss));
                 //m.setRow(row, XMath.medianVector(vss));
                 if (collapse_gex_mode == 0) {
@@ -410,7 +398,7 @@ public class DatasetGenerators {
 
         // the trick is to order the gene set by the scores in the sds
         // then the usual extract method picks up rows in the same order as the fset
-        GeneSet ofset = new FSet(gset, fullSds);
+        GeneSet ofset = new GeneSet(gset, fullSds);
 
         //System.out.println(">>>> " + ofset.getMembers());
 

@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome;
 
 import java.io.File;
@@ -17,7 +17,6 @@ import edu.mit.broad.genome.objects.GeneSet;
 import edu.mit.broad.genome.objects.PersistentObject;
 import edu.mit.broad.genome.objects.Template;
 import edu.mit.broad.genome.parsers.DataFormat;
-import edu.mit.broad.genome.parsers.ParseUtils;
 
 /**
  * Class NamingConventions
@@ -33,59 +32,6 @@ public class NamingConventions {
 
     private static final int MAX_FILE_LEN_ALLOWED = 100;
 
-
-    /**
-     * NO decimals
-     * If no p or q, then null
-     * <p/>
-     * 10p11.23 => 10p11
-     * 10p11.2-p12 => 10p11
-     * 20q11.1-q13.1 => 20q11
-     * 20q11.2 => 20q11
-     *
-     * @param cyto
-     * @return
-     */
-    public static String parseCyto(String cyto) {
-
-        if (isNull(cyto)) {
-            return null;
-        }
-
-        if ((cyto.indexOf('p') == -1) && (cyto.indexOf('q') == -1)) {
-            return null;
-        }
-
-        if ((cyto.indexOf("pter") != -1) || (cyto.indexOf("ptel") != -1)) {
-            return null;
-        }
-
-        if ((cyto.indexOf("qter") != -1) || (cyto.indexOf("qtel") != -1)) {
-            return null;
-        }
-
-        if (cyto.indexOf("cen") != -1) {
-            return null;
-        }
-
-        cyto = cyto.toLowerCase();
-
-        if (cyto.startsWith("x")) {
-            cyto = "X" + cyto.substring(1, cyto.length());
-        }
-
-        if (cyto.startsWith("y")) {
-            cyto = "Y" + cyto.substring(1, cyto.length());
-        }
-
-        cyto = ParseUtils.string2strings(cyto, "-.; |", false)[0];
-
-        if (cyto.startsWith("chr") == false) {
-            return "chr" + cyto;
-        } else {
-            return cyto;
-        }
-    }
 
     public static String splitLongHashName(final String possibleLongNameWithHashes, final String prefixStr) {
         if (possibleLongNameWithHashes == null ||

@@ -1,9 +1,9 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package org.genepattern.menu;
 
-import org.genepattern.uiutil.OS;
+import org.apache.commons.lang3.SystemUtils;
 
 import javax.swing.*;
 import java.awt.*;
@@ -21,7 +21,7 @@ public abstract class FileMenu extends AbstractPlotMenu {
 
     public static JMenuItem createExitMenuItem() {
         JMenuItem item = null;
-        if (OS.isMac()) {
+        if (SystemUtils.IS_OS_MAC_OSX) {
             item = new JMenuItem("Quit");
             KeyStroke ks = KeyStroke.getKeyStroke('Q', Toolkit
                     .getDefaultToolkit().getMenuShortcutKeyMask());

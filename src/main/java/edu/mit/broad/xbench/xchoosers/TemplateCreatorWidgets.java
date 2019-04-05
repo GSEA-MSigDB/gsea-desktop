@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.xbench.xchoosers;
 
 import edu.mit.broad.genome.NamingConventions;
@@ -40,14 +40,7 @@ public class TemplateCreatorWidgets {
 
         private Template createdTemplate;
 
-        /**
-         * Class constructor
-         */
         public OnTheFlyFromSampleNames() {
-            jbInit();
-        }
-
-        private void jbInit() {
 
             JPanel pan = new JPanel(new SRLayout(2, 15));
 
@@ -87,7 +80,7 @@ public class TemplateCreatorWidgets {
             cbDataset = new JComboBox();
             cbDataset.setBorder(BorderFactory.createTitledBorder("Dataset"));
             cbDataset.setEditable(false);
-            ObjectBindery.bind(cbDataset, new Class[]{Dataset.class}, false);
+            ObjectBindery.bind(cbDataset, new Class[]{Dataset.class});
             GuiHelper.safeSelect(cbDataset);
             val.add(cbDataset, BorderLayout.CENTER);
 
@@ -171,10 +164,6 @@ public class TemplateCreatorWidgets {
          * Class constructor
          */
         public GenePhenotype() {
-            jbInit();
-        }
-
-        private void jbInit() {
 
             this.geneSearch = new GeneSearchList();
             geneSearch.getJList().setVisibleRowCount(50);
@@ -204,7 +193,7 @@ public class TemplateCreatorWidgets {
                 }
             });
             cbDataset.setEditable(false);
-            ObjectBindery.bind(cbDataset, new Class[]{Dataset.class}, false);
+            ObjectBindery.bind(cbDataset, new Class[]{Dataset.class});
             val.add(cbDataset, BorderLayout.CENTER);
 
             this.add(val, BorderLayout.SOUTH);

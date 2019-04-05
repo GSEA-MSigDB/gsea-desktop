@@ -1,9 +1,7 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.math;
-
-import edu.mit.broad.genome.utils.containers.ClassNamePair;
 
 /**
  * enum construct
@@ -13,15 +11,8 @@ public class SortMode {
     public static final SortMode REAL = new SortMode("real");
     public static final SortMode ABSOLUTE = new SortMode("abs");
     public static final SortMode[] ALL = new SortMode[]{REAL, ABSOLUTE};
-    public static final ClassNamePair[] ALL_CNP = new ClassNamePair[]{
-            new ClassNamePair(REAL.getClass(), REAL.fType),
-            new ClassNamePair(ABSOLUTE.getClass(),
-                    ABSOLUTE.fType)};
     private final String fType;
 
-    /**
-     * Privatized class constructor.
-     */
     private SortMode(String type) {
         this.fType = type;
     }
@@ -74,4 +65,4 @@ public class SortMode {
 
         throw new IllegalArgumentException("Unable to lookup direction String: " + obj);
     }
-}    // End SortMode
+}

@@ -1,21 +1,21 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.reports.api;
 
 import edu.mit.broad.genome.*;
 import edu.mit.broad.genome.charts.XChart;
+import edu.mit.broad.genome.math.Matrix;
 import edu.mit.broad.genome.objects.*;
 import edu.mit.broad.genome.parsers.DataFormat;
-import edu.mit.broad.genome.parsers.MiscParsers;
 import edu.mit.broad.genome.parsers.ParserFactory;
 import edu.mit.broad.genome.reports.RichDataframe;
 import edu.mit.broad.genome.reports.pages.*;
-import edu.mit.broad.genome.utils.FileUtils;
 import edu.mit.broad.genome.utils.SystemUtils;
 import edu.mit.broad.genome.utils.ZipUtility;
 import edu.mit.broad.xbench.core.api.Application;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
 import org.genepattern.io.ImageUtil;
 
@@ -51,7 +51,6 @@ import java.util.*;
  * if htnl, would be linked etc
  *
  * @author Aravind Subramanian
- * @version %I%, %G%
  */
 // dont extend abstractobject -- easier to impl ourselves here as impl not pob but reports
 public class ToolReport implements Report {
@@ -250,11 +249,16 @@ public class ToolReport implements Report {
             new ZipUtility().zipDir(fReportDir, tmp_zipped_file);
 
             // ok, move it into the dir once it has been zipped up
-            org.apache.commons.io.FileUtils.moveFile(tmp_zipped_file, zipped_file);
+            FileUtils.moveFile(tmp_zipped_file, zipped_file);
 
         } catch (Throwable t) {
             log.error(t);
-            FileUtils.writeSafely(t.getMessage(), zipped_file);
+            try {
+                FileUtils.writeStringToFile(zipped_file, t.getMessage());
+            }
+            catch (IOException ie) {
+                log.error(ie);
+            }
         }
 
         return zipped_file;
@@ -561,11 +565,11 @@ public class ToolReport implements Report {
                 file = _createFile(name, DataFormat.GCT_FORMAT.getExtension(), inDir);
                 ParserFactory.saveGct((Dataset) pob, file);
             } else if (pob instanceof BitSetDataset) {
-                Dataset ds = ((BitSetDataset) (pob)).toDataset(true, false);
+                Dataset ds = ((BitSetDataset) (pob)).toDataset();
                 file = _createFile(name, "bsd", inDir);
                 ParserFactory.saveGct(ds, file);
                 File mf = _createFile(name, "mat", inDir);
-                MiscParsers.save(ds.getMatrix(), mf);
+                Matrix.save(ds.getMatrix(), mf);
                 _centralAddPage(new FileWrapperPage(mf, desc));    // @note
             } else if (pob instanceof StringDataframe) {
                 file = _createFile(name, DataFormat.getExtension(pob), inDir);
@@ -619,7 +623,7 @@ public class ToolReport implements Report {
             if (!false) {
                 log.debug("saving in: " + file);
             }
-            FileUtils.write(content, file);
+            FileUtils.writeStringToFile(file, content);
             if (true) {
                 _centralAddPage(new FileWrapperPage(file, desc));  // @note
             }
@@ -661,7 +665,7 @@ public class ToolReport implements Report {
         try {
 
             File cssFile = _createFile("xtools", "css", inDir);
-            FileUtils.copy(JarResources.toURL("xtools.css"), cssFile);
+            FileUtils.copyURLToFile(JarResources.toURL("xtools.css"), cssFile);
 
         } catch (Throwable t) {
             log.error("Trouble copying over CSS", t);
@@ -882,7 +886,8 @@ public class ToolReport implements Report {
             if (!silent) {
                 log.debug("saving in: " + file);
             }
-            FileUtils.write(content, file);
+            
+            FileUtils.writeStringToFile(file, content);
             if (add2Cache) {
                 _centralAddPage(new FileWrapperPage(file, desc));  // @note
             }
@@ -911,7 +916,7 @@ public class ToolReport implements Report {
 
             file = createSafeReportFile(name.toString(), inDir);
 
-            if (FileUtils.isLocked(file)) {
+            if (edu.mit.broad.genome.utils.FileUtils.isLocked(file)) {
                 // dont do this as it can make the file name way too long
                 // instead just give it a flavor (10 chars) of what the real name is
                 //name = new StringBuffer(fname).append(".WARNING_renamed_on_detecting_lock").append(System.currentTimeMillis()).append('.').append(suffix);
@@ -1073,8 +1078,5 @@ public class ToolReport implements Report {
         List getFiles_list() {
             return flist;
         }
-
-    } // End inner class Pages
-
-}    // End ToolReport
-
+    }
+}

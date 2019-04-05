@@ -4,7 +4,7 @@
 package xtools.api.ui;
 
 import edu.mit.broad.genome.JarResources;
-import edu.mit.broad.genome.objects.FSet;
+import edu.mit.broad.genome.objects.GeneSet;
 import edu.mit.broad.genome.objects.GeneSet;
 import edu.mit.broad.genome.parsers.ParseUtils;
 import edu.mit.broad.genome.parsers.ParserFactory;
@@ -142,7 +142,7 @@ public class GeneSetMatrixChooserWindow {
             if (s != null) {
                 String[] strs = ParseUtils.string2strings(s, "\t\n", false); // we want things synched
                 if (strs.length != 0) {
-                    GeneSet gset = new FSet("from_text_entry_", strs);
+                    GeneSet gset = new GeneSet("from_text_entry_", strs);
                     try {
                         ParserFactory.save(gset, File.createTempFile(gset.getName(), ".grp"));
                     } catch (Throwable t) {

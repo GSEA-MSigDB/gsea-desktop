@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.utils;
 
 import java.io.File;
@@ -12,29 +12,6 @@ import java.io.File;
  * @version %I%, %G%
  */
 public class SystemUtils {
-
-    public static final String OS_NAME = System.getProperty("os.name");
-
-    private static Boolean kIsLinuxOrUnix;
-
-    public static boolean isLinuxOrUnix() {
-        //TraceUtils.showTrace();
-        if (kIsLinuxOrUnix == null) {
-            String osName = OS_NAME.toLowerCase();
-            if (osName.indexOf("unix") != -1 || osName.indexOf("linux") != -1 || osName.equalsIgnoreCase("OSF1")) {
-                kIsLinuxOrUnix = Boolean.TRUE;
-            } else {
-                kIsLinuxOrUnix = Boolean.FALSE;
-            }
-        }
-
-        return kIsLinuxOrUnix.booleanValue();
-    }
-
-    public static boolean isMac() {
-        // TODO: Inline this
-        return org.apache.commons.lang3.SystemUtils.IS_OS_MAC_OSX;
-    }
 
     public static String getProperty(String key, boolean caseSensitive) {
         if (caseSensitive) {
@@ -59,19 +36,6 @@ public class SystemUtils {
 
     public static File getUserHome() {
         return new File(System.getProperty("user.home"));
-    }
-
-    public static String getJavaPath() {
-        //return getJavaHome() + File.pathSeparator + "bin" + File.pathSeparator + "java";
-        return getJavaHome() + File.separator + "bin" + File.separator + "java";
-    }
-
-    public static String getJavaHome() {
-        return System.getProperty("java.home").trim();
-    }
-
-    public static String getClassPath() {
-        return System.getProperty("java.class.path").trim();
     }
 
     public static File getPwd() {

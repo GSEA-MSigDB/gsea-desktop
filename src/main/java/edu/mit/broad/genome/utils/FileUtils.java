@@ -1,14 +1,12 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.utils;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 
 import java.io.*;
-import java.net.URI;
 import java.net.URL;
 import java.util.*;
 
@@ -24,26 +22,8 @@ public class FileUtils {
      */
     private final static Logger klog = Logger.getLogger(FileUtils.class);
 
-    /**
-     * The file is opened and closed after counting
-     *
-     * @param file
-     * @param ignoreblanklines
-     * @return
-     * @throws IOException
-     */
-    public static int countLines(File file, boolean ignoreblanklines) throws IOException {
-        BufferedReader bin = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
-        return _countLines(bin, ignoreblanklines);
-    }
-
     public static int countLines(String path, boolean ignoreblanklines) throws IOException {
-        return countLines(new File(path), ignoreblanklines);
-    }
-
-    // reader should be untouched, reader is closed when done
-    private static int _countLines(BufferedReader reader, boolean ignoreblanklines)
-            throws IOException {
+        BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(new File(path))));
         try {
             int numberOfLines = 0;
 
@@ -78,92 +58,13 @@ public class FileUtils {
 
     }
 
-    public static void copy(URL url, File fileB) throws IOException {
-        InputStream source = url.openStream();
-        FileOutputStream target = new FileOutputStream(fileB);
-        try {
-            IOUtils.copy(source, target);
-        }
-        finally {
-            target.close();
-        }
-    }
-
-    /**
-     * Writes specified String to specified file.
-     * File must exist. Any existing content is overwritten.
-     *
-     * @throws IOException on errors
-     */
-    public static void write(String s, File f) throws IOException {
-        // open PrintWriter in overwrite mode
-        PrintWriter out = new PrintWriter(new FileOutputStream(f));
-        try {
-            IOUtils.write(s, out);
-        }
-        finally {
-            out.close();
-        }
-    }
-
-    public static void writeSafely(String s, File f) {
-        try {
-            write(s, f);
-        } catch (Throwable t) {
-            klog.error("Writing to file: " + f + " failed");
-        }
-    }
-
-    /**
-     * One element per line
-     *
-     * @param list
-     * @param file
-     * @throws IOException
-     */
-    public static void write(List<?> list, File file) throws IOException {
-        PrintWriter out = new PrintWriter(new FileOutputStream(file));
-        try{
-            IOUtils.writeLines(list, IOUtils.LINE_SEPARATOR, out);
-        }
-        finally {
-            out.close();
-        }
-    }
-
-    /*
-     * As with toURL, unused for now but keep the code for possible revamp.
-     */
-    public static BufferedReader toBufferedReader(String filepathORurl) throws IOException {
-        URL url = toURL(filepathORurl);
-        return new BufferedReader(new InputStreamReader(url.openStream()));
-    }
-
-    /*
-     * This detection routine is bogus, failing on Windows with e.g. 'C:/' file paths being
-     * detected as URLs.  Keeping the code for now as we may revamped soon, but it will be 
-     * unused in the meanwhile.
-     */
-    private static URL toURL(String filepathORurl) throws IOException {
-        if (StringUtils.contains(filepathORurl, ":")) {
-            return new URL(filepathORurl);
-        } else {
-            URI uri = new File(filepathORurl).toURI();
-            return uri.toURL();
-        }
-    }
-
-    public static File findFile(final File dir, final String endsWith, boolean barfOnMissing) {
+    public static File findFile(final File dir, final String endsWith) {
         Collection<File> allMatches = org.apache.commons.io.FileUtils.listFiles(dir,
                 new String[] { endsWith }, false);        
         
         if (allMatches.isEmpty()) {
-            if (barfOnMissing) {
-                throw new IllegalArgumentException("No file with endsWith: " + endsWith + " found in dir: "
-                        + dir + "\n");
-            } else {
-                return null;
-            }
+            throw new IllegalArgumentException("No file with endsWith: " + endsWith + " found in dir: "
+                    + dir + "\n");
         }
         
         return allMatches.iterator().next();

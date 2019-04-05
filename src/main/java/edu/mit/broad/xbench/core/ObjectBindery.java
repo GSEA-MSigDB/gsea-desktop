@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.xbench.core;
 
 import edu.mit.broad.genome.parsers.ParserFactory;
@@ -15,7 +15,6 @@ import javax.swing.*;
  * Chooser -> a UI that allows interactive choice of some object(s)
  *
  * @author Aravind Subramanian
- * @version %I%, %G%
  */
 public class ObjectBindery {
 
@@ -26,17 +25,16 @@ public class ObjectBindery {
     private ObjectBindery() {
     }
 
-    public static void bind(JComboBox cb, Class[] classes, boolean addNos) {
+    public static void bind(JComboBox cb, Class[] classes) {
 
         if (cb == null) {
             throw new IllegalArgumentException("param cb cannot be null");
         }
 
-        ComboBoxModel model = ParserFactory.getCache().createBoxModel(classes, addNos);
+        ComboBoxModel model = ParserFactory.getCache().createBoxModel(classes);
 
         cb.setModel(model);
         cb.setRenderer(new RendererFactory2.CommonLookListRenderer());
-
     }
 
     public static ComboBoxModel getModel(Class c) {
@@ -46,6 +44,4 @@ public class ObjectBindery {
     public static ComboBoxModel getHackAuxGeneSetsBoxModel() {
         return ParserFactory.getCache().hackCreateAuxGeneSetsBoxModel();
     }
-}    // End ObjectBindery
-
-
+}

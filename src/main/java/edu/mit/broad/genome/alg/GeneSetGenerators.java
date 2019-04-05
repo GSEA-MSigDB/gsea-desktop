@@ -56,7 +56,7 @@ public class GeneSetGenerators {
                 klog.warn("Bad randomization -- repeated rnd members were made members: " + members.size() + " but wanted: " + nmembers);
             }
 
-            rndgsets[g] = new FSet(prefix + "_" + g, members);
+            rndgsets[g] = new GeneSet(prefix + "_" + g, members);
         }
 
         return rndgsets;

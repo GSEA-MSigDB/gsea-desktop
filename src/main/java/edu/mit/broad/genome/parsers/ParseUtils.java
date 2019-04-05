@@ -1,11 +1,10 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.parsers;
 
 import edu.mit.broad.genome.*;
 import edu.mit.broad.genome.math.Vector;
-import edu.mit.broad.genome.utils.FileUtils;
 
 import java.io.*;
 import java.net.URI;
@@ -31,8 +30,6 @@ import java.util.*;
  * @version 1.0
  */
 public class ParseUtils {
-
-    private static final char DEFAULT_FIELD_SEP_CSV = ',';
 
     /**
      * NamingConventions delimiters - <pre>" \t\n,;:"</pre>
@@ -161,49 +158,14 @@ public class ParseUtils {
         return ret;
     }
 
-    public static String[] string2stringsV2(String s) throws IllegalArgumentException {
-        List ret = string2stringsV2_list(s);
-        return (String[]) ret.toArray(new String[ret.size()]);
-    }
-
-    // double tabs are tolerated and no need for the NULL thing
-    public static List string2stringsV2_list(String s) throws IllegalArgumentException {
-
-        if (null == s) {
-            throw new NullPointerException("Cannot work on null String");
-        }
-
-        s = s.trim(); // no tabs before or after
-
-        StringTokenizer tok = new StringTokenizer(s, "\t", true); // note including the delim in rets
-        List ret = new ArrayList();
-
-        //System.out.println("# " + tok.countTokens());
-        String prev = null;
-        while (tok.hasMoreTokens()) {
-            String curr = tok.nextToken(); // dont trim!
-            if (!curr.equals("\t")) {
-                ret.add(curr);
-            }
-
-            if (curr.equals(prev)) { // 2 consecutive tabs
-                ret.add(""); //empty field
-            }
-
-            prev = curr;
-        }
-
-        return ret;
-    }
-
-    public static List string2stringsList(String s, String delim) throws IllegalArgumentException {
+    public static List<String> string2stringsList(String s, String delim) throws IllegalArgumentException {
 
         if (null == s) {
             throw new NullPointerException("Cannot work on null String");
         }
 
         StringTokenizer tok = new StringTokenizer(s, delim);
-        List ret = new ArrayList(tok.countTokens());
+        List<String> ret = new ArrayList<String>(tok.countTokens());
 
         while (tok.hasMoreTokens()) {
             ret.add(tok.nextToken().trim());
@@ -212,13 +174,13 @@ public class ParseUtils {
         return ret;
     }
 
-    public static Set string2stringsSet(String s, String delim) throws IllegalArgumentException {
+    public static Set<String> string2stringsSet(String s, String delim) throws IllegalArgumentException {
+        Set<String> ret = new HashSet<String>();
         if (null == s) {
-            return new HashSet();
+            return ret;
         }
 
         StringTokenizer tok = new StringTokenizer(s, delim);
-        Set ret = new HashSet();
 
         while (tok.hasMoreTokens()) {
             String elem = tok.nextToken().trim();
@@ -298,9 +260,9 @@ public class ParseUtils {
         return i;
     }
 
-    public static List getUniqueTokens(StringTokenizer tok) {
+    public static List<String> getUniqueTokens(StringTokenizer tok) {
 
-        List uniqs = new ArrayList();
+        List<String> uniqs = new ArrayList<String>();
         while (tok.hasMoreElements()) {
             String t = tok.nextToken().trim();
             if (!uniqs.contains(t)) {
@@ -321,11 +283,11 @@ public class ParseUtils {
      * @return Description of the Return Value
      * @throws IOException Description of the Exception
      */
-    public static List readFfn(File aFile) throws IOException {
+    public static List<String> readFfn(File aFile) throws IOException {
 
         BufferedReader buf = new BufferedReader(new FileReader(aFile));
         String line;
-        ArrayList lines = new ArrayList();
+        ArrayList<String> lines = new ArrayList<String>();
 
         line = nextLine(buf);
 
@@ -384,7 +346,7 @@ public class ParseUtils {
         }
 
         int lineNum = 0;
-        List duplLines = new ArrayList();
+        List<String> duplLines = new ArrayList<String>();
         while (line != null) {
             StringTokenizer tok = new StringTokenizer(line, "\t");
             String key;
@@ -433,56 +395,6 @@ public class ParseUtils {
         }
 
         return prp;
-    }
-
-    public static String slurp(URL url, boolean ignoreanycomments) throws IOException {
-        return slurp(_buf(url), ignoreanycomments);
-    }
-
-    public static String slurp(BufferedReader buf, boolean ignoreanycomments) throws IOException {
-
-        String line;
-        String s = "";
-
-        while ((line = buf.readLine()) != null) {
-            if ((ignoreanycomments) && (line.startsWith(Constants.COMMENT_CHAR))) {
-                ;
-            } else {
-                s = s.concat(line).concat("\n");
-            }
-        }
-
-        buf.close();
-
-        return s;
-    }
-
-    public static String[] slurpIntoArray(URL url, boolean ignoreanycomments) throws IOException {
-        Set set = slurpIntoSet(_buf(url), ignoreanycomments);
-        return (String[]) set.toArray(new String[set.size()]);
-    }
-
-    public static Set slurpIntoSet(BufferedReader buf, boolean ignoreanycomments) throws IOException {
-        Set set = new HashSet();
-        String line;
-
-        while ((line = buf.readLine()) != null) {
-            line = line.trim();
-
-            if (line.length() == 0) {
-                continue;
-            }
-
-            if ((ignoreanycomments) && (line.startsWith(Constants.COMMENT_CHAR))) {
-                continue;
-            }
-
-            set.add(line);
-        }
-
-        buf.close();
-
-        return set;
     }
 
     public static int countLines(File file, boolean ignoreblanklines) throws IOException {
@@ -542,103 +454,12 @@ public class ParseUtils {
         return currLine;
     }
 
-    private static BufferedReader _buf(URL url) throws IOException {
-        if (url == null) {
-            throw new IllegalArgumentException("Parameter url cannot be null");
-        }
-        InputStreamReader isr = new InputStreamReader(url.openStream());
-        return new BufferedReader(isr);
-    }
-
     private static BufferedReader _buf(File file) throws IOException {
         if (file == null) {
             throw new IllegalArgumentException("Parameter file cannot be null");
         }
 
         return new BufferedReader(new FileReader(file));
-    }
-
-    /**
-     * parse: break the input String into fields
-     *
-     * @return java.util.Iterator containing each field
-     *         from the original as a String, in order.
-     */
-    public static String[] string2strings_csv(final String csvLine) {
-        final StringBuffer sb = new StringBuffer();
-
-        final List list = new ArrayList();
-        int i = 0;
-
-        do {
-            sb.setLength(0);
-            if (i < csvLine.length() && csvLine.charAt(i) == '"') {
-                i = advQuoted_for_csv(csvLine, sb, ++i);    // skip quote
-            } else {
-                i = advPlain_for_csv(csvLine, sb, i);
-            }
-            list.add(sb.toString());
-            i++;
-        } while (i < csvLine.length());
-
-        return (String[]) list.toArray(new String[list.size()]);
-    }
-
-    public static List string2stringsList_csv(final String csvLine) {
-        final String[] ss = string2strings_csv(csvLine);
-        final List list = new ArrayList();
-        for (int i = 0; i < ss.length; i++) {
-            list.add(ss[i]);
-        }
-
-        return list;
-    }
-
-    /**
-     * advQuoted: quoted field; return index of next separator
-     */
-    private static int advQuoted_for_csv(final String s, final StringBuffer sb, final int i) {
-        int j;
-        int len = s.length();
-        for (j = i; j < len; j++) {
-            if (s.charAt(j) == '"' && j + 1 < len) {
-                if (s.charAt(j + 1) == '"') {
-                    j++; // skip escape char
-
-                } else if (s.charAt(j + 1) == DEFAULT_FIELD_SEP_CSV) { //next delimeter
-
-                    j++; // skip end quotes
-
-                    break;
-                }
-            } else if (s.charAt(j) == '"' && j + 1 == len) { // end quotes at end of line
-
-                break; //done
-
-            }
-            sb.append(s.charAt(j));    // regular character.
-
-        }
-        return j;
-    }
-
-    /**
-     * advPlain: unquoted field; return index of next separator
-     */
-    private static int advPlain_for_csv(final String s, final StringBuffer sb, final int i) {
-        int j;
-
-        j = s.indexOf(DEFAULT_FIELD_SEP_CSV, i); // look for separator
-
-        //klog.debug("csv: " + "i = " + i + " j = " + j);
-        if (j == -1) {                   // none found
-
-            sb.append(s.substring(i));
-            return s.length();
-        } else {
-            sb.append(s.substring(i, j));
-            return j;
-        }
     }
 
 

@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.parsers;
 
 import edu.mit.broad.genome.*;
@@ -10,7 +10,6 @@ import edu.mit.broad.genome.objects.*;
 import edu.mit.broad.genome.objects.esmatrix.db.EnrichmentDb;
 import edu.mit.broad.genome.reports.api.Report;
 import edu.mit.broad.genome.utils.FileUtils;
-import edu.mit.broad.vdb.VdbRuntimeResources;
 import edu.mit.broad.vdb.chip.Chip;
 import edu.mit.broad.xbench.core.api.Application;
 
@@ -75,7 +74,7 @@ public class ParserFactory implements Constants {
 
     public static GeneSet combineIntoOne(final GeneSetMatrix gm) {
         final Set names = gm.getAllMemberNamesOnlyOnceS();
-        final GeneSet gset = new FSet("combo_" + names.size() + "_" + gm.getName(), names);
+        final GeneSet gset = new GeneSet("combo_" + names.size() + "_" + gm.getName(), names);
         _getCache().makeVisible(gset, GeneSet.class);
         return gset;
     }
@@ -436,7 +435,7 @@ public class ParserFactory implements Constants {
             GeneSetMatrix gm = readGeneSetMatrix(f.getPath(), createInputStream(f), useCache, true, add2Cache);
             return gm.getGeneSet(gsetName);
         } else {
-            Parser parser = new FSetParser();
+            Parser parser = new GeneSetParser();
             gset = (GeneSet) parser.parse(toName(path), is).get(0);
             // for convenience make a genesetmatrix too (its not expensive)
             // but be careful where you are adding -- dont want call to be recursive
@@ -461,7 +460,7 @@ public class ParserFactory implements Constants {
     public static Report readReport(File file, boolean useCache) throws Exception {
 
         if (file.isDirectory()) {
-            file = FileUtils.findFile(file, "rpt", true); // @note hack to read the rpt
+            file = FileUtils.findFile(file, "rpt"); // @note hack to read the rpt
         }
 
         return readReport(file.getPath(), createInputStream(file), useCache);
@@ -946,7 +945,7 @@ public class ParserFactory implements Constants {
      * @throws Exception
      */
     public static void save(GeneSet gset, File toFile) throws Exception {
-        Parser parser = new FSetParser();
+        Parser parser = new GeneSetParser();
         parser.export(gset, toFile);
         _getCache().add(toFile, gset, GeneSet.class);
     }
@@ -1069,43 +1068,11 @@ public class ParserFactory implements Constants {
     }
 
     private static InputStream createInputStream(URL url) throws IOException {
-        String filePath = url.getPath();
-
-        // Special work-around for GENE_SYMBOL & SEQ_ACCESSION FTP dependencies.
-        File localFile = null;
-        final boolean isGeneSymbolChip = VdbRuntimeResources.isPathGeneSymbolChip(filePath);
-        final boolean isSeqAccessionChip = VdbRuntimeResources.isChipSeqAccession(filePath);
-        if (isGeneSymbolChip || isSeqAccessionChip) {
-            // Short-term hack fix for Special CHIP files.  There are hard-coded URL references to these in the code base
-            // which won't always work (private FTP site).  We modify these URLs here to use the public FTP site instead.
-            // We plan to transition to a different transfer method in the near future, so we'll rework things more completely
-            // at that point.
-            String localFileName = (isGeneSymbolChip) ? Constants.GENE_SYMBOL_CHIP : Constants.SEQ_ACCESSION_CHIP;
-            url = new URL(GseaWebResources.getArrayAnnotationsURL() + "/" + localFileName);
-            
-            // Are we retrieving GENE_SYMBOL or SEQ_ACCESSION?  Check whether we can pick it up 
-            // from the local cache instead.
-            localFile = new File(chipCacheDir, localFileName);
-            if (localFile.exists() && localFile.isFile()) {
-                klog.info("File found in local file cache; will process " + localFile.getAbsolutePath()
-                        + " in place of " + url.toString() + ".  Ignore any following message(s) about this URL.");
-                return new BufferedInputStream(new FileInputStream(localFile));
-            }
-        }
-
         klog.debug("Parsing URL: " + url.getPath() + " >> " + url.toString());
         if (url.getProtocol().equalsIgnoreCase("ftp") && url.getHost().equalsIgnoreCase(GseaWebResources.getGseaFTPServer())) {
             try {
                 FtpSingleUrlTransferCommand ftpCommand = new FtpSingleUrlTransferCommand(url);
                 FtpResultInputStream ftpInputStream = ftpCommand.retrieveAsInputStream();
-                
-                // If it's a file for the local cache, fetch it by FTP, save it, and return a stream from the File.
-                // NOTE: for now this is just one of the "special CHIPs" but it could be other things in the future.
-                if (localFile != null && !localFile.exists()) {
-                    org.apache.commons.io.FileUtils.copyInputStreamToFile(ftpInputStream, localFile);
-                    return new BufferedInputStream(new FileInputStream(localFile));
-                }
-                
                 return ftpInputStream;
             }
             catch (Exception e) {

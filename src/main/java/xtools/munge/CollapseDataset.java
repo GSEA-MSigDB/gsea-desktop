@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package xtools.munge;
 
 import edu.mit.broad.genome.alg.DatasetGenerators;
@@ -11,7 +11,7 @@ import edu.mit.broad.vdb.chip.Chip;
 import xtools.api.AbstractTool;
 import xtools.api.ToolCategory;
 import xtools.api.param.BooleanParam;
-import xtools.api.param.ChipChooserMultiParam;
+import xtools.api.param.ChipOptParam;
 import xtools.api.param.DatasetReqdParam;
 import xtools.api.param.ModeReqdParam;
 
@@ -26,7 +26,7 @@ import java.util.Properties;
  */
 public class CollapseDataset extends AbstractTool {
 
-    private final ChipChooserMultiParam fChipParam = new ChipChooserMultiParam(true);
+    private final ChipOptParam fChipParam = new ChipOptParam(true);
     private final DatasetReqdParam fDatasetParam = new DatasetReqdParam();
 
     private final ModeReqdParam fModeParm = new ModeReqdParam("mode", "Collapsing mode for probe sets => 1 gene", "Collapsing mode for probe sets => 1 gene", new String[]{"Max_probe", "Median_of_probes"});
@@ -57,7 +57,7 @@ public class CollapseDataset extends AbstractTool {
     public void execute() throws Exception {
         startExec();
 
-        final Chip chip = fChipParam.getChipCombo();
+        final Chip chip = fChipParam.getChip();
 
         Dataset ds = fDatasetParam.getDataset();
 

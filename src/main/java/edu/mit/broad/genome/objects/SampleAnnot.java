@@ -1,9 +1,7 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.objects;
-
-import edu.mit.broad.vdb.sampledb.SampleAnnot;
 
 import java.awt.*;
 import java.util.*;
@@ -12,7 +10,7 @@ import java.util.List;
 /**
  * @author Aravind Subramanian
  */
-public class SampleAnnotImpl extends AbstractObject implements SampleAnnot {
+public class SampleAnnot extends AbstractObject {
 
     private List fSampleNames;
 
@@ -20,11 +18,10 @@ public class SampleAnnotImpl extends AbstractObject implements SampleAnnot {
 
     /**
      * Class constructor
-     *
      * @param sampleNames
      */
-    public SampleAnnotImpl(final String name, final List sampleNames, final ColorMap.Columns cm_opt) {
-        initHere(name, sampleNames, cm_opt);
+    public SampleAnnot(final String name, final List sampleNames) {
+        initHere(name, sampleNames, null);
     }
 
     /**
@@ -34,7 +31,7 @@ public class SampleAnnotImpl extends AbstractObject implements SampleAnnot {
      * @param sampleNames
      * @param cm_opt
      */
-    public SampleAnnotImpl(final String name, final String[] sampleNames, final ColorMap.Columns cm_opt) {
+    public SampleAnnot(final String name, final String[] sampleNames, final ColorMap.Columns cm_opt) {
         if (sampleNames == null) {
             throw new IllegalArgumentException("Param sampleNames cannot be null");
         }
@@ -63,12 +60,8 @@ public class SampleAnnotImpl extends AbstractObject implements SampleAnnot {
         }
     }
 
-    public SampleAnnot cloneDeep(final String newName, final String[] useOnlyTheseSamples) {
-        return new SampleAnnotImpl(newName, useOnlyTheseSamples, new ColumnsImpl(useOnlyTheseSamples));
-    }
-
     public SampleAnnot cloneDeep(final String[] useOnlyTheseSamples) {
-        return cloneDeep(getName() + "resr_" + useOnlyTheseSamples.length, useOnlyTheseSamples);
+        return new SampleAnnot(getName() + "resr_" + useOnlyTheseSamples.length, useOnlyTheseSamples, new ColumnsImpl(useOnlyTheseSamples));
     }
 
     public String getQuickInfo() {

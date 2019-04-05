@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.parsers;
 
 import edu.mit.broad.genome.Constants;
@@ -189,7 +189,7 @@ public class GmxParser extends AbstractParser {
         for (int i = 0; i < members.length; i++) {
             //@note convention
             final String gsetName = sourcepath.concat("#").concat(gsetNames[i].toUpperCase()); // @note the UC'ing 
-            gsets[i] = new FSet(gsetName, namesEnglish[i], members[i], fCheckForDuplicates);
+            gsets[i] = new GeneSet(gsetName, namesEnglish[i], members[i], fCheckForDuplicates);
         }
 
         doneImport();

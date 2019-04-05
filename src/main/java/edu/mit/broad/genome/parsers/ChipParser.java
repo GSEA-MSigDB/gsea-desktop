@@ -1,16 +1,13 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.parsers;
 
 import edu.mit.broad.genome.Constants;
 import edu.mit.broad.genome.NamingConventions;
 import edu.mit.broad.genome.objects.PersistentObject;
-import edu.mit.broad.vdb.VdbRuntimeResources;
 import edu.mit.broad.vdb.chip.*;
-import edu.mit.broad.vdb.meg.AliasDb;
 import edu.mit.broad.vdb.meg.Gene;
-import gnu.trove.THashSet;
 
 import java.io.*;
 import java.util.*;
@@ -30,9 +27,6 @@ public class ChipParser extends AbstractParser {
     private static final String GENE_TITLE = "Gene Title";
     private static final String GENE_SYMBOL = "Gene Symbol";
     
-    // NOTE: the Aliases column is optional and *does* get parsed and loaded.  However, that loaded
-    // data is never used.  This could possibly be removed in the future.
-    private static final String ALIASES = "Aliases";
     /**
      * Class Constructor.
      */
@@ -160,7 +154,7 @@ public class ChipParser extends AbstractParser {
 
                 }
 
-                Probe probe = new SimpleProbe(probeName, symbol, title);
+                Probe probe = new Probe(probeName, symbol, title);
                 probesList.add(probe);
             }
 
@@ -172,7 +166,7 @@ public class ChipParser extends AbstractParser {
         }
 
         final Probe[] probes = (Probe[]) probesList.toArray(new Probe[probesList.size()]);
-        final Chip chip = new FileInMemoryChip(FilenameUtils.getName(sourcepath), sourcepath, probes);
+        final Chip chip = new Chip(FilenameUtils.getName(sourcepath), sourcepath, probes);
 
         bin.close();
 

@@ -1,6 +1,6 @@
-/*******************************************************************************
+/*
  * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+ */
 package edu.mit.broad.genome.reports;
 
 import edu.mit.broad.genome.Constants;
@@ -26,19 +26,18 @@ import edu.mit.broad.genome.reports.api.ToolReport;
 import edu.mit.broad.genome.reports.pages.*;
 import edu.mit.broad.genome.reports.web.LinkedFactory;
 import edu.mit.broad.genome.swing.GuiHelper;
-import edu.mit.broad.genome.utils.FileUtils;
+import edu.mit.broad.xbench.heatmap.GramImagerImpl;
 import gnu.trove.TIntFloatHashMap;
 import gnu.trove.TIntIntHashMap;
 import gnu.trove.TIntObjectHashMap;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.ecs.StringElement;
 import org.apache.ecs.html.*;
 import org.genepattern.io.ImageUtil;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.annotations.XYTextAnnotation;
-import org.jfree.chart.axis.AxisLabelLocation;
-import org.jfree.chart.axis.AxisSpace;
 import org.jfree.chart.axis.NumberAxis;
 import org.jfree.chart.block.BlockContainer;
 import org.jfree.chart.block.BorderArrangement;
@@ -62,12 +61,11 @@ import org.jfree.data.xy.XYDataset;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 
-import xapps.api.vtools.viewers.VizFactory;
-
 import java.awt.*;
 import java.awt.Font;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -822,7 +820,7 @@ public class EnrichmentReports extends ChartHelper {
                 // Build extracted dataset based on gene set, maintaining the order in the ScoredDataset (i.e gset order ignored)
                 Dataset extractedDSForGSet = new DatasetGenerators().extractRowsSorted((ScoredDataset) rl, gset);
                 htmlPage.addHeatMap(gsetName, "Blue-Pink O' Gram in the Space of the Analyzed GeneSet",
-                        VizFactory.createGramImager().createBpogHeatMap(extractedDSForGSet, template_opt),
+                        new GramImagerImpl().createBpogHeatMap(extractedDSForGSet, template_opt),
                         saveDetailFilesInDir, createSvgs);
                 if (createGcts) {
                     File gctFile = new File(saveDetailFilesInDir, gsetName + ".gct");
@@ -1452,7 +1450,12 @@ public class EnrichmentReports extends ChartHelper {
             } catch (Throwable t) {
                 klog.error(t); // dont penalize - not a critical error
                 geneSets_sizes_file = report.createFile("gene_set_sizes_errored_out.txt", "List of gene sets that errored out");
-                FileUtils.writeSafely(t.getStackTrace().toString(), geneSets_sizes_file);
+                try {
+                    FileUtils.writeStringToFile(geneSets_sizes_file, t.getStackTrace().toString());
+                }
+                catch (IOException ie) {
+                    klog.error(ie);
+                }
             }
         }
 

@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.cytoscape.view;
 
 import java.awt.BorderLayout;
@@ -17,14 +17,8 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.SwingWorker;
 
-import xapps.api.vtools.ParamSetFormForAFew;
-import xtools.api.param.DirParam;
-import xtools.api.param.Param;
-import xtools.api.param.ReportCacheChooserParam;
-
 import com.jgoodies.forms.builder.PanelBuilder;
 import com.jgoodies.forms.layout.CellConstraints;
-import com.jidesoft.grid.SortableTable;
 import com.jidesoft.swing.JideTabbedPane;
 
 import edu.mit.broad.genome.JarResources;
@@ -33,17 +27,19 @@ import edu.mit.broad.genome.swing.fields.GDirFieldPlusChooser;
 import edu.mit.broad.genome.swing.fields.GFieldPlusChooser;
 import edu.mit.broad.genome.viewers.AbstractViewer;
 import edu.mit.broad.xbench.core.api.Application;
+import xapps.api.vtools.ParamSetFormForAFew;
+import xtools.api.param.DirParam;
+import xtools.api.param.Param;
+import xtools.api.param.ReportCacheChooserParam;
 
 public class EnrichmentMapInputPanel extends AbstractViewer {
-	public static final String NAME = "EnrichmentMapVisualizationWidget";
+    public static final String NAME = "EnrichmentMapVisualizationWidget";
 
     public static final Icon ICON = JarResources.getIcon("enrichmentmap_logo.png");
 
     private ReportCacheChooserParam fReportParam;
 
     private DirParam fDirParam;
-
-    private SortableTable sortableTable;
 
     private JComponent fFiller;
 
@@ -59,17 +55,16 @@ public class EnrichmentMapInputPanel extends AbstractViewer {
         jbInit();
     }
 
-
     private JideTabbedPane sharedTabbedPane;
 
     private void jbInit() {
-    	JPanel buttons = new JPanel();
-    	JButton bClear = new JButton("Clear");
-    	bClear.addActionListener(new ActionListener() {
+        JPanel buttons = new JPanel();
+        JButton bClear = new JButton("Clear");
+        bClear.addActionListener(new ActionListener() {
             public void actionPerformed(final ActionEvent e) {
-            	
-            	((GFieldPlusChooser) fReportParam.getSelectionComponent()).setValue("");
-            	((GDirFieldPlusChooser) fDirParam.getSelectionComponent()).getTextField().setText("");
+
+                ((GFieldPlusChooser) fReportParam.getSelectionComponent()).setValue("");
+                ((GDirFieldPlusChooser) fDirParam.getSelectionComponent()).getTextField().setText("");
 
             }
         });
@@ -78,7 +73,8 @@ public class EnrichmentMapInputPanel extends AbstractViewer {
         bBuild.addActionListener(new ActionListener() {
             public void actionPerformed(final ActionEvent e) {
                 if (fReportParam.isSpecified() && fDirParam.isSpecified()) {
-                    Application.getWindowManager().showMessage("Both cache and a brows'ed directory were specified. Only 1 can be specified. Delete one and try again");
+                    Application.getWindowManager().showMessage(
+                            "Both cache and a brows'ed directory were specified. Only 1 can be specified. Delete one and try again");
                 } else if (!fReportParam.isSpecified() && !fDirParam.isSpecified()) {
                     Application.getWindowManager().showMessage("No GSEA result folder was specified. Specify one and try again");
                 } else {
@@ -89,19 +85,18 @@ public class EnrichmentMapInputPanel extends AbstractViewer {
                                 Application.getWindowManager().getRootFrame().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
                                 String current_results = "";
                                 if (fReportParam.isSpecified()) {
-                                    
+
                                     current_results = fReportParam.getValue().toString();
-                                    //check to see if there are multiple directories
-                                    //Can load however many you want but can only do a two dataset analysis
-                                                                                                                                            
-                                    
+                                    // check to see if there are multiple directories
+                                    // Can load however many you want but can only do a two dataset analysis
+
                                 } else {
-                                		current_results = fDirParam.getValue().toString();
+                                    current_results = fDirParam.getValue().toString();
                                 }
-                                
+
                                 String[] datasets = current_results.split(",");
-                                
-                                //curr_edb = edb;
+
+                                // curr_edb = edb;
 
                                 boolean first = false;
                                 if (sharedTabbedPane == null) {
@@ -112,23 +107,21 @@ public class EnrichmentMapInputPanel extends AbstractViewer {
                                     sharedTabbedPane.setShowCloseButtonOnTab(true);
 
                                 }
-                                //add this analysis to tab
+                                // add this analysis to tab
                                 try {
-                                		EnrichmentMapParameterPanel new_panel = new EnrichmentMapParameterPanel(datasets);
-                                		JScrollPane scrollablePanel = new JScrollPane(new_panel);
-                                		sharedTabbedPane.addTab("EM Analysis", scrollablePanel);                                
-                                		sharedTabbedPane.setSelectedComponent(scrollablePanel);
+                                    EnrichmentMapParameterPanel new_panel = new EnrichmentMapParameterPanel(datasets);
+                                    JScrollPane scrollablePanel = new JScrollPane(new_panel);
+                                    sharedTabbedPane.addTab("EM Analysis", scrollablePanel);
+                                    sharedTabbedPane.setSelectedComponent(scrollablePanel);
                                 } catch (Throwable t) {
-                                		System.out.println("unable to initialize interface");
+                                    System.out.println("unable to initialize interface");
                                 }
-
 
                                 if (first) {
                                     fInstance.remove(fFiller);
                                     fInstance.add(sharedTabbedPane, BorderLayout.CENTER);
-                                    //sharedTabbedPane.setTabClosableAt(0, false);
+                                    // sharedTabbedPane.setTabClosableAt(0, false);
                                 }
-
 
                                 fInstance.revalidate();
                             } catch (Throwable t) {
@@ -146,8 +139,9 @@ public class EnrichmentMapInputPanel extends AbstractViewer {
         });
 
         this.fReportParam = new ReportCacheChooserParam("Select a GSEA result from the application cache", false);
-        this.fDirParam = new DirParam("dir", "[ OR ] Locate a GSEA result folder from the file system", "[ OR ] Locate a GSEA report folder from the file system", false);
-        final Param[] params = new Param[]{fReportParam, fDirParam};
+        this.fDirParam = new DirParam("dir", "[ OR ] Locate a GSEA result folder from the file system",
+                "[ OR ] Locate a GSEA report folder from the file system", false);
+        final Param[] params = new Param[] { fReportParam, fDirParam };
 
         // -------------------------------------------------------------------------------------------- //
         StringBuffer colStr = _createColStr();
@@ -175,10 +169,10 @@ public class EnrichmentMapInputPanel extends AbstractViewer {
         }
 
         builder.add(new JLabel(""), cc.xy(1, rowcnt));
-        //add the two buttons to the buttons panel
+        // add the two buttons to the buttons panel
         buttons.add(bClear);
         buttons.add(bBuild);
-        
+
         builder.add(buttons, cc.xy(3, rowcnt));
 
         final JPanel paramPanel = builder.getPanel();
@@ -190,21 +184,11 @@ public class EnrichmentMapInputPanel extends AbstractViewer {
         this.fFiller = GuiHelper.createWaitingPlaceholder();
         this.add(fFiller, BorderLayout.CENTER);
 
-        //this.add(createControlPanel(), BorderLayout.SOUTH);
+        // this.add(createControlPanel(), BorderLayout.SOUTH);
 
         this.revalidate();
     }
 
-
-    public String[] getSelectedResultNames() {
-        final int[] rows = sortableTable.getSelectedRows();
-        final String[] names = new String[rows.length];
-        for (int i = 0; i < rows.length; i++) {
-            names[i] = sortableTable.getModel().getValueAt(rows[i], 1).toString();
-        }
-
-        return names;
-    }
     private static StringBuffer _createColStr() {
         return new StringBuffer("220dlu,      4dlu,        200dlu,   4dlu,  4dlu"); // columns
     }
@@ -220,7 +204,6 @@ public class EnrichmentMapInputPanel extends AbstractViewer {
         }
         return rowStr;
     }
-
 
     public JMenuBar getJMenuBar() {
         return EMPTY_MENU_BAR;

@@ -1,9 +1,7 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.math;
-
-import edu.mit.broad.genome.utils.containers.ClassNamePair;
 
 /**
  * enum construct
@@ -17,11 +15,6 @@ public class Order {
      * @maint manually keep array in sync with declarations above and below
      */
     public static final Order[] ALL = new Order[]{ASCENDING, DESCENDING};
-    public static final ClassNamePair[] ALL_CNP = new ClassNamePair[]{
-            new ClassNamePair(ASCENDING.getClass(),
-                    ASCENDING.fType),
-            new ClassNamePair(DESCENDING.getClass(),
-                    DESCENDING.fType)};
     private final String fType;
 
     /**

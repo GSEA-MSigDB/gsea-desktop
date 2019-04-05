@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.xbench.tui;
 
 import edu.mit.broad.genome.reports.api.Report;
@@ -38,29 +38,28 @@ import java.util.WeakHashMap;
  */
 public class ToolLauncherDefaultImpl extends JPanel implements ToolLauncher, MouseMotionListener, ToolRunnerControl.DisplayHook {
 
-    private String fTitle;
-    private Icon fIcon;
+    private String fTitle = "Analysis history";
+    private Icon fIcon = ReportViewer.ICON;
     private static final Logger klog = Logger.getLogger(ToolLauncherDefaultImpl.class);
-    private Tool[] fTools;
-    private final JSplitPane splitPane;
+    private final JSplitPane splitPane = new JSplitPane();
     private ToolSelectorTree fToolSelectorTree;
 
     /**
      * key -> Tool, value -> ParamSetDisplay
      */
-    private final Map fToolParamSetDisplayMap;
+    private final Map fToolParamSetDisplayMap = new WeakHashMap();
     private Tool fCurrTool;
     private ToolRunnerControl fToolRunner;
 
     /**
      * key toolcat, value -> desc of toolcat + name/desc of tools belonging to it
      */
-    private final Map fToolCatDescMap;
+    private final Map fToolCatDescMap = new WeakHashMap();
 
     /**
      * key -> Report, value -> ReportViewer Panel
      */
-    private final Map fReportViewerPanelMap;
+    private final Map fReportViewerPanelMap = new WeakHashMap();
 
     private ToolLauncherDefaultImpl fInstance = this;
 
@@ -68,79 +67,44 @@ public class ToolLauncherDefaultImpl extends JPanel implements ToolLauncher, Mou
 
     private ReportStub fCurrReportStub;
 
-    private boolean fShowReportNode; // show report node
-    private boolean fShowRootNode; // show report node
-
-    /**
-     * Class Constructor.
-     */
-    public ToolLauncherDefaultImpl(final Tool[] tools,
-                                   final boolean showReportNode,
-                                   final boolean showRootNode,
-                                   final boolean showToolLauncher,
-                                   final boolean makeNormalTheDefault,
-                                   final boolean showGrayHelptext,
-                                   final Icon icon,
-                                   final String title) {
-
-        this.splitPane = new JSplitPane();
-        this.fToolParamSetDisplayMap = new WeakHashMap();
-        this.fToolCatDescMap = new WeakHashMap();
-        this.fReportViewerPanelMap = new WeakHashMap();
-        this.fShowReportNode = showReportNode;
-        this.fShowRootNode = showRootNode;
-        this.fIcon = icon;
-        this.fTitle = title;
-
-        init(tools, showToolLauncher);
-    }
-
-    /**
-     * Class constructor
-     */
     public ToolLauncherDefaultImpl() {
-        //(new Tool[]{}, true, false, false, false, true, ReportViewer.ICON, "Analysis history")
-        this(null, true, true, true, true, true, null, null); // @note defaults
-    }
 
-    // does the real initialization
-    private void init(final Tool[] tools, final boolean showToolLauncher) {
-
-        if (tools == null) {
-            throw new IllegalArgumentException("Param tools cannot be null");
-        }
-
-        this.fTools = tools;
-
-
-        for (int t = 0; t < fTools.length; t++) {
-            ToolCategory tc = fTools[t].getCategory();
-            if (fToolCatDescMap.get(tc) == null) {
-                fToolCatDescMap.put(tc, new StringBuffer(tc.getDesc()).append("\n\n"));
-            }
-
-            StringBuffer buf = (StringBuffer) fToolCatDescMap.get(tc);
-            buf.append(fTools[t].getName()).append('\n').append(fTools[t].getDesc()).append("\n\n");
-        }
-
-
-        jbInit(showToolLauncher, fTitle);
+        splitPane.setOrientation(JSplitPane.HORIZONTAL_SPLIT);
+        this.fToolSelectorTree = new ToolSelectorTree();
+        
+        JScrollPane sp = new JScrollPane(fToolSelectorTree.getComponent());
+        
+        int width = XPreferencesFactory.getToolTreeWidth();
+        int width_min = XPreferencesFactory.getToolTreeWidth_min();
+        sp.setPreferredSize(new Dimension(width, splitPane.getHeight()));
+        sp.setMinimumSize(new Dimension(width_min, 0));
+        
+        GseaSimpleInternalFrame sif = new GseaSimpleInternalFrame(fTitle);
+        sif.setPreferredSize(new Dimension(width - 20, splitPane.getHeight() - 20));
+        sif.setMinimumSize(new Dimension(width_min, 0));
+        sif.add(sp);
+        splitPane.add(sif, JSplitPane.LEFT);
+        
+        splitPane.add(GuiHelper.createNaPlaceholder(), JSplitPane.RIGHT);
+        splitPane.setDividerLocation(XPreferencesFactory.getToolTreeDivLocation());
+        splitPane.setOneTouchExpandable(false); // imp else makes it hard to get back to original
+        splitPane.setDividerSize(3);
+        //splitPane.setLastDividerLocation(270);
+        splitPane.setLastDividerLocation(LHS_SIZE);
+        
+        fToolRunner = new ToolRunnerControl(this);
+        
+        this.setLayout(new BorderLayout());
+        this.add(splitPane, BorderLayout.CENTER);
 
         fToolSelectorTree.addTreeSelectionListener(new TreeSelectionListener() {
 
             public void valueChanged(TreeSelectionEvent e) {
 
-                try {    // disabled foxtrot as it complains about the init call being outside awt event loop -- see below
-                    //log.debug("ToolLauncherTreeImpl tree event: " + e + " source: " + e.getSource());
-
-                    //Worker.post(new Task() {
-                    //  public Object run() throws Exception {
+                try {
                     int divloc = splitPane.getDividerLocation();
-                    //log.debug("divloc: " + divloc);
                     TreePath path = fToolSelectorTree.getSelectionPath();
                     Object val;
-
-                    //log.debug("path : " + path);
 
                     if (path == null && fCurrReport != null) {
                         val = fCurrReport; // else the thing changes to disabled whern a new reports is added to cache
@@ -170,7 +134,7 @@ public class ToolLauncherDefaultImpl extends JPanel implements ToolLauncher, Mou
                                 Object obj = fToolParamSetDisplayMap.get(tool);
 
                                 if (obj == null) {
-                                    obj = ToolDisplayFactory.createParamSetDisplayComponent(tool, fInstance);
+                                    obj = new ParamSetDisplay(tool.getTitle(), null, tool.getParamSet(), fInstance);
                                     ((ParamSetDisplay) obj).addMouseMotionListener(fInstance);
                                     fToolParamSetDisplayMap.put(tool, obj);
                                 }
@@ -262,42 +226,6 @@ public class ToolLauncherDefaultImpl extends JPanel implements ToolLauncher, Mou
     //private JScrollPane sp_for_box;
 
     private static final int LHS_SIZE = 250;
-
-    private void jbInit(boolean addToolControl, String title) {
-
-        splitPane.setOrientation(JSplitPane.HORIZONTAL_SPLIT);
-        this.fToolSelectorTree = ToolDisplayFactory.createToolSelector(fTools, fShowReportNode, fShowRootNode);
-
-        klog.debug("Making ToolSelectorTree");
-        JScrollPane sp = new JScrollPane(fToolSelectorTree.getComponent());
-
-        int width = XPreferencesFactory.getToolTreeWidth();
-        int width_min = XPreferencesFactory.getToolTreeWidth_min();
-        sp.setPreferredSize(new Dimension(width, splitPane.getHeight()));
-        sp.setMinimumSize(new Dimension(width_min, 0));
-
-        GseaSimpleInternalFrame sif = new GseaSimpleInternalFrame(title);
-        sif.setPreferredSize(new Dimension(width - 20, splitPane.getHeight() - 20));
-        sif.setMinimumSize(new Dimension(width_min, 0));
-        sif.add(sp);
-        splitPane.add(sif, JSplitPane.LEFT);
-
-        splitPane.add(GuiHelper.createNaPlaceholder(), JSplitPane.RIGHT);
-        splitPane.setDividerLocation(XPreferencesFactory.getToolTreeDivLocation());
-        splitPane.setOneTouchExpandable(false); // imp else makes it hard to get back to original
-        splitPane.setDividerSize(3);
-        //splitPane.setLastDividerLocation(270);
-        splitPane.setLastDividerLocation(LHS_SIZE);
-
-        fToolRunner = new ToolRunnerControl(this);
-
-        this.setLayout(new BorderLayout());
-        this.add(splitPane, BorderLayout.CENTER);
-
-        if (addToolControl) {
-            this.add(fToolRunner, BorderLayout.SOUTH);
-        }
-    }
 
     /**
      * ToolRunnerControl.DisplayHook impl.

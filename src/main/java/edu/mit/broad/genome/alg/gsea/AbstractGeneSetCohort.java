@@ -81,9 +81,6 @@ abstract class AbstractGeneSetCohort implements GeneSetCohort {
 
         if (!atleastonewithits) {
             System.out.println("rl: " + rl.getName() + " \n" + rl.getRankedNames().subList(0, 10));
-            if (gsets.length > 0) {
-                System.out.println("gset: " + gsets[0].getMembersS());
-            }
 
             TraceUtils.showTrace();
             log.warn("No hits in the ranked list to any of the gene sets!");

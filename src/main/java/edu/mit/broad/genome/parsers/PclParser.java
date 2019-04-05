@@ -1,12 +1,11 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.parsers;
 
 import edu.mit.broad.genome.math.Matrix;
 import edu.mit.broad.genome.objects.*;
 import edu.mit.broad.genome.utils.FileUtils;
-import edu.mit.broad.vdb.sampledb.SampleAnnot;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -160,12 +159,12 @@ public class PclParser extends AbstractParser {
         // Initialize the Dataset and Annotation
         String name = new File(hackINeedFullPath).getName();
 
-        FeatureAnnot fann = new FeatureAnnotImpl(name, rowNames, rowDescs);
+        FeatureAnnot fann = new FeatureAnnot(name, rowNames, rowDescs);
         fann.addComment(fComment.toString());
 
-        final SampleAnnot sann = new SampleAnnotImpl(name, colNames, null);
+        final SampleAnnot sann = new SampleAnnot(name, colNames);
 
-        Dataset ds = new DefaultDataset(name, matrix, rowNames, colNames, true, new AnnotImpl(fann, sann));
+        Dataset ds = new DefaultDataset(name, matrix, rowNames, colNames, true, new Annot(fann, sann));
         ds.addComment(fComment.toString());
 
         doneImport();

@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2018 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.reports;
 
 import edu.mit.broad.genome.Headers;
@@ -12,8 +12,8 @@ import edu.mit.broad.genome.parsers.GctParser;
 import edu.mit.broad.genome.reports.pages.HtmlFormat;
 import edu.mit.broad.genome.reports.pages.HtmlPage;
 import edu.mit.broad.genome.reports.web.LinkedFactory;
+import edu.mit.broad.xbench.heatmap.GramImagerImpl;
 import gnu.trove.TIntObjectHashMap;
-import xapps.api.vtools.viewers.VizFactory;
 
 import java.io.File;
 import java.util.*;
@@ -52,7 +52,7 @@ public class MiscReports {
                 List useNames = rl.getNamesOfUpOrDnXRanks(topBotXGenes, true);
                 useNames.addAll(rl.getNamesOfUpOrDnXRanks(topBotXGenes, false));
                 Dataset ds = new DatasetGenerators().extractRows(fullDs_opt, useNames);
-                HeatMap heatMap = VizFactory.createGramImager().createBpogHeatMap(ds, template);
+                HeatMap heatMap = new GramImagerImpl().createBpogHeatMap(ds, template);
                 htmlPage.addHeatMap("heat_map", "Heat Map of the top " + topBotXGenes + " features for each phenotype in " + fullDs_opt.getName(), heatMap, saveInDir, createSvgs);
 
                 if (createGcts) {

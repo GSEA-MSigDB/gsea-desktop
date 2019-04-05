@@ -17,7 +17,6 @@ edtFTPJ/Free, Copyright 2001-2007 Enterprise Distributed Technologies Ltd. All R
 Jakarta ECS, Copyright The Apache Software Foundation. All rights reserved. (https://attic.apache.org/projects/jakarta-ecs.html).
 JCommon, Copyright 2007-2014 Object Refinery Limited. (http://www.jfree.org/jcommon/).
 JFreeChart, Copyright 2005-2014 Object Refinery Limited. (http://www.jfree.org/jfreechart/).
-JExcelApi, Copyright 2001-2009 Andrew Khan, Copyright 1996-2000 by Elliot Joel Berk and C. Scott Ananian. (http://jexcelapi.sourceforge.net/).
 JIDE Common, Copyright 2002-2016, JIDE Software, Inc. All Rights Reserved.  (www.jidesoft.com).
 JSON Simple, (https://code.google.com/archive/p/json-simple/).
 Maven Artifact, Copyright 2001-2008. All rights reserved. (http://maven.apache.org/index.html).

@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package org.genepattern.gsea;
 
 import com.jidesoft.docking.DefaultDockingManager;
@@ -107,12 +107,8 @@ public class LeadingEdgeAnalysis {
 
     public LeadingEdgeAnalysis(final GeneSetMatrix lev_gmx,
                                RankedList rankedList, final Frame parent) {
-        this(lev_gmx.getGeneSets(), new BitSetDataset(lev_gmx).toDataset(true, false),
-                rankedList, parent);
-    }
-    
-    public LeadingEdgeAnalysis(final GeneSet[] gsets, final Dataset lev_ds,
-            RankedList rankedList, final Frame parent) {
+        final GeneSet[] gsets = lev_gmx.getGeneSets();
+        final Dataset lev_ds = new BitSetDataset(lev_gmx).toDataset();
     
         try {
             clusteredDataset = HCLAlgorithm.cluster(lev_ds);

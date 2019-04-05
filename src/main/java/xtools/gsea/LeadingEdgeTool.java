@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2018 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package xtools.gsea;
 
 import edu.mit.broad.genome.Printf;
@@ -12,6 +12,8 @@ import edu.mit.broad.genome.parsers.ParserFactory;
 import edu.mit.broad.genome.reports.api.ReportIndexState;
 import edu.mit.broad.genome.reports.pages.HtmlFormat;
 import edu.mit.broad.genome.reports.pages.HtmlReportIndexPage;
+import edu.mit.broad.xbench.heatmap.DisplayState;
+import edu.mit.broad.xbench.heatmap.GramImagerImpl;
 
 import org.apache.ecs.StringElement;
 import org.apache.ecs.html.*;
@@ -23,13 +25,11 @@ import org.genepattern.heatmap.HeatMapComponent;
 import org.genepattern.heatmap.image.HeatMap;
 import org.genepattern.io.ImageUtil;
 
-import xapps.api.vtools.viewers.VizFactory;
 import xtools.api.AbstractTool;
 import xtools.api.ToolCategory;
 import xtools.api.param.BooleanParam;
 import xtools.api.param.DirParam;
 import xtools.api.param.Param;
-import xtools.api.param.ParamFactory;
 import xtools.api.param.StringInputParam;
 import xtools.api.param.StringMultiInputParam;
 
@@ -59,7 +59,7 @@ public class LeadingEdgeTool extends AbstractTool {
     private BooleanParam fCreateExtraPlotsParam = new BooleanParam("extraPlots", 
             "create extra LEV plots", false, false);
 
-    private final BooleanParam fMakeZippedReportParam = ParamFactory.createZipReportParam(false);
+    private final BooleanParam fMakeZippedReportParam = AbstractTool.createZipReportParam(false);
 
     /**
      * Class constructor
@@ -151,7 +151,7 @@ public class LeadingEdgeTool extends AbstractTool {
                 
         final GeneSetMatrix lev_gmx = new DefaultGeneSetMatrix("leading_edge_matrix_for_" + edb.getName(), gsets);
         final BitSetDataset lev_bsd = new BitSetDataset(lev_gmx);
-        final Dataset lev_ds = lev_bsd.toDataset(true, false);
+        final Dataset lev_ds = lev_bsd.toDataset();
         final File lev_ds_file = fReport.savePage(lev_ds, false);
 
         Dataset lev_ds_clustered = null;
@@ -205,7 +205,7 @@ public class LeadingEdgeTool extends AbstractTool {
 
         Dataset lev_ds_clustered_m = _morph(lev_ds_clustered, edb.getRankedList());
 
-        HeatMap heatMap = VizFactory.createGramImager(GPWrappers.createColorScheme_for_lev_with_score(lev_ds_clustered_m)).createBpogHeatMap(lev_ds_clustered_m);
+        HeatMap heatMap = new GramImagerImpl(new DisplayState(GPWrappers.createColorScheme_for_lev_with_score(lev_ds_clustered_m))).createBpogHeatMap(lev_ds_clustered_m);
         File lev_clust_hm_file = fReport.createFile("leading_edge_heat_map_clustered." + imgFormat, "foo");
         lev_clust_hm_file = ImageUtil.saveReportPlotImage(heatMap, lev_clust_hm_file, imgFormat);
         StringElement line3 = HtmlFormat.Links.hyper("Heat map of clustered leading edge subsets", lev_clust_hm_file, ". Rows are gene sets and columns are genes. This matrix is clustered", fReport.getReportDir());
@@ -263,7 +263,7 @@ public class LeadingEdgeTool extends AbstractTool {
         line2 = HtmlFormat.Links.hyper("Dataset (gct)", lev_ds_file, "for the specified gene sets. 1's denote membership of a gene in the leading edge subset", fReport.getReportDir());
         ul.addElement(new LI(line2));
 
-        HeatMap lev_image = VizFactory.createGramImager(GPWrappers.createColorScheme_for_lev_with_score(lev_ds)).createBpogHeatMap(_morph(lev_ds, edb.getRankedList()));
+        HeatMap lev_image = new GramImagerImpl(new DisplayState(GPWrappers.createColorScheme_for_lev_with_score(lev_ds))).createBpogHeatMap(_morph(lev_ds, edb.getRankedList()));
         File lev_hm_file = fReport.createFile("leading_edge_heat_map_unclustered." + imgFormat, "foo");
         lev_hm_file = ImageUtil.saveReportPlotImage(lev_image, lev_hm_file, imgFormat);
         line3 = HtmlFormat.Links.hyper("Heat map of leading edge subsets", lev_hm_file, ". Rows are gene sets and columns are genes. This matrix is NOT clustered", fReport.getReportDir());

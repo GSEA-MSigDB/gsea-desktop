@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2018 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package org.broad.gsea.ui;
 
 import java.awt.GraphicsEnvironment;
@@ -8,10 +8,10 @@ import java.awt.Image;
 
 import javax.swing.JOptionPane;
 
+import org.apache.commons.lang3.SystemUtils;
 import org.apache.log4j.Logger;
 
 import apple.dts.samplecode.osxadapter.OSXAdapter;
-import edu.mit.broad.genome.utils.SystemUtils;
 import xapps.gsea.GseaFijiTabsApplicationFrame;
 
 /**
@@ -37,13 +37,13 @@ public class DesktopIntegration {
     }
     
     public static void setDockIcon(Image image) {
-        if (SystemUtils.isMac()) {
+        if (SystemUtils.IS_OS_MAC_OSX) {
             OSXAdapter.setDockIconImage(image);
         }
     }
 
     public static void setAboutHandler(GseaFijiTabsApplicationFrame applicationFrame) {
-        if (!SystemUtils.isMac()) return;
+        if (!SystemUtils.IS_OS_MAC_OSX) return;
         try {
             OSXAdapter.setAboutHandler(applicationFrame, applicationFrame.getClass().getDeclaredMethod("showAboutDialog", (Class[]) null));
         } catch (Exception e) {
@@ -52,7 +52,7 @@ public class DesktopIntegration {
     }
     
     public static void setQuitHandler(GseaFijiTabsApplicationFrame applicationFrame) {
-        if (!SystemUtils.isMac()) return;
+        if (!SystemUtils.IS_OS_MAC_OSX) return;
         try {
             OSXAdapter.setQuitHandler(applicationFrame, applicationFrame.getClass().getDeclaredMethod("exitApplication", (Class[]) null));
         } catch (Exception e) {

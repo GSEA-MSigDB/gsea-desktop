@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.math;
 
 import java.awt.*;
@@ -11,10 +11,7 @@ import java.awt.*;
  */
 public class ColorSchemes {
 
-    /**
-     * Base class
-     */
-    static abstract class BasicColorScheme implements ColorScheme {
+    public static class ColorScheme {
 
         private final String fName;
         private final ColorValue[] fColorValues;
@@ -22,7 +19,7 @@ public class ColorSchemes {
         /**
          * Privatized Class Constructor.
          */
-        public BasicColorScheme(final String type, final int[] colors, final String[] colorlabels) {
+        public ColorScheme(final String type, final int[] colors, final String[] colorlabels) {
 
             this.fName = type;
             this.fColorValues = new ColorValue[colors.length];
@@ -55,7 +52,7 @@ public class ColorSchemes {
         public boolean equals(final Object obj) {
 
             if (obj instanceof ColorScheme) {
-                if (((BasicColorScheme) obj).fName.equals(this.fName)) {
+                if (((ColorScheme) obj).fName.equals(this.fName)) {
                     return true;
                 }
             }
@@ -70,7 +67,7 @@ public class ColorSchemes {
     } // BaseColorScheme
 
 
-    public static class BroadCancer extends BasicColorScheme {
+    public static class BroadCancer extends ColorScheme {
         /**
          * Default mit heat map
          * Note that there are 12 diff colors
@@ -91,7 +88,7 @@ public class ColorSchemes {
         }
     }
 
-    public static class BroadCancerRed extends BasicColorScheme {
+    public static class BroadCancerRed extends ColorScheme {
         /**
          * Default mit heat map
          * Note that there are 12 diff colors
@@ -111,7 +108,7 @@ public class ColorSchemes {
         }
     }
 
-    public static class BroadCancerBlue extends BasicColorScheme {
+    public static class BroadCancerBlue extends ColorScheme {
         /**
          * Default mit heat map
          * Note that there are 12 diff colors
@@ -129,83 +126,4 @@ public class ColorSchemes {
             super("MIT_BLUE", MIT_BLUE_COLORS_SCHEME, MIT_BLUE_COLORS_LABELS);
         }
     }
-
-
-}    // End DefaultColorScheme
-
-/**
- * for the four color scheme
- */
-/*
-public static final Color EQUAL_COLOR = Color.green;
-public static final Color LOWER_COLOR = Color.blue;
-public static final Color HIGHER_COLOR = Color.red;
-public static final Color NAN_COLOR = Color.black;
-public static final Color ERROR_COLOR = Color.white;
-*/
-
-/*
-
-private static final ColorValue[] STANFORD2_COLORS_= {
-new ColorValue(new Color(0, 255, 0), "-3.0"),
-new ColorValue(new Color(0, 170, 0), "-2.5"),
-new ColorValue(new Color(0, 85, 0), "-1.0"),
-
-new ColorValue(Color.black, "0"),
-
-new ColorValue(new Color(85, 0, 0), "+1.0"),
-new ColorValue(new Color(170, 0, 0), "+2.0"),
-new ColorValue(new Color(255, 0, 0), "+3.0"),
-};
-
-// fromdchip 0.6, 1.8, 3
-private static final ColorValue[] STANFORD3_COLORS_ = {
-new ColorValue(new Color(0, 255, 0), "-3.0"),
-new ColorValue(new Color(0, 153, 0), "-1.8"),
-new ColorValue(new Color(0, 51, 0), "-0.6"),
-
-new ColorValue(Color.black, "0"),
-
-new ColorValue(new Color(51, 0, 0), "+0.6"),
-new ColorValue(new Color(153, 0, 0), "+1.8"),
-new ColorValue(new Color(255, 0, 0), "+3.0"),
-};
-
-*/
-
-/*
-private static final ColorValue[] STANFORD4_COLORS = {
-    new ColorValue(new Color(0, 255, 0), "-3.0"),
-    new ColorValue(new Color(0, 153, 0), "-1.8"),
-    new ColorValue(new Color(0, 51, 0), "-0.6"),
-    new ColorValue(new Color(0, 20, 0), "-0.25"),
-    new ColorValue(new Color(0, 10, 0), "-0.1"),
-
-    new ColorValue(Color.black, "0"),
-
-    new ColorValue(new Color(10, 0, 0), "+0.1"),
-    new ColorValue(new Color(20, 0, 0), "+0.25"),
-    new ColorValue(new Color(51, 0, 0), "+0.6"),
-    new ColorValue(new Color(153, 0, 0), "+1.8"),
-    new ColorValue(new Color(255, 0, 0), "+3.0"),
-};
-*/
-
-/* // these are the values listed in the eisen paper
-// but they are log scale - here we ae not log scale
-private static final ColorValue[] STANFORD_COLORS = {
-    new ColorValue(new Color(0, 255, 0), ">8"),
-    new ColorValue(new Color(0, 200, 0), ">6"),
-    new ColorValue(new Color(0, 150, 0), ">4"),
-    new ColorValue(new Color(0, 100, 0), ">2"),
-    new ColorValue(new Color(0, 50, 0), ">0.5"),
-
-    new ColorValue(Color.black, "1:1"),
-
-    new ColorValue(new Color(50, 0, 0), ">0.5"),
-    new ColorValue(new Color(100, 0, 0), ">2"),
-    new ColorValue(new Color(150, 0, 0), ">4"),
-    new ColorValue(new Color(200, 0, 0), ">6"),
-    new ColorValue(new Color(255, 0, 0), ">8"),
-};
-*/
+}

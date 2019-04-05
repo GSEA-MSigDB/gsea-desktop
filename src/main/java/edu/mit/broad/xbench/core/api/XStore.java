@@ -1,11 +1,12 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.xbench.core.api;
 
 import edu.mit.broad.genome.alg.ComparatorFactory;
 import edu.mit.broad.genome.parsers.ParseUtils;
-import edu.mit.broad.genome.utils.FileUtils;
+
+import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
 
 import javax.swing.*;
@@ -140,7 +141,7 @@ public class XStore extends AbstractListModel implements ComboBoxModel {
             }
 
             if (fFile.canWrite()) {
-                FileUtils.write(fLines, fFile);
+                FileUtils.writeLines(fFile, fLines);
             }
 
         } catch (Throwable t) {

@@ -12,7 +12,6 @@ import edu.mit.broad.genome.objects.esmatrix.db.EnrichmentDb;
 import edu.mit.broad.genome.reports.api.Report;
 import edu.mit.broad.genome.utils.SystemUtils;
 import edu.mit.broad.vdb.chip.Chip;
-import edu.mit.broad.vdb.sampledb.SampleAnnot;
 import org.apache.log4j.Logger;
 
 import javax.swing.*;
@@ -83,7 +82,7 @@ public class DataFormat extends DataType implements Constants {
 
     public static final DataFormat GRP_FORMAT = new DataFormat(GeneSet.class, "GeneSet",
             "MIT GeneSet Format", GRP,
-            JarResources.getIcon("Grp.gif"), FSetParser.class);
+            JarResources.getIcon("Grp.gif"), GeneSetParser.class);
 
     public static final DataFormat RNK_FORMAT = new DataFormat(RankedList.class, "RankedList",
             "MIT RankedList Format", RNK,

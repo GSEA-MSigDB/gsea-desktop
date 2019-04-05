@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.objects.esmatrix.db;
 
 import edu.mit.broad.genome.math.XMath;
@@ -65,7 +65,7 @@ public class GeneSetSignalImpl implements GeneSetSignal {
                 set.add(rl.getRankName(fCoreRanks.get(i)));
                 //System.out.println(">>>>>>>>> " + Printf.outs(rl));
             }
-            this.fCoreGeneSet = new FSet(getName(), set);
+            this.fCoreGeneSet = new GeneSet(getName(), set);
         }
 
         //System.out.println("# members: " + fCoreGeneSet.getNumMembers() + " " + fCoreGeneSet.getName() + " " + fCoreRanks.size());

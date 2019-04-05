@@ -1,8 +1,9 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package xtools.gsea;
 
+import edu.mit.broad.genome.Headers;
 import edu.mit.broad.genome.alg.DatasetGenerators;
 import edu.mit.broad.genome.alg.Metric;
 import edu.mit.broad.genome.alg.gsea.GeneSetCohortGenerator;
@@ -22,10 +23,13 @@ import edu.mit.broad.genome.parsers.ParserFactory;
 import edu.mit.broad.genome.reports.EnrichmentReports;
 import edu.mit.broad.genome.reports.pages.HtmlReportIndexPage;
 import edu.mit.broad.vdb.chip.Chip;
+import edu.mit.broad.xbench.prefs.XPreferencesFactory;
 import xtools.api.param.*;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -46,8 +50,8 @@ public abstract class AbstractGsea2Tool extends AbstractGseaTool {
     protected final OrderParam fOrderParam = new OrderParam(false);
     protected final SortParam fSortParam = new SortParam(false);
     protected final PermuteTypeChooserParam fPermuteTypeParamType = PermuteTypeChooserParam.createTemplateOrGeneSet(true);
-    protected final BooleanParam fMedianParam = ParamFactory.createMedianParam(false);
-    protected final IntegerParam fNumMarkersParam = ParamFactory.createNumMarkersParam(100, false);
+    protected final BooleanParam fMedianParam = new BooleanParam("median", "Median for class  metrics", "Use the median of each class instead of the mean for the class seperation metrics", XPreferencesFactory.kMedian.getBoolean(), false);
+    protected final IntegerParam fNumMarkersParam = new IntegerParam("num", "Number of markers", "Number of markers", 100, false);
 
     protected final BooleanParam fSaveRndRankedListsParam = new BooleanParam("save_rnd_lists", "Save random ranked lists", "Save random ranked lists (might be very large)", false, false);
 
@@ -103,7 +107,7 @@ public abstract class AbstractGsea2Tool extends AbstractGseaTool {
         final LabelledVectorProcessor lvp = new LabelledVectorProcessors.None(); // @note
 
         final RandomSeedGenerator rst = fRndSeedTypeParam.createSeed();
-        final Map mps = fMetricParam.getMetricParams(fMedianParam);
+        final Map mps = getMetricParams(fMedianParam);
         final GeneSetCohortGenerator gcohgen = fGcohGenReqdParam.createGeneSetCohortGenerator(false);
 
         final DatasetTemplate dt = new DatasetGenerators().extract(fullCd.getDataset(), template);
@@ -233,7 +237,7 @@ public abstract class AbstractGsea2Tool extends AbstractGseaTool {
                         " in the space of gene symbols. Chip is used to collapse probe ids into symbols", 1002);
             }
     
-            final Chip chip = fChipParam.getChipCombo();
+            final Chip chip = fChipParam.getChip();
             Dataset collapsed = new DatasetGenerators().collapse(origDs, chip,
                     fIncludeOnlySymbols.isTrue(), fCollapseModeParam.getStringIndexChoosen());
             log.info("Collapsing dataset was done. Original: " + origDs.getQuickInfo() + " collapsed: " + collapsed.getQuickInfo());
@@ -241,7 +245,9 @@ public abstract class AbstractGsea2Tool extends AbstractGseaTool {
             cd.chip = chip;
             cd.wasCollapsed = true;
             cd.collapsed = collapsed;
-            ParamFactory.checkIfCollapsedIsEmpty(cd);
+            if (cd.getNumRow_orig() != 0 && cd.getNumRow_collapsed() == 0) {
+                throw new BadParamException("The collapsed dataset was empty when used with chip:" + cd.getChipName(), 1005);
+            }
     
         } else {
             cd.wasCollapsed = false;
@@ -252,4 +258,13 @@ public abstract class AbstractGsea2Tool extends AbstractGseaTool {
         return cd;
     }
 
-}    // End AbstractGsea2Tool
+    // result hack to allow setting mean / median
+    public Map<String, Boolean> getMetricParams(BooleanParam medianParam) {
+        Map<String, Boolean> params = new HashMap<String, Boolean>();
+        params.put(Headers.USE_MEDIAN, XPreferencesFactory.kMedian.getBooleanO());
+        params.put(Headers.FIX_LOW, XPreferencesFactory.kFixLowVar.getBooleanO());
+        params.put(Headers.USE_BIASED, XPreferencesFactory.kBiasedVar.getBooleanO());
+        params.put(Headers.USE_MEDIAN, (Boolean)medianParam.getValue());
+        return Collections.unmodifiableMap(params);
+    }
+}

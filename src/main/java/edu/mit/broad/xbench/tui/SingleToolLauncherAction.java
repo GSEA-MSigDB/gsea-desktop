@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.xbench.tui;
 
 import java.awt.Dimension;
@@ -10,8 +10,6 @@ import edu.mit.broad.xbench.actions.WidgetAction;
 import edu.mit.broad.xbench.core.Widget;
 import xtools.api.Tool;
 import xtools.api.param.ParamSet;
-
-import javax.swing.*;
 
 /**
  * @author Aravind Subramanian
@@ -30,25 +28,9 @@ public class SingleToolLauncherAction extends WidgetAction {
     private ParamSet fPSet;
     private String fTitle;
 
-    /**
-     * Class Constructor.
-     *
-     * @param tool
-     */
     public SingleToolLauncherAction(Tool tool, ParamSet pset, String titleOpt) {
-        this(tool, pset, titleOpt, ToolLauncher.ICON);
-    }
-
-    /**
-     * Class constructor
-     *
-     * @param tool
-     * @param pset
-     * @param iconOpt
-     */
-    public SingleToolLauncherAction(final Tool tool, final ParamSet pset, final String titleOpt, final Icon iconOpt) {
         super("SingleToolLauncherAction", getToolName(tool), 
-                "Set Parameters and Launch Analysis Tools", iconOpt);
+                "Set Parameters and Launch Analysis Tools", ToolLauncher.ICON);
 
         if (pset == null) {
             throw new IllegalArgumentException("Param pset cannot be null");

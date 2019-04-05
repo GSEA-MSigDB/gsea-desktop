@@ -1,11 +1,15 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.math;
 
 import edu.mit.broad.genome.objects.AbstractObject;
 import edu.mit.broad.genome.utils.ImmutedException;
 import gnu.trove.TFloatArrayList;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.PrintWriter;
 
 import org.ujmp.core.calculation.Calculation.Ret;
 import org.ujmp.core.enums.ValueType;
@@ -481,6 +485,16 @@ public class Matrix extends AbstractObject {
         if (fImmuted) {
             throw new ImmutedException();
         }
+    }
+
+    public static void save(Matrix m, File toFile) throws Exception {
+        PrintWriter pw = new PrintWriter(new FileOutputStream(toFile));
+    
+        for (int r = 0; r < m.getNumRow(); r++) {
+            pw.println(m.getRowV(r).toString('\t'));
+        }
+    
+        pw.close();
     }
 
     private static void _enforceEqualDimensions(Matrix a, Matrix b) {

@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2018 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.xbench.tui;
 
 import edu.mit.broad.genome.JarResources;
@@ -235,7 +235,7 @@ public class ToolRunnerControl extends JPanel {
                 JButton bCopy = new JButton("Copy", GuiHelper.ICON_COPY16);
 
                 StringBuffer buf = new StringBuffer("java -Xmx512m ").append(fHook.getCurrentTool().getName()).append(' ');
-                buf.append(fHook.getCurrentParamSet().getAsCommand(false, true, false).trim());
+                buf.append(fHook.getCurrentParamSet().getAsCommand(true).trim());
 
                 final JTextArea ta = new JTextArea(buf.toString(), 5, 50);
 

@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package org.genepattern.io;
 
 import java.io.BufferedReader;
@@ -27,12 +27,12 @@ public class FeatureListReader extends AbstractReader {
      * @return The feature list
      * @throws IOException If an error occurs while reading the file
      */
-    public List read(String fileName) throws IOException {
+    public List<String> read(String fileName) throws IOException {
         BufferedReader br = null;
         try {
             br = new BufferedReader(new FileReader(fileName));
             String s = null;
-            List probeList = new ArrayList();
+            List<String> probeList = new ArrayList<>();
             while ((s = br.readLine()) != null) {
                 String feature = s.trim();
                 if (!feature.equals("")) {

@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package xtools.gsea;
 
 import edu.mit.broad.genome.alg.gsea.GeneSetCohortGenerator;
@@ -15,6 +15,7 @@ import edu.mit.broad.genome.reports.EnrichmentReports;
 import edu.mit.broad.genome.reports.api.ReportIndexState;
 import edu.mit.broad.genome.reports.pages.HtmlReportIndexPage;
 import edu.mit.broad.vdb.chip.Chip;
+import xtools.api.AbstractTool;
 import xtools.api.param.*;
 
 import java.util.Properties;
@@ -36,7 +37,7 @@ public class GseaPreranked extends AbstractGseaTool {
     private final RankedListReqdParam fRankedListParam = new RankedListReqdParam();
 
     private final IntegerParam fShowDetailsForTopXSetsParam = new IntegerParam("plot_top_x", "Plot graphs for the top sets of each phenotype", "Plot GSEA mountain and related plots for the top sets of each phenotype", 20, false, Param.ADVANCED);
-    private final BooleanParam fMakeZippedReportParam = ParamFactory.createZipReportParam(false);
+    private final BooleanParam fMakeZippedReportParam = AbstractTool.createZipReportParam(false);
     private final BooleanParam fMakeGeneSetReportsParam = new BooleanParam("make_sets", "Make detailed gene set report", "Create detailed gene set reports (heat-map, mountain plot etc) for every enriched gene set", true, false, Param.ADVANCED);
 
     // Push up to AbstractGseaTool
@@ -92,7 +93,7 @@ public class GseaPreranked extends AbstractGseaTool {
 
         final GeneSet[] gsets = Helper.getGeneSets(cd.getRankedList(), fOrigGeneSets, fGeneSetMinSizeParam, fGeneSetMaxSizeParam);
 
-        ParamFactory.checkAndBarfIfZeroSets(gsets);
+        checkAndBarfIfZeroSets(gsets);
 
         final HtmlReportIndexPage htmlReportIndexPage = fReport.getIndexPage();
 
@@ -124,7 +125,7 @@ public class GseaPreranked extends AbstractGseaTool {
         final boolean createSvgs = fCreateSvgsParam.isSpecified() && fCreateSvgsParam.isTrue();
         Chip chip = null;
         RankedList rl = ((CollapsedDetails.Ranked) fullRL).getRankedList();
-        FeatureAnnot fann = new FeatureAnnotImpl(rl.getName(), rl.getRankedNames(), null);
+        FeatureAnnot fann = new FeatureAnnot(rl.getName(), rl.getRankedNames(), null);
 
         final KSTests tests = new KSTests(getOutputStream());
         

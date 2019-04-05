@@ -1,9 +1,8 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.xbench.heatmap;
 
-import edu.mit.broad.genome.math.ColorScheme;
 import edu.mit.broad.genome.objects.*;
 import org.genepattern.data.expr.IExpressionData;
 import org.genepattern.heatmap.image.DisplaySettings;
@@ -16,18 +15,10 @@ public class GramImagerImpl implements GramImager {
 
     private DisplayState fDisplayState;
 
-    /**
-     * Class constructor
-     */
     public GramImagerImpl() {
         this(null);
     }
 
-    /**
-     * Class constructor
-     *
-     * @param state
-     */
     public GramImagerImpl(final DisplayState state) {
         if (state == null) {
             this.fDisplayState = new DisplayState(); // default
@@ -38,15 +29,14 @@ public class GramImagerImpl implements GramImager {
     }
 
     public HeatMap createBpogHeatMap(final Dataset ds) {
-        return _xcoreCreateBpogImage(ds, null, null, null);
+        return _xcoreCreateBpogImage(ds, null);
     }
 
     public HeatMap createBpogHeatMap(final Dataset ds, final Template t) {
-        return _xcoreCreateBpogImage(ds, t, null, null);
+        return _xcoreCreateBpogImage(ds, t);
     }
 
-    private DisplaySettings _createDefaultDisplaySettings(final Dataset origDs,
-                                                          final ColorScheme colorScheme_opt) {
+    private DisplaySettings _createDefaultDisplaySettings(final Dataset origDs) {
         final DisplaySettings set = new DisplaySettings();
 
         set.drawGrid = true;
@@ -66,30 +56,20 @@ public class GramImagerImpl implements GramImager {
             set.colorConverter = fDisplayState.getColorScheme();
         }
 
-        if (colorScheme_opt != null) {
-            set.colorConverter = GPWrappers.createColorScheme(origDs, colorScheme_opt);
-        }
-
         return set;
     }
 
     private HeatMap _xcoreCreateBpogImage(final Dataset origDs,
-                                                final Template origT_opt,
-                                                final ColorScheme colorScheme_opt,
-                                                DisplaySettings displaySettings_opt) {
-
+                                                final Template origT_opt) {
         if (origDs == null) {
             throw new IllegalArgumentException("Param origDs cannot be null");
         }
 
-
-        if (displaySettings_opt == null) {
-            displaySettings_opt = _createDefaultDisplaySettings(origDs, colorScheme_opt);
-        }
+        DisplaySettings displaySettings_opt = _createDefaultDisplaySettings(origDs);
 
         final IExpressionData data = GPWrappers.createIExpressionData(origDs);
 
         return HeatMap.createHeatMap(data, displaySettings_opt, GPWrappers.createFeatureAnnotator(origDs),
                 GPWrappers.createSampleAnnotator(origDs, origT_opt));
     }
-} // End GramImagerImpl
+}

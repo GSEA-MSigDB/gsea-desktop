@@ -1,19 +1,26 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package org.genepattern.module;
 
 import org.genepattern.data.expr.IExpressionData;
 import org.genepattern.data.matrix.ClassVector;
-import org.genepattern.io.IOUtil;
+import org.genepattern.io.FeatureListReader;
+import org.genepattern.io.expr.IExpressionDataWriter;
+import org.genepattern.io.expr.cls.ClsReader;
+import org.genepattern.io.expr.gct.GctWriter;
+import org.genepattern.io.expr.res.ResWriter;
 
 import edu.mit.broad.genome.utils.ParseException;
 
 import javax.swing.*;
 
 import java.awt.*;
+import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.List;
 
 /**
@@ -24,21 +31,12 @@ import java.util.List;
  */
 public class VisualizerUtil {
 
-    private VisualizerUtil() {
-    }
+    public static ClsReader clsReader = new ClsReader();
+    private static FeatureListReader featureListReader = new FeatureListReader();
+    private static GctWriter gctWriter = new GctWriter();
+    public static ResWriter resWriter = new ResWriter();
 
-    /**
-     * Brings up an error message dialog
-     *
-     * @param parentComponent determines the <code>Frame</code> in which the dialog is
-     *                        displayed; if <code>null</code>, or if the
-     *                        <code>parentComponent</code> has no <code>Frame</code>, a
-     *                        default <code>Frame</code> is used
-     * @param message         The message
-     */
-    public static void error(Component parentComponent, String message) {
-        JOptionPane.showMessageDialog(parentComponent, message, "Error",
-                JOptionPane.ERROR_MESSAGE);
+    private VisualizerUtil() {
     }
 
     /**
@@ -54,16 +52,11 @@ public class VisualizerUtil {
     public static ClassVector readCls(Component parentComponent, String pathname) {
 
         try {
-            return IOUtil.readCls(pathname);
-        } catch (IOException e) {
-            error(parentComponent, "An error occured while reading the file "
-                    + new File(pathname).getName());
-            return null;
-        } catch (ParseException e) {
-            fileReadError(e, parentComponent, pathname);
+            return clsReader.read(pathname);
+        } catch (ParseException | IOException e) {
+            fileOperationError("An error occured while reading the file ", e, parentComponent, pathname);
             return null;
         }
-
     }
 
     /**
@@ -76,13 +69,11 @@ public class VisualizerUtil {
      * @param pathname        The pathname string
      * @return the feature list
      */
-    public static List readFeatureList(Component parentComponent,
-                                       String pathname) {
+    public static List<String> readFeatureList(Component parentComponent, String pathname) {
         try {
-            return IOUtil.readFeatureList(pathname);
+            return featureListReader.read(pathname);
         } catch (IOException e) {
-            error(parentComponent, "An error occured while reading the file "
-                    + new File(pathname).getName());
+            fileOperationError("An error occured while reading the file ", e, parentComponent, pathname);
             return null;
         }
     }
@@ -107,44 +98,46 @@ public class VisualizerUtil {
     public static String write(Component parentComponent, IExpressionData data,
                                String formatName, String pathname, boolean checkFileExtension) {
         try {
-            return IOUtil.write(data, formatName, pathname, checkFileExtension);
+            String modPathname = pathname;
+            IExpressionDataWriter writer = getWriterForFormat(formatName);
+            if (checkFileExtension) {
+                modPathname = writer.checkFileExtension(modPathname);
+            }
+            OutputStream os = null;
+            try {
+                os = new BufferedOutputStream(new FileOutputStream(modPathname));
+                writer.write(data, os);
+            } finally {
+                if (os != null) {
+                    os.close();
+                }
+            }
+            return modPathname;
         } catch (IOException ioe) {
-            fileSaveError(ioe, parentComponent, pathname);
+            fileOperationError("An error occured while attempting to save the file ", ioe, parentComponent, pathname);
             return null;
         }
     }
 
-    private static void fileReadError(Exception e, Component parentComponent,
-                                      String pathname) {
-        String message = "An error occured while reading the file "
-                + VisualizerUtil.getFileName(pathname) + ".";
+    private static void fileOperationError(String baseMsg, Exception e, Component parentComponent, String pathname) {
+        String name = new File(pathname).getName().replaceFirst("Axis[0-9]*axis_", "");
+        String message = baseMsg + name + ".";
         String exceptionMessage = e.getMessage();
         if (exceptionMessage != null) {
             message += "\nCause: " + exceptionMessage;
         }
-        error(parentComponent, message);
+        JOptionPane.showMessageDialog(parentComponent, message, "Error", JOptionPane.ERROR_MESSAGE);
     }
 
-    private static void fileSaveError(Exception e, Component parentComponent,
-                                      String pathname) {
-        String msg = "An error occured while attempting to save the file "
-                + VisualizerUtil.getFileName(pathname) + ".";
-        String excMsg = e.getMessage();
-        if (excMsg != null) {
-            msg += "\nCause: " + excMsg;
+    private static IExpressionDataWriter getWriterForFormat(String formatName) throws IOException {
+        if ("gct".equalsIgnoreCase(formatName)) {
+            return gctWriter;
         }
-        error(parentComponent, msg);
-    }
-
-    /**
-     * Gets the name of the file at the given pathname. Removes the axis prefix
-     * if necessary.
-     *
-     * @param pathname The pathname string
-     * @return The file name
-     */
-    private static String getFileName(String pathname) {
-        String name = new File(pathname).getName();
-        return name.replaceFirst("Axis[0-9]*axis_", "");
+        
+        if ("res".equalsIgnoreCase(formatName)) {
+            return resWriter;
+        }
+    
+        throw new IOException("No writer to save the data in " + formatName + " format.");
     }
 }

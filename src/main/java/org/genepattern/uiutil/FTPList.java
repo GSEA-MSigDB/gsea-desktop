@@ -1,13 +1,11 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package org.genepattern.uiutil;
 
 import com.enterprisedt.net.ftp.FTPConnectMode;
 import com.enterprisedt.net.ftp.FTPException;
 import com.enterprisedt.net.ftp.FileTransferClient;
-
-import edu.mit.broad.vdb.VdbRuntimeResources;
 
 import javax.swing.*;
 
@@ -50,11 +48,7 @@ public class FTPList extends JList {
                 this.fFileNames = (String[]) all.toArray(new String[all.size()]);
             }
             for (int i = 0, length = fFileNames.length; i < length; i++) {
-                String filename = fFileNames[i];
-                // Skip putting GENE_SYMBOL and SEQ_ACCESSION entries into the list so they are not selectable.
-                if (!VdbRuntimeResources.isChipGeneSymbol(filename) && !VdbRuntimeResources.isChipSeqAccession(filename)) {
-                    model.addElement(new FTPFile(host, dir, filename));
-                }
+                model.addElement(new FTPFile(host, dir, fFileNames[i]));
             }
         }
         setModel(model);

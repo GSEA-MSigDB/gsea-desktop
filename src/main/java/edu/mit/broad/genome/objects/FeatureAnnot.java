@@ -1,52 +1,34 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.objects;
 
+import edu.mit.broad.genome.MismatchedSizeException;
 import edu.mit.broad.genome.TraceUtils;
 import edu.mit.broad.vdb.chip.Chip;
 import edu.mit.broad.vdb.meg.Gene;
+
 import org.apache.log4j.Logger;
+
+import java.util.List;
 
 /**
  * @author Aravind Subramanian
+ *         <p/>
+ *         A sometimes CHIP-LESS implementation
+ *         Useful because it shares row names with the dataset
  */
-public interface FeatureAnnot extends PersistentObject {
+public class FeatureAnnot extends AbstractObject {
 
-    public int getNumFeatures();
-
-    // @note IMP any and all of these fields can be null
-    // remember that the dataset need not even be gene based, so really everything can be null!!
-
-    /**
-     * The original desc for instance the desc in the gex dataset
-     *
-     * @return
-     */
-    public String getNativeDesc(final String featureName);
-
-    public boolean hasNativeDescriptions();
-
-    public String getGeneSymbol(final String featureName);
-
-    public String getGeneTitle(final String featureName);
-
-    public Chip getChip();
-
-    public ColorMap.Rows getColorMap();
-
-    public void setChip(final Chip chip, ColorMap.Rows cmr);
-
-    static class Helper {
-
+    public static class Helper {
+    
         private boolean fReportedError = false;
-
+    
         private static final Logger klog = Logger.getLogger(Helper.class);
-
+    
         public Helper() {
-
         }
-
+    
         public static void checkChip(final Chip current, final Chip newChip) {
             if (current != null && newChip != null) {
                 if (!current.getName().equalsIgnoreCase(newChip.getName())) {
@@ -57,31 +39,23 @@ public interface FeatureAnnot extends PersistentObject {
                 }
             }
         }
-
+    
         public String getGeneSymbol(final String featureName, final Chip chip) {
             Gene gene = _hugo(featureName, chip);
-            if (gene != null) {
-                return gene.getSymbol();
-            } else {
-                return null;
-            }
+            return (gene != null) ? gene.getSymbol() : null;
         }
-
+    
         public String getGeneTitle(final String featureName, final Chip chip) {
             Gene gene = _hugo(featureName, chip);
-            if (gene != null) {
-                return gene.getTitle_truncated(); // @note trunc
-            } else {
-                return null;
-            }
+            return (gene != null) ? gene.getTitle_truncated() : null; // @note trunc
         }
-
+    
         //Set errors = new HashSet();
         private Gene _hugo(final String featureName, final Chip chip) {
             if (chip == null) {
                 return null;
             }
-
+    
             // Keep checking - error or not but dont REPORT every time - just the one time
             try {
                 return chip.getHugo(featureName);
@@ -96,10 +70,92 @@ public interface FeatureAnnot extends PersistentObject {
                 }
                 fReportedError = true;
             }
+    
+            return null;
+        }
+    
+    }
 
+    private Logger log = Logger.getLogger(getClass());
+
+    private List fFeatureNamesList;
+
+    private List fRowDescs;
+
+    private Chip fChip;
+
+    private Helper fHelper;
+
+    public FeatureAnnot(final String name,
+            final List rowNames,
+            final List rowDescs_opt) {
+        this(name, rowNames, rowDescs_opt, null);
+    }
+
+    public FeatureAnnot(final String name,
+            final List rowNames,
+            final List rowDescs_opt,
+            final Chip chip_opt) {
+        if (rowNames == null) {
+            throw new IllegalArgumentException("Param rowNames cannot be null");
+        }
+
+        if (rowDescs_opt != null && rowNames.size() != rowDescs_opt.size()) {
+            throw new MismatchedSizeException("num rows", rowNames.size(), " row descs", rowDescs_opt.size());
+        }
+
+        super.initialize(name);
+        this.fFeatureNamesList = rowNames;
+        this.fRowDescs = rowDescs_opt;
+        this.fChip = chip_opt;
+        this.fHelper = new FeatureAnnot.Helper();
+    }
+
+    public Chip getChip() {
+        return fChip;
+    }
+
+    public void setChip(final Chip chip) {
+        if (chip != null) {
+            Helper.checkChip(fChip, chip);
+            this.fChip = chip;
+        }
+    }
+
+    public String getQuickInfo() {
+        return null;
+    }
+
+    public int getNumFeatures() {
+        return fFeatureNamesList.size();
+    }
+
+    public boolean hasNativeDescriptions() {
+        return fRowDescs != null && !fRowDescs.isEmpty();
+    }
+
+    public String getNativeDesc(final String featureName) {
+
+        if (fRowDescs == null) {
             return null;
         }
 
+        int index = fFeatureNamesList.indexOf(featureName);
+        if (index == -1) {
+            log.warn("No such such feature: >" + featureName + "< " + getName());
+            return null;
+        } else {
+            return fRowDescs.get(index).toString();
+        }
     }
 
-} // End interface FeatureAnnotation
+    public String getGeneSymbol(final String featureName) {
+        return fHelper.getGeneSymbol(featureName, fChip);
+    }
+
+    public String getGeneTitle(final String featureName) {
+        return fHelper.getGeneTitle(featureName, fChip);
+    }
+
+} // End class FeatureAnnotationDatasetImpl
+

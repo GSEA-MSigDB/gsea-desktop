@@ -1,11 +1,12 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.viewers;
 
 import com.jidesoft.grid.SortableTable;
 import edu.mit.broad.genome.JarResources;
 import edu.mit.broad.vdb.chip.Chip;
+import edu.mit.broad.vdb.chip.NullSymbolModes;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
@@ -31,11 +32,6 @@ public class ChipViewer extends AbstractViewer {
         super(NAME, ICON, chip);
 
         this.fChip = chip;
-
-        jbInit();
-    }
-
-    private void jbInit() {
 
         Model model = new Model(fChip);
         SortableTable table = createTable(model, true, true);
@@ -106,10 +102,10 @@ public class ChipViewer extends AbstractViewer {
                 if (col == 0) {
                     return probeName;
                 } else if (col == 1) {
-                    return fChip.getSymbol(probeName, Chip.OMIT_NULLS);
+                    return fChip.getSymbol(probeName, NullSymbolModes.OmitNulls);
                 } else {
 
-                    return fChip.getTitle(probeName, Chip.OMIT_NULLS);
+                    return fChip.getTitle(probeName, NullSymbolModes.OmitNulls);
                 }
             } catch (Exception e) {
                 if (!once) {

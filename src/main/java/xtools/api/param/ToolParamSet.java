@@ -1,11 +1,10 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package xtools.api.param;
 
 import edu.mit.broad.genome.NamingConventions;
 import edu.mit.broad.genome.parsers.AuxUtils;
-import edu.mit.broad.genome.utils.SystemUtils;
 import org.apache.log4j.Logger;
 
 import java.io.File;
@@ -440,30 +439,18 @@ public class ToolParamSet implements ParamSet {
 
     }
 
-    public String getAsCommand(final boolean includecp, final boolean fullfilepaths, final boolean ignoreguiparam) {
+    public String getAsCommand(final boolean fullfilepaths) {
 
         StringBuffer buf = new StringBuffer();
-
-        if (includecp) {
-            String javapath = SystemUtils.getJavaPath();
-            String classpath = SystemUtils.getClassPath();
-            buf.append(javapath).append(" -cp ").append(classpath);
-        }
 
         for (int i = 0; i < getNumParams(); i++) {
             Param param = getParam(i);
 
-            if (ignoreguiparam && param instanceof GuiParam) {
-
-            } else {
-                //System.out.println("param=" + param);
+            if (! (param instanceof GuiParam)) {
                 String rep = param.getValueStringRepresentation(fullfilepaths);
                 if (rep != null) {
                     rep = rep.trim();
                     if (rep.length() > 0) {
-                        // old -D method
-                        //buf.append(" -D").append(param.getName()).append("=");
-                        //buf.append(rep);
                         buf.append(" -").append(param.getName()).append(' ').append(rep);
                     }
                 }

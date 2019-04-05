@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package xapps.gsea;
 
 import com.jgoodies.looks.LookUtils;
@@ -11,9 +11,9 @@ import com.jidesoft.comparator.ObjectComparatorManager;
 import com.jidesoft.swing.SplashScreen;
 
 import edu.mit.broad.genome.JarResources;
-import edu.mit.broad.genome.utils.SystemUtils;
 import edu.mit.broad.xbench.ComparatorFactory2;
 
+import org.apache.commons.lang3.SystemUtils;
 import org.apache.log4j.Logger;
 import org.broad.gsea.ui.DesktopIntegration;
 
@@ -43,7 +43,7 @@ public class Main {
         DesktopIntegration.verifyJavaPlatform();
         DesktopIntegration.setDockIcon(JarResources.getImage("XBench64x64.gif"));
         
-        if (SystemUtils.isMac()) {
+        if (SystemUtils.IS_OS_MAC_OSX) {
             System.setProperty("apple.laf.useScreenMenuBar", "true");
         }
     }
@@ -108,7 +108,7 @@ public class Main {
             UIManager.put("ClassLoader", LookUtils.class.getClassLoader());
     
             try {
-                if (!SystemUtils.isMac()) {
+                if (!SystemUtils.IS_OS_MAC_OSX) {
                     PlasticXPLookAndFeel.setMyCurrentTheme(new ExperienceBlue());
                     UIManager.setLookAndFeel(new com.jgoodies.looks.plastic.PlasticXPLookAndFeel());
                     //UIManager.setLookAndFeel(new com.jgoodies.looks.));

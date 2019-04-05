@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 
 package org.genepattern.annotation;
 
@@ -13,8 +13,6 @@ public interface SetAnnotatorModel {
     public int getIndex(String name);
 
     public String getName(int index);
-
-    public int getMappedIndex(int row);
 
     /**
      * @return the number of features in the model

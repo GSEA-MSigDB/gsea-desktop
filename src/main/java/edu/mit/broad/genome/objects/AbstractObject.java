@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.objects;
 
 import org.apache.log4j.Logger;
@@ -21,6 +21,9 @@ import java.util.Properties;
  * @author Aravind Subramanian
  * @version 1.0
  */
+// NOTE: the above javadoc is *incorrect*.  There is no use of UUIDs.
+// Leaving it in place as a historical marker in case we ever get around
+// to proving IDs are unnecessary.
 public abstract class AbstractObject implements PersistentObject {
 
     /**
@@ -86,12 +89,6 @@ public abstract class AbstractObject implements PersistentObject {
             throw new NullPointerException("Parameter name cannot be null");
         }
 
-        /* dont
-        if (nameEnglish == null) {
-            throw new NullPointerException("Parameter nameEnglish cannot be null");
-        }
-        */
-
         this.log = Logger.getLogger(this.getClass());
         this.fId = id;
         this.fName = removeExtension(name);
@@ -99,7 +96,6 @@ public abstract class AbstractObject implements PersistentObject {
             this.fNameEnglish = removeExtension(nameEnglish);
         }
 
-        //enforceNamingConvention();
         this.fInited = true;
     }
 
@@ -162,14 +158,6 @@ public abstract class AbstractObject implements PersistentObject {
         checkInit();
 
         return fNameEnglish;
-
-        /*
-        if (fNameEnglish == null) {
-            return fName; // @note
-        } else {
-            return fNameEnglish;
-        }
-        */
     }
 
     public String getComment() {
@@ -188,7 +176,7 @@ public abstract class AbstractObject implements PersistentObject {
      * Implemntors need to decide if its safe or not to allow this.
      * Preferab;ly impl as part of a cloneShallow strategy
      *
-     * @see FSet
+     * @see GeneSet
      */
     protected void setName(String newname) {
         if (newname == null) {
@@ -198,36 +186,6 @@ public abstract class AbstractObject implements PersistentObject {
         }
     }
 
-    /**
-     * @return
-     * @todo see if this causes trouble
-     * <p/>
-     * not for internal use -- see ObjectBinder
-     * <p/>
-     * not for internal use -- see ObjectBinder
-     * <p/>
-     * not for internal use -- see ObjectBinder
-     * <p/>
-     * not for internal use -- see ObjectBinder
-     * <p/>
-     * not for internal use -- see ObjectBinder
-     * <p/>
-     * not for internal use -- see ObjectBinder
-     */
-    /*
-    private void enforceNamingConvention() {
-
-        String newn = enforceNamingConvention(fName, this.getClass());
-        if (newn.equals(fName)) {
-            ; // we're ok
-        } else {
-            log.warn("Incorrect name for pob -- missing extension - changing from: " + fName + " to: " + newn);
-            this.fName = newn;
-        }
-
-    }
-    */
-
     private Properties prp; // lazilly inited
 
     public void setProperty(String key, String value) {
@@ -236,5 +194,4 @@ public abstract class AbstractObject implements PersistentObject {
         }
         prp.put(key, value);
     }
-
-}    // End AbstractObject
+}

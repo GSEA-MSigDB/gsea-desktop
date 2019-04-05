@@ -160,12 +160,9 @@ public class BitSetDataset extends AbstractObject {
         set.clear();
     }
 
-    public Dataset toDataset(boolean setTrueAsOne, boolean addTotalsColumn) {
+    public Dataset toDataset() {
         List colNames = new ArrayList(fcBitNames);
-        if (addTotalsColumn) {
-            colNames.add("Total");
-        }
-        return new DefaultDataset(getName(), toMatrix(setTrueAsOne, addTotalsColumn),
+        return new DefaultDataset(getName(), toMatrix(),
                 frBitSetNames, colNames, true, false, false, null);
     }
 
@@ -243,47 +240,21 @@ public class BitSetDataset extends AbstractObject {
         return mAnd;
     }
 
-    public Matrix toMatrix(boolean setTrueAsOne, boolean addTotals) {
-        int true_val;
-        int false_val;
-        if (setTrueAsOne) {
-            true_val = 1;
-            false_val = 0;
-        } else {
-            true_val = 0;
-            false_val = 1;
-        }
-
-        return toMatrix(true_val, false_val, addTotals);
-    }
-
-    public Matrix toMatrix(int setTrueAsThisVal, int setFalseAsThisValue, boolean addTotals) {
+    private Matrix toMatrix() {
         int numCols = getNumBits();
-        if (addTotals) {
-            numCols++;
-        }
-
         final Matrix m = new Matrix(getNumBitSets(), numCols);
 
         for (int r = 0; r < getNumBitSets(); r++) {
-            int c;
-            int tot = 0;
-            for (c = 0; c < getNumBits(); c++) {
+            for (int c = 0; c < getNumBits(); c++) {
                 if (fBitSets[r].get(c)) {
-                    m.setElement(r, c, setTrueAsThisVal);
-                    tot++;
+                    m.setElement(r, c, 1);
                 } else {
-                    m.setElement(r, c, setFalseAsThisValue);
+                    m.setElement(r, c, 0);
                 }
-            }
-
-            if (addTotals) {
-                m.setElement(r, c, tot);
             }
         }
 
         // dont set as immutable
         return m;
     }
-
-}    // End BitSetDataset
+}

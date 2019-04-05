@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2018 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package org.broad.gsea.ui;
 
 import java.awt.Desktop;
@@ -10,7 +10,8 @@ import java.awt.Taskbar;
 
 import javax.swing.JOptionPane;
 
-import edu.mit.broad.genome.utils.SystemUtils;
+import org.apache.commons.lang3.SystemUtils;
+
 import xapps.gsea.GseaFijiTabsApplicationFrame;
 
 /**
@@ -35,7 +36,7 @@ public class DesktopIntegration {
     }
     
     public static void setDockIcon(Image image) {
-        if (SystemUtils.isMac()) {
+        if (SystemUtils.IS_OS_MAC_OSX) {
             Taskbar.getTaskbar().setIconImage(image);
         }
     }

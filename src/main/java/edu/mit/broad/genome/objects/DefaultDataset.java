@@ -1,12 +1,11 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.objects;
 
 import edu.mit.broad.genome.math.Matrix;
 import edu.mit.broad.genome.math.Vector;
 import edu.mit.broad.genome.parsers.ParserFactory;
-import edu.mit.broad.vdb.sampledb.SampleAnnot;
 import gnu.trove.TObjectIntHashMap;
 
 import java.io.File;
@@ -282,14 +281,12 @@ public class DefaultDataset extends AbstractObject implements Dataset {
         set.clear();
     }
 
-    //Made lazilly
+    //Made lazily
     public Annot getAnnot() {
         if (fAnn == null) {
-            //log.debug("Annotation is null -- will use a default ann " + getName());
-            ColorMap.Rows cm = null;
-            final FeatureAnnot fann = new FeatureAnnotImpl(getName(), fRowNames, null, cm);
-            final SampleAnnot sann = new SampleAnnotImpl(getName(), getColumnNames(), null);
-            this.fAnn = new AnnotImpl(fann, sann);
+            final FeatureAnnot fann = new FeatureAnnot(getName(), fRowNames, null);
+            final SampleAnnot sann = new SampleAnnot(getName(), getColumnNames());
+            this.fAnn = new Annot(fann, sann);
         }
 
         return fAnn;
@@ -338,7 +335,7 @@ public class DefaultDataset extends AbstractObject implements Dataset {
 
     public GeneSet getRowNamesGeneSet() {
         if (rowNamesGeneSet == null) {
-            rowNamesGeneSet = new FSet(getName(), new HashSet(fRowNames));
+            rowNamesGeneSet = new GeneSet(getName(), new HashSet(fRowNames));
         }
         return rowNamesGeneSet;
     }

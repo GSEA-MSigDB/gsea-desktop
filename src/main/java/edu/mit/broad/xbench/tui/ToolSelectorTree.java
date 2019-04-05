@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.xbench.tui;
 
 import edu.mit.broad.genome.JarResources;
@@ -33,7 +33,8 @@ import java.util.List;
  */
 public class ToolSelectorTree extends JTree {
 
-    private final Tool[] fTools;
+    private final Tool[] fTools = new Tool[]{};
+
     private final Logger log = Logger.getLogger(ToolSelectorTree.class);
     private final DefaultTreeModel fModel;
 
@@ -46,13 +47,10 @@ public class ToolSelectorTree extends JTree {
     /**
      * Class Constructor.
      */
-    public ToolSelectorTree(final Tool[] tools, final boolean showReportNode, final boolean makeRootNodeVisible) {
+    public ToolSelectorTree() {
 
-        this.fTools = tools;
-
-        log.debug("Making tool tree with tools: " + tools.length + " showReportNode: " + showReportNode);
         //TraceUtils.showTrace();
-        this.setRootVisible(makeRootNodeVisible);
+        this.setRootVisible(false);
         this.setShowsRootHandles(true);
 
         final DefaultTreeSelectionModel sm = new DefaultTreeSelectionModel();
@@ -61,7 +59,7 @@ public class ToolSelectorTree extends JTree {
         this.setSelectionModel(sm);
 
         this.fToolNodeMap = new HashMap();
-        this.fModel = new Model(showReportNode);
+        this.fModel = new Model();
 
         this.setModel(fModel);
         this.setCellRenderer(new Renderer());
@@ -128,7 +126,7 @@ public class ToolSelectorTree extends JTree {
         /**
          * Class Constructor.
          */
-        Model(boolean showReportNode) {
+        Model() {
 
             super(new DefaultMutableTreeNode("Tools", true));
 
@@ -165,9 +163,7 @@ public class ToolSelectorTree extends JTree {
             }
 
             // add the reports as another node
-            if (showReportNode) {
-                toolNode.add(new ReportModel().createReportNode(this));
-            }
+            toolNode.add(new ReportModel().createReportNode(this));
         }
 
     }    // End inner class Model
@@ -230,7 +226,7 @@ public class ToolSelectorTree extends JTree {
         }
 
 
-        void prettyFormat(ReportStub stub, JLabel label) {
+        private void prettyFormat(ReportStub stub, JLabel label) {
             StringBuffer buf = new StringBuffer("<html><body>");
             buf.append(stub.getName_without_ts());
             buf.append("<font color=gray>");
@@ -242,7 +238,7 @@ public class ToolSelectorTree extends JTree {
             label.setBorder(null);
         }
 
-        void prettyFormat(Report rpt, JLabel label) {
+        private void prettyFormat(Report rpt, JLabel label) {
             StringBuffer buf = new StringBuffer("<html><body>");
             buf.append(rpt.getName());
             buf.append("<font color=gray>");

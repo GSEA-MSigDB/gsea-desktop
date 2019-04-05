@@ -1,21 +1,18 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.xbench;
 
-import edu.mit.broad.genome.Constants;
 import edu.mit.broad.genome.JarResources;
 import edu.mit.broad.genome.charts.XChart;
 import edu.mit.broad.genome.objects.PersistentObject;
 import edu.mit.broad.genome.parsers.DataFormat;
 import edu.mit.broad.genome.parsers.ParserFactory;
 import edu.mit.broad.genome.swing.GPopupChecker;
-import edu.mit.broad.genome.swing.GuiHelper;
 import edu.mit.broad.xbench.core.api.Application;
 import org.genepattern.uiutil.FTPFile;
 
 import javax.swing.*;
-import javax.swing.table.DefaultTableCellRenderer;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -30,34 +27,6 @@ import java.io.File;
 public class RendererFactory2 {
 
     public static final Icon FTP_FILE_ICON = JarResources.getIcon("FTPFile.gif");
-
-    /**
-     * GramTableCellRenderer for table headers.
-     * Headers in bold font -- looks like excel headers.
-     */
-    public static class BoldHeaderRenderer extends DefaultTableCellRenderer {
-
-        public Component getTableCellRendererComponent(JTable table, Object value,
-                                                       boolean isSelected, boolean hasFocus, int row, int col) {
-
-
-            if (value == null) {
-                value = Constants.NA;
-            }
-
-            this.setFont(GuiHelper.FONT_DEFAULT_BOLD);
-
-            this.setText(value.toString());
-            this.setToolTipText(value.toString());
-            this.setHorizontalAlignment(SwingConstants.CENTER);
-            this.setVerticalAlignment(SwingConstants.CENTER);
-            this.setBorder(BorderFactory.createRaisedBevelBorder());
-            this.setBackground(Color.lightGray);
-            this.setForeground(Color.black);
-
-            return this;
-        }
-    }    // End BoldHeaderRenderer
 
     /**
      * For rendering the lists/combo boxes that have nodes properly

@@ -3,7 +3,7 @@
  *******************************************************************************/
 package edu.mit.broad.genome.viewers;
 
-import edu.mit.broad.genome.objects.FSet;
+import edu.mit.broad.genome.objects.GeneSet;
 import edu.mit.broad.genome.objects.GeneSet;
 import edu.mit.broad.xbench.actions.ObjectAction;
 import edu.mit.broad.xbench.core.Widget;
@@ -25,7 +25,7 @@ public class GeneSetViewerAction extends ObjectAction {
 
 
     public void setObject(Object obj) {
-        this.fGeneSet = (FSet) obj;
+        this.fGeneSet = (GeneSet) obj;
     }
 
     public Widget getWidget() {

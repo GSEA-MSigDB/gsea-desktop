@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package xtools.api;
 
 import edu.mit.broad.genome.Conf;
@@ -391,6 +391,12 @@ public abstract class AbstractTool implements Tool {
         return "";
     }
 
+    public static BooleanParam createZipReportParam(final boolean reqd) {
+        return new BooleanParam("zip_report", "Make a zipped file with all reports",
+                "Create a zipped file with all files made by the report. This can be emailed to share results",
+                false, reqd, Param.ADVANCED);
+    }
+
     protected static void tool_main(final AbstractTool tool) {
 
         if (tool == null) {
@@ -515,7 +521,7 @@ public abstract class AbstractTool implements Tool {
 
     private static void setChip(final Dataset ds, final Chip chip) throws Exception {
         if (chip != null) {
-            ds.getAnnot().setChip(chip, null);
+            ds.getAnnot().setChip(chip);
         }
     }
 

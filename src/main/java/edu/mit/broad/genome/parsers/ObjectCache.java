@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.parsers;
 
 import edu.mit.broad.genome.objects.GeneSetMatrix;
@@ -23,7 +23,6 @@ import java.util.*;
 
 /**
  * @author Aravind Subramanian
- * @version %I%, %G%
  */
 public class ObjectCache {
 
@@ -363,7 +362,7 @@ public class ObjectCache {
         return auxsetsmodel;
     }
 
-    public ComboBoxModel createBoxModel(Class[] classes, boolean addNotSpecifieds) {
+    public ComboBoxModel createBoxModel(Class[] classes) {
 
         PobBoxModel[] models = new PobBoxModel[classes.length];
 
@@ -371,13 +370,7 @@ public class ObjectCache {
             models[i] = _createBoxModel(classes[i]);
         }
 
-        PobBoxModels pmodel = new PobBoxModels(models);
-
-        if (addNotSpecifieds) {
-            return new NotSpecifiedBoxWrapper(pmodel);
-        } else {
-            return pmodel;
-        }
+        return new PobBoxModels(models);
     }
 
     // NOT an immutbale list!! --can be sorted etc by caller
@@ -526,7 +519,5 @@ public class ObjectCache {
         public int hashCode() {
             return uniqId.hashCode();
         }
-
-    } /// End class ProjectNodes
-
-}    // End ObjectCache
+    }
+}

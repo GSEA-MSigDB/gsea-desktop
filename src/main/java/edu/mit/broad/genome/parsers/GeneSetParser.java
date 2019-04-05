@@ -1,9 +1,8 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.parsers;
 
-import edu.mit.broad.genome.objects.FSet;
 import edu.mit.broad.genome.objects.GeneSet;
 import edu.mit.broad.genome.objects.GeneSetMatrix;
 import edu.mit.broad.genome.objects.PersistentObject;
@@ -27,14 +26,13 @@ import java.util.List;
  * <br>
  *
  * @author Aravind Subramanian
- * @version %I%, %G%
  */
-public class FSetParser extends AbstractParser {
+public class GeneSetParser extends AbstractParser {
 
     /**
      * Class Constructor.
      */
-    public FSetParser() {
+    public GeneSetParser() {
         super(GeneSet.class);
     }
 
@@ -77,13 +75,13 @@ public class FSetParser extends AbstractParser {
      */
     public List parse(String sourcepath, InputStream is) throws Exception {
         startImport(sourcepath);
-        FSet fset = parse(sourcepath, new BufferedReader(new InputStreamReader(is)));
+        GeneSet fset = parse(sourcepath, new BufferedReader(new InputStreamReader(is)));
         doneImport();
         return unmodlist(fset);
 
     }    // End parse()
 
-    protected FSet parse(String sourcepath, BufferedReader buf) throws IOException {
+    protected GeneSet parse(String sourcepath, BufferedReader buf) throws IOException {
         String currLine = nextLine(buf);
 
         List lines = new ArrayList();
@@ -98,7 +96,6 @@ public class FSetParser extends AbstractParser {
         final String[] members = (String[]) lines.toArray(new String[lines.size()]);
 
         // assume no desc for fset
-        return new FSet(sourcepath, null, members);
+        return new GeneSet(sourcepath, null, members);
     }
-
-}    // End FSetParser
+}

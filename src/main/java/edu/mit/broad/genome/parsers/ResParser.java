@@ -1,13 +1,12 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.parsers;
 
 import edu.mit.broad.genome.Constants;
 import edu.mit.broad.genome.math.Matrix;
 import edu.mit.broad.genome.math.Vector;
 import edu.mit.broad.genome.objects.*;
-import edu.mit.broad.vdb.sampledb.SampleAnnot;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -302,12 +301,12 @@ public class ResParser extends AbstractParser {
 
         doneImport();
 
-        FeatureAnnot fann = new FeatureAnnotImpl(sourcepath, rowNames, rowDescs);
+        FeatureAnnot fann = new FeatureAnnot(sourcepath, rowNames, rowDescs);
         fann.addComment(fComment.toString());
 
-        final SampleAnnot sann = new SampleAnnotImpl(sourcepath, colNames, null);
+        final SampleAnnot sann = new SampleAnnot(sourcepath, colNames);
 
-        final Dataset ds = new DefaultDataset(sourcepath, matrix, rowNames, colNames, true, new AnnotImpl(fann, sann), apmMatrix);
+        final Dataset ds = new DefaultDataset(sourcepath, matrix, rowNames, colNames, true, new Annot(fann, sann), apmMatrix);
         ds.addComment(fComment.toString());
 
         System.out.println(">>>>> DONE PARSING: " + apmMatrix.getQuickInfo());

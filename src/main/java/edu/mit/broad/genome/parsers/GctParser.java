@@ -1,13 +1,12 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.parsers;
 
 import edu.mit.broad.genome.Constants;
 import edu.mit.broad.genome.NamingConventions;
 import edu.mit.broad.genome.math.Matrix;
 import edu.mit.broad.genome.objects.*;
-import edu.mit.broad.vdb.sampledb.SampleAnnot;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -225,11 +224,11 @@ public class GctParser extends AbstractParser {
             }
         }
 
-        final FeatureAnnot ann = new FeatureAnnotImpl(objName, rowNames, rowDescs);
+        final FeatureAnnot ann = new FeatureAnnot(objName, rowNames, rowDescs);
         ann.addComment(fComment.toString());
-        final SampleAnnot sann = new SampleAnnotImpl(objName, colNames, null);
+        final SampleAnnot sann = new SampleAnnot(objName, colNames);
 
-        final Dataset ds = new DefaultDataset(objName, matrix, rowNames, colNames, true, new AnnotImpl(ann, sann));
+        final Dataset ds = new DefaultDataset(objName, matrix, rowNames, colNames, true, new Annot(ann, sann));
         ds.addComment(fComment.toString());
         doneImport();
         return unmodlist(new PersistentObject[]{ds});

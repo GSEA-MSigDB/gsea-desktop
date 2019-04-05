@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.objects;
 
 import edu.mit.broad.genome.NotImplementedException;
@@ -154,7 +154,7 @@ public class ScoredDatasetImpl extends AbstractObject implements ScoredDataset {
 
     public GeneSet getRowNamesGeneSet() {
         if (fRowNamesGeneSet == null) {
-            fRowNamesGeneSet = new FSet(getName(), new HashSet(getRankedNames()));
+            fRowNamesGeneSet = new GeneSet(getName(), new HashSet(getRankedNames()));
         }
         return fRowNamesGeneSet;
     }

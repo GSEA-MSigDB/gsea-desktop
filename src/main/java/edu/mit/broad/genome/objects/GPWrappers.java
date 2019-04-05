@@ -1,13 +1,12 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.objects;
 
 import edu.mit.broad.genome.NotImplementedException;
 import edu.mit.broad.genome.math.ColorSchemes;
 import edu.mit.broad.genome.math.Matrix;
 import edu.mit.broad.genome.math.ScaleMode;
-import edu.mit.broad.vdb.sampledb.SampleAnnot;
 import org.genepattern.data.expr.IExpressionData;
 import org.genepattern.heatmap.ColorScheme;
 import org.genepattern.heatmap.image.FeatureAnnotator;
@@ -51,7 +50,7 @@ public class GPWrappers {
     }
 
     public static ColorScheme createColorScheme(final Dataset ds,
-                                                final edu.mit.broad.genome.math.ColorScheme csIn) {
+                                                final edu.mit.broad.genome.math.ColorSchemes.ColorScheme csIn) {
 
         return new ColorScheme() {
             ColorDataset cds = new ColorDatasetImpl(ds, csIn);
@@ -79,7 +78,7 @@ public class GPWrappers {
 
     static class LegendTable extends JTable {
 
-        LegendTable(final edu.mit.broad.genome.math.ColorScheme colorScheme) {
+        LegendTable(final edu.mit.broad.genome.math.ColorSchemes.ColorScheme colorScheme) {
 
             DefaultTableModel model = new DefaultTableModel(2, colorScheme.getNumColors());
             String[] ss = new String[colorScheme.getNumColors()];
@@ -147,7 +146,7 @@ public class GPWrappers {
 
         Annot synched_annot = null;
         if (annot_opt != null) {
-            synched_annot = new AnnotImpl(annot_opt.getFeatureAnnot(), annot_opt.getSampleAnnot_synched(colNames));
+            synched_annot = new Annot(annot_opt.getFeatureAnnot(), annot_opt.getSampleAnnot_synched(colNames));
         }
 
         return new DefaultDataset("conv", m, rowNames, colNames, true, synched_annot);
@@ -162,10 +161,6 @@ public class GPWrappers {
         if (fa == null) {
             throw new IllegalArgumentException("Param fa cannot be null");
         }
-
-        // Colors in Josh's impl are cells to the LEFT of the probe set id (and other annotations)
-        // Lets paint the GIN fields with these colors (they will not have labels) => GIN GRID
-        final ColorMap.Rows cm = fa.getColorMap();
 
         return new FeatureAnnotator() {
 
@@ -192,35 +187,7 @@ public class GPWrappers {
             }
 
             public java.util.List getColors(final String featureName) {
-
-                if (fa.getColorMap() == null) {
-                    return Collections.EMPTY_LIST;
-                }
-
-                java.util.List list = new ArrayList();
-                for (int c = 0; c < cm.getNumCol(); c++) {
-
-                    String symbol;
-                    if (cm.isInSymbols(c)) { // @note conversion to symbols as the cm is often in symbols (as when read from the GIN)
-                        symbol = fa.getGeneSymbol(featureName);
-                        if (symbol == null) {
-                            return Collections.EMPTY_LIST;
-                        }
-
-                    } else {
-                        symbol = featureName;
-                    }
-
-                    Color color = cm.getColor(symbol, c);
-                    if (color == null) {
-                        color = Color.WHITE;
-                    }
-                    //System.out.println(">> " + symbol + " " + color);
-                    list.add(color);
-                    list.add(Color.WHITE); // always
-                }
-
-                return list;
+                return Collections.EMPTY_LIST;
             }
         };
     }
@@ -274,8 +241,7 @@ public class GPWrappers {
                 return list;
             }
         };
-    } // End method createSampleAnnotator
-
+    }
 
     /**
      * Inner class implementing a IExpressionData
@@ -344,15 +310,10 @@ public class GPWrappers {
 
         public String getRowMetadata(final int row, final String name) {
             return null;
-            //throw new NotImplementedException();
         }
 
         public String getColumnMetadata(final int column, final String name) {
             return null;
-            //throw new NotImplementedException();
         }
-
-    } // End inner class IExpressionDataAdaptor
-
-
-} // End class GPWrappers
+    }
+}

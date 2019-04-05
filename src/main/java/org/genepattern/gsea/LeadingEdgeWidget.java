@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2018 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package org.genepattern.gsea;
 
 import com.jidesoft.swing.JideTabbedPane;
@@ -19,8 +19,8 @@ import edu.mit.broad.xbench.tui.TaskManager;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.SystemUtils;
 import org.genepattern.menu.PlotAction;
-import org.genepattern.uiutil.OS;
 import org.genepattern.uiutil.UIUtil;
 
 import xtools.api.param.ToolParamSet;
@@ -415,7 +415,13 @@ public class LeadingEdgeWidget implements Widget {
                 "Broad Institute of MIT and Harvard",
                 "Gene set  enrichment analysis java desktop application",
                 "YSjBO6OJfF9WbavzI73Jt1HgDI4x9L21");
-        OS.setLookAndFeel();
+        if (!SystemUtils.IS_OS_MAC_OSX) {
+            try {
+                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
 
         if (args.length != 1) {
             UIUtil.showMessageDialog(null,

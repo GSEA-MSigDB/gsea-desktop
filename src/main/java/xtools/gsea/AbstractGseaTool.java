@@ -1,13 +1,12 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package xtools.gsea;
 
 import edu.mit.broad.genome.alg.DatasetGenerators;
 import edu.mit.broad.genome.alg.Metric;
 import edu.mit.broad.genome.alg.Metrics;
 import edu.mit.broad.genome.objects.Dataset;
-import edu.mit.broad.genome.objects.FSet;
 import edu.mit.broad.genome.objects.GeneSet;
 import edu.mit.broad.genome.objects.RankedList;
 import xtools.api.AbstractTool;
@@ -23,13 +22,37 @@ import java.util.Set;
  */
 public abstract class AbstractGseaTool extends AbstractTool {
 
+    // barfs if size is zero or content is zero for all sets
+    public static void checkAndBarfIfZeroSets(final GeneSet[] qual_gsets) {
+    
+        boolean wasError = false;
+        if (qual_gsets.length == 0) {
+            wasError = true;
+        } else {
+            boolean at_least_one_non_empty_set = false;
+            for (int i = 0; i < qual_gsets.length; i++) {
+                if (qual_gsets[i].getNumMembers() > 0) {
+                    at_least_one_non_empty_set = true;
+                    break;
+                }
+            }
+            if (!at_least_one_non_empty_set) {
+                wasError = true;
+            }
+        }
+    
+        if (wasError) {
+            throw new BadParamException("After pruning, none of the gene sets passed size thresholds.", 1001);
+        }
+    }
+
     protected GeneSetMatrixMultiChooserParam fGeneSetMatrixParam;
 
     // These settings for gene set size correspond to that used in the paper
-    protected final IntegerParam fGeneSetMinSizeParam = ParamFactory.createGeneSetMinSizeParam(15, false);
-    protected final IntegerParam fGeneSetMaxSizeParam = ParamFactory.createGeneSetMaxSizeParam(500, false);
+    protected final IntegerParam fGeneSetMinSizeParam = new IntegerParam("set_min", "Min size: exclude smaller sets", "Gene sets smaller than this number are EXLCUDED from the analysis", 15, false);
+    protected final IntegerParam fGeneSetMaxSizeParam = new IntegerParam("set_max", "Max size: exclude larger sets", "Gene sets larger than this number are EXLCUDED from the analysis", 500, false);
 
-    protected final IntegerParam fNumPermParam = ParamFactory.createNumPermParam(true);
+    protected final IntegerParam fNumPermParam = new IntegerParam("nperm", "Number of permutations", "The number of permutations", 1000, new int[]{0, 1, 10, 100, 1000}, true);
     protected final RandomSeedTypeParam fRndSeedTypeParam = new RandomSeedTypeParam(false);
 
     // restrict to just the regular norm mode??
@@ -129,7 +152,7 @@ public abstract class AbstractGseaTool extends AbstractTool {
 
     protected RankedList uniquize(final RankedList rl) {
 
-        final GeneSet gset = new FSet(rl.getName(), rl.getName(), rl.getRankedNames(), true);
+        final GeneSet gset = new GeneSet(rl.getName(), rl.getName(), rl.getRankedNames(), true);
         if (gset.getNumMembers() == rl.getSize()) {
             return rl;
         } else {

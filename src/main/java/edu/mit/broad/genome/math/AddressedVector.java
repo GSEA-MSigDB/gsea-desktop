@@ -4,7 +4,6 @@
 package edu.mit.broad.genome.math;
 
 import edu.mit.broad.genome.MismatchedSizeException;
-import edu.mit.broad.genome.utils.ArrayUtils;
 
 import java.util.List;
 
@@ -26,6 +25,28 @@ import java.util.List;
 //public class AddressedVector extends Vector {
 
 public class AddressedVector {
+
+    /**
+     * creates a new integer array with elements as all consecutive integers between
+     * min and max INclusive.
+     * Length = max - min + 1
+     */
+    // TODO: Look for another implementation, then inline.  Apache Commons?
+    private static int[] rangeAsElements(final int min, final int max) {
+    
+        if (max < min) {
+            throw new IllegalArgumentException("Max: " + max + " less than min: " + min);
+        }
+    
+        int[] ret = new int[max - min + 1];
+        int curr = min;
+    
+        for (int i = 0; i < ret.length; i++) {
+            ret[i] = curr++;
+        }
+    
+        return ret;
+    }
 
     /**
      * @maint IMP IMP IMP
@@ -85,7 +106,7 @@ public class AddressedVector {
      * @param v
      */
     public AddressedVector(final Vector v, final boolean share) {
-        this(v, ArrayUtils.rangeAsElements(0, _max(v)), share);
+        this(v, rangeAsElements(0, _max(v)), share);
     }
 
     private static int _max(Vector v) {

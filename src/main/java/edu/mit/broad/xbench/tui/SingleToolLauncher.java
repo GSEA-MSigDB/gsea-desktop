@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.xbench.tui;
 
 import edu.mit.broad.genome.JarResources;
@@ -68,16 +68,8 @@ public class SingleToolLauncher extends JPanel implements Widget, MouseMotionLis
         this.fMakeNormalTheDefault = makeNormalTheDefault;
         this.fShowGrayHelpText = showGrayHelptext;
 
-        init();
-    }
-
-    private void init() {
-        jbInit();
-    }
-
-    private void jbInit() {
-
-        this.fDisplay = ToolDisplayFactory.createParamSetDisplayComponent(fTool.getTitle(), fIcon, fParamSet, this);    // use the specified one (may or maynot be same as the one in tool)
+        // use the specified one (may or maynot be same as the one in tool)
+        this.fDisplay = new ParamSetDisplay(fTool.getTitle(), fIcon, fParamSet, this);
         this.fToolRunner = new ToolRunnerControl(this);
         this.fDisplay.addMouseMotionListener(this);
         checkTable();

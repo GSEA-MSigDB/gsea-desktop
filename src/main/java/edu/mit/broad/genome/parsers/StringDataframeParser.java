@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.parsers;
 
 import edu.mit.broad.genome.Constants;
@@ -101,7 +101,7 @@ public class StringDataframeParser extends AbstractParser {
      * NO ann buiisness
      * @see above for format
      */
-    public List parse(String sourcepath, InputStream is) throws Exception {
+    public List<PersistentObject> parse(String sourcepath, InputStream is) throws Exception {
         startImport(sourcepath);
         BufferedReader bin = new BufferedReader(new InputStreamReader(is));
         StringDataframe sdf = parseSdf(sourcepath, bin);
@@ -111,21 +111,16 @@ public class StringDataframeParser extends AbstractParser {
 
     /// does the real parsing
     // expects the bin to be untouched
-    protected StringDataframe parseSdf(String objname, BufferedReader bin) throws Exception {
+    private StringDataframe parseSdf(String objname, BufferedReader bin) throws Exception {
         return parseSdf(objname, bin, nextNonEmptyLine(bin));
     }
 
-    public StringDataframe parseSdf(File file) throws Exception {
-        BufferedReader bin = new BufferedReader(new FileReader(file));
-        return parseSdf(file.getName(), bin, nextNonEmptyLine(bin));
-    }
-
-    protected StringDataframe parseSdf(String objname, BufferedReader bin, String firstLine) throws Exception {
+    public StringDataframe parseSdf(String objname, BufferedReader bin, String firstLine) throws Exception {
         String currLine = firstLine;
 
         // 1st  non-empty, non-comment line is the col header:
         // First fields is to be ignored
-        List colNames = ParseUtils.string2stringsList(currLine, "\t");
+        List<String> colNames = ParseUtils.string2stringsList(currLine, "\t");
 
         //log.debug("# cols found: " + colnames.size());
 
@@ -133,7 +128,7 @@ public class StringDataframeParser extends AbstractParser {
 
         // At this point, currLine should contain the first data line
         // data line: <row name> <tab> <ex1> <tab> <ex2> <tab>
-        List lines = new ArrayList();
+        List<String> lines = new ArrayList<String>();
 
         //currLine = nextLine(bin);
         currLine = nextLineTrimless(bin); // @note Modified oct 25 2005
@@ -154,16 +149,15 @@ public class StringDataframeParser extends AbstractParser {
         return sdf;
     }
 
-    private StringDataframe _parse(String objname, List lines, List colNames) throws Exception {
+    private StringDataframe _parse(String objname, List<String> lines, List<String> colNames) throws Exception {
 
         StringMatrix matrix = new StringMatrix(lines.size(), colNames.size());
-        List rowNames = new ArrayList();
+        List<String> rowNames = new ArrayList<String>();
         String nstr = null;
 
         for (int i = 0; i < lines.size(); i++) {
             String currLine = (String) lines.get(i);
 
-            //List fields = ParseUtils.string2stringsV2_list(currLine); // comm out fpor allowing empty cols, Oct 25, 2005
             List fields = string2stringsV2(currLine, colNames.size() + 1); // + 1 for the name col
 
 
@@ -187,13 +181,10 @@ public class StringDataframeParser extends AbstractParser {
 
         }
 
-        //log.info("Completed parsing StringDataframe");
-
         StringDataframe sdf = new StringDataframe(objname, matrix, rowNames, colNames, true);
         sdf.addComment(fComment.toString());
 
         return sdf;
 
     }
-
-}    // End of class StringDataframeParser
+}

@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package xtools.api.param;
 
 import edu.mit.broad.genome.alg.Metric;
@@ -11,7 +11,6 @@ import edu.mit.broad.genome.swing.fields.GFieldPlusChooser;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Map;
 
 /**
  * Object to capture commandline params</p>
@@ -74,10 +73,4 @@ public class MetricParam extends AbstractParam implements ActionListener {
     public void actionPerformed(ActionEvent evt) {
         this.setValue((Metric) ((JComboBox) cbOptions.getComponent()).getSelectedItem());
     }
-
-    // result hack to allow setting mean / median
-    public Map getMetricParams(BooleanParam medianParam) {
-        return ParamFactory.getMetricParams(medianParam);
-    }
-
-}    // End class MetricParam
+}

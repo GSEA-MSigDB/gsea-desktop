@@ -1,29 +1,70 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.objects;
 
 import edu.mit.broad.vdb.chip.Chip;
-import edu.mit.broad.vdb.sampledb.SampleAnnot;
 
 /**
  * @author Aravind Subramanian
  */
-public interface Annot {
+public class Annot {
 
-    public FeatureAnnot getFeatureAnnot();
+    private FeatureAnnot fFeatureAnnot;
 
-    public SampleAnnot getSampleAnnot_global();
+    private SampleAnnot fSampleAnnot;
 
-    // dont give this AP as it means that the ds is loaded (which can be lazy)
-    // public SampleAnnot getSampleAnnot_synched(final Dataset ds);
+    /**
+     * Class constructor
+     * <p/>
+     * Both parameters are nullable
+     *
+     * @param featureAnnot
+     * @param sampleAnnot
+     */
+    public Annot(final FeatureAnnot featureAnnot, final SampleAnnot sampleAnnot) {
 
-    public SampleAnnot getSampleAnnot_synched(final String[] names);
+        if (featureAnnot == null) {
+            throw new IllegalArgumentException("Param featureAnnot cannot be null");
+        }
 
-    public Chip getChip();
+        if (sampleAnnot == null) {
+            throw new IllegalArgumentException("Param sampleAnnot cannot be null");
+            //klog.warn("Param sampleAnnot_optAnnot was null for fa: " + featureAnnot.getName());
+            //TraceUtils.showTrace();
+        }
 
-    public void setChip(final Chip chip, final ColorMap.Rows cmr);
+        this.fFeatureAnnot = featureAnnot;
+        this.fSampleAnnot = sampleAnnot;
+    }
 
-    //public Annot cloneDeep(final List featureNames, final List featureDescs, boolean preserveSampleAnnot);
+    public FeatureAnnot getFeatureAnnot() {
+        return fFeatureAnnot;
+    }
 
-} // End class Annot
+    // @note heres some magix
+    // if sample annot is null
+    public SampleAnnot getSampleAnnot_global() {
+        return fSampleAnnot;
+    }
+
+    public SampleAnnot getSampleAnnot_synched(final String[] colNames) {
+        if (colNames == null) {
+            throw new IllegalArgumentException("Param colNames cannot be null");
+        }
+
+        if (fSampleAnnot == null) {
+            throw new IllegalStateException("No available sample annot: " + fSampleAnnot);
+        }
+
+        return fSampleAnnot.cloneDeep(colNames);
+    }
+
+    public Chip getChip() {
+        return fFeatureAnnot.getChip();
+    }
+
+    public void setChip(final Chip chip) {
+        fFeatureAnnot.setChip(chip);
+    }
+}

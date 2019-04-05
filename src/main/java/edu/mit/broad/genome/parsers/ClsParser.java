@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.parsers;
 
 import edu.mit.broad.genome.Constants;
@@ -291,12 +291,6 @@ public class ClsParser extends AbstractParser implements Constants {
         doneImport();
         return preTemplates;
     }
-
-    /*
-    private List _parse_new_style_xls(String sourcepath, BufferedReader buf, String firstLine) throws Exception {
-        throw new NotImplementedException();
-    }
-    */
 
     /**
      * Header line: <numData> <tab> <numClasses> <tab> <numAssignments>

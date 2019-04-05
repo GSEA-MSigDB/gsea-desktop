@@ -27,15 +27,6 @@ public class ColumnsImpl implements ColorMap.Columns {
             ncs[i] = new NamedColor(sampleNames[i], Color.WHITE);
         }
 
-        this.init(ncs);
-    }
-
-    private void init(final NamedColor[] ncs) {
-
-        if (ncs == null) {
-            throw new IllegalArgumentException("Param ncs cannot be null");
-        }
-
         this.fName_nc_Map = new HashMap();
         for (int i = 0; i < ncs.length; i++) {
             fName_nc_Map.put(ncs[i].getName(), ncs[i]);

@@ -1,16 +1,13 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package xtools.api.param;
 
 import edu.mit.broad.genome.swing.GuiHelper;
 import edu.mit.broad.genome.swing.fields.GFieldPlusChooser;
-import edu.mit.broad.genome.swing.fields.GOptionsFieldPlusChooser;
-import org.apache.log4j.Logger;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 /**
@@ -19,67 +16,19 @@ import java.awt.event.ActionListener;
  */
 public class WChipChooserUI extends JPanel implements GFieldPlusChooser {
 
-    protected final Logger log = Logger.getLogger(GOptionsFieldPlusChooser.class);
-    protected JTextField tfEntry = new JTextField(40);
-    protected JButton bEntry = new JButton(GuiHelper.ICON_ELLIPSIS);
-    protected WChipChooserWindow fWindow; // @note make lazilly -- see below
+    private JTextField tfEntry = new JTextField(40);
+    private JButton bEntry = new JButton(GuiHelper.ICON_ELLIPSIS);
+    private WChipChooserWindow fWindow; // @note make lazily -- see below
 
-    // needed as otherwise a default one is added and then again one another one is added
-    // if the setCustomActionListener is called
-    public WChipChooserUI(final boolean addDefaultActionListener) {
-        if (addDefaultActionListener) {
-            init();
-        } else {
-            jbInit();
-        }
-    }
-
-    public void setCustomActionListener(final ActionListener customActionListener) {
-        bEntry.addActionListener(customActionListener);
-    }
-
-    private void init() {
-
-        jbInit();
-        bEntry.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                Object[] sels = _window().show();
-                format(sels);
-            }
-        });
-    }
-
-    private void jbInit() {
-
+    public WChipChooserUI() {
         this.setLayout(new BorderLayout());
         tfEntry.setEditable(true);
         this.add(tfEntry, BorderLayout.CENTER);
         this.add(bEntry, BorderLayout.EAST);
     }
 
-    private void format(Object[] sels) {
-
-        if (sels == null) {
-            tfEntry.setText("");
-            return;
-        }
-
-        StringBuffer buf = new StringBuffer();
-
-        for (int i = 0; i < sels.length; i++) {
-            if (sels[i] == null) {
-                //
-            } else {
-
-                buf.append(sels[i].toString().trim());
-
-                if (i != sels.length - 1) {
-                    buf.append(',');
-                }
-            }
-        }
-
-        tfEntry.setText(buf.toString());
+    public void setCustomActionListener(final ActionListener customActionListener) {
+        bEntry.addActionListener(customActionListener);
     }
 
     public String getText() {
@@ -127,7 +76,4 @@ public class WChipChooserUI extends JPanel implements GFieldPlusChooser {
             this.setText(obj.toString());
         }
     }
-
-
-}    // End WChipChooserUI
-
+}

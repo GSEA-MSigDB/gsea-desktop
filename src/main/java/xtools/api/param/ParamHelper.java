@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package xtools.api.param;
 
 import edu.mit.broad.genome.parsers.ParserFactory;
@@ -18,13 +18,9 @@ import java.io.File;
  * Bunch of static methods that help concrete Params do their thing.
  *
  * @author Aravind Subramanian
- * @version %I%, %G%
  */
 public class ParamHelper {
 
-    /**
-     * Privatized Class constructor
-     */
     private ParamHelper() {
     }
 
@@ -51,7 +47,7 @@ public class ParamHelper {
 
     }
 
-    protected static GComboBoxField createActionListenerBoundHintsComboBox(boolean editable, ActionListener al, Param param) {
+    static GComboBoxField createActionListenerBoundHintsComboBox(boolean editable, ActionListener al, Param param) {
         DefaultComboBoxModel model = new DefaultComboBoxModel(param.getHints());
 
         if ((param.getValue() != null) && (model.getIndexOf(param.getValue()) == -1)) {
@@ -65,15 +61,15 @@ public class ParamHelper {
         return new GComboBoxField(cb);
     }
 
-    protected static GComboBoxField createActionListenerBoundPobComboBox(ActionListener al, Class[] pobClasses) {
+    static GComboBoxField createActionListenerBoundPobComboBox(ActionListener al, Class[] pobClasses) {
         JComboBox cb = new JComboBox();
         cb.setEditable(false);
-        ObjectBindery.bind(cb, pobClasses, false);
+        ObjectBindery.bind(cb, pobClasses);
         cb.addActionListener(al);
         return new GComboBoxField(cb);
     }
 
-    protected static void safeSelectFirst(JComboBox cb) {
+    static void safeSelectFirst(JComboBox cb) {
         // imp -- so that somethign is selected at startup -> the act of selection
         // fires the event that does the param setting of value
         if (cb.getModel().getSize() > 0) {
@@ -86,7 +82,7 @@ public class ParamHelper {
     // fires the event that does the param setting of value
     // value if not null and if found in the cbx
     // else 0 (if has at least 1 element)
-    protected static void safeSelectPobValueDefaultOrFirst(JComboBox cb, Param param) {
+    static void safeSelectPobValueDefaultOrFirst(JComboBox cb, Param param) {
         int indx = -1;
 
         /// first see if the value exists
@@ -112,7 +108,7 @@ public class ParamHelper {
 
     }
 
-    protected static void safeSelectValueDefaultOrNone(JComboBox cb, Param param) {
+    static void safeSelectValueDefaultOrNone(JComboBox cb, Param param) {
 
         Object t = param.getValue();
 
@@ -129,7 +125,7 @@ public class ParamHelper {
     // need to use this as cant use new object as it isnt equal
     // for instance, see MetricParam
     // the signal2n is def, but its a different object than the one in hints
-    protected static void safeSelectValueDefaultByString(JComboBox cb, Param param) {
+    static void safeSelectValueDefaultByString(JComboBox cb, Param param) {
         Object sel = getIfHasValue(param.getValue(), cb);
 
         if (sel == null) { // null value or value not found, so use default

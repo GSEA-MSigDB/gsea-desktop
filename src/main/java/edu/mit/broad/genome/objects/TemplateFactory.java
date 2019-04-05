@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.objects;
 
 import edu.mit.broad.genome.Constants;
@@ -157,8 +157,8 @@ public class TemplateFactory extends TemplateImpl {
         }
 
 
-        final GeneSet a = new FSet(classAName, classASampleNames);
-        final GeneSet b = new FSet(classBName, classBSampleNames);
+        final GeneSet a = new GeneSet(classAName, classASampleNames);
+        final GeneSet b = new GeneSet(classBName, classBSampleNames);
 
         return createCategoricalTemplate(name, all_col_names_ordered, new GeneSet[]{a, b});
     }

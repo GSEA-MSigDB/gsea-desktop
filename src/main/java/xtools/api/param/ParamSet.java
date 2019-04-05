@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package xtools.api.param;
 
 import java.io.File;
@@ -32,7 +32,7 @@ public interface ParamSet extends Serializable {
 
     public Properties toProperties();
 
-    public String getAsCommand(boolean includecp, boolean fullfilepaths, boolean ignoreguiparam);
+    public String getAsCommand(boolean fullfilepaths);
 
     /**
      * fill params but dont fill those that have missing files

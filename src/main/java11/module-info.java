@@ -36,7 +36,6 @@ module org.gsea_msigdb.gsea {
     exports edu.mit.broad.vdb.chip;
     exports edu.mit.broad.vdb.map;
     exports edu.mit.broad.vdb.meg;
-    exports edu.mit.broad.vdb.sampledb;
     exports edu.mit.broad.xbench;
     exports edu.mit.broad.xbench.actions;
     exports edu.mit.broad.xbench.actions.ext;
@@ -73,7 +72,6 @@ module org.gsea_msigdb.gsea {
     exports xapps.api.frameworks;
     exports xapps.api.frameworks.fiji;
     exports xapps.api.vtools;
-    exports xapps.api.vtools.viewers;
     exports xapps.gsea;
     exports xtools.api;
     exports xtools.api.param;
@@ -105,7 +103,6 @@ module org.gsea_msigdb.gsea {
     requires jgoodies.uif.lite;
     requires jide.common;
     requires json.simple;
-    requires jxl;
     requires log4j;
     requires org.apache.logging.log4j;
     requires org.apache.logging.log4j.core;

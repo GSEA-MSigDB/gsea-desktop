@@ -1,18 +1,16 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.alg;
 
 import java.util.Comparator;
 
 import org.apache.commons.io.FilenameUtils;
-import org.apache.log4j.Logger;
 
 import edu.mit.broad.genome.math.Order;
 import edu.mit.broad.genome.objects.PersistentObject;
 import edu.mit.broad.genome.objects.ScoredDataset;
 import edu.mit.broad.genome.objects.esmatrix.db.EnrichmentResult;
-import edu.mit.broad.vdb.VdbRuntimeResources;
 
 /**
  * Collection of usefule comparators
@@ -22,11 +20,6 @@ import edu.mit.broad.vdb.VdbRuntimeResources;
  */
 public class ComparatorFactory {
 
-    private static final Logger klog = Logger.getLogger(ComparatorFactory.class);
-
-    /**
-     * Privatized Class constructor
-     */
     private ComparatorFactory() {
     }
 
@@ -134,10 +127,7 @@ public class ComparatorFactory {
         }
     }    // End FileExtComparator
 
-    /**
-     *
-     */
-    public static class ScoredDatasetScoreComparator implements Comparator {
+    public static class ScoredDatasetScoreComparator implements Comparator<String> {
         final ScoredDataset fSds;
 
         public ScoredDatasetScoreComparator(ScoredDataset sds) {
@@ -147,27 +137,16 @@ public class ComparatorFactory {
         /**
          * Return -1 if o1 is less than o2, 0 if they're equal, +1 if o1 is greater than o2.
          */
-        public int compare(Object pn1, Object pn2) {
+        public int compare(String pn1, String pn2) {
 
-            String name1 = (String) pn1;
-            String name2 = (String) pn2;
-
-            int rank1 = fSds.getRank(name1);
-            int rank2 = fSds.getRank(name2);
-
-            //System.out.println(">>> " + rank1 +  " " + rank2);
+            int rank1 = fSds.getRank(pn1);
+            int rank2 = fSds.getRank(pn2);
 
             if (rank1 == -1 || rank2 == -1) {
-                throw new IllegalArgumentException("Specified label not in the sds: " + name1 + " " + name2);
+                throw new IllegalArgumentException("Specified label not in the sds: " + pn1 + " " + pn2);
             }
 
-            if (rank1 < rank2) {
-                return -1;
-            } else if (rank1 == rank2) {
-                return 0;
-            } else {
-                return +1;
-            }
+            return rank1 - rank2;
         }
 
         /**
@@ -176,58 +155,14 @@ public class ComparatorFactory {
         public boolean equals(Object o2) {
             return false;
         }
-    }    // End ScoredDatasetScoreComparator
-
+    }
 
     public static class ChipNameComparator implements Comparator {
 
-        /**
-         * Return -1 if o1 is less than o2, 0 if they're equal, +1 if o1 is greater than o2.
-         */
         public int compare(Object pn1, Object pn2) {
-
             String s1 = pn1.toString();
             String s2 = pn2.toString();
-
-            // always want GENE_SYMBOL.chip first
-            if (VdbRuntimeResources.isChipGeneSymbol(s1) && VdbRuntimeResources.isChipGeneSymbol(s2)) {
-                return 0;
-            } else if (VdbRuntimeResources.isChipGeneSymbol(s1)) {
-                return -1;
-            } else if (VdbRuntimeResources.isChipGeneSymbol(s2)) {
-                return 1;
-            }
-
-            // always want SEQ_ACCESSION.chip after GENE_SYMBOL.chip but ahead of all the rest
-            if (VdbRuntimeResources.isChipSeqAccession(s1) && VdbRuntimeResources.isChipGeneSymbol(s2)) {
-                return 0;
-            } else if (VdbRuntimeResources.isChipSeqAccession(s1)) {
-                return -1;
-            } else if (VdbRuntimeResources.isChipSeqAccession(s2)) {
-                return 1;
-            }
-
-            // next are chip files that begin with "HG"
-            if (s1.toUpperCase().startsWith("HG") && s2.toUpperCase().startsWith("HG")) {
-                return s1.compareTo(s2);
-            } else if (s1.toUpperCase().startsWith("HG")) {
-                return -1;
-            } else if (s2.toUpperCase().startsWith("HG")) {
-                return 1;
-            }
-
-            // next are chip files that begin with "HU"
-            if (s1.toUpperCase().startsWith("HU") && s2.toUpperCase().startsWith("HU")) {
-                return s1.compareTo(s2);
-            } else if (s1.toUpperCase().startsWith("HU")) {
-                return -1;
-            } else if (s2.toUpperCase().startsWith("HU")) {
-                return 1;
-            }
-
-            // now just string comparison
             return s1.compareTo(s2);
-
         }
 
         /**
@@ -236,6 +171,5 @@ public class ComparatorFactory {
         public boolean equals(Object o2) {
             return false;
         }
-    }    // End ChipNameComparator
-
+    }
 }

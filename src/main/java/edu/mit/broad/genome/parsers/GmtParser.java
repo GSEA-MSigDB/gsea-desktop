@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.parsers;
 
 import edu.mit.broad.genome.Constants;
@@ -122,7 +122,7 @@ public class GmtParser extends AbstractParser {
 
             //@note convention
             String fname = sourcepath.concat("#").concat(gsetName);
-            GeneSet gset = new FSet(fname, gsetname_english, geneNames, true);
+            GeneSet gset = new GeneSet(fname, gsetname_english, geneNames, true);
 
             gsets.add(gset);
 

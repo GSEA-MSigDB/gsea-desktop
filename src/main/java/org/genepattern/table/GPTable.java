@@ -1,14 +1,12 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package org.genepattern.table;
 
 import javax.swing.*;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableModel;
 import java.awt.*;
-import java.awt.datatransfer.Clipboard;
-import java.awt.datatransfer.StringSelection;
 import java.awt.event.MouseEvent;
 
 /**
@@ -46,43 +44,6 @@ public class GPTable extends JTable {
                 return realIndex >= 0 ? getColumnName(realIndex) : null;
             }
         };
-    }
-
-    /**
-     * Copies the data in the table to the system clipboard
-     */
-    public void copy() {
-        Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-        int[] selectedRows = this.getSelectedRows();
-        int[] selectedColumns = this.getSelectedColumns();
-        StringBuffer buf = getSelectedData(this, selectedRows, selectedColumns);
-        StringSelection stringSelection = new StringSelection(buf.toString());
-        clipboard.setContents(stringSelection, stringSelection);
-    }
-
-    /**
-     * Gets the data selected by the user in the this.
-     *
-     * @param table           Description of the Parameter
-     * @param selectedRows    Description of the Parameter
-     * @param selectedColumns Description of the Parameter
-     * @return the selected data.
-     */
-    public static StringBuffer getSelectedData(JTable table,
-                                               int[] selectedRows, int[] selectedColumns) {
-        StringBuffer buf = new StringBuffer();
-        for (int i = 0; i < selectedRows.length; i++) {
-            for (int j = 0; j < selectedColumns.length; j++) {
-                Object value = table.getValueAt(selectedRows[i],
-                        selectedColumns[j]); // column converted to model
-                if (value != null) {
-                    buf.append(value);
-                }
-                buf.append("\t");
-            }
-            buf.append("\n");
-        }
-        return buf;
     }
 
     public String getToolTipText(MouseEvent event) {

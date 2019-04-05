@@ -1,13 +1,10 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.alg;
 
-import edu.mit.broad.genome.Headers;
 import edu.mit.broad.genome.math.*;
 import edu.mit.broad.genome.objects.*;
-import edu.mit.broad.xbench.prefs.XPreferencesFactory;
-import org.apache.log4j.Logger;
 
 import java.util.*;
 
@@ -17,21 +14,10 @@ import java.util.*;
  */
 public class DatasetMetrics {
 
-    private final Logger log = Logger.getLogger(this.getClass());
-
     /**
      * Class Constructor.
      */
     public DatasetMetrics() {
-    }
-
-
-    public static Map getDefaultMetricParams() {
-        Map params = new HashMap();
-        params.put(Headers.USE_MEDIAN, XPreferencesFactory.kMedian.getBooleanO());
-        params.put(Headers.FIX_LOW, XPreferencesFactory.kFixLowVar.getBooleanO());
-        params.put(Headers.USE_BIASED, XPreferencesFactory.kBiasedVar.getBooleanO());
-        return params;
     }
 
     /**
