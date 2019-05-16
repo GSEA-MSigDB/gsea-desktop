@@ -38,9 +38,9 @@ public class MappingEtiology {
         return cnt_with_at_least_one_match;
     }
 
-    public void add(final String sourceMember, final Set<String> targets, final boolean isValidTargetSymbol) {
+    public void add(final String sourceMember, final Set<String> targets) {
         checkImmuted();
-        fOneMaps.add(new OneMap(sourceMember, targets, isValidTargetSymbol));
+        fOneMaps.add(new OneMap(sourceMember, targets));
     }
 
     public void setImmutable() {
@@ -92,21 +92,13 @@ public class MappingEtiology {
 
         Set<String> mappedProbeNames;
         
-        boolean isValidTargetSymbol;
-
-        OneMap(final String probeName, final Set<String> mappedProbeNames, final boolean isValidTargetSymbol) {
+        OneMap(final String probeName, final Set<String> mappedProbeNames) {
             if (probeName == null) {
                 throw new IllegalArgumentException("Parameter probeName cannot be null");
             }
-
-            if (mappedProbeNames == null) {
-                throw new IllegalArgumentException("Parameter mappedProbeNames cannot be null");
-            }
-
-
+            
             this.sourceProbeName = probeName;
             this.mappedProbeNames = mappedProbeNames;
-            this.isValidTargetSymbol = isValidTargetSymbol;
         }
 
         public int size() {
@@ -118,9 +110,6 @@ public class MappingEtiology {
         }
 
         public String toString() {
-            if (!isValidTargetSymbol) {
-                return "Invalid probe for source chip";
-            }
             if (mappedProbeNames == null || mappedProbeNames.isEmpty()) {
                 return "Invalid probe for source chip";
             }

@@ -46,8 +46,9 @@ public class MGeneSet {
 
             if (maintainEtiology) {
                 try {
-                    this.met.add(sourceMember, target, targetChip.isProbe(sourceMember));
+                    this.met.add(sourceMember, target);
                 } catch (Throwable t) {
+                    // TODO: confirm if this clause is necessary
                     t.printStackTrace();
                 }
             }

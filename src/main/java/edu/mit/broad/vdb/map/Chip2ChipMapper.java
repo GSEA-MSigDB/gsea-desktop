@@ -3,7 +3,7 @@
  */
 package edu.mit.broad.vdb.map;
 
-import edu.mit.broad.genome.Constants;
+import edu.mit.broad.genome.alg.ComparatorFactory;
 import edu.mit.broad.genome.objects.AbstractObject;
 import edu.mit.broad.genome.objects.DefaultGeneSetMatrix;
 import edu.mit.broad.genome.objects.GeneSet;
@@ -12,6 +12,8 @@ import edu.mit.broad.genome.parsers.AuxUtils;
 import edu.mit.broad.vdb.chip.Chip;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -30,20 +32,23 @@ public class Chip2ChipMapper extends AbstractObject {
         }
 
         int numMappedSets = mgm.getNumMappedSets();
-        final List<Set<String>> sets = new ArrayList<Set<String>>(numMappedSets);
+        final List<List<String>> memberLists = new ArrayList<List<String>>(numMappedSets);
         final String[] names = new String[numMappedSets];
         for (int j = 0; j < numMappedSets; j++) {
             GeneSet gset = mgm.getMappedGeneSet(j).getMappedGeneSet(true);
-            HashSet<String> memberSet = new HashSet<String>();
-            sets.add(memberSet);
-            memberSet.addAll(gset.getMembersS());
+            List<String> members = new ArrayList<String>(gset.getMembersS());
+            Collections.sort(members);  // for reproducibility
+            memberLists.add(members);
             names[j] = gset.getName();
         }
     
         GeneSet[] gsets = new GeneSet[numMappedSets];
         for (int i = 0; i < numMappedSets; i++) {
-            gsets[i] = new GeneSet(AuxUtils.getAuxNameOnlyNoHash(names[i]), sets.get(i));
+            // Don't need to checkForDuplicates here because we use gset.getMembersS() above, which
+            // returns a Set and thus has no duplicates.
+            gsets[i] = new GeneSet(AuxUtils.getAuxNameOnlyNoHash(names[i]), null, memberLists.get(i), false);
         }
+        Arrays.sort(gsets, ComparatorFactory.PERSISTENT_OBJECT_BY_NAME);  // for reproducibility
     
         return new DefaultGeneSetMatrix(name, gsets);
     }

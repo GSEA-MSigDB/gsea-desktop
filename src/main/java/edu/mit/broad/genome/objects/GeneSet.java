@@ -260,7 +260,7 @@ public class GeneSet extends AbstractObject implements PersistentObject {
     }
 
     /**
-     * @return Unmodifiable list of members of this FSet
+     * @return Unmodifiable list of members of this GeneSet
      */
     public List<String> getMembers() {
         return Collections.unmodifiableList(fMembers);

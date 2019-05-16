@@ -157,6 +157,15 @@ public class ComparatorFactory {
         }
     }
 
+    public static Comparator<PersistentObject> PERSISTENT_OBJECT_BY_NAME = new Comparator<PersistentObject>() {
+        @Override
+        public int compare(PersistentObject o1, PersistentObject o2) {
+            if (o1 == null) return -1;
+            if (o2 == null) return 1;
+            return o1.getName().compareTo(o2.getName());
+        }
+    };
+    
     public static class ChipNameComparator implements Comparator {
 
         public int compare(Object pn1, Object pn2) {
