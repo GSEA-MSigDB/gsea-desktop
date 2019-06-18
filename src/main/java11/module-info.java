@@ -83,6 +83,7 @@ module org.gsea_msigdb.gsea {
     requires batik.awt.util;
     requires batik.dom;
     requires batik.svggen;
+    requires commons.cli;
     requires commons.compress;
     requires commons.io;
     requires commons.lang3;

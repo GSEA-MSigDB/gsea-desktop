@@ -68,6 +68,10 @@ public class GseaPreranked extends AbstractGseaTool {
     public GseaPreranked() {
         declareParams();
     }
+    
+    public String getName() {
+        return "GSEAPreranked";
+    }
 
     public void execute() throws Exception {
 

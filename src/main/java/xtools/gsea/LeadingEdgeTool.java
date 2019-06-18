@@ -82,6 +82,10 @@ public class LeadingEdgeTool extends AbstractTool {
     public LeadingEdgeTool() {
         declareParams();
     }
+    
+    public String getName() {
+        return "LeadingEdgeTool";
+    }
 
     private Dataset _morph(Dataset ds, RankedList rl) {
         Matrix m = new Matrix(ds.getNumRow(), ds.getNumCol());

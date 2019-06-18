@@ -172,6 +172,7 @@ public class TemplateFactory extends TemplateImpl {
             ClassImpl cl = new ClassImpl(gsets_sample_names[i].getName(true));
             template.add(cl);
             for (int r = 0; r < gsets_sample_names[i].getNumMembers(); r++) {
+                // TODO: Is this uppercase hack still needed?
                 String sampleName = gsets_sample_names[i].getMember(r).toUpperCase(); // @ugggh hack for things like dmap
                 int pos = _getColumnIndex(all_col_names_ordered, sampleName);
                 if (pos == -1) {

@@ -100,6 +100,7 @@ public class NamingConventions {
             return null;
         }
 
+        // TODO: want to avoid forced uppercase.  Evaluate this possibility
         symbol = symbol.toUpperCase(); // @note IMP IMp all sumbols are UC only
 
         // Finally if the symbol is toolung, truncate it

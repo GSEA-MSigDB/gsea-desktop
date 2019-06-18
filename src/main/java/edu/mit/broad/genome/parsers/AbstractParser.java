@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.parsers;
 
 import edu.mit.broad.genome.Constants;
@@ -317,24 +317,6 @@ public abstract class AbstractParser implements Parser {
                 fLines.add(s);
             }
         }
-
-        
-
-        /* @todo deprec after vdb cleanup
-        protected Chip getChip() {
-            String chipName = getValue(Headers.CHIP);
-
-            if (chipName == null) {
-                chipName = getValue(Headers.CHIP.toLowerCase());
-            }
-
-            if (chipName != null) {
-                return VdbRuntimeResources.getChip(chipName);
-            } else {
-                return null;
-            }
-        }
-        */
 
         public String toString() {
             if (fLines == null && fKeyValues == null) {

@@ -141,6 +141,10 @@ public class Chip2Chip extends AbstractTool {
     public Chip2Chip() {
         declareParams();
     }
+    
+    public String getName() {
+        return "Chip2Chip";
+    }
 
     public void execute() throws Exception {
         // to preserve memory & for custom indexing

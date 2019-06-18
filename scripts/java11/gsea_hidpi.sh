@@ -12,10 +12,10 @@ if [ -d "${prefix}/jdk-11" ]; then
     JAVA_HOME="${prefix}/jdk-11"
     PATH=$JAVA_HOME/bin:$PATH
 else
-    echo "Bundled JDK not found.  Using system JDK."
+    echo "Using system JDK."
 fi
 
-exec java --module-path="${prefix}/modules" -Xmx4g \
+exec java -showversion --module-path="${prefix}/modules" -Xmx4g \
     @"${prefix}/gsea.args" \
     --patch-module="jide.common=${prefix}/lib/jide-components-3.7.4.jar:${prefix}/lib/jide-dock-3.7.4.jar:${prefix}/lib/jide-grids-3.7.4.jar" \
     -Dsun.java2d.uiScale=2 \

@@ -105,6 +105,7 @@ public abstract class AbstractGeneSetMatrix extends AbstractObject implements Ge
         // @see edbparser
         String gsetname = gsetnameF.replace('|', '/');
         gsetname = AuxUtils.getAuxNameOnlyNoHash(gsetnameF); // @note
+        // TODO: is it really necessary to force Gene Set names to uppercase?
         gsetname = gsetname.toUpperCase();
 
         if (fNameGeneSetMap == null) {

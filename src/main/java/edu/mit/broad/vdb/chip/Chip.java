@@ -28,6 +28,7 @@ public class Chip extends AbstractObject {
      */
     private Probe[] fProbes;
 
+    // TODO: want to avoid forced uppercase.  Evaluate this possibility
     /**
      * key -> Probe name (String), Value -> Probe object (UPpercased)
      * Lazily inited
@@ -204,6 +205,7 @@ public class Chip extends AbstractObject {
             readDeepData();
             this.fProbeNameProbeMap = new HashMap<String, Probe>();
             for (int i = 0; i < fProbes.length; i++) {
+                // TODO: want to avoid forced uppercase.  Evaluate this possibility
                 fProbeNameProbeMap.put(fProbes[i].getName().toUpperCase(), fProbes[i]); // @note
             }
         }
@@ -225,6 +227,7 @@ public class Chip extends AbstractObject {
     
         initProbeProbeMap();
     
+        // TODO: want to avoid forced uppercase.  Evaluate this possibility
         probeName = probeName.toUpperCase(); // @note
         return fProbeNameProbeMap.containsKey(probeName);
     }
@@ -236,6 +239,7 @@ public class Chip extends AbstractObject {
     
         initProbeProbeMap();
     
+        // TODO: want to avoid forced uppercase.  Evaluate this possibility
         final String probeName = probeName_orig.toUpperCase();
         final Object obj = fProbeNameProbeMap.get(probeName);
     

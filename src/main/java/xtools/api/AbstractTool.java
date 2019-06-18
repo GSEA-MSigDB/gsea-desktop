@@ -369,10 +369,6 @@ public abstract class AbstractTool implements Tool {
         return fParamSet;
     }
 
-    public String getName() {
-        return this.getClass().getName();
-    }
-
     public String getTitle() {
         String sn = ClassUtils.shorten(getName());
         String desc = getDesc();
@@ -382,8 +378,6 @@ public abstract class AbstractTool implements Tool {
         } else {
             return "<html><body><b>" + sn + "</b>: " + desc + "</body></html>";
         }
-
-        //return "<html><body><b>" + sn.toUpperCase() + "</b>: Set parameters and run enrichment tests</body></html>";
     }
 
     // Real tools must override

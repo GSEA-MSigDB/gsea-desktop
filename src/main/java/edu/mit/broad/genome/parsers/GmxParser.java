@@ -188,6 +188,7 @@ public class GmxParser extends AbstractParser {
         final GeneSet[] gsets = new GeneSet[members.length];
         for (int i = 0; i < members.length; i++) {
             //@note convention
+            // TODO: is it really necessary to force Gene Set names to uppercase?
             final String gsetName = sourcepath.concat("#").concat(gsetNames[i].toUpperCase()); // @note the UC'ing 
             gsets[i] = new GeneSet(gsetName, namesEnglish[i], members[i], fCheckForDuplicates);
         }

@@ -53,6 +53,10 @@ public class CollapseDataset extends AbstractTool {
     public CollapseDataset() {
         declareParams();
     }
+    
+    public String getName() {
+        return "CollapseDataset";
+    }
 
     public void execute() throws Exception {
         startExec();

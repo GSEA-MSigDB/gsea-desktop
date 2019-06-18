@@ -104,6 +104,7 @@ public class GmtParser extends AbstractParser {
                 throw new ParserException("Empty gene line: " + currLine + " at row: " + row);
             }
 
+            // TODO: is it really necessary to force Gene Set names to uppercase?
             String gsetName = tok.nextToken().trim().toUpperCase(); // @note the UC'ing
 
             String gsetname_english = tok.nextToken().trim();

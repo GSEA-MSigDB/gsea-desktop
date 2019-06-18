@@ -60,6 +60,10 @@ public class Gsea extends AbstractGsea2Tool {
     public Gsea() {
         declareParams();
     }
+    
+    public String getName() {
+        return "GSEA";
+    }
 
     public void execute() throws Exception {
 
