@@ -100,9 +100,6 @@ public class NamingConventions {
             return null;
         }
 
-        // TODO: want to avoid forced uppercase.  Evaluate this possibility
-        symbol = symbol.toUpperCase(); // @note IMP IMp all sumbols are UC only
-
         // Finally if the symbol is toolung, truncate it
         // This happens when affy truncates many eaually likely genes into 1
         // e.g KLRA15 /// KLRA20 ...

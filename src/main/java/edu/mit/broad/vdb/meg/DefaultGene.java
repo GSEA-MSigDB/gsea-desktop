@@ -32,8 +32,7 @@ public class DefaultGene implements Gene {
         }
 
         this.fTitle = NamingConventions.titleize(title);
-        // TODO: want to avoid forced uppercase.  Evaluate this possibility
-        this.fSymbol = symbol.toUpperCase(); // @note
+        this.fSymbol = symbol;
     }
 
     public String getSymbol() {

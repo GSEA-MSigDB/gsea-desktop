@@ -28,9 +28,8 @@ public class Chip extends AbstractObject {
      */
     private Probe[] fProbes;
 
-    // TODO: want to avoid forced uppercase.  Evaluate this possibility
     /**
-     * key -> Probe name (String), Value -> Probe object (UPpercased)
+     * key -> Probe name (String), Value -> Probe object
      * Lazily inited
      */
     private Map<String, Probe> fProbeNameProbeMap;
@@ -155,8 +154,6 @@ public class Chip extends AbstractObject {
     
         // all set now, so init
         this.fSourcePath = sourcePath;
-    
-        //log.debug("Initing: " + chipName + " sourcePath: " + sourcePath + " probes: " + fProbes.length);
     }
 
     private void readDeepData() throws Exception {
@@ -205,8 +202,7 @@ public class Chip extends AbstractObject {
             readDeepData();
             this.fProbeNameProbeMap = new HashMap<String, Probe>();
             for (int i = 0; i < fProbes.length; i++) {
-                // TODO: want to avoid forced uppercase.  Evaluate this possibility
-                fProbeNameProbeMap.put(fProbes[i].getName().toUpperCase(), fProbes[i]); // @note
+                fProbeNameProbeMap.put(fProbes[i].getName(), fProbes[i]);
             }
         }
     }
@@ -226,9 +222,6 @@ public class Chip extends AbstractObject {
         }
     
         initProbeProbeMap();
-    
-        // TODO: want to avoid forced uppercase.  Evaluate this possibility
-        probeName = probeName.toUpperCase(); // @note
         return fProbeNameProbeMap.containsKey(probeName);
     }
 
@@ -238,10 +231,7 @@ public class Chip extends AbstractObject {
         }
     
         initProbeProbeMap();
-    
-        // TODO: want to avoid forced uppercase.  Evaluate this possibility
-        final String probeName = probeName_orig.toUpperCase();
-        final Object obj = fProbeNameProbeMap.get(probeName);
+        final Object obj = fProbeNameProbeMap.get(probeName_orig);
     
         if (obj == null) {
             throw new IllegalArgumentException("No Probe called: " + probeName_orig + " on this chip (chip name is >" + getName() + "<)");
