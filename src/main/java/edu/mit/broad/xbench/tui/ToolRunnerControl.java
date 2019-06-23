@@ -9,6 +9,8 @@ import edu.mit.broad.genome.swing.GuiHelper;
 import edu.mit.broad.xbench.actions.ext.BrowserAction;
 import edu.mit.broad.xbench.core.ApplicationDialog;
 import edu.mit.broad.xbench.core.api.Application;
+
+import org.apache.commons.lang3.SystemUtils;
 import org.apache.log4j.Logger;
 
 import xtools.api.Tool;
@@ -233,8 +235,9 @@ public class ToolRunnerControl extends JPanel {
             public void actionPerformed(ActionEvent e) {
 
                 JButton bCopy = new JButton("Copy", GuiHelper.ICON_COPY16);
-
-                StringBuffer buf = new StringBuffer("gsea-cli.sh ").append(fHook.getCurrentTool().getName()).append(' ');
+                
+                String launcherCmd = (SystemUtils.IS_OS_WINDOWS) ? "gsea-cli.bat" : "gsea-cli.sh";
+                StringBuffer buf = new StringBuffer(launcherCmd).append(" ").append(fHook.getCurrentTool().getName()).append(' ');
                 buf.append(fHook.getCurrentParamSet().getAsCommand(true).trim());
 
                 final JTextArea ta = new JTextArea(buf.toString(), 5, 50);

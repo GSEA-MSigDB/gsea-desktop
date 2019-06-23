@@ -25,6 +25,8 @@ downloaded.  You might have to make the script executable (chmod a+x gsea.sh).
 gsea.bat       (for Windows)
 gsea.sh        (for Linux and macOS)
 gsea_hidpi.sh  (for Linux with HiDPI screens)
+gsea-cli.sh    (for Linux and macOS command line usage)
+gsea-cli.bat   (for Windows command line usage)
 gsea.command   (for macOS, double-click to start)
 
 The bat and shell scripts are configured to start GSEA with 4GB of
