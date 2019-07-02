@@ -177,7 +177,7 @@ public class ToolReport implements Report {
 
         if (reportForTool_opt != null) {
             this.fProducerClass = reportForTool_opt.getClass();
-            this.fProducerName = reportForTool_opt.getName();
+            this.fProducerName = reportForTool_opt.getClass().getName();
 
             if (cacheToolObject) {
                 this.fTool_opt = reportForTool_opt;
@@ -222,7 +222,7 @@ public class ToolReport implements Report {
 
         label = label.trim();
 
-        StringTokenizer tok = new StringTokenizer(tool.getName(), ".");
+        StringTokenizer tok = new StringTokenizer(tool.getClass().getName(), ".");
         String tn = null;
 
         while (tok.hasMoreTokens()) {
@@ -1021,7 +1021,7 @@ public class ToolReport implements Report {
 
             label = label.trim();
 
-            StringTokenizer tok = new StringTokenizer(tool.getName(), ".");
+            StringTokenizer tok = new StringTokenizer(tool.getClass().getName(), ".");
             String toolName = null;
 
             while (tok.hasMoreTokens()) {

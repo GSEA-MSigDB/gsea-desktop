@@ -88,7 +88,7 @@ public abstract class AbstractTool implements Tool {
     }
 
     public String getHelpURL() {
-        return JarResources.getHelpURL(getName());
+        return JarResources.getHelpURL(getClass().getName());
     }
 
     public PrintStream getOutputStream() {
@@ -231,7 +231,7 @@ public abstract class AbstractTool implements Tool {
     protected String getHeader() {
         StringBuffer buf = new StringBuffer();
         buf.append("<div id=\"footer\" style=\"width: 905; height: 35\">\n").append(
-                "<h3 style=\"text-align: left\"><font color=\"#808080\">Report for: ").append(getName()).append("</font></h3>\n").append("</div>");
+                "<h3 style=\"text-align: left\"><font color=\"#808080\">Report for: ").append(getClass().getName()).append("</font></h3>\n").append("</div>");
         return buf.toString();
     }
 
@@ -370,7 +370,7 @@ public abstract class AbstractTool implements Tool {
     }
 
     public String getTitle() {
-        String sn = ClassUtils.shorten(getName());
+        String sn = ClassUtils.shorten(getClass().getName());
         String desc = getDesc();
 
         if (desc == null || desc.length() == 0) {

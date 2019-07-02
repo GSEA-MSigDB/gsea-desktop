@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.xbench.core.api;
 
 import edu.mit.broad.genome.NamingConventions;
@@ -41,7 +41,7 @@ public class ToolManagerImpl implements ToolManager {
     }
 
     public void setLastToolName(final Tool tool) {
-        XPreferencesFactory.kLastToolName.setValue(tool.getName());
+        XPreferencesFactory.kLastToolName.setValue(tool.getClass().getName());
     }
 
     // Might return null if none

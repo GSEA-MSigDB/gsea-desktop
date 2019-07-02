@@ -187,10 +187,10 @@ public class ToolRunnerControl extends JPanel {
                 SwingWorker<Object, Void> worker = new SwingWorker<Object, Void>() {
                     @Override
                     protected Object doInBackground() throws Exception {
-                        final ReportStub rs = Application.getToolManager().getLastReportStub(fHook.getCurrentTool().getName());
+                        final ReportStub rs = Application.getToolManager().getLastReportStub(fHook.getCurrentTool().getClass().getName());
 
                         if (rs == null) {
-                            Application.getWindowManager().showMessage("No history available for: " + fHook.getCurrentTool().getName());
+                            Application.getWindowManager().showMessage("No history available for: " + fHook.getCurrentTool().getClass().getName());
                             return null;
                         }
 
@@ -252,7 +252,7 @@ public class ToolRunnerControl extends JPanel {
                     }
                 });
 
-                ApplicationDialog dd = new ApplicationDialog("Command Line for: " + fHook.getCurrentTool().getName(), new JScrollPane(ta));
+                ApplicationDialog dd = new ApplicationDialog("Command Line for: " + fHook.getCurrentTool().getClass().getName(), new JScrollPane(ta));
                 dd.setButtons(new JButton[]{bCopy});
                 dd.show();
             }

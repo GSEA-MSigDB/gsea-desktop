@@ -77,7 +77,7 @@ public class SingleToolLauncher extends JPanel implements Widget, MouseMotionLis
 
         if (fShowTopBufferPanel) {
             JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEADING));
-            JLabel label = new JLabel("<html><body>Initialized to: " + "<b>" + fTool.getName() + "</b></body></html>");
+            JLabel label = new JLabel("<html><body>Initialized to: " + "<b>" + fTool.getClass().getName() + "</b></body></html>");
             int height = 30;
             topPanel.add(label);
             //panel.setBackground(Color.DARK_GRAY);
@@ -128,7 +128,7 @@ public class SingleToolLauncher extends JPanel implements Widget, MouseMotionLis
 
         // shorter is nicer
         if (fName == null) {
-            StringTokenizer tok = new StringTokenizer(fTool.getName(), ".");
+            StringTokenizer tok = new StringTokenizer(fTool.getClass().getName(), ".");
             while (tok.hasMoreTokens()) {
                 fName = tok.nextToken();
             }

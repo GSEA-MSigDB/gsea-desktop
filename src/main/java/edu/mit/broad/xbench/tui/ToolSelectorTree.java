@@ -71,7 +71,7 @@ public class ToolSelectorTree extends JTree {
         }
 
         for (int i = 0; i < fTools.length; i++) {
-            if (fTools[i].getName().equalsIgnoreCase(toolName)) {
+            if (fTools[i].getClass().getName().equalsIgnoreCase(toolName)) {
                 TreePath tp = this.getPath(fTools[i]);
                 //log.debug("initing to Tree path " + tp + " tool: " + fTools[i].getName());
                 this.setSelectionPath(tp);
@@ -199,7 +199,7 @@ public class ToolSelectorTree extends JTree {
                     this.setToolTipText(((ToolCategory) node).getDesc());
                     this.setIcon(((ToolCategory) node).getIcon());
                 } else if (node instanceof Tool) {
-                    StringTokenizer tok = new StringTokenizer(((Tool) node).getName(), ".");
+                    StringTokenizer tok = new StringTokenizer(((Tool) node).getClass().getName(), ".");
                     String name = null;
                     while (tok.hasMoreTokens()) {
                         name = tok.nextToken();

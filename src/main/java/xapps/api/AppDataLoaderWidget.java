@@ -354,7 +354,7 @@ public class AppDataLoaderWidget extends GseaSimpleInternalFrame implements Widg
             SwingWorker<Object, Void> worker = new SwingWorker<Object, Void>() {
                 @Override
                 protected Object doInBackground() throws Exception {
-                    final ReportStub rs = Application.getToolManager().getLastReportStub(new Gsea().getName());
+                    final ReportStub rs = Application.getToolManager().getLastReportStub(new Gsea().getClass().getName());
 
                     if (rs == null) {
                         Application.getWindowManager().showMessage("No history available, nothing loaded!");

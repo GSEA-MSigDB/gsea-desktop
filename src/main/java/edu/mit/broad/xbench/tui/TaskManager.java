@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.xbench.tui;
 
 import edu.mit.broad.genome.JarResources;
@@ -150,7 +150,7 @@ public class TaskManager {
         trunnable.owner_thread = t;
 
         t.start();
-        klog.debug("Started executing Tool: " + clonedTool.getName() + " priority: " + priority);
+        klog.debug("Started executing Tool: " + clonedTool.getClass().getName() + " priority: " + priority);
         return clonedTool;
     }
 
@@ -163,7 +163,7 @@ public class TaskManager {
 
     public static Tool createTool(final Tool tool, final ParamSet pset) throws Exception {
 
-        String toolName = tool.getName();
+        String toolName = tool.getClass().getName();
         Class toolClass = Class.forName(toolName);
         klog.debug("toolClass: " + toolClass + " pset: " + pset);
         Class[] initArgsClass = new Class[]{Properties.class};    // reqd to have a ParamSet constructor
@@ -521,7 +521,7 @@ public class TaskManager {
             klog.debug("running ToolRunnableStateAction");
 
             if (trunnable.state == ExecState.WAITING) {
-                Application.getWindowManager().showMessage("Waiting for: " + trunnable.tool.getName());
+                Application.getWindowManager().showMessage("Waiting for: " + trunnable.tool.getClass().getName());
             } else if (trunnable.state == ExecState.PARAM_ERROR) {
                 kInstance.updateTable();
                 Application.getWindowManager().showError("One or more parameter(s) were not specified",
@@ -558,12 +558,12 @@ public class TaskManager {
                 				}
                 			} else {                				
                 				JObjectsList jol = new JObjectsList(report.getFilesProduced());
-                				JObjectsList.displayInWindow("Results for: " + trunnable.tool.getName(), RESULTS_ICON, jol);
+                				JObjectsList.displayInWindow("Results for: " + trunnable.tool.getClass().getName(), RESULTS_ICON, jol);
                 			}               		
                 }
             } else {
                 kInstance.updateTable();
-                Application.getWindowManager().showMessage("No actions defined for this state " + trunnable.state + " " + trunnable.tool.getName());
+                Application.getWindowManager().showMessage("No actions defined for this state " + trunnable.state + " " + trunnable.tool.getClass().getName());
             }
         }
     }    // End ToolStateAction

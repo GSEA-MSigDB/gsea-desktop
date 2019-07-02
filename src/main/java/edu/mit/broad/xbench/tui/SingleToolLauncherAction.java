@@ -21,7 +21,7 @@ public class SingleToolLauncherAction extends WidgetAction {
         if (tool == null) {
             throw new IllegalArgumentException("Param tool cannot be null");
         }
-        return ParseUtils.getLastToken(tool.getName(), ".");
+        return ParseUtils.getLastToken(tool.getClass().getName(), ".");
     }
 
     private Tool fTool;
