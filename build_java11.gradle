@@ -1,4 +1,4 @@
-// Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents 
+0// Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents 
 // of the University of California. All rights reserved.
 apply plugin: 'java'
 import org.apache.tools.ant.filters.ReplaceTokens
@@ -121,24 +121,6 @@ task createLinuxDistZip(type: Zip, dependsOn: createDist) {
     }
 }
 
-task createMacDistZip(type: Zip, dependsOn: createDist) {
-    baseName = "GSEA_Mac"
-    archiveName = createMacDistZip.baseName + "_${version}.zip"
-    destinationDir = file("${buildDir}/distZip")
-    if (!jdkBundleMac.equals("")) {
-        with copySpec { from jdkBundleMac into "jdk-11" }
-    }
-    from ("${buildDir}/GSEA-dist") {
-        exclude "*.bat"
-        exclude "*_hidpi.sh"
-    }
-    into createMacDistZip.baseName + "_${version}"
-
-    doLast {
-        project.exec { commandLine('chmod', '775', createMacDistZip.archivePath ) }
-    }
-}
-
 task createMacAppDist(type: Copy, dependsOn: createDist) {
     if (!jdkBundleMac.equals("")) {
         with copySpec { from jdkBundleMac into "GSEA_${version}.app/Contents/jdk-11" }
@@ -237,7 +219,7 @@ task signWinExeDist(type: Exec, dependsOn: createWinExeDist) {
     }
 }
 
-build.dependsOn createDistZip,createLinuxDistZip,createMacDistZip,createMacAppDistZip
+build.dependsOn createDistZip,createLinuxDistZip,createMacAppDistZip
 
 if (!makensisCommand.equals("") && !signcodeCommand.equals("")) {
     build.dependsOn signWinExeDist
