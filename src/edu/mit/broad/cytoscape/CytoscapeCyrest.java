@@ -13,7 +13,6 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
-
 import org.apache.http.HttpEntity;
 import org.apache.http.NameValuePair;
 import org.apache.http.StatusLine;
@@ -25,8 +24,7 @@ import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicNameValuePair;
-
-
+import org.apache.http.util.EntityUtils;
 import org.apache.log4j.Logger;
 
 import edu.mit.broad.genome.XLogger;
@@ -208,11 +206,12 @@ public class CytoscapeCyrest {
 		CloseableHttpResponse response = httpclient.execute(httpget);
 	
 		HttpEntity entity = response.getEntity();
+		String message = EntityUtils.toString(entity);
 		StatusLine statusLine = response.getStatusLine();
 		klog.info("status:" + statusLine.getReasonPhrase());
 		if(!statusLine.getReasonPhrase().equalsIgnoreCase("ok")){
-			Application.getWindowManager().showMessage("Unable to create Enrichment Map:" +statusLine.getReasonPhrase() + entity.toString());
-			httpclient.close();						
+		    Application.getWindowManager().showMessage("Unable to create Enrichment Map: " + statusLine.getReasonPhrase() + "\n" + message);
+		    httpclient.close();						
 			return false;
 		}
 		
