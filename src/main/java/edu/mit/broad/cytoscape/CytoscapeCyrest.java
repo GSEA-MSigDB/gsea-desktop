@@ -18,6 +18,7 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
+import org.apache.http.util.EntityUtils;
 import org.apache.log4j.Logger;
 
 import edu.mit.broad.xbench.core.api.Application;
@@ -120,9 +121,9 @@ public class CytoscapeCyrest {
         StatusLine statusLine = response.getStatusLine();
         klog.info("status:" + statusLine.getReasonPhrase());
         if (!statusLine.getReasonPhrase().equalsIgnoreCase("ok")) {
-            Application.getWindowManager()
-                    .showMessage("Unable to create Enrichment Map:" + statusLine.getReasonPhrase() + entity.toString());
-            httpclient.close();
+            String message = EntityUtils.toString(entity);
+            Application.getWindowManager().showMessage("Unable to create Enrichment Map: " + statusLine.getReasonPhrase() + "\n" + message);
+            httpclient.close();            
             return false;
         }
 

@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.math;
 
 import java.util.ArrayList;
@@ -30,14 +30,15 @@ public class DoubleElement {
     /**
      * a list with DoubleElement as elements
      */
-    public static void sort(final SortMode sort, final Order order, final List felist) {
+    public static void sort(final SortMode sort, final Order order, final List<DoubleElement> felist) {
 
         Collections.sort(felist, new DoubleElementComparator(sort, order.isAscending()));
 
     }
 
     public static DoubleElement[] sort(final SortMode sort, final Order order, final DoubleElement[] dels) {
-        List list = DoubleElement.toList(dels);
+        List<DoubleElement> list = DoubleElement.toList(dels);
+        
         sort(sort, order, list);
 
         return (DoubleElement[]) list.toArray(new DoubleElement[list.size()]);
@@ -74,8 +75,8 @@ public class DoubleElement {
         return values;
     }
 
-    public static List toList(DoubleElement[] dels) {
-        List list = new ArrayList(dels.length);
+    public static List<DoubleElement> toList(DoubleElement[] dels) {
+        List<DoubleElement> list = new ArrayList<DoubleElement>(dels.length);
         for (int i = 0; i < dels.length; i++) {
             list.add(dels[i]);
         }
@@ -92,48 +93,53 @@ public class DoubleElement {
         return floats;
     }
 
-    static class DoubleElementComparator implements java.util.Comparator {
+    public static class DoubleElementComparator implements java.util.Comparator<DoubleElement> {
 
-        private final SortMode fSort;
+        private final boolean fIsAbsolute;
         private final Boolean fAscending;
+        private final int ascendingFirstObjReturn;
+        private final int ascendingSecondObjReturn;
 
         public DoubleElementComparator(SortMode sort, boolean ascending) {
-            this.fSort = sort;
+            this.fIsAbsolute = sort.isAbsolute();
             this.fAscending = ascending;
+            this.ascendingFirstObjReturn = fAscending ? -1 : +1;
+            this.ascendingSecondObjReturn = fAscending ? +1 : -1;
         }
 
-        public int compare(Object obj1, Object obj2) {
+        public int compare(DoubleElement obj1, DoubleElement obj2) {
+            
+            if (obj1 == null) {
+                if (obj2 == null) return 0;     // can't compare
+                return ascendingFirstObjReturn;    // null is always least
+            }
+            if (obj2 == null) {
+                return ascendingSecondObjReturn;    // null is always least
+            }
+            
+            double d1 = obj1.fValue;
+            double d2 = obj2.fValue;
 
-            if ((obj1 == null) && (obj2 == null)) {
-                return 0;     // cant compare
-            } else if (obj1 == null) {
-                return fAscending ? -1 : +1;    // null is always least
-            } else if (obj2 == null) {
-                return fAscending ? +1 : -1;    // null is always least
+            if (Double.isNaN(d1)) {
+                if (Double.isNaN(d2)) return 0;
+                return ascendingFirstObjReturn;
+            }
+            if (Double.isNaN(d2)) {
+                return ascendingSecondObjReturn;
             }
 
-            double d1 = ((DoubleElement) obj1).fValue;
-            double d2 = ((DoubleElement) obj2).fValue;
-
-
-            if (Double.isNaN(d1) && Double.isNaN(d2)) {
-                return 0;
-            } else if (Double.isNaN(d1)) {
-                return fAscending ? -1 : +1;
-            } else if (Double.isNaN(d2)) {
-                return fAscending ? +1 : -1;
-            }
-
-            if (fSort.isAbsolute()) {
+            if (fIsAbsolute) {
                 d1 = Math.abs(d1);
                 d2 = Math.abs(d2);
             }
 
+            // Note: this does NOT work the same as Double.compare(d1, d2).
             if (d1 < d2) {
-                return fAscending ? -1 : +1;
-            } else if (d1 > d2) {
-                return fAscending ? +1 : -1;
-            } else
+                return ascendingFirstObjReturn;
+            }
+            if (d1 > d2) {
+                return ascendingSecondObjReturn;
+            }
             return 0;
         }
     }

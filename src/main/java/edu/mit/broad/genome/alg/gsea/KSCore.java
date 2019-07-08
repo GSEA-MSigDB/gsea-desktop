@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.alg.gsea;
 
 import edu.mit.broad.genome.math.Vector;
@@ -124,7 +124,9 @@ public class KSCore {
         final RankedList rl = gcoh.getRankedList();
 
         // START JG CHANGES //
-
+        // Note that this following loop has been found to be very important to overall
+        // performance, so be very careful about changes here.
+        
         boolean isLastRun = false;
         for (int r = 0; r < rl.getSize(); r++) {
 

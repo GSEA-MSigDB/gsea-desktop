@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.math;
 
 import edu.mit.broad.genome.Printf;
@@ -334,18 +334,27 @@ public class Vector {
     public Vector toVectorNaNless() {
 
         if (fNaNless == null) {
-            TFloatArrayList v1 = new TFloatArrayList();
-            for (int i = 0; i < getSize(); i++) {
+            //TFloatArrayList v1 = new TFloatArrayList();
+            int size = getSize();
+            float[] nanlessArr = new float[size];
+            int pos = 0;
+            for (int i = 0; i < size; i++) {
                 float val = getElement(i);
                 if (!Float.isNaN(val)) {
-                    v1.add(val);
+                    //v1.add(val);
+                    nanlessArr[pos++] = val;
                 }
             }
 
-            if (v1.size() == 0) {
+            // TODO: this looks like a bug, and should mean *all* values are NaN
+            // Should be testing v1.size() == this.size().
+            //if (v1.size() == 0) {
+            if (pos == size) {
                 fNaNless = this; // i.e no nans in the data
             } else {
-                fNaNless = new Vector(v1);
+                //fNaNless = new Vector(v1);
+                // Truncate the nanlessArr to just the values (since pos < size)
+                fNaNless = new Vector(Arrays.copyOf(nanlessArr, pos));
                 fNaNless.setImmutable();
             }
         }

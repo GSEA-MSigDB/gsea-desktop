@@ -6,12 +6,13 @@ package edu.mit.broad.genome.objects;
 import edu.mit.broad.genome.NotImplementedException;
 import edu.mit.broad.genome.math.*;
 import edu.mit.broad.genome.objects.strucs.DefaultMetricWeightStruc;
-import gnu.trove.TObjectIntHashMap;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 
 /**
  * A Dataset that is scored and sorted/ordered in some way. The data IS SHARED between original
@@ -190,12 +191,13 @@ public class ScoredDatasetImpl extends AbstractObject implements ScoredDataset {
         return index;
     }
 
-    private TObjectIntHashMap fRowNameSdsRowIndexMap;
+    private Map<String, Integer> fRowNameSdsRowIndexMap;
 
     private void cacheRowNameIndex() {
         if (fRowNameSdsRowIndexMap == null) {
-            fRowNameSdsRowIndexMap = new TObjectIntHashMap();
-            for (int sdsrown = 0; sdsrown < getNumRow(); sdsrown++) {
+            fRowNameSdsRowIndexMap = new HashMap<String, Integer>();
+            int numRow = getNumRow();
+            for (int sdsrown = 0; sdsrown < numRow; sdsrown++) {
                 fRowNameSdsRowIndexMap.put(getRowName(sdsrown), sdsrown);
             }
         }

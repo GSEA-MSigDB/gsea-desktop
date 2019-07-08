@@ -85,7 +85,7 @@ public class DatasetMetrics {
         return calcSortedMetricStruc(metric, sort, order, metricParams, lvp, ds, template).av;
     }
 
-    public ScoredStruc calcSortedMetricStruc(final Metric metric,
+    private ScoredStruc calcSortedMetricStruc(final Metric metric,
                                              final SortMode sort,
                                              final Order order,
                                              final Map metricParams,
@@ -107,17 +107,21 @@ public class DatasetMetrics {
         }
 
         //log.info("Running: " + metric.getName() + " on: " + ds.getName());
-        List dels = new ArrayList(ds.getNumRow());
-        DoubleElement[] datasetSynchedDels = new DoubleElement[ds.getNumRow()];
+        final int rows = ds.getNumRow();
+        //List<DoubleElement> dels = new ArrayList<DoubleElement>(rows);
+        DoubleElement[] datasetSynchedDels = new DoubleElement[rows];
 
-        for (int i = 0; i < ds.getNumRow(); i++) {
+        for (int i = 0; i < rows; i++) {
             double dist = metric.getScore(ds.getRow(i), template, metricParams);
             DoubleElement del = new DoubleElement(i, dist);
-            dels.add(del);
+            //dels.add(del);
             datasetSynchedDels[i] = del;
         }
-
-        DoubleElement.sort(sort, order, dels);
+        
+        DoubleElement[] sorted =  Arrays.copyOf(datasetSynchedDels, datasetSynchedDels.length);
+        Arrays.parallelSort(sorted, new DoubleElement.DoubleElementComparator(sort, order.isAscending()));
+        List<DoubleElement> dels = Arrays.asList(sorted);
+        //DoubleElement.sort(sort, order, dels);
 
         lvp.process(dels); // @note
 

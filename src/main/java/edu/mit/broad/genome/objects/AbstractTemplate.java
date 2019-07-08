@@ -125,14 +125,16 @@ public abstract class AbstractTemplate extends AbstractObject implements Templat
      */
     public Vector[] splitByTemplateClass(final Vector profile) {
 
-        final Vector[] vectors = new Vector[getNumClasses()];
+        final int numClasses = getNumClasses();
+        final Vector[] vectors = new Vector[numClasses];
 
         // @note IMP: within a class the items need not be ordered by asc profile pos
-        for (int i = 0; i < getNumClasses(); i++) {
+        for (int i = 0; i < numClasses; i++) {
             Template.Class cl = getClass(i); // @note IMP simply get the class NOT get teh class by first profile pos
-            Vector v = new Vector(cl.getSize());
+            final int classSize = cl.getSize();
+            Vector v = new Vector(classSize);
 
-            for (int p = 0; p < cl.getSize(); p++) {
+            for (int p = 0; p < classSize; p++) {
                 int pos = cl.getItem(p).getProfilePosition();
                 v.setElement(p, profile.getElement(pos));
             }
