@@ -107,7 +107,7 @@ public class DoubleElement {
             this.ascendingSecondObjReturn = fAscending ? +1 : -1;
         }
 
-        public int compare(DoubleElement obj1, DoubleElement obj2) {
+        public int compare(final DoubleElement obj1, final DoubleElement obj2) {
             
             if (obj1 == null) {
                 if (obj2 == null) return 0;     // can't compare

@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.objects;
 
 import edu.mit.broad.genome.Printf;
@@ -130,7 +130,7 @@ public abstract class AbstractTemplate extends AbstractObject implements Templat
 
         // @note IMP: within a class the items need not be ordered by asc profile pos
         for (int i = 0; i < numClasses; i++) {
-            Template.Class cl = getClass(i); // @note IMP simply get the class NOT get teh class by first profile pos
+            final Template.Class cl = getClass(i); // @note IMP simply get the class NOT get teh class by first profile pos
             final int classSize = cl.getSize();
             Vector v = new Vector(classSize);
 

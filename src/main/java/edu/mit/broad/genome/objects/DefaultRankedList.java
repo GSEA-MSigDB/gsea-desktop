@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.objects;
 
 import edu.mit.broad.genome.MismatchedSizeException;
@@ -8,11 +8,12 @@ import edu.mit.broad.genome.math.ScoreMode;
 import edu.mit.broad.genome.math.Vector;
 import edu.mit.broad.genome.objects.strucs.DefaultMetricWeightStruc;
 import gnu.trove.TFloatArrayList;
-import gnu.trove.TObjectIntHashMap;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Aravind Subramanian
@@ -141,11 +142,11 @@ public class DefaultRankedList extends AbstractObject implements RankedList {
         if (fRowNameSdsRowIndexMap == null) {
             cacheRowNameIndex();
         }
-
-        int index = fRowNameSdsRowIndexMap.get(rowName);
+        
+        Integer index = fRowNameSdsRowIndexMap.get(rowName);
 
         // IMP needed as returns 0 and not -1 on no hits!!
-        if (index == 0) {
+        if (index == null) {
             if (!fRowNameSdsRowIndexMap.containsKey(rowName)) {
                 return -1;
             } else {
@@ -156,13 +157,13 @@ public class DefaultRankedList extends AbstractObject implements RankedList {
         return index;
     }
 
-    private TObjectIntHashMap fRowNameSdsRowIndexMap;
+    private Map<String, Integer> fRowNameSdsRowIndexMap;
 
     private void cacheRowNameIndex() {
         if (fRowNameSdsRowIndexMap == null) {
-            fRowNameSdsRowIndexMap = new TObjectIntHashMap();
+            fRowNameSdsRowIndexMap = new HashMap<String, Integer>();
             for (int r = 0; r < getSize(); r++) {
-                fRowNameSdsRowIndexMap.put(fRankedNames.get(r), r);
+                fRowNameSdsRowIndexMap.put(fRankedNames.get(r).toString(), Integer.valueOf(r));
             }
         }
     }

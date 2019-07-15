@@ -106,22 +106,19 @@ public class DatasetMetrics {
             throw new IllegalArgumentException("Param order cannot be null");
         }
 
-        //log.info("Running: " + metric.getName() + " on: " + ds.getName());
         final int rows = ds.getNumRow();
-        //List<DoubleElement> dels = new ArrayList<DoubleElement>(rows);
-        DoubleElement[] datasetSynchedDels = new DoubleElement[rows];
+        final DoubleElement[] datasetSynchedDels = new DoubleElement[rows];
+        final DoubleElement[] sorted = new DoubleElement[rows];
 
         for (int i = 0; i < rows; i++) {
             double dist = metric.getScore(ds.getRow(i), template, metricParams);
-            DoubleElement del = new DoubleElement(i, dist);
-            //dels.add(del);
+            final DoubleElement del = new DoubleElement(i, dist);
             datasetSynchedDels[i] = del;
+            sorted[i] = del;
         }
         
-        DoubleElement[] sorted =  Arrays.copyOf(datasetSynchedDels, datasetSynchedDels.length);
         Arrays.parallelSort(sorted, new DoubleElement.DoubleElementComparator(sort, order.isAscending()));
         List<DoubleElement> dels = Arrays.asList(sorted);
-        //DoubleElement.sort(sort, order, dels);
 
         lvp.process(dels); // @note
 

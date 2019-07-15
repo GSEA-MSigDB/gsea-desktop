@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.reports.web;
 
 import java.io.File;
@@ -167,14 +167,9 @@ public class LinkedFactory {
             return fProbe;
         }
 
-        public Hyperlink createDefaultLink() { // @todo this is a hack. Better way??
-            if (fProbe.indexOf("IMAGE") != -1) {
-                return new DefaultHyperlink(WebResources.STANFORD_SOURCE_CLONE.getName(),
-                        WebResources.STANFORD_SOURCE_CLONE.getUrlPrefix() + fProbe);
-            } else {
-                return new DefaultHyperlink(WebResources.NETAFFX.getName(),
-                        WebResources.NETAFFX.getUrlPrefix() + fProbe);
-            }
+        public Hyperlink createDefaultLink() {
+            return new DefaultHyperlink(WebResources.ENSEMBL.getName(),
+                    WebResources.ENSEMBL.getUrlPrefix() + fProbe);
         }
 
         public Hyperlink[] createAllLinks() {

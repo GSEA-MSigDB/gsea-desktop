@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.alg.gsea;
 
 import edu.mit.broad.genome.math.XMath;
@@ -120,7 +120,7 @@ public class GeneSetScoringTables {
     }
 
     // Needed as cdna give some nans for the class metric
-    private static float _abs(float score) {
+    private static final float _abs(float score) {
         if (Float.isNaN(score) || Float.isInfinite(score)) {
             return 0.01f;
         } else {
@@ -180,12 +180,7 @@ public class GeneSetScoringTables {
             float score = rankedList.getScore(name);
 
             score = _abs(score);
-
-            if (XMath.isPositive(score)) {
-                return score / totalWeight;
-            } else {
-                return score / totalWeight;
-            }
+            return score / totalWeight;
         }
 
         // misses are not weighted
