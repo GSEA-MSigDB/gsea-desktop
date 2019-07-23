@@ -17,7 +17,7 @@ public class GseaWebResources {
     private final static String GSEA_FTP_SERVER_USERNAME = "anonymous";
     private final static String GSEA_FTP_SERVER_PASSWORD = "gsea@broadinstitute.org";
     private final static String GSEA_FTP_SERVER_BASE_DIR = "/pub/gsea";
-    private final static String GSEA_FTP_SERVER_CHIPFILES_SUB_DIR = "annotations";
+    private final static String GSEA_FTP_SERVER_CHIPFILES_SUB_DIR = "annotations_versioned";
     private final static String GSEA_FTP_SERVER_GENESETS_SUB_DIR = "gene_sets";
 
     public static String getGseaFTPServer() {
