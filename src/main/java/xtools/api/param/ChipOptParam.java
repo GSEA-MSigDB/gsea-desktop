@@ -5,6 +5,7 @@ package xtools.api.param;
 
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -205,6 +206,13 @@ public class ChipOptParam extends AbstractParam {
                 setIcon(null);
             }
 
+            if (str.contains(ComparatorFactory.ChipNameComparator.getHighestVersionId())) {
+                Font font = this.getFont();
+                String fontName = font.getFontName();
+                int fontSize = font.getSize();
+                this.setFont(new Font(fontName, Font.BOLD, fontSize));
+            }
+            
             return this;
         }
     }    // End ChipListRenderer

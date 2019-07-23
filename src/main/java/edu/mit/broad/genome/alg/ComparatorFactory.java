@@ -6,6 +6,7 @@ package edu.mit.broad.genome.alg;
 import java.util.Comparator;
 
 import org.apache.commons.io.FilenameUtils;
+import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 
 import edu.mit.broad.genome.math.Order;
 import edu.mit.broad.genome.objects.PersistentObject;
@@ -166,11 +167,50 @@ public class ComparatorFactory {
         }
     };
     
-    public static class ChipNameComparator implements Comparator {
+    public static class ChipNameComparator implements Comparator<String> {
 
-        public int compare(Object pn1, Object pn2) {
-            String s1 = pn1.toString();
-            String s2 = pn2.toString();
+        /* private static member used to track highest seen version */
+        private static String highestVersionId;
+        private static DefaultArtifactVersion highestVersion;
+
+        public static String getHighestVersionId() {
+            return highestVersionId;
+        }
+
+        /**
+         * Return -1 if o1 is less than o2, 0 if they're equal, +1 if o1 is greater than o2.
+         */
+        public int compare(String s1, String s2) {
+            
+            String versionId1 = s1.substring(s1.lastIndexOf("v"), s1.lastIndexOf(".chip"));
+            String versionId2 = s2.substring(s2.lastIndexOf("v"), s2.lastIndexOf(".chip"));
+            
+            DefaultArtifactVersion version1 = new DefaultArtifactVersion(versionId1);
+            DefaultArtifactVersion version2 = new DefaultArtifactVersion(versionId2);
+
+            /* want to keep track of highest version seen */
+            if (highestVersion == null) {
+                if (version1.compareTo(version2) < 0) {
+                    highestVersion = version2;
+                    highestVersionId = versionId2;
+                }
+                else {
+                    highestVersion = version1;
+                    highestVersionId = versionId1;
+                }
+            }
+            else {
+                if (highestVersion.compareTo(version2) < 0) {
+                    highestVersion = version2;
+                    highestVersionId = versionId2;
+                }
+            }
+
+            if (!version1.equals(version2)) {
+                return version2.compareTo(version1);
+            }
+
+            // now just string comparison
             return s1.compareTo(s2);
         }
 
@@ -180,5 +220,5 @@ public class ComparatorFactory {
         public boolean equals(Object o2) {
             return false;
         }
-    }
+    }    // End ChipNameComparator
 }

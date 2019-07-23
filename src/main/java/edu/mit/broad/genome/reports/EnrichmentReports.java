@@ -535,10 +535,10 @@ public class EnrichmentReports extends ChartHelper {
         }
 
         if (butterfly_file != null && butterfly_file.exists()) {
-            StringElement line6 = HtmlFormat.Links.hyper("Buttefly plot", butterfly_file, "of significant genes", saveInThisDir);
+            StringElement line6 = HtmlFormat.Links.hyper("Butterfly plot", butterfly_file, "of significant genes", saveInThisDir);
             ul.addElement(new LI(line6));
             if (createSvgs) {
-                StringElement line6a = HtmlFormat.Links.hyper("Buttefly plot", butterfly_file_svg, "of significant genes (in compressed SVG format)", saveInThisDir);
+                StringElement line6a = HtmlFormat.Links.hyper("Butterfly plot", butterfly_file_svg, "of significant genes (in compressed SVG format)", saveInThisDir);
                 ul.addElement(new LI(line6a));
             }
         }

@@ -92,6 +92,7 @@ task fullJar(type: Jar, dependsOn: jar) {
             "GSEA-Build-Date": timestamp,
             "Codebase": "http://*.broadinstitute.org/gsea/software https://*.broadinstitute.org/gsea/software http://*.broadinstitute.org:8080/gsea/software https://*.broadinstitute.org:8080/gsea/software http://*.gsea-msigdb.org/gsea/software https://*.gsea-msigdb.org/gsea/software http://*.msigdb.org/gsea/software https://*.msigdb.org/gsea/software",
 //            "Codebase": "http://*.broadinstitute.org/gsea-msigdb/gsea/software/test http://*.broadinstitute.org/gsea/software https://*.broadinstitute.org/gsea/software http://*.broadinstitute.org:8080/gsea/software https://*.broadinstitute.org:8080/gsea/software http://*.gsea-msigdb.org/gsea/software https://*.gsea-msigdb.org/gsea/software http://*.msigdb.org/gsea/software https://*.msigdb.org/gsea/software",
+//            "Codebase": "http://127.0.0.1:8092/gsea-public/software",
             "Class-Path": configurations.jarsToShipUntouched.collect { it.getName() }.join(' ')
         )
     }
