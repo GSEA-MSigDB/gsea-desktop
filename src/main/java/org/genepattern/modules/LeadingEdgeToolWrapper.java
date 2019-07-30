@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2003-2018 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ *  Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package org.genepattern.modules;
 
@@ -32,8 +32,11 @@ public class LeadingEdgeToolWrapper extends AbstractModule {
         options.addOption(OptionBuilder.withArgName("imgFormat").hasArg().create("imgFormat"));
         options.addOption(OptionBuilder.withArgName("altDelim").hasArg().create("altDelim"));
         options.addOption(OptionBuilder.withArgName("extraPlots").hasArg().create("extraPlots"));
-        options.addOption(OptionBuilder.withArgName("createZip").hasArg().create("create_zip"));
+        options.addOption(OptionBuilder.withArgName("createZip").hasArg().create("zip_report"));
+        options.addOption(OptionBuilder.withArgName("outFile").hasArg().create("out"));
+        options.addOption(OptionBuilder.withArgName("resultsDir").hasArg().create("dir"));
         options.addOption(OptionBuilder.withArgName("devMode").hasArg().create("dev_mode"));
+        options.addOption(OptionBuilder.withArgName("gpModuleMode").hasArg().create("run_as_genepattern"));
         return options;
     }
 
@@ -72,6 +75,11 @@ public class LeadingEdgeToolWrapper extends AbstractModule {
 
             analysis.mkdirs();
 
+            // The GP modules should declare they are running in GP mode.  This has minor effects on the error messages
+            // and runtime behavior.
+            boolean gpMode = StringUtils.equalsIgnoreCase(cl.getOptionValue("run_as_genepattern"), "false");
+
+            
             // Enable any developer-only settings. For now, this just disables the update check; may do more in the future (verbosity level,
             // etc)
             boolean devMode = StringUtils.equalsIgnoreCase(cl.getOptionValue("dev_mode"), "true");
@@ -83,7 +91,7 @@ public class LeadingEdgeToolWrapper extends AbstractModule {
                 System.setProperty("UPDATE_CHECK_EXTRA_PROJECT_INFO", "GP_MODULES");
             }
 
-            final boolean createZip = StringUtils.equalsIgnoreCase(cl.getOptionValue("create_zip"), "true");
+            final boolean createZip = StringUtils.equalsIgnoreCase(cl.getOptionValue("zip_report"), "true");
 
             String outputFileName = cl.getOptionValue("output_file_name");
             if (StringUtils.isNotBlank(outputFileName)) {
@@ -101,7 +109,8 @@ public class LeadingEdgeToolWrapper extends AbstractModule {
                 enrichmentResultZip = copyFileWithoutBadChars(enrichmentResultZip, tmp_working);
                 paramProcessingError |= (enrichmentResultZip == null);
             } else {
-                System.err.println("Required parameter 'enrichment.result.zip.file' not found");
+                String paramName = (gpMode) ? "enrichment.result.zip.file" : "-enrichment_zip";
+                System.err.println("Required parameter '" + paramName + "' not found");
                 paramProcessingError = true;
             }
 
@@ -135,8 +144,9 @@ public class LeadingEdgeToolWrapper extends AbstractModule {
             String altDelim = cl.getOptionValue("altDelim", "");
             if (StringUtils.isNotBlank(altDelim)) {
                 if (altDelim.length() > 1) {
-                    System.err.println(
-                            "Invalid alt.delim '" + altDelim + "' specified. This must be only a single character and no whitespace.");
+                    String paramName = (gpMode) ? "alt.delim" : "--altDelim";
+                    System.err.println("Invalid " + paramName + " '" + altDelim
+                            + "' specified. This must be only a single character and no whitespace.");
                     paramProcessingError = true;
                 } else {
                     setParam("altDelim", altDelim, paramProps);

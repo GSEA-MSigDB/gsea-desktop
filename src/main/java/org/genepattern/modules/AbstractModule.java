@@ -1,3 +1,6 @@
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package org.genepattern.modules;
 
 import java.io.File;
@@ -122,7 +125,7 @@ public class AbstractModule {
         }
     }
 
-    protected static final List<String> selectGeneSetsFromFiles(List<String> geneSetDBs, List<String> selectedGeneSets) {
+    protected static final List<String> selectGeneSetsFromFiles(List<String> geneSetDBs, List<String> selectedGeneSets, boolean gpMode) {
         // If there are no geneSet DBs at all just return an empty list. This is covering any possible earlier error conditions
         // that caused these lists to be wiped out (e.g. error in downloading MSigDB files). Those errors should have already
         // been flagged so we don't want to repeat ourselves here, nor do we want to cause spurious cascading errors.
@@ -145,7 +148,8 @@ public class AbstractModule {
             return selected;
         }
         catch (IllegalArgumentException iae) {
-            System.err.println("There was a problem processing the 'gene.set.selector' parameter");
+            String paramName = (gpMode) ? "selected.gene.sets" : "-selected_gene_sets";
+            System.err.println("There was a problem processing the '" + paramName + "' parameter");
             iae.printStackTrace(System.err);
             return null;
         }

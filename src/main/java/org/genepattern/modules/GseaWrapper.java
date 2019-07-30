@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2003-2018 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ *  Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package org.genepattern.modules;
 
@@ -66,8 +66,11 @@ public class GseaWrapper extends AbstractModule {
         options.addOption(OptionBuilder.withArgName("selectedGeneSets").hasOptionalArg().create("selected_gene_sets"));
         options.addOption(OptionBuilder.withArgName("outputFileName").hasOptionalArg().create("output_file_name"));
         options.addOption(OptionBuilder.withArgName("altDelim").hasOptionalArg().create("altDelim"));
-        options.addOption(OptionBuilder.withArgName("createZip").hasArg().create("create_zip"));
+        options.addOption(OptionBuilder.withArgName("createZip").hasArg().create("zip_report"));
+        options.addOption(OptionBuilder.withArgName("outFile").hasArg().create("out"));
+        options.addOption(OptionBuilder.withArgName("reportLabel").hasArg().create("rpt_label"));
         options.addOption(OptionBuilder.withArgName("devMode").hasArg().create("dev_mode"));
+        options.addOption(OptionBuilder.withArgName("gpModuleMode").hasArg().create("run_as_genepattern"));
         return options;
     }
 
@@ -99,6 +102,10 @@ public class GseaWrapper extends AbstractModule {
 
             analysis.mkdirs();
 
+            // The GP modules should declare they are running in GP mode.  This has minor effects on the error messages
+            // and runtime behavior.
+            boolean gpMode = StringUtils.equalsIgnoreCase(cl.getOptionValue("run_as_genepattern"), "false");
+
             // Enable any developer-only settings. For now, this just disables the update check; may do more in the future (verbosity level,
             // etc)
             boolean devMode = StringUtils.equalsIgnoreCase(cl.getOptionValue("dev_mode"), "true");
@@ -110,7 +117,7 @@ public class GseaWrapper extends AbstractModule {
                 System.setProperty("UPDATE_CHECK_EXTRA_PROJECT_INFO", "GP_MODULES");
             }
 
-            boolean createZip = StringUtils.equalsIgnoreCase(cl.getOptionValue("create_zip"), "true");
+            boolean createZip = StringUtils.equalsIgnoreCase(cl.getOptionValue("zip_report"), "true");
 
             String outputFileName = cl.getOptionValue("output_file_name");
             if (StringUtils.isNotBlank(outputFileName)) {
@@ -124,11 +131,12 @@ public class GseaWrapper extends AbstractModule {
 
             String expressionDataFileName = cl.getOptionValue("res");
             if (StringUtils.isNotBlank(expressionDataFileName)) {
-                // Copy the file to get rid of problematic character, if necessary. A null return value indicates something went wrong
+                // Copy the file to get rid of problematic characters, if necessary. A null return value indicates something went wrong
                 expressionDataFileName = copyFileWithoutBadChars(expressionDataFileName, tmp_working);
                 paramProcessingError |= (expressionDataFileName == null);
             } else {
-                System.err.println("Required parameter 'expression.dataset' not found.");
+                String paramName = (gpMode) ? "expression.dataset" : "-res";
+                System.err.println("Required parameter '" + paramName + "' not found.");
                 paramProcessingError = true;
             }
 
@@ -139,12 +147,18 @@ public class GseaWrapper extends AbstractModule {
 
                 String targetProfile = cl.getOptionValue("target_profile");
                 if (StringUtils.isNotBlank(targetProfile)) {
-                    // For continuous phenotype, GSEA expects the target profile
-                    // to be appended to the cls file name, with '#" as separator.
-                    classFileName = classFileName + "#" + targetProfile;
+                    if (gpMode) {
+                        // For continuous phenotype, GSEA expects the target profile
+                        // to be appended to the cls file name, with '#" as separator.
+                        classFileName = classFileName + "#" + targetProfile;
+                    }
+                    else {
+                        System.out.println("-target_profile parameter ignored; only valid wih -run_as_genepattern true.");
+                    }
                 }
             } else {
-                System.err.println("Required parameter 'phenotype.labels' not found.");
+                String paramName = (gpMode) ? "phenotype.labels" : "-cls";
+                System.err.println("Required parameter '"+ paramName +"' not found.");
                 paramProcessingError = true;
             }
 
@@ -155,7 +169,8 @@ public class GseaWrapper extends AbstractModule {
                 chipPlatformFileName = copyFileWithoutBadChars(chipPlatformFileName, tmp_working);
                 paramProcessingError |= (chipPlatformFileName == null);
             } else if (isCollapse.equals("true")) {
-                System.err.println("collapse is set to true; a 'chip.platform.file' must be provided");
+                String paramName = (gpMode) ? "chip.platform.file" : "-chip";
+                System.err.println("collapse is set to true; a '"+ paramName + "' must be provided");
                 paramProcessingError = true;
             }
 
@@ -163,8 +178,9 @@ public class GseaWrapper extends AbstractModule {
             String geneSetDBsParam = cl.getOptionValue("gmx");
 
             if (StringUtils.isBlank(geneSetDBsParam)) {
+                String paramName = (gpMode) ? "gene.sets.database" : "-gmx";
                 System.err.println("No Gene Sets Databases files were specified.");
-                System.err.println("Please provide one or more values to the 'gene.sets.database' parameter.");
+                System.err.println("Please provide one or more values to the '"+ paramName + "' parameter.");
                 paramProcessingError = true;
             }
 
@@ -187,8 +203,9 @@ public class GseaWrapper extends AbstractModule {
             Pattern delimPattern = COMMA_PATTERN;
             if (StringUtils.isNotBlank(altDelim)) {
                 if (altDelim.length() > 1) {
-                    System.err.println(
-                            "Invalid alt.delim '" + altDelim + "' specified. This must be only a single character and no whitespace.");
+                    String paramName = (gpMode) ? "alt.delim" : "--altDelim";
+                    System.err.println("Invalid " + paramName + " '" + altDelim
+                            + "' specified. This must be only a single character and no whitespace.");
                     paramProcessingError = true;
                 } else {
                     delim = altDelim;
@@ -202,7 +219,7 @@ public class GseaWrapper extends AbstractModule {
 
             // Join up all of the Gene Set DBs or the selections to be passed in the paramProps.
             List<String> geneSetsSelection = (selectedGeneSets.isEmpty()) ? safeNameGeneSetDBs
-                    : selectGeneSetsFromFiles(safeNameGeneSetDBs, selectedGeneSets);
+                    : selectGeneSetsFromFiles(safeNameGeneSetDBs, selectedGeneSets, gpMode);
             paramProcessingError |= (geneSetsSelection == null);
 
             String geneSetsSelector = StringUtils.join(geneSetsSelection, delim);

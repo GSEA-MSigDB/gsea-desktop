@@ -97,35 +97,37 @@ public class DoubleElement {
 
         private final boolean fIsAbsolute;
         private final Boolean fAscending;
-        private final int ascendingFirstObjReturn;
-        private final int ascendingSecondObjReturn;
+        private final int firstObjReturn;
+        private final int secondObjReturn;
 
         public DoubleElementComparator(SortMode sort, boolean ascending) {
             this.fIsAbsolute = sort.isAbsolute();
             this.fAscending = ascending;
-            this.ascendingFirstObjReturn = fAscending ? -1 : +1;
-            this.ascendingSecondObjReturn = fAscending ? +1 : -1;
+            this.firstObjReturn = fAscending ? -1 : +1;
+            this.secondObjReturn = fAscending ? +1 : -1;
         }
 
         public int compare(final DoubleElement obj1, final DoubleElement obj2) {
             
             if (obj1 == null) {
                 if (obj2 == null) return 0;     // can't compare
-                return ascendingFirstObjReturn;    // null is always least
+                return firstObjReturn;    // null is always least
             }
             if (obj2 == null) {
-                return ascendingSecondObjReturn;    // null is always least
+                return secondObjReturn;    // null is always least
             }
             
+            // Note: this does NOT work the same as Double.compare(d1, d2).
+            // TODO: evaluate if this whole section should just be Double.compare(d1, d2).
             double d1 = obj1.fValue;
             double d2 = obj2.fValue;
 
             if (Double.isNaN(d1)) {
                 if (Double.isNaN(d2)) return 0;
-                return ascendingFirstObjReturn;
+                return firstObjReturn;
             }
             if (Double.isNaN(d2)) {
-                return ascendingSecondObjReturn;
+                return secondObjReturn;
             }
 
             if (fIsAbsolute) {
@@ -133,12 +135,11 @@ public class DoubleElement {
                 d2 = Math.abs(d2);
             }
 
-            // Note: this does NOT work the same as Double.compare(d1, d2).
             if (d1 < d2) {
-                return ascendingFirstObjReturn;
+                return firstObjReturn;
             }
             if (d1 > d2) {
-                return ascendingSecondObjReturn;
+                return secondObjReturn;
             }
             return 0;
         }

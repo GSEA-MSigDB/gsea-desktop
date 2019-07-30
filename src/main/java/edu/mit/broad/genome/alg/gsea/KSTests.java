@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.alg.gsea;
 
 import edu.mit.broad.genome.MismatchedSizeException;
@@ -101,7 +101,7 @@ public class KSTests {
             edb = shuffleTemplate(nperm, metric, sort, order, mps, lvp,
                     ds, t, gsets, gcohgen, rt, rst, numMarkers, store_rnd_ranked_lists_here_opt);
         } else {
-            edb = shuffleGeneSet(nperm, metric, sort, order, mps, lvp, ds, t, gsets, gcohgen, rst, true);
+            edb = shuffleGeneSet(nperm, metric, sort, order, mps, lvp, ds, t, gsets, gcohgen, rst);
         }
 
         sout.println("Finished permutations ... creating reports");
@@ -119,7 +119,7 @@ public class KSTests {
 
         log.debug("!!!! Executing for: " + rl_real.getName() + " # features: " + rl_real.getSize());
 
-        EnrichmentResult[] results = shuffleGeneSet_precannedRankedList(nperm, rl_real, null, gsets, chip, gcohgen, rst, false, true, true);
+        EnrichmentResult[] results = shuffleGeneSet_precannedRankedList(nperm, rl_real, null, gsets, chip, gcohgen, rst);
         return new EnrichmentDbImpl_one_shared_rl(rl_real.getName(),
                 rl_real, null, null, results, new LabelledVectorProcessors.None(),
                 new Metrics.None(),
@@ -257,21 +257,18 @@ public class KSTests {
      * @throws Exception
      */
     // this is the CORE method
-    public EnrichmentResult[] shuffleGeneSet_precannedRankedList(final int nperm,
-                                                                 final RankedList rlReal,
-                                                                 final Template t_opt,
-                                                                 final GeneSet[] gsetsReal,
-                                                                 final Chip chip_opt,
-                                                                 final GeneSetCohortGenerator gcohgen,
-                                                                 final RandomSeedGenerator rst,
-                                                                 final boolean qualifyGeneSets,
-                                                                 final boolean storeDeepForRL,
-                                                                 final boolean storeRESPointByPoint_for_real) {
+    private EnrichmentResult[] shuffleGeneSet_precannedRankedList(final int nperm,
+                                                                  final RankedList rlReal,
+                                                                  final Template t_opt,
+                                                                  final GeneSet[] gsetsReal,
+                                                                  final Chip chip_opt,
+                                                                  final GeneSetCohortGenerator gcohgen,
+                                                                  final RandomSeedGenerator rst) {
 
         final EnrichmentResult[] results = new EnrichmentResult[gsetsReal.length];
-        final GeneSetCohort gcohReal = gcohgen.createGeneSetCohort(rlReal, gsetsReal, qualifyGeneSets, true);
+        final GeneSetCohort gcohReal = gcohgen.createGeneSetCohort(rlReal, gsetsReal, false, true);
 
-        final EnrichmentScore[] real_scores = core.calculateKSScore(gcohReal, storeDeepForRL, storeRESPointByPoint_for_real); // @note ususally always store deep for the real one
+        final EnrichmentScore[] real_scores = core.calculateKSScore(gcohReal, true); // @note usually always store deep for the real one
 
         // The make rnd gene sets for every real one
         for (int g = 0; g < gsetsReal.length; g++) {
@@ -325,8 +322,7 @@ public class KSTests {
                                        final Template template,
                                        final GeneSet[] gsets,
                                        final GeneSetCohortGenerator gen,
-                                       final RandomSeedGenerator rst,
-                                       final boolean storeRESPointByPoint_for_real) {
+                                       final RandomSeedGenerator rst) {
 
         if (ds == null) {
             throw new IllegalArgumentException("Param ds cannot be null");
@@ -338,7 +334,7 @@ public class KSTests {
         final Chip chip = ds.getAnnot().getChip();
 
         final EnrichmentResult[] results = shuffleGeneSet_precannedRankedList(nperm,
-                rlReal, template, gsets, chip, gen, rst, false, true, storeRESPointByPoint_for_real); // @note store deep
+                rlReal, template, gsets, chip, gen, rst);
 
         final String name = NamingConventions.generateName(ds, template, true);
         return new EnrichmentDbImpl_one_shared_rl(name, rlReal, ds, template,

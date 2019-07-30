@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2003-2018 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ *  Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package org.genepattern.modules;
 
@@ -28,7 +28,10 @@ public class CollapseDatasetWrapper extends AbstractModule {
         options.addOption(OptionBuilder.withArgName("chipPlatform").hasArg().create("chip"));
         options.addOption(OptionBuilder.withArgName("collapseMode").hasArg().create("mode"));
         options.addOption(OptionBuilder.withArgName("omitFeaturesWithNoSymbolMatch").hasArg().create("include_only_symbols"));
+        options.addOption(OptionBuilder.withArgName("outFile").hasArg().create("out"));
+        options.addOption(OptionBuilder.withArgName("reportLabel").hasArg().create("rpt_label"));
         options.addOption(OptionBuilder.withArgName("devMode").hasArg().create("dev_mode"));
+        options.addOption(OptionBuilder.withArgName("gpModuleMode").hasArg().create("run_as_genepattern"));
         return options;
     }
 

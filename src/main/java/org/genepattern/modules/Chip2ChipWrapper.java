@@ -43,8 +43,11 @@ public class Chip2ChipWrapper extends AbstractModule {
         options.addOption(OptionBuilder.withArgName("showEtiology").hasArg().create("show_etiology"));
         options.addOption(OptionBuilder.withArgName("selectedGeneSets").hasArg().create("selected_gene_sets"));
         options.addOption(OptionBuilder.withArgName("altDelim").hasArg().create("altDelim"));
-        options.addOption(OptionBuilder.withArgName("createZip").hasArg().create("create_zip"));
+        options.addOption(OptionBuilder.withArgName("createZip").hasArg().create("zip_report"));
+        options.addOption(OptionBuilder.withArgName("outFile").hasArg().create("out"));
+        options.addOption(OptionBuilder.withArgName("reportLabel").hasArg().create("rpt_label"));
         options.addOption(OptionBuilder.withArgName("devMode").hasArg().create("dev_mode"));
+        options.addOption(OptionBuilder.withArgName("gpModuleMode").hasArg().create("run_as_genepattern"));
         return options;
     }
 
@@ -83,6 +86,10 @@ public class Chip2ChipWrapper extends AbstractModule {
 
             analysis.mkdirs();
 
+            // The GP modules should declare they are running in GP mode.  This has minor effects on the error messages
+            // and runtime behavior.
+            boolean gpMode = StringUtils.equalsIgnoreCase(cl.getOptionValue("run_as_genepattern"), "false");
+
             // Enable any developer-only settings. For now, this just disables the update check; may do more in the future (verbosity level,
             // etc)
             boolean devMode = StringUtils.equalsIgnoreCase(cl.getOptionValue("dev_mode"), "true");
@@ -94,7 +101,7 @@ public class Chip2ChipWrapper extends AbstractModule {
                 System.setProperty("UPDATE_CHECK_EXTRA_PROJECT_INFO", "GP_MODULES");
             }
 
-            boolean createZip = StringUtils.equalsIgnoreCase(cl.getOptionValue("create_zip"), "true");
+            boolean createZip = StringUtils.equalsIgnoreCase(cl.getOptionValue("zip_report"), "true");
 
             // Convert the format string passed by GP into the tokens expected by GSEA.
             String outputFileFormat = cl.getOptionValue("genesetmatrix_format");
@@ -154,7 +161,7 @@ public class Chip2ChipWrapper extends AbstractModule {
 
             // Join up all of the Gene Set DBs or the selections to be passed in the paramProps.
             List<String> geneSetsSelection = (selectedGeneSets.isEmpty()) ? safeNameGeneSetDBs
-                    : selectGeneSetsFromFiles(safeNameGeneSetDBs, selectedGeneSets);
+                    : selectGeneSetsFromFiles(safeNameGeneSetDBs, selectedGeneSets, gpMode);
             paramProcessingError |= (geneSetsSelection == null);
 
             String geneSetsSelector = StringUtils.join(geneSetsSelection, delim);

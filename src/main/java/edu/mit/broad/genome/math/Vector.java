@@ -415,6 +415,53 @@ public class Vector {
         return oldvar / len;
     }
 
+    // Specialized versions
+    private double _varBiased() {
+
+        double oldvar = 0.0;
+        int len = elementCount;
+
+        // Variance of 1 point is 0 (we are returning the biased variance in this case)
+        if (len <= 0) {
+            return oldvar;
+        }
+
+        double mean = mean();
+
+        computeset.mean = mean;
+
+        for (int i = 0; i < elementCount; i++) {
+            double tmp = elementData[i] - mean;
+            oldvar += tmp * tmp;
+        }
+
+        // DONT set computeset!
+        return oldvar / len;
+    }
+
+    private double _varUnBiased() {
+
+        double oldvar = 0.0;
+        int len = elementCount;
+        len--;
+
+        // Variance of 1 point is 0 (we are returning the biased variance in this case)
+        if (len <= 0) {
+            return oldvar;
+        }
+
+        double mean = mean();
+
+        computeset.mean = mean;
+
+        for (int i = 0; i < elementCount; i++) {
+            double tmp = elementData[i] - mean;
+            oldvar += tmp * tmp;
+        }
+
+        // DONT set computeset!
+        return oldvar / len;
+    }
 
     /**
      * @return The std aa_indev of vector
@@ -455,6 +502,66 @@ public class Vector {
         return computeset.stddev;
     }
 
+    // Specialized versions.
+    public double stddevBiasedFixLow() {
+        double stddev = Math.sqrt(_varBiased()); // @note call to _var and not var
+        double mean = computeset.mean;                    // avoid recalc
+
+        double minallowed = (0.20 * Math.abs(mean));
+
+        // In the case of a zero mean, assume the mean is 1
+        if (minallowed == 0) {
+            minallowed = 0.20;
+        }
+
+        if (minallowed < stddev) {
+            // keep orig
+        } else {
+            stddev = minallowed;
+        }
+
+        computeset.stddev = stddev;
+
+        return computeset.stddev;
+    }
+
+    public double stddevUnBiasedFixLow() {
+        double stddev = Math.sqrt(_varUnBiased()); // @note call to _var and not var
+        double mean = computeset.mean;                    // avoid recalc
+
+        double minallowed = (0.20 * Math.abs(mean));
+
+        // In the case of a zero mean, assume the mean is 1
+        if (minallowed == 0) {
+            minallowed = 0.20;
+        }
+
+        if (minallowed < stddev) {
+            // keep orig
+        } else {
+            stddev = minallowed;
+        }
+
+        computeset.stddev = stddev;
+
+        return computeset.stddev;
+    }
+    public double stddevBiasedNotFixLow() {
+        double stddev = Math.sqrt(_varBiased()); // @note call to _var and not var
+
+        computeset.stddev = stddev;
+
+        return computeset.stddev;
+    }
+
+    public double stddevUnBiasedNotFixLow() {
+        double stddev = Math.sqrt(_varUnBiased()); // @note call to _var and not var
+
+        computeset.stddev = stddev;
+
+        return computeset.stddev;
+    }
+    
     /**
      * defined as stddev / mean
      *

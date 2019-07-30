@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.alg.markers;
 
 import edu.mit.broad.genome.alg.DatasetMetrics;
@@ -67,9 +67,8 @@ public class PermutationTestBuilder extends AbstractPermutationTest {
 
         final DatasetMetrics dm = new DatasetMetrics();
         // calc real metric levels
-        DatasetMetrics.ScoredStruc realss = dm.scoreDatasetStruc(fMetric, fSort, fOrder, fMetricParams, fLabelledVectorProc,
+        this.fRealScoredDataset = dm.scoreDataset(fMetric, fSort, fOrder, fMetricParams, fLabelledVectorProc,
                 getDataset(), getTemplate());
-        this.fRealScoredDataset = realss.sds;
 
         // calc mean/median and stdev for each class for each marker
         if (categorical) {

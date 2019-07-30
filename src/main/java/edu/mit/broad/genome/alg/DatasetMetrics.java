@@ -41,104 +41,33 @@ public class DatasetMetrics {
                                       final Dataset ds,
                                       final Template template) {
 
-        AddressedVector av = calcSortedMetric(metric, sort, order, metricParams, lvp, ds, template);
-
-        return new ScoredDatasetImpl(av, ds);
-    }
-
-    public ScoredStruc scoreDatasetStruc(final Metric metric,
-                                         final SortMode sort,
-                                         final Order order,
-                                         final Map metricParams,
-                                         final LabelledVectorProcessor lvp,
-                                         final Dataset ds,
-                                         final Template template) {
-
-        ScoredStruc ss = calcSortedMetricStruc(metric, sort, order, metricParams, lvp, ds, template);
-        ss.sds = new ScoredDatasetImpl(ss.av, ds);
-        return ss;
-    }
-
-    /**
-     * Score AND sort/order a Dataset according to specified parameters
-     * Results are sorted/ordered.
-     * <p/>
-     * Also see the Unsorted version below for better perf in some
-     * cases.
-     *
-     * @param metric
-     * @param sort
-     * @param order
-     * @param ds
-     * @param template
-     * @param metricParams
-     * @return
-     */
-    public AddressedVector calcSortedMetric(final Metric metric,
-                                            final SortMode sort,
-                                            final Order order,
-                                            final Map metricParams,
-                                            final LabelledVectorProcessor lvp,
-                                            final Dataset ds,
-                                            final Template template) {
-
-        return calcSortedMetricStruc(metric, sort, order, metricParams, lvp, ds, template).av;
-    }
-
-    private ScoredStruc calcSortedMetricStruc(final Metric metric,
-                                             final SortMode sort,
-                                             final Order order,
-                                             final Map metricParams,
-                                             final LabelledVectorProcessor lvp,
-                                             final Dataset ds,
-                                             final Template template) {
-
         if (ds == null) {
             throw new IllegalArgumentException("Param ds cannot be null");
         }
-
+        
         // DONT check for Template -- it can be null for some metrics
         if (sort == null) {
             throw new IllegalArgumentException("Param sort cannot be null");
         }
-
+        
         if (order == null) {
             throw new IllegalArgumentException("Param order cannot be null");
         }
-
+        
         final int rows = ds.getNumRow();
-        final DoubleElement[] datasetSynchedDels = new DoubleElement[rows];
         final DoubleElement[] sorted = new DoubleElement[rows];
-
+                
         for (int i = 0; i < rows; i++) {
             double dist = metric.getScore(ds.getRow(i), template, metricParams);
             final DoubleElement del = new DoubleElement(i, dist);
-            datasetSynchedDels[i] = del;
             sorted[i] = del;
         }
         
         Arrays.parallelSort(sorted, new DoubleElement.DoubleElementComparator(sort, order.isAscending()));
         List<DoubleElement> dels = Arrays.asList(sorted);
-
+        
         lvp.process(dels); // @note
-
-        return new ScoredStruc(datasetSynchedDels, new AddressedVector(dels));
+        
+        return new ScoredDatasetImpl(new AddressedVector(dels), ds);
     }
-
-    /**
-     * Inner class representing ???
-     */
-    public static class ScoredStruc {
-        public AddressedVector av;
-        public DoubleElement[] datasetSynchedDels; // synched with the dataset that was scored, but not score sorted
-
-        public ScoredDataset sds;
-
-        ScoredStruc(DoubleElement[] dels, AddressedVector av) {
-            this.datasetSynchedDels = dels;
-            this.av = av;
-        }
-
-    }
-
 }    // End DatasetMetrics

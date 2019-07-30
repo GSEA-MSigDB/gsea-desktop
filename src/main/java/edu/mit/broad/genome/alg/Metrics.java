@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.alg;
 
 import edu.mit.broad.genome.math.Vector;
@@ -342,6 +342,78 @@ public class Metrics {
             super(CATEGORICAL);
         }
 
+        // TODO: build specialized compute lambda 
+        // This shows some promise for performance improvement but needs to be
+        // better verified and then pushed across all applicable metrics.
+        // We're not ready to do that.
+//        boolean usebiased;
+//        boolean fixlow;
+//        boolean usemedian;
+//        
+//        BiFunction<Vector, Vector, Double> s2n = null;
+//        
+//        public void config(Map params) {
+//            usebiased = AlgMap.isBiased(params);
+//            fixlow = AlgMap.isFixLowVar(params);
+//            usemedian = AlgMap.isMedian(params);
+            
+//            s2n = XMath.getS2n(usebiased, usemedian, fixlow);
+//        }
+        
+        /**
+         * params:
+         * USE_BIASED -> true or false (Boolean objects). Default is FALSE.
+         * USE_MEDIAN -> true or false (Boolean objects). Default is TRUE.
+         * FIX_LOW    -> true or false (Boolean objects). Default is TRUE
+         * Template is required.
+         */
+        // TODO: Ignore these params.  Instead, config the metric ahead of the computation
+        public double getScore(Vector profile, Template template, Map params) {
+
+            boolean usebiased = AlgMap.isBiased(params);
+            boolean fixlow = AlgMap.isFixLowVar(params);
+            boolean usemedian = AlgMap.isMedian(params);
+
+            Vector[] vs = fSplitter.splitBiphasic_nansafe(profile, template);
+
+            if (vs == null) {
+                return 0;
+            } else {
+
+                int coiIndex = template.getClassOfInterestIndex();
+
+                if (coiIndex == 0) {
+                    return //s2n.apply(vs[0], vs[1]);
+                            XMath.s2n(vs[0], vs[1], usebiased, usemedian, fixlow);
+                } else {
+                    return //s2n.apply(vs[1], vs[0]);
+                            XMath.s2n(vs[1], vs[0], usebiased, usemedian, fixlow);
+                }
+            }
+
+        }
+
+        public String getName() {
+            return NAME;
+        }
+
+        public int getMinNumSamplesNeededPerClassForCalculation() {
+            return MIN_NUM_FOR_VAR;
+        }
+
+    }
+
+    /**
+     * Signal2Noise.  Just holding this...
+     */
+    public static class Signal2Noise2 extends AbstractMetric {
+
+        public static final String NAME = "Signal2Noise";
+
+        public Signal2Noise2() {
+            super(CATEGORICAL);
+        }
+
         /**
          * params:
          * USE_BIASED -> true or false (Boolean objects). Default is FALSE.
@@ -381,7 +453,6 @@ public class Metrics {
         }
 
     }
-
 
     public static class None extends AbstractMetric {
 

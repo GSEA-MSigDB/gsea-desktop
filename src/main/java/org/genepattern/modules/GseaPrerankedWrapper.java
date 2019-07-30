@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2003-2018 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ *  Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package org.genepattern.modules;
 
@@ -53,8 +53,11 @@ public class GseaPrerankedWrapper extends AbstractModule {
         options.addOption(OptionBuilder.withArgName("selectedGeneSets").hasOptionalArg().create("selected_gene_sets"));
         options.addOption(OptionBuilder.withArgName("outputFileName").hasOptionalArg().create("output_file_name"));
         options.addOption(OptionBuilder.withArgName("altDelim").hasOptionalArg().create("altDelim"));
-        options.addOption(OptionBuilder.withArgName("createZip").hasArg().create("create_zip"));
+        options.addOption(OptionBuilder.withArgName("createZip").hasArg().create("zip_report"));
+        options.addOption(OptionBuilder.withArgName("outFile").hasArg().create("out"));
+        options.addOption(OptionBuilder.withArgName("reportLabel").hasArg().create("rpt_label"));
         options.addOption(OptionBuilder.withArgName("devMode").hasArg().create("dev_mode"));
+        options.addOption(OptionBuilder.withArgName("gpModuleMode").hasArg().create("run_as_genepattern"));
         return options;
     }
 
@@ -93,6 +96,10 @@ public class GseaPrerankedWrapper extends AbstractModule {
 
             analysis.mkdirs();
 
+            // The GP modules should declare they are running in GP mode.  This has minor effects on the error messages
+            // and runtime behavior.
+            boolean gpMode = StringUtils.equalsIgnoreCase(cl.getOptionValue("run_as_genepattern"), "false");
+
             // Enable any developer-only settings. For now, this just disables the update check; may do more in the future (verbosity level,
             // etc)
             boolean devMode = StringUtils.equalsIgnoreCase(cl.getOptionValue("dev_mode"), "true");
@@ -104,7 +111,7 @@ public class GseaPrerankedWrapper extends AbstractModule {
                 System.setProperty("UPDATE_CHECK_EXTRA_PROJECT_INFO", "GP_MODULES");
             }
 
-            boolean createZip = StringUtils.equalsIgnoreCase(cl.getOptionValue("create_zip"), "true");
+            boolean createZip = StringUtils.equalsIgnoreCase(cl.getOptionValue("zip_report"), "true");
 
             String outputFileName = cl.getOptionValue("output_file_name");
             if (StringUtils.isNotBlank(outputFileName)) {
@@ -168,7 +175,7 @@ public class GseaPrerankedWrapper extends AbstractModule {
 
             // Join up all of the Gene Set DBs or the selections to be passed in the paramProps.
             List<String> geneSetsSelection = (selectedGeneSets.isEmpty()) ? safeNameGeneSetDBs
-                    : selectGeneSetsFromFiles(safeNameGeneSetDBs, selectedGeneSets);
+                    : selectGeneSetsFromFiles(safeNameGeneSetDBs, selectedGeneSets, gpMode);
             paramProcessingError |= (geneSetsSelection == null);
 
             String geneSetsSelector = StringUtils.join(geneSetsSelection, delim);

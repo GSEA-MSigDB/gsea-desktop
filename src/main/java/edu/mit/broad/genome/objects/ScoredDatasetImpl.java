@@ -37,6 +37,12 @@ public class ScoredDatasetImpl extends AbstractObject implements ScoredDataset {
     private GeneSet fRowNamesGeneSet; // lazilly filled
 
     /**
+     * Class constructor
+     *
+     * @param iv
+     * @param ds
+     */
+    /**
      * Class Constructor.
      * Dataset data is NOT duplicated.
      * But see note for the getMatrix() method below.
@@ -47,70 +53,42 @@ public class ScoredDatasetImpl extends AbstractObject implements ScoredDataset {
      * @todo Hmm to avoid duplicating data we need a sorted matrix.
      * If this is possible to impl at a later stage, look into doing the same with FeatureList too.
      */
-    public ScoredDatasetImpl(final String name, final int num, final AddressedVector iv, final Dataset ds) {
-        init(name, num, iv, ds);
-    }
-
-    public ScoredDatasetImpl(final int num, final AddressedVector iv, final Dataset ds) {
-        this(ds.getName(), num, iv, ds);
-    }
-
-    /**
-     * Class constructor
-     *
-     * @param iv
-     * @param ds
-     */
     public ScoredDatasetImpl(final AddressedVector iv, final Dataset ds) {
-        // this(ds.getNumRow(), iv, ds); IMP NOT ds length -> it might be bigger than the iv
-        this(iv.getSize(), iv, ds);
+        if (iv == null) {
+            throw new NullPointerException("Param AddressedVector cannot be null");
+        }
+        
+        if (ds == null) {
+            throw new NullPointerException("Param Dataset cannot be null");
+        }
+        
+        super.initialize(ds.getName());
+        
+        final int num = iv.getSize();
+        if (num < 0) {
+            throw new IllegalArgumentException("# features: " + num + " cannot be less than zero");
+        }
+        
+        if (num > ds.getNumRow()) {
+            throw new IllegalArgumentException("# sorted elements: " + num
+                    + " cannot be > Dataset length: " + ds.getNumRow());
+        }
+        
+        this.fDataset = ds;
+        this.fIndVector = iv; //new AddressedVector(num, iv);    // data copied
+        this.fRowNamesInSdsOrder = new ArrayList(num);
+        
+        for (int sdsrown = 0; sdsrown < num; sdsrown++) {
+            int posinds = sdsrown2posinds(sdsrown);
+            fRowNamesInSdsOrder.add(ds.getRowName(posinds)); // IMP -> note adding converted index order
+        }
+        
+        this.fRowNamesInSdsOrder = Collections.unmodifiableList(fRowNamesInSdsOrder);
     }
 
     public RankedList cloneShallowRL(final String newName) {
         super.setName(newName);
         return this;
-    }
-
-    /**
-     * common initialization routine.
-     */
-    private void init(final String name, final int num, final AddressedVector iv, final Dataset ds) {
-
-        if (iv == null) {
-            throw new NullPointerException("Param AddressedVector cannot be null");
-        }
-
-        if (ds == null) {
-            throw new NullPointerException("Param Dataset cannot be null");
-        }
-
-        super.initialize(name);
-
-        if (num < 0) {
-            throw new IllegalArgumentException("# features: " + num + " cannot be less than sero");
-        }
-
-        if (num > iv.getSize()) {
-            throw new IllegalArgumentException("# features: " + num
-                    + " cannot be > than number of sorted elements: "
-                    + iv.getSize());
-        }
-
-        if (iv.getSize() > ds.getNumRow()) {
-            throw new IllegalArgumentException("# sorted elements: " + iv.getSize()
-                    + " cannot be > Dataset length: " + ds.getNumRow());
-        }
-
-        this.fDataset = ds;
-        this.fIndVector = new AddressedVector(num, iv);    // data copied
-        this.fRowNamesInSdsOrder = new ArrayList(num);
-
-        for (int sdsrown = 0; sdsrown < num; sdsrown++) {
-            int posinds = sdsrown2posinds(sdsrown);
-            fRowNamesInSdsOrder.add(ds.getRowName(posinds)); // IMP -> note adding converted index order
-        }
-
-        this.fRowNamesInSdsOrder = Collections.unmodifiableList(fRowNamesInSdsOrder);
     }
 
     public Annot getAnnot() {

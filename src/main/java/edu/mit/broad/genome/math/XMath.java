@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.math;
 
 import org.apache.log4j.Logger;
@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
+import java.util.function.BiFunction;
 
 /**
  * Functionally extends java.lang.Math with additional math related methods.
@@ -636,7 +637,71 @@ public class XMath {
 
         return s2n;
     }
+    
+    public static final BiFunction<Vector, Vector, Double> getS2n(final boolean usebiased,
+            final boolean usemedian,
+            final boolean fixlow) {
+        if (usemedian) {
+            if (usebiased) {
+                if (fixlow) return (x, y) -> s2nMedianBiasedFixLow(x, y);
+                else return (x, y) -> s2nMedianBiasedNotFixLow(x, y);
+            } else {
+                if (fixlow) return (x, y) -> s2nMedianUnBiasedFixLow(x, y);
+                else return (x, y) -> s2nMedianUnBiasedNotFixLow(x, y);
+            }
+        } else {
+            if (usebiased) {
+                if (fixlow) return (x, y) -> s2nMeanBiasedFixLow(x, y);
+                else return (x, y) -> s2nMeanBiasedNotFixLow(x, y);
+            } else {
+                if (fixlow) return (x, y) -> s2nMeanUnBiasedFixLow(x, y);
+                else return (x, y) -> s2nMeanUnBiasedNotFixLow(x, y);
+            }
+        }
+    }
+    
+    // Specialized versions
+    public static double s2nMeanBiasedFixLow(final Vector x, final Vector y) {
 
+        return (x.mean() - y.mean()) / (x.stddevBiasedFixLow() + y.stddevBiasedFixLow());
+    }
+
+    public static double s2nMeanUnBiasedFixLow(final Vector x, final Vector y) {
+
+        return (x.mean() - y.mean()) / (x.stddevUnBiasedFixLow() + y.stddevUnBiasedFixLow());
+    }
+
+    public static double s2nMeanBiasedNotFixLow(final Vector x, final Vector y) {
+
+        return (x.mean() - y.mean()) / (x.stddevBiasedNotFixLow() + y.stddevBiasedNotFixLow());
+    }
+
+    public static double s2nMeanUnBiasedNotFixLow(final Vector x, final Vector y) {
+
+        return (x.mean() - y.mean()) / (x.stddevUnBiasedNotFixLow() + y.stddevUnBiasedNotFixLow());
+    }
+
+    public static double s2nMedianBiasedFixLow(final Vector x, final Vector y) {
+
+        return (x.median() - y.median()) / (x.stddevBiasedFixLow() + y.stddevBiasedFixLow());
+    }
+
+    public static double s2nMedianUnBiasedFixLow(final Vector x, final Vector y) {
+
+        return (x.median() - y.median()) / (x.stddevUnBiasedFixLow() + y.stddevUnBiasedFixLow());
+    }
+
+    public static double s2nMedianBiasedNotFixLow(final Vector x, final Vector y) {
+
+        return (x.median() - y.median()) / (x.stddevBiasedNotFixLow() + y.stddevBiasedNotFixLow());
+    }
+
+    public static double s2nMedianUnBiasedNotFixLow(final Vector x, final Vector y) {
+
+        return (x.median() - y.median()) / (x.stddevUnBiasedNotFixLow() + y.stddevUnBiasedNotFixLow());
+    }
+
+    
     /**
      * @see http://trochim.human.cornell.edu/kb/stat_t.htm
      */
