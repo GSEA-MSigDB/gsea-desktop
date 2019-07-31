@@ -19,6 +19,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.filefilter.FileFileFilter;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.log4j.Logger;
 
 public class AbstractModule {
 
@@ -48,13 +49,15 @@ public class AbstractModule {
         }
     }
 
-    protected static void setParam(String name, String value, Properties paramProps) {
-        System.out.println(name + "\t" + value);
+    protected static void setParam(String name, String value, Properties paramProps, Logger log) {
+        log.info(name + "\t" + value);
         paramProps.setProperty(name, value);
     }
 
-    protected static void setOptionValueAsParam(String optionName, CommandLine commandLine, Properties paramProps) {
-        setParam(optionName, commandLine.getOptionValue(optionName), paramProps);
+    protected static void setOptionValueAsParam(String optionName, CommandLine commandLine, Properties paramProps, Logger log) {
+        String optionValue = commandLine.getOptionValue(optionName);
+        if (optionValue == null) return;
+        setParam(optionName, optionValue, paramProps, log);
     }
 
     protected static void copyAnalysisToCurrentDir(final File cwd, final File analysis, boolean createZip, final String zipFileName) throws Exception {

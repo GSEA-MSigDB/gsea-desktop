@@ -10,16 +10,17 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
-import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.log4j.Logger;
 
 import edu.mit.broad.genome.Conf;
 import xtools.api.AbstractTool;
 import xtools.munge.CollapseDataset;
 
 public class CollapseDatasetWrapper extends AbstractModule {
-
+    private static final Logger klog = Logger.getLogger(CollapseDatasetWrapper.class);
+    
     // Suppressing the static-access warnings because this is the recommended usage according to the Commons-CLI docs.
     @SuppressWarnings("static-access")
     private static Options setupCliOptions() {
@@ -36,36 +37,49 @@ public class CollapseDatasetWrapper extends AbstractModule {
     }
 
     public static void main(final String[] args) throws Exception {
-        System.setProperty("debug", "false");
-        System.setProperty("mkdir", "false");
-
-        // Define a working directory, to be cleaned up on exit. The name starts with a '.' so it's hidden from GP & file system.
-        // Also, define a dedicated directory for building the report output
-        final File cwd = new File(System.getProperty("user.dir"));
-        final File tmp_working = new File(".tmp_gsea");
-
         // Success flag. We set this to *false* until proven otherwise by a successful Tool run. This saves having to catch
         // all manner of exceptions along the way; just allow them to propagate to the top-level handler.
         boolean success = false;
 
         AbstractTool tool = null;
 
+        File tmp_working = null;
+        File cwd = null;
         try {
             Options opts = setupCliOptions();
             CommandLineParser parser = new PosixParser();
-            CommandLine cl = null;
+            CommandLine cl = parser.parse(opts, args);
 
-            try {
-                cl = parser.parse(opts, args);
-            } catch (ParseException pe) {
-                System.err.println("ParseException: " + pe.getMessage());
-                success = true;
-                System.exit(1);
-            }
-
+            // We want to check *all* params before reporting any errors so that the user sees everything that went wrong.
             boolean paramProcessingError = false;
 
-            tmp_working.mkdirs();
+            // Properties object to gather parameter settings to be passed to the Tool
+            Properties paramProps = new Properties();
+
+            // The GP modules should declare they are running in GP mode.  This has minor effects on the error messages
+            // and runtime behavior.
+            boolean gpMode = StringUtils.equalsIgnoreCase(cl.getOptionValue("run_as_genepattern"), "true");
+
+            if (gpMode) {
+                // Turn off debugging in the GSEA code and tell it not to create directories
+                // TODO: confirm the "mkdir" property works as expected
+                System.setProperty("debug", "false");
+                System.setProperty("mkdir", "false");
+
+                String outOption = cl.getOptionValue("out");
+                if (StringUtils.isNotBlank(outOption)) {
+                    klog.warn("-out parameter ignored; only valid wih -run_as_genepattern false.");
+                }
+    
+                // Define a working directory, to be cleaned up on exit. The name starts with a '.' so it's hidden from GP & file system.
+                // Also, define a dedicated directory for building the report output
+                cwd = new File(System.getProperty("user.dir"));
+                tmp_working = new File(".tmp_gsea");
+                tmp_working.mkdirs();
+            } else {
+                // Don't set these for regular CLI mode, just pass through -out
+                setOptionValueAsParam("out", cl, paramProps, klog);
+            }
 
             // Enable any developer-only settings. For now, this just disables the update check; may do more in the future (verbosity level,
             // etc)
@@ -80,49 +94,55 @@ public class CollapseDatasetWrapper extends AbstractModule {
 
             String expressionDataFileName = cl.getOptionValue("res");
             if (StringUtils.isNotBlank(expressionDataFileName)) {
-                expressionDataFileName = copyFileWithoutBadChars(expressionDataFileName, tmp_working);
+                if (gpMode) expressionDataFileName = copyFileWithoutBadChars(expressionDataFileName, tmp_working);
+                paramProcessingError |= (expressionDataFileName == null);
             } else {
-                System.err.println("Required parameter 'expression.dataset' not found.");
+                String paramName = (gpMode) ? "expression.dataset" : "-res";
+                klog.error("Required parameter '" + paramName + "' not found.");
                 paramProcessingError = true;
             }
 
             String chipPlatformFileName = cl.getOptionValue("chip");
             if (StringUtils.isNotBlank(chipPlatformFileName)) {
-                chipPlatformFileName = copyFileWithoutBadChars(chipPlatformFileName, tmp_working);
+                if (gpMode) chipPlatformFileName = copyFileWithoutBadChars(chipPlatformFileName, tmp_working);
+                paramProcessingError |= (chipPlatformFileName == null);
             } else {
-                System.err.println("Required parameter 'chip.platform.file' not found.");
+                String paramName = (gpMode) ? "chip.platform.file" : "-chip";
+                klog.error("Required parameter '" + paramName + "' not found");
                 paramProcessingError = true;
+            }
+
+            String rptLabel = cl.getOptionValue("rpt_label");
+            if (StringUtils.isBlank(rptLabel)) {
+                rptLabel = "my_analysis";
             }
 
             if (paramProcessingError) {
                 // Should probably use BadParamException and set an errorCode, use it to look up a Wiki Help page.
-                throw new Exception("There were one or more errors with the job parameters.  Please check stderr.txt for details.");
+                throw new Exception("There were one or more errors with the job parameters.  Please check log output for details.");
             }
 
-            Properties paramProps = new Properties();
-
-            System.out.println("Parameters passing to CollapseDataset.main:");
-            setParam("res", expressionDataFileName, paramProps);
-            setParam("chip", chipPlatformFileName, paramProps);
-
-            setParam("out", cwd.getPath(), paramProps);
-            setParam("rpt_label", "my_analysis ", paramProps);
-
-            setParam("gui", "false", paramProps);
+            klog.info("Parameters passing to CollapseDataset.main:");
+            setParam("res", expressionDataFileName, paramProps, klog);
+            setParam("chip", chipPlatformFileName, paramProps, klog);
+            setParam("rpt_label", rptLabel, paramProps, klog);
+            setParam("gui", "false", paramProps, klog);
+            if (gpMode) setParam("out", cwd.getPath(), paramProps, klog);
 
             // Finally, load up the remaining simple parameters. We'll let GSEA validate these.
-            setOptionValueAsParam("include_only_symbols", cl, paramProps);
-            setOptionValueAsParam("mode", cl, paramProps);
+            setOptionValueAsParam("include_only_symbols", cl, paramProps, klog);
+            setOptionValueAsParam("mode", cl, paramProps, klog);
 
             tool = new CollapseDataset(paramProps);
             success = AbstractTool.module_main(tool);
         } finally {
             try {
-                cleanUpAnalysisDirs(cwd, tmp_working);
-            } finally {
-                if (tool != null && tool.getParamSet().getGuiParam().isFalse()) {
-                    Conf.exitSystem(!success);
+                if (cwd != null && tmp_working != null) {
+                    klog.info("clean");
+                    cleanUpAnalysisDirs(cwd, tmp_working);
                 }
+            } finally {
+                Conf.exitSystem(!success);
             }
         }
     }

@@ -21,6 +21,7 @@ import org.apache.commons.cli.PosixParser;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.log4j.Logger;
 
 import edu.mit.broad.genome.Conf;
 import xtools.api.AbstractTool;
@@ -28,11 +29,14 @@ import xtools.api.param.BadParamException;
 import xtools.gsea.Gsea;
 
 /**
+ * When running in GenePattern mode:
  * GseaWrapper parses the command line arguments passed in by GP Server's run task page, creates a new parameter file, and passes that
  * parameter file to the GSEA tool's main method. Upon completion of GSEA, GseaWrapper creates a zip file containing results and then cleans
  * up the working directory so it only contains the zip file, the output files, and the input files that were uploaded by the run task page.
  */
 public class GseaWrapper extends AbstractModule {
+    private static final Logger klog = Logger.getLogger(GseaWrapper.class);
+    
     // Suppressing the static-access warnings because this is the recommended usage according to the Commons-CLI docs.
     @SuppressWarnings("static-access")
     private static Options setupCliOptions() {
@@ -75,23 +79,15 @@ public class GseaWrapper extends AbstractModule {
     }
 
     public static void main(final String[] args) throws Exception {
-        // Turn off debugging in the GSEA code and tell it not to create directories
-        // TODO: confirm the "mkdir" property works as expected
-        System.setProperty("debug", "false");
-        System.setProperty("mkdir", "false");
-
-        // Define a working directory, to be cleaned up on exit. The name starts with a '.' so it's hidden from GP & file system.
-        // Also, define a dedicated directory for building the report output
-        final File cwd = new File(System.getProperty("user.dir"));
-        final File tmp_working = new File(".tmp_gsea");
-        final File analysis = new File(tmp_working, "analysis");
-
         // Success flag. We set this to *false* until proven otherwise by a successful Tool run. This saves having to catch
         // all manner of exceptions along the way; just allow them to propagate to the top-level handler.
         boolean success = false;
 
         AbstractTool tool = null;
 
+        File analysis = null;
+        File tmp_working = null;
+        File cwd = null;
         try {
             Options opts = setupCliOptions();
             CommandLineParser parser = new PosixParser();
@@ -100,12 +96,35 @@ public class GseaWrapper extends AbstractModule {
             // We want to check *all* params before reporting any errors so that the user sees everything that went wrong.
             boolean paramProcessingError = false;
 
-            analysis.mkdirs();
+            // Properties object to gather parameter settings to be passed to the Tool
+            Properties paramProps = new Properties();
 
             // The GP modules should declare they are running in GP mode.  This has minor effects on the error messages
             // and runtime behavior.
-            boolean gpMode = StringUtils.equalsIgnoreCase(cl.getOptionValue("run_as_genepattern"), "false");
+            boolean gpMode = StringUtils.equalsIgnoreCase(cl.getOptionValue("run_as_genepattern"), "true");
+            
+            if (gpMode) {
+                // Turn off debugging in the GSEA code and tell it not to create directories
+                // TODO: confirm the "mkdir" property works as expected
+                System.setProperty("debug", "false");
+                System.setProperty("mkdir", "false");
 
+                String outOption = cl.getOptionValue("out");
+                if (StringUtils.isNotBlank(outOption)) {
+                    klog.warn("-out parameter ignored; only valid wih -run_as_genepattern false.");
+                }
+    
+                // Define a working directory, to be cleaned up on exit. The name starts with a '.' so it's hidden from GP & file system.
+                // Also, define a dedicated directory for building the report output
+                cwd = new File(System.getProperty("user.dir"));
+                tmp_working = new File(".tmp_gsea");
+                analysis = new File(tmp_working, "analysis");
+                analysis.mkdirs();
+            } else {
+                // Don't set these for regular CLI mode, just pass through -out
+                setOptionValueAsParam("out", cl, paramProps, klog);
+            }
+            
             // Enable any developer-only settings. For now, this just disables the update check; may do more in the future (verbosity level,
             // etc)
             boolean devMode = StringUtils.equalsIgnoreCase(cl.getOptionValue("dev_mode"), "true");
@@ -121,28 +140,30 @@ public class GseaWrapper extends AbstractModule {
 
             String outputFileName = cl.getOptionValue("output_file_name");
             if (StringUtils.isNotBlank(outputFileName)) {
-                if (!outputFileName.toLowerCase().endsWith(".zip")) {
+                if (!gpMode) {
+                    klog.warn("-output_file_name parameter ignored; only valid wih -run_as_genepattern true.");
+                }
+                else if (!outputFileName.toLowerCase().endsWith(".zip")) {
                     outputFileName += ".zip";
                 }
             } else {
-                outputFileName = "gsea_analysis.zip";
+                if (gpMode) outputFileName = "gsea_analysis.zip";
             }
-            final String zipFileName = outputFileName;
-
+            
             String expressionDataFileName = cl.getOptionValue("res");
             if (StringUtils.isNotBlank(expressionDataFileName)) {
                 // Copy the file to get rid of problematic characters, if necessary. A null return value indicates something went wrong
-                expressionDataFileName = copyFileWithoutBadChars(expressionDataFileName, tmp_working);
+                if (gpMode) expressionDataFileName = copyFileWithoutBadChars(expressionDataFileName, tmp_working);
                 paramProcessingError |= (expressionDataFileName == null);
             } else {
                 String paramName = (gpMode) ? "expression.dataset" : "-res";
-                System.err.println("Required parameter '" + paramName + "' not found.");
+                klog.error("Required parameter '" + paramName + "' not found.");
                 paramProcessingError = true;
             }
 
             String classFileName = cl.getOptionValue("cls");
             if (StringUtils.isNotBlank(classFileName)) {
-                classFileName = copyFileWithoutBadChars(classFileName, tmp_working);
+                if (gpMode) classFileName = copyFileWithoutBadChars(classFileName, tmp_working);
                 paramProcessingError |= (classFileName == null);
 
                 String targetProfile = cl.getOptionValue("target_profile");
@@ -153,12 +174,12 @@ public class GseaWrapper extends AbstractModule {
                         classFileName = classFileName + "#" + targetProfile;
                     }
                     else {
-                        System.out.println("-target_profile parameter ignored; only valid wih -run_as_genepattern true.");
+                        klog.warn("-target_profile parameter ignored; only valid wih -run_as_genepattern true.");
                     }
                 }
             } else {
                 String paramName = (gpMode) ? "phenotype.labels" : "-cls";
-                System.err.println("Required parameter '"+ paramName +"' not found.");
+                klog.error("Required parameter '"+ paramName +"' not found.");
                 paramProcessingError = true;
             }
 
@@ -166,36 +187,49 @@ public class GseaWrapper extends AbstractModule {
             String isCollapse = cl.getOptionValue("collapse");
 
             if (StringUtils.isNotBlank(chipPlatformFileName)) {
-                chipPlatformFileName = copyFileWithoutBadChars(chipPlatformFileName, tmp_working);
+                if (gpMode) chipPlatformFileName = copyFileWithoutBadChars(chipPlatformFileName, tmp_working);
                 paramProcessingError |= (chipPlatformFileName == null);
             } else if (isCollapse.equals("true")) {
                 String paramName = (gpMode) ? "chip.platform.file" : "-chip";
-                System.err.println("collapse is set to true; a '"+ paramName + "' must be provided");
+                klog.error("collapse is set to true; a '"+ paramName + "' must be provided");
                 paramProcessingError = true;
             }
 
+            String rptLabel = cl.getOptionValue("rpt_label");
+            if (StringUtils.isNotBlank(rptLabel)) {
+                if (gpMode) {
+                    klog.warn("-rpt_label parameter ignored; only valid wih -run_as_genepattern false.");
+                }
+            } else {
+                if (!gpMode) rptLabel = "my_analysis";
+            }
+            if (gpMode) rptLabel = FilenameUtils.getBaseName(outputFileName);
+            
             // List of Gene Sets Database files
             String geneSetDBsParam = cl.getOptionValue("gmx");
 
             if (StringUtils.isBlank(geneSetDBsParam)) {
                 String paramName = (gpMode) ? "gene.sets.database" : "-gmx";
-                System.err.println("No Gene Sets Databases files were specified.");
-                System.err.println("Please provide one or more values to the '"+ paramName + "' parameter.");
+                klog.error("No Gene Sets Databases files were specified.");
+                klog.error("Please provide one or more values to the '"+ paramName + "' parameter.");
                 paramProcessingError = true;
             }
 
-            List<String> geneSetDBs = FileUtils.readLines(new File(geneSetDBsParam), (Charset) null);
-
-            List<String> safeNameGeneSetDBs = new ArrayList<String>(geneSetDBs.size());
-            for (String geneSetDB : geneSetDBs) {
-                String renamedFile = copyFileWithoutBadChars(geneSetDB, tmp_working);
-                if (renamedFile != null) {
-                    safeNameGeneSetDBs.add(renamedFile);
-                } else {
-                    // Something went wrong. Use the original name just to complete checking parameters
-                    paramProcessingError = true;
-                    safeNameGeneSetDBs.add(geneSetDB);
+            List<String> geneSetDBs = (StringUtils.isBlank(geneSetDBsParam)) ? Collections.emptyList()
+                    : FileUtils.readLines(new File(geneSetDBsParam), (Charset) null);
+            if (gpMode) {
+                List<String> safeNameGeneSetDBs = new ArrayList<String>(geneSetDBs.size());
+                for (String geneSetDB : geneSetDBs) {
+                    String renamedFile = copyFileWithoutBadChars(geneSetDB, tmp_working);
+                    if (renamedFile != null) {
+                        safeNameGeneSetDBs.add(renamedFile);
+                    } else {
+                        // Something went wrong. Use the original name just to complete checking parameters
+                        paramProcessingError = true;
+                        safeNameGeneSetDBs.add(geneSetDB);
+                    }
                 }
+                geneSetDBs = safeNameGeneSetDBs;
             }
 
             String delim = ",";
@@ -204,7 +238,7 @@ public class GseaWrapper extends AbstractModule {
             if (StringUtils.isNotBlank(altDelim)) {
                 if (altDelim.length() > 1) {
                     String paramName = (gpMode) ? "alt.delim" : "--altDelim";
-                    System.err.println("Invalid " + paramName + " '" + altDelim
+                    klog.error("Invalid " + paramName + " '" + altDelim
                             + "' specified. This must be only a single character and no whitespace.");
                     paramProcessingError = true;
                 } else {
@@ -218,61 +252,56 @@ public class GseaWrapper extends AbstractModule {
                     : Arrays.asList(delimPattern.split(selectedGeneSetsParam));
 
             // Join up all of the Gene Set DBs or the selections to be passed in the paramProps.
-            List<String> geneSetsSelection = (selectedGeneSets.isEmpty()) ? safeNameGeneSetDBs
-                    : selectGeneSetsFromFiles(safeNameGeneSetDBs, selectedGeneSets, gpMode);
+            List<String> geneSetsSelection = (selectedGeneSets.isEmpty()) ? geneSetDBs
+                    : selectGeneSetsFromFiles(geneSetDBs, selectedGeneSets, gpMode);
             paramProcessingError |= (geneSetsSelection == null);
 
             String geneSetsSelector = StringUtils.join(geneSetsSelection, delim);
 
             if (paramProcessingError) {
                 // Should probably use BadParamException and set an errorCode, use it to look up a Wiki Help page.
-                throw new Exception("There were one or more errors with the job parameters.  Please check stderr.txt for details.");
+                throw new Exception("There were one or more errors with the job parameters.  Please check log output for details.");
             }
 
-            Properties paramProps = new Properties();
+            klog.info("Parameters passed to GSEA tool:");
+            setParam("gmx", geneSetsSelector, paramProps, klog);
+            setParam("res", expressionDataFileName, paramProps, klog);
+            setParam("cls", classFileName, paramProps, klog);
+            setParam("rpt_label", rptLabel, paramProps, klog);
+            setParam("collapse", isCollapse, paramProps, klog);
+            setParam("zip_report", Boolean.toString(createZip), paramProps, klog);
+            setParam("gui", "false", paramProps, klog);
+            if (gpMode) setParam("out", analysis.getPath(), paramProps, klog);
 
-            System.out.println("Parameters passed to GSEA tool:");
-            setParam("gmx", geneSetsSelector, paramProps);
-            setParam("res", expressionDataFileName, paramProps);
-            setParam("cls", classFileName, paramProps);
-            setParam("out", analysis.getPath(), paramProps);
-
-            setParam("rpt_label", FilenameUtils.getBaseName(outputFileName), paramProps);
-            setParam("zip_report", Boolean.toString(createZip), paramProps);
-            setParam("gui", "false", paramProps);
-
-            // This may change in the future when/if we allow the user to provide their own CHIP as an annotation mechanism,
-            // when we would pass through the CHIP regardless of collapse.
-            setParam("collapse", isCollapse, paramProps);
             if (StringUtils.equalsIgnoreCase(isCollapse, "true")) {
-                setParam("chip", chipPlatformFileName, paramProps);
+                setParam("chip", chipPlatformFileName, paramProps, klog);
             }
 
             if (StringUtils.isNotBlank(altDelim)) {
-                setParam("altDelim", altDelim, paramProps);
+                setParam("altDelim", altDelim, paramProps, klog);
             }
 
             // Finally, load up the remaining simple parameters. We'll let GSEA validate these.
-            setOptionValueAsParam("mode", cl, paramProps);
-            setOptionValueAsParam("norm", cl, paramProps);
-            setOptionValueAsParam("nperm", cl, paramProps);
-            setOptionValueAsParam("permute", cl, paramProps);
-            setOptionValueAsParam("rnd_type", cl, paramProps);
-            setOptionValueAsParam("scoring_scheme", cl, paramProps);
-            setOptionValueAsParam("metric", cl, paramProps);
-            setOptionValueAsParam("sort", cl, paramProps);
-            setOptionValueAsParam("order", cl, paramProps);
-            setOptionValueAsParam("include_only_symbols", cl, paramProps);
-            setOptionValueAsParam("make_sets", cl, paramProps);
-            setOptionValueAsParam("median", cl, paramProps);
-            setOptionValueAsParam("num", cl, paramProps);
-            setOptionValueAsParam("plot_top_x", cl, paramProps);
-            setOptionValueAsParam("rnd_seed", cl, paramProps);
-            setOptionValueAsParam("save_rnd_lists", cl, paramProps);
-            setOptionValueAsParam("create_svgs", cl, paramProps);
-            setOptionValueAsParam("create_gcts", cl, paramProps);
-            setOptionValueAsParam("set_max", cl, paramProps);
-            setOptionValueAsParam("set_min", cl, paramProps);
+            setOptionValueAsParam("mode", cl, paramProps, klog);
+            setOptionValueAsParam("norm", cl, paramProps, klog);
+            setOptionValueAsParam("nperm", cl, paramProps, klog);
+            setOptionValueAsParam("permute", cl, paramProps, klog);
+            setOptionValueAsParam("rnd_type", cl, paramProps, klog);
+            setOptionValueAsParam("scoring_scheme", cl, paramProps, klog);
+            setOptionValueAsParam("metric", cl, paramProps, klog);
+            setOptionValueAsParam("sort", cl, paramProps, klog);
+            setOptionValueAsParam("order", cl, paramProps, klog);
+            setOptionValueAsParam("include_only_symbols", cl, paramProps, klog);
+            setOptionValueAsParam("make_sets", cl, paramProps, klog);
+            setOptionValueAsParam("median", cl, paramProps, klog);
+            setOptionValueAsParam("num", cl, paramProps, klog);
+            setOptionValueAsParam("plot_top_x", cl, paramProps, klog);
+            setOptionValueAsParam("rnd_seed", cl, paramProps, klog);
+            setOptionValueAsParam("save_rnd_lists", cl, paramProps, klog);
+            setOptionValueAsParam("create_svgs", cl, paramProps, klog);
+            setOptionValueAsParam("create_gcts", cl, paramProps, klog);
+            setOptionValueAsParam("set_max", cl, paramProps, klog);
+            setOptionValueAsParam("set_min", cl, paramProps, klog);
 
             tool = new Gsea(paramProps);
             try {
@@ -280,27 +309,35 @@ public class GseaWrapper extends AbstractModule {
             } catch (BadParamException e) {
                 String message = e.getMessage();
                 if (message != null && message.contains("None of the gene sets passed the size thresholds")) {
-                    System.err.print("Please verify that the correct chip platform was provided.");
+                    klog.error("Please verify that the correct chip platform was provided.");
                     throw e;
                 }
             } finally {
-                try {
-                    if (!analysis.exists()) return;
-                    copyAnalysisToCurrentDir(cwd, analysis, createZip, zipFileName);
-                } catch (IOException ioe) {
-                    System.err.println("Error during clean-up...");
-                    throw ioe;
-                } finally {
-                    cleanUpAnalysisDirs(cwd, tmp_working);
+                if (gpMode) {
+                    try {
+                        if (!analysis.exists()) return;
+                        copyAnalysisToCurrentDir(cwd, analysis, createZip, outputFileName);
+                    } catch (IOException ioe) {
+                        klog.error("Error during clean-up...");
+                        throw ioe;
+                    } finally {
+                        cleanUpAnalysisDirs(cwd, tmp_working);
+                    }
                 }
             }
         } catch (Throwable t) {
             success = false;
-            System.err.println("Error while processng:");
-            System.err.println(t.getMessage());
+            klog.error("Error while processng:");
+            klog.error(t.getMessage());
             t.printStackTrace(System.err);
         } finally {
-            Conf.exitSystem(!success);
+            try {
+                if (cwd != null && tmp_working != null) {
+                    cleanUpAnalysisDirs(cwd, tmp_working);
+                }
+            } finally {
+                Conf.exitSystem(!success);
+            }
         }
     }
 }
