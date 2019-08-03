@@ -58,6 +58,7 @@ public class UpdateChecker {
                 if (newerVersionExists(currMajor, latestMajor, currMinor, latestMinor, currPatch, latestPatch)) {
                     String latestVersion = latestGseaVersionProps.getProperty("build.version", "");
                     String latestTimestamp = latestGseaVersionProps.getProperty("build.timestamp", "");
+                    String updateMessage = latestGseaVersionProps.getProperty("build.updateMessage", "");
                     String message = "Your current version of GSEA is " + currVersion + ". A newer version";
                     if (StringUtils.isNotBlank(latestVersion)) {
                         message += " (" + latestVersion + ")";
@@ -66,6 +67,9 @@ public class UpdateChecker {
                             + "To update, please download from http://gsea-msigdb.org/gsea/downloads.jsp";
                     if (StringUtils.isNotBlank(latestTimestamp)) {
                             message += IOUtils.LINE_SEPARATOR + "(build date: " + latestTimestamp + ")";
+                    }
+                    if (StringUtils.isNotBlank(updateMessage)) {
+                        message += IOUtils.LINE_SEPARATOR + " " + updateMessage;
                     }
                     
                     klog.info(message);
