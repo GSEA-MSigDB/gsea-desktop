@@ -45,12 +45,13 @@ public class UpdateChecker {
                 connection.setReadTimeout(20000);
                 String versionCheckInfo = IOUtils.toString(connection.getInputStream(), (Charset) null);
 
-                int currMajor = NumberUtils.toInt(GseaFijiTabsApplicationFrame.buildProps.getProperty("build.major", "3"), 3);
+                // TODO: in a future revision, use the values from the build.properties file as defaults.
+                int currMajor = NumberUtils.toInt(GseaFijiTabsApplicationFrame.buildProps.getProperty("build.major", "4"), 4);
                 int currMinor = NumberUtils.toInt(GseaFijiTabsApplicationFrame.buildProps.getProperty("build.minor", "0"), 0);
                 int currPatch = NumberUtils.toInt(GseaFijiTabsApplicationFrame.buildProps.getProperty("build.patchLevel", "0"), 0);
                 String currVersion = GseaFijiTabsApplicationFrame.buildProps.getProperty("build.version", "3.0");
                 Properties latestGseaVersionProps = parseGseaVersionInfo(versionCheckInfo);
-                int latestMajor = NumberUtils.toInt(latestGseaVersionProps.getProperty("build.major", "3"), 3);
+                int latestMajor = NumberUtils.toInt(latestGseaVersionProps.getProperty("build.major", "4"), 4);
                 int latestMinor = NumberUtils.toInt(latestGseaVersionProps.getProperty("build.minor", "0"), 0);
                 int latestPatch = NumberUtils.toInt(latestGseaVersionProps.getProperty("build.patchLevel", "0"), 0);
 
