@@ -45,17 +45,16 @@ public class UpdateChecker {
                 connection.setReadTimeout(20000);
                 String versionCheckInfo = IOUtils.toString(connection.getInputStream(), (Charset) null);
 
-                // TODO: in a future revision, use the values from the build.properties file as defaults.
                 int currMajor = NumberUtils.toInt(GseaFijiTabsApplicationFrame.buildProps.getProperty("build.major", "4"), 4);
                 int currMinor = NumberUtils.toInt(GseaFijiTabsApplicationFrame.buildProps.getProperty("build.minor", "0"), 0);
                 int currPatch = NumberUtils.toInt(GseaFijiTabsApplicationFrame.buildProps.getProperty("build.patchLevel", "0"), 0);
-                String currVersion = GseaFijiTabsApplicationFrame.buildProps.getProperty("build.version", "3.0");
+                String currVersion = GseaFijiTabsApplicationFrame.buildProps.getProperty("build.version", "4.0.0");
                 Properties latestGseaVersionProps = parseGseaVersionInfo(versionCheckInfo);
-                int latestMajor = NumberUtils.toInt(latestGseaVersionProps.getProperty("build.major", "4"), 4);
-                int latestMinor = NumberUtils.toInt(latestGseaVersionProps.getProperty("build.minor", "0"), 0);
-                int latestPatch = NumberUtils.toInt(latestGseaVersionProps.getProperty("build.patchLevel", "0"), 0);
+                int latestMajor = NumberUtils.toInt(latestGseaVersionProps.getProperty("build.major", ""), currMajor);
+                int latestMinor = NumberUtils.toInt(latestGseaVersionProps.getProperty("build.minor", ""), currMinor);
+                int latestPatch = NumberUtils.toInt(latestGseaVersionProps.getProperty("build.patchLevel", ""), currPatch);
 
-                // Compare the current website version info to the local info and if so display/log a message.
+                // Compare the current website version info to the local info and display/log a message if there's a new version.
                 if (newerVersionExists(currMajor, latestMajor, currMinor, latestMinor, currPatch, latestPatch)) {
                     String latestVersion = latestGseaVersionProps.getProperty("build.version", "");
                     String latestTimestamp = latestGseaVersionProps.getProperty("build.timestamp", "");
