@@ -7,7 +7,7 @@ ShowInstDetails nevershow
 ShowUninstDetails nevershow
 SetCompressor /solid lzma
 AutoCloseWindow true
-Icon "GSEA_@VERSION@\XBench64x64.ico"
+Icon "GSEA_@VERSION@\GSEA_Icon.ico"
 LicenseData LICENSE_WIN.txt
 LicenseForceSelection radiobuttons
 
@@ -19,9 +19,9 @@ UninstPage instfiles
 section
      setOutPath "$INSTDIR"
      File /a /r GSEA_@VERSION@\*.*
-     createShortCut "$DESKTOP\GSEA_@VERSION@.lnk" "$INSTDIR\gsea.bat" "" "$INSTDIR\XBench64x64.ico"
+     createShortCut "$DESKTOP\GSEA_@VERSION@.lnk" "$INSTDIR\gsea.bat" "" "$INSTDIR\GSEA_Icon.ico"
      createDirectory "$SMPROGRAMS\GSEA_@VERSION@"
-     createShortCut "$SMPROGRAMS\GSEA_@VERSION@\GSEA.lnk" "$INSTDIR\gsea.bat" "" "$INSTDIR\XBench64x64.ico"
+     createShortCut "$SMPROGRAMS\GSEA_@VERSION@\GSEA.lnk" "$INSTDIR\gsea.bat" "" "$INSTDIR\GSEA_Icon.ico"
      
      WriteUninstaller $INSTDIR\uninstaller.exe
      createShortCut "$SMPROGRAMS\GSEA_@VERSION@\uninstaller.lnk" "$INSTDIR\uninstaller.exe"
