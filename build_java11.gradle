@@ -203,7 +203,7 @@ task createWinDist(type: Copy, dependsOn: createDist) {
             exclude "*.sh"
             exclude "*.command"
         }
-        from ("scripts/nsis") { include "XBench64x64.ico" }
+        from ("scripts/nsis") { include "GSEA_Icon.ico" }
         into "GSEA_${version}"
     }
     with copySpec {

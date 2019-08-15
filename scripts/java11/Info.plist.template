@@ -7,7 +7,7 @@
 	<key>CFBundleExecutable</key>
 	<string>GSEA</string>
 	<key>CFBundleIconFile</key>
-	<string>gsea_icon.icns</string>
+	<string>GSEA_Icon.icns</string>
 	<key>CFBundleIdentifier</key>
 	<string>xapps.gsea.GSEA</string>
 	<key>CFBundleDisplayName</key>
