@@ -20,6 +20,6 @@ exec java -showversion --module-path="${prefix}/../Java/modules" -Xmx4g \
     @"${prefix}/../Java/gsea.args" \
     --patch-module="jide.common=${prefix}/../Java/lib/jide-components-3.7.4.jar:${prefix}/../Java/lib/jide-dock-3.7.4.jar:${prefix}/../Java/lib/jide-grids-3.7.4.jar" \
     -Xdock:name="GSEA" \
-    -Xdock:icon="${prefix}/../Resources/XBench64x64.gif" \
+    -Xdock:icon="${prefix}/../Resources/icon_64x64.png" \
     -Dapple.laf.useScreenMenuBar=true \
 	--module=org.gsea_msigdb.gsea/xapps.gsea.GSEA

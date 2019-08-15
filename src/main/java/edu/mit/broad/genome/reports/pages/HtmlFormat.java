@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.reports.pages;
 
 import edu.mit.broad.genome.Constants;
@@ -40,7 +40,7 @@ public class HtmlFormat {
         CSS_XTOOLS_CANNED_REPORTS.setRel("stylesheet");
         CSS_XTOOLS_CANNED_REPORTS.setHref("xtools.css");
         ICON_CANNED_REPORTS.setRel("shortcut icon");
-        ICON_CANNED_REPORTS.setHref(GseaWebResources.getGseaBaseURL() + "/images/XBench.gif");
+        ICON_CANNED_REPORTS.setHref(GseaWebResources.getGseaBaseURL() + "/images/icon_16x16.png");
     }
 
     public static void setCommonDocThings(final String title, final Document doc) {

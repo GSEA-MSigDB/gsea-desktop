@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2018 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package xapps.gsea;
 
 import com.jgoodies.looks.HeaderStyle;
@@ -67,7 +67,7 @@ public class GseaFijiTabsApplicationFrame extends DefaultDockableHolder implemen
             + " (Gene set enrichment analysis)";
 
     // Application's Icon that people see in their operating system task bar
-    private static final Image ICON = JarResources.getImage("XBench.gif");
+    private static final Image ICON = JarResources.getImage("icon_16x16.png");
 
     // Icon for the Preferences
     private static final Icon PREF_ICON = JarResources.getIcon("Preferences16.gif");

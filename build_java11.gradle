@@ -75,7 +75,7 @@ compileJava {
 }
 
 task createDist(type: Copy, dependsOn: jar)  {
-    from ("src/main/resources/edu/mit/broad/genome/resources/XBench64x64.gif")
+    from ("src/main/resources/edu/mit/broad/genome/resources/icon_64x64.png")
     from ('scripts/java11') {
         include 'gsea*'
         include 'readme.txt'
@@ -162,7 +162,7 @@ task createMacAppDist(type: Copy, dependsOn: createDist) {
         into "GSEA_${version}.app/Contents/MacOS"
     }
     with copySpec {
-        from ("src/main/resources/edu/mit/broad/genome/resources/XBench64x64.gif")
+        from ("src/main/resources/edu/mit/broad/genome/resources/icon_64x64.png")
         into "GSEA_${version}.app/Contents/Resources"
     }
     with copySpec {

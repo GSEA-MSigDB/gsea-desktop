@@ -41,7 +41,7 @@ public class Main {
                 "YSjBO6OJfF9WbavzI73Jt1HgDI4x9L21");
 
         DesktopIntegration.verifyJavaPlatform();
-        DesktopIntegration.setDockIcon(JarResources.getImage("XBench64x64.gif"));
+        DesktopIntegration.setDockIcon(JarResources.getImage("icon_64x64.png"));
         
         if (SystemUtils.IS_OS_MAC_OSX) {
             System.setProperty("apple.laf.useScreenMenuBar", "true");
