@@ -119,24 +119,16 @@ public class DatasetGenerators {
             String symbol = chip.getSymbol(ps, nm);
             String title = chip.getTitle(ps, nm);
 
-            if (symbol != null && includeOnlySymbols && ps.equals(symbol)) {
-                // chip returned a matching symbol, we include only symbols, but that
-                // symbol is equal to the probe id
-                // @todo hack as the symbol lookup isn't always removed
-            } else {
-
-                if (symbol != null) {
-                    Object obj = symbolStrucMap.get(symbol);
-                    if (obj == null) {
-                        // Note: we only save the *first* title, so if they differ the subsequent
-                        // ones are ignored.
-                        obj = new CollapseStruc(symbol, title);
-                    }
-                    ((CollapseStruc) obj).add(ps);
-                    symbolStrucMap.put(symbol, obj);
+            if (symbol != null) {
+                Object obj = symbolStrucMap.get(symbol);
+                if (obj == null) {
+                    // Note: we only save the *first* title, so if they differ the subsequent
+                    // ones are ignored.
+                    obj = new CollapseStruc(symbol, title);
                 }
+                ((CollapseStruc) obj).add(ps);
+                symbolStrucMap.put(symbol, obj);
             }
-
         }
 
         // symbolStructMap is a mapping of present symbol names to CollapseStruc objects, where

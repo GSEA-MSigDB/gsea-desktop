@@ -206,7 +206,7 @@ public class ChipOptParam extends AbstractParam {
                 setIcon(null);
             }
 
-            if (str.contains(ComparatorFactory.ChipNameComparator.getHighestVersionId())) {
+            if (!skipRenderCheck && str.contains(ComparatorFactory.ChipNameComparator.getHighestVersionId())) {
                 Font font = this.getFont();
                 String fontName = font.getFontName();
                 int fontSize = font.getSize();
