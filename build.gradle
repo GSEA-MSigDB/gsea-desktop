@@ -98,11 +98,13 @@ task fullJar(type: Jar, dependsOn: jar) {
     }
 }
 
-task optimizeJar(type: proguard.gradle.ProGuardTask, dependsOn: fullJar) {
+task optimizeJar(type: proguard.gradle.ProGuardTask, dependsOn: jar) {
     doFirst { mkdir "proguard_log" }
     
     verbose
-    injars "${buildDir}/libs/gsea-all_deps-${version}.jar"
+    injars "${buildDir}/libs/gsea-minimal-${version}.jar"
+    injars "modules", jarfilter: "!" + configurations.jarsToShipUntouched.collect { it.getName() }.join(',!'), filter: '!META-INF/**'
+    injars "lib", filter: '!META-INF/**'
     outjars "${buildDir}/libs/gsea-${version}.jar"
 
     // Automatically handle the Java version of this build.
