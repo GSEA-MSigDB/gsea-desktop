@@ -146,7 +146,7 @@ public class GseaFijiTabsApplicationFrame extends DefaultDockableHolder implemen
             buildInfo += ", " + buildTS;
         }
         AboutPanel aboutPanel = new AboutPanel("Gene Set Enrichment Analysis (GSEA) v" + buildProps.getProperty("build.version"), 
-                "Copyright (c) 2003-2017 Broad Institute, Inc., Massachusetts Institute of Technology, ",
+                "Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, ",
                 "and Regents of the University of California.  All rights reserved.", 
                 buildInfo);
         JOptionPane.showMessageDialog(fFrame, aboutPanel, "About GSEA", JOptionPane.PLAIN_MESSAGE);
