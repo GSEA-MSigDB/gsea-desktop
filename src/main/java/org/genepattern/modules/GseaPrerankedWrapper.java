@@ -7,11 +7,9 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
-import java.util.regex.Pattern;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -35,11 +33,12 @@ import xtools.gsea.GseaPreranked;
  */
 public class GseaPrerankedWrapper extends AbstractModule {
     private static final Logger klog = Logger.getLogger(GseaPrerankedWrapper.class);
-    
+
     // Suppressing the static-access warnings because this is the recommended usage according to the Commons-CLI docs.
     @SuppressWarnings("static-access")
     private static Options setupCliOptions() {
         Options options = new Options();
+        options.addOption(OptionBuilder.withArgName("geneSetsDatabaseList").hasOptionalArg().create("gmx_list"));
         options.addOption(OptionBuilder.withArgName("geneSetsDatabase").hasOptionalArg().create("gmx"));
         options.addOption(OptionBuilder.withArgName("numberOfPermutations").hasArg().create("nperm"));
         options.addOption(OptionBuilder.withArgName("rankedList").hasArg().create("rnk"));
@@ -83,7 +82,7 @@ public class GseaPrerankedWrapper extends AbstractModule {
             // Properties object to gather parameter settings to be passed to the Tool
             Properties paramProps = new Properties();
 
-            // The GP modules should declare they are running in GP mode.  This has minor effects on the error messages
+            // The GP modules should declare they are running in GP mode. This has minor effects on the error messages
             // and runtime behavior.
             boolean gpMode = StringUtils.equalsIgnoreCase(cl.getOptionValue("run_as_genepattern"), "true");
 
@@ -97,7 +96,7 @@ public class GseaPrerankedWrapper extends AbstractModule {
                 if (StringUtils.isNotBlank(outOption)) {
                     klog.warn("-out parameter ignored; only valid wih -run_as_genepattern false.");
                 }
-    
+
                 // Define a working directory, to be cleaned up on exit. The name starts with a '.' so it's hidden from GP & file system.
                 // Also, define a dedicated directory for building the report output
                 cwd = new File(System.getProperty("user.dir"));
@@ -126,8 +125,7 @@ public class GseaPrerankedWrapper extends AbstractModule {
             if (StringUtils.isNotBlank(outputFileName)) {
                 if (!gpMode) {
                     klog.warn("-output_file_name parameter ignored; only valid wih -run_as_genepattern true.");
-                }
-                else if (!outputFileName.toLowerCase().endsWith(".zip")) {
+                } else if (!outputFileName.toLowerCase().endsWith(".zip")) {
                     outputFileName += ".zip";
                 }
             } else {
@@ -145,33 +143,6 @@ public class GseaPrerankedWrapper extends AbstractModule {
                 paramProcessingError = true;
             }
 
-            // List of Gene Sets Database files
-            String geneSetDBsParam = cl.getOptionValue("gmx");
-
-            if (StringUtils.isBlank(geneSetDBsParam)) {
-                String paramName = (gpMode) ? "gene.sets.database" : "-gmx";
-                klog.error("No Gene Sets Databases files were specified.");
-                klog.error("Please provide one or more values to the '"+ paramName + "' parameter.");
-                paramProcessingError = true;
-            }
-
-            List<String> geneSetDBs = (StringUtils.isBlank(geneSetDBsParam)) ? Collections.emptyList()
-                    : FileUtils.readLines(new File(geneSetDBsParam), (Charset) null);
-            if (gpMode) {
-                List<String> safeNameGeneSetDBs = new ArrayList<String>(geneSetDBs.size());
-                for (String geneSetDB : geneSetDBs) {
-                    String renamedFile = copyFileWithoutBadChars(geneSetDB, tmp_working);
-                    if (renamedFile != null) {
-                        safeNameGeneSetDBs.add(renamedFile);
-                    } else {
-                        // Something went wrong. Use the original name just to complete checking parameters
-                        paramProcessingError = true;
-                        safeNameGeneSetDBs.add(geneSetDB);
-                    }
-                }
-                geneSetDBs = safeNameGeneSetDBs;
-            }
-
             String rptLabel = cl.getOptionValue("rpt_label");
             if (StringUtils.isNotBlank(rptLabel)) {
                 if (gpMode) {
@@ -182,31 +153,21 @@ public class GseaPrerankedWrapper extends AbstractModule {
             }
             if (gpMode) rptLabel = FilenameUtils.getBaseName(outputFileName);
 
-            String delim = ",";
+            String geneSetDBParam = cl.getOptionValue("gmx");
+            String geneSetDBListParam = cl.getOptionValue("gmx_list");
+            String selectedGeneSetsParam = cl.getOptionValue("selected_gene_sets");
+
             String altDelim = cl.getOptionValue("altDelim", "");
-            Pattern delimPattern = COMMA_PATTERN;
-            if (StringUtils.isNotBlank(altDelim)) {
-                if (altDelim.length() > 1) {
-                    String paramName = (gpMode) ? "alt.delim" : "--altDelim";
-                    klog.error("Invalid " + paramName + " '" + altDelim
-                            + "' specified. This must be only a single character and no whitespace.");
-                    paramProcessingError = true;
-                } else {
-                    delim = altDelim;
-                    delimPattern = Pattern.compile(delim);
-                }
+            if (StringUtils.isNotBlank(altDelim) && altDelim.length() > 1) {
+                String paramName = (gpMode) ? "alt.delim" : "--altDelim";
+                klog.error(
+                        "Invalid " + paramName + " '" + altDelim + "' specified. This must be only a single character and no whitespace.");
+                paramProcessingError = true;
             }
 
-            String selectedGeneSetsParam = cl.getOptionValue("selected_gene_sets");
-            List<String> selectedGeneSets = (StringUtils.isBlank(selectedGeneSetsParam)) ? Collections.emptyList()
-                    : Arrays.asList(delimPattern.split(selectedGeneSetsParam));
-
-            // Join up all of the Gene Set DBs or the selections to be passed in the paramProps.
-            List<String> geneSetsSelection = (selectedGeneSets.isEmpty()) ? geneSetDBs
-                    : selectGeneSetsFromFiles(geneSetDBs, selectedGeneSets, gpMode);
-            paramProcessingError |= (geneSetsSelection == null);
-
-            String geneSetsSelector = StringUtils.join(geneSetsSelection, delim);
+            String geneSetsSelector = determineSelectorFromParams(geneSetDBParam, geneSetDBListParam, selectedGeneSetsParam, altDelim,
+                    gpMode, tmp_working, klog);
+            paramProcessingError |= geneSetsSelector == null;
 
             if (paramProcessingError) {
                 // Should probably use BadParamException and set an errorCode, use it to look up a Wiki Help page.
