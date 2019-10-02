@@ -4,6 +4,7 @@
 package org.genepattern.modules;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Properties;
 
 import org.apache.commons.cli.CommandLine;
@@ -43,6 +44,7 @@ public class CollapseDatasetWrapper extends AbstractModule {
 
         AbstractTool tool = null;
 
+        File analysis = null;
         File tmp_working = null;
         File cwd = null;
         try {
@@ -76,9 +78,13 @@ public class CollapseDatasetWrapper extends AbstractModule {
                 cwd = new File(System.getProperty("user.dir"));
                 tmp_working = new File(".tmp_gsea");
                 tmp_working.mkdirs();
-            } else {
-                // Don't set these for regular CLI mode, just pass through -out
-                setOptionValueAsParam("out", cl, paramProps, klog);
+
+                // Define a working directory, to be cleaned up on exit. The name starts with a '.' so it's hidden from GP & file system.
+                // Also, define a dedicated directory for building the report output
+                cwd = new File(System.getProperty("user.dir"));
+                tmp_working = new File(".tmp_gsea");
+                analysis = new File(tmp_working, "analysis");
+                analysis.mkdirs();
             }
 
             // Enable any developer-only settings. For now, this just disables the update check; may do more in the future (verbosity level,
@@ -94,8 +100,10 @@ public class CollapseDatasetWrapper extends AbstractModule {
 
             String expressionDataFileName = cl.getOptionValue("res");
             if (StringUtils.isNotBlank(expressionDataFileName)) {
-                if (gpMode) expressionDataFileName = copyFileWithoutBadChars(expressionDataFileName, tmp_working);
-                paramProcessingError |= (expressionDataFileName == null);
+                if (gpMode) {
+                    expressionDataFileName = copyFileWithoutBadChars(expressionDataFileName, tmp_working);
+                    paramProcessingError |= (expressionDataFileName == null);
+                }
             } else {
                 String paramName = (gpMode) ? "expression.dataset" : "-res";
                 klog.error("Required parameter '" + paramName + "' not found.");
@@ -104,8 +112,10 @@ public class CollapseDatasetWrapper extends AbstractModule {
 
             String chipPlatformFileName = cl.getOptionValue("chip");
             if (StringUtils.isNotBlank(chipPlatformFileName)) {
-                if (gpMode) chipPlatformFileName = copyFileWithoutBadChars(chipPlatformFileName, tmp_working);
-                paramProcessingError |= (chipPlatformFileName == null);
+                if (gpMode) {
+                    chipPlatformFileName = copyFileWithoutBadChars(chipPlatformFileName, tmp_working);
+                    paramProcessingError |= (chipPlatformFileName == null);
+                }
             } else {
                 String paramName = (gpMode) ? "chip.platform.file" : "-chip";
                 klog.error("Required parameter '" + paramName + "' not found");
@@ -127,14 +137,34 @@ public class CollapseDatasetWrapper extends AbstractModule {
             setParam("chip", chipPlatformFileName, paramProps, klog);
             setParam("rpt_label", rptLabel, paramProps, klog);
             setParam("gui", "false", paramProps, klog);
-            if (gpMode) setParam("out", cwd.getPath(), paramProps, klog);
+            if (gpMode) {
+                setParam("out", analysis.getPath(), paramProps, klog);
+            } else {
+                // For regular CLI mode just pass through -out instead of setting tmpdir
+                setOptionValueAsParam("out", cl, paramProps, klog);
+            }
 
             // Finally, load up the remaining simple parameters. We'll let GSEA validate these.
             setOptionValueAsParam("include_only_symbols", cl, paramProps, klog);
             setOptionValueAsParam("mode", cl, paramProps, klog);
 
             tool = new CollapseDataset(paramProps);
-            success = AbstractTool.module_main(tool);
+            try {
+                success = AbstractTool.module_main(tool);
+            } finally {
+                try {
+                    if (!analysis.exists()) return;
+                    copyAnalysisToCurrentDir(cwd, analysis, false, null);
+                } catch (IOException ioe) {
+                    System.err.println("Error during clean-up:");
+                    throw ioe;
+                }
+            }
+        } catch (Throwable t) {
+            success = false;
+            klog.error("Error while processng:");
+            klog.error(t.getMessage());
+            t.printStackTrace(System.err);
         } finally {
             try {
                 if (cwd != null && tmp_working != null) {

@@ -5,10 +5,6 @@ package org.genepattern.modules;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 import java.util.Properties;
 
 import org.apache.commons.cli.CommandLine;
@@ -16,13 +12,13 @@ import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.PosixParser;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 
 import edu.mit.broad.genome.Conf;
 import xtools.api.AbstractTool;
+import xtools.api.param.BadParamException;
 import xtools.gsea.GseaPreranked;
 
 /**
@@ -42,9 +38,13 @@ public class GseaPrerankedWrapper extends AbstractModule {
         options.addOption(OptionBuilder.withArgName("geneSetsDatabase").hasOptionalArg().create("gmx"));
         options.addOption(OptionBuilder.withArgName("numberOfPermutations").hasArg().create("nperm"));
         options.addOption(OptionBuilder.withArgName("rankedList").hasArg().create("rnk"));
+        options.addOption(OptionBuilder.withArgName("collapseDataset").hasArg().create("collapse"));
+        options.addOption(OptionBuilder.withArgName("collapseMode").hasArg().create("mode"));
         options.addOption(OptionBuilder.withArgName("scoringScheme").hasArg().create("scoring_scheme"));
         options.addOption(OptionBuilder.withArgName("maxGeneSetSize").hasArg().create("set_max"));
         options.addOption(OptionBuilder.withArgName("minGeneSetSize").hasArg().create("set_min"));
+        options.addOption(OptionBuilder.withArgName("chipPlatform").hasOptionalArg().create("chip"));
+        options.addOption(OptionBuilder.withArgName("omitFeaturesWithNoSymbolMatch").hasArg().create("include_only_symbols"));
         options.addOption(OptionBuilder.withArgName("normalizationMode").hasArg().create("norm"));
         options.addOption(OptionBuilder.withArgName("makeDetailedGeneSetReport").hasArg().create("make_sets"));
         options.addOption(OptionBuilder.withArgName("numberOftopSetsToPlot").hasArg().create("plot_top_x"));
@@ -103,9 +103,6 @@ public class GseaPrerankedWrapper extends AbstractModule {
                 tmp_working = new File(".tmp_gsea");
                 analysis = new File(tmp_working, "analysis");
                 analysis.mkdirs();
-            } else {
-                // Don't set these for regular CLI mode, just pass through -out
-                setOptionValueAsParam("out", cl, paramProps, klog);
             }
 
             // Enable any developer-only settings. For now, this just disables the update check; may do more in the future (verbosity level,
@@ -135,11 +132,27 @@ public class GseaPrerankedWrapper extends AbstractModule {
             // Ranked feature list file
             String rankedListFileName = cl.getOptionValue("rnk");
             if (StringUtils.isNotBlank(rankedListFileName)) {
-                if (gpMode) rankedListFileName = copyFileWithoutBadChars(rankedListFileName, tmp_working);
-                paramProcessingError |= (rankedListFileName == null);
+                if (gpMode) {
+                    rankedListFileName = copyFileWithoutBadChars(rankedListFileName, tmp_working);
+                    paramProcessingError |= (rankedListFileName == null);
+                }
             } else {
                 String paramName = (gpMode) ? "ranked.list" : "-rnk";
                 klog.error("Required parameter '" + paramName + "' not found.");
+                paramProcessingError = true;
+            }
+
+            String chipPlatformFileName = cl.getOptionValue("chip");
+            String collapseParam = cl.getOptionValue("collapse");
+
+            if (StringUtils.isNotBlank(chipPlatformFileName)) {
+                if (gpMode) {
+                    chipPlatformFileName = copyFileWithoutBadChars(chipPlatformFileName, tmp_working);
+                    paramProcessingError |= (chipPlatformFileName == null);
+                }
+            } else if (isCollapseOrRemap(collapseParam)) {
+                String paramName = (gpMode) ? "chip.platform.file" : "-chip";
+                klog.error("A '"+ paramName + "' must be provided for collapse/remap");
                 paramProcessingError = true;
             }
 
@@ -178,18 +191,30 @@ public class GseaPrerankedWrapper extends AbstractModule {
             setParam("rnk", rankedListFileName, paramProps, klog);
             setParam("gmx", geneSetsSelector, paramProps, klog);
             setParam("rpt_label", rptLabel, paramProps, klog);
+            setParam("collapse", collapseParam, paramProps, klog);
             setParam("zip_report", Boolean.toString(createZip), paramProps, klog);
             setParam("gui", "false", paramProps, klog);
-            if (gpMode) setParam("out", analysis.getPath(), paramProps, klog);
+            if (gpMode) {
+                setParam("out", analysis.getPath(), paramProps, klog);
+            } else {
+                // For regular CLI mode just pass through -out instead of setting tmpdir
+                setOptionValueAsParam("out", cl, paramProps, klog);
+            }
+
+            if (isCollapseOrRemap(collapseParam)) {
+                setParam("chip", chipPlatformFileName, paramProps, klog);
+            }
 
             if (StringUtils.isNotBlank(altDelim)) {
                 setParam("altDelim", altDelim, paramProps, klog);
             }
 
             // Finally, load up the remaining simple parameters. We'll let Preranked validate these.
+            setOptionValueAsParam("mode", cl, paramProps, klog);
             setOptionValueAsParam("norm", cl, paramProps, klog);
             setOptionValueAsParam("nperm", cl, paramProps, klog);
             setOptionValueAsParam("scoring_scheme", cl, paramProps, klog);
+            setOptionValueAsParam("include_only_symbols", cl, paramProps, klog);
             setOptionValueAsParam("make_sets", cl, paramProps, klog);
             setOptionValueAsParam("plot_top_x", cl, paramProps, klog);
             setOptionValueAsParam("rnd_seed", cl, paramProps, klog);
@@ -200,6 +225,12 @@ public class GseaPrerankedWrapper extends AbstractModule {
             tool = new GseaPreranked(paramProps);
             try {
                 success = AbstractTool.module_main(tool);
+            } catch (BadParamException e) {
+                String message = e.getMessage();
+                if (message != null && message.contains("none of the gene sets passed size thresholds")) {
+                    klog.error("Please verify that the correct chip platform was provided.");
+                    throw e;
+                }
             } finally {
                 if (gpMode) {
                     try {
@@ -207,10 +238,15 @@ public class GseaPrerankedWrapper extends AbstractModule {
                         copyAnalysisToCurrentDir(cwd, analysis, createZip, outputFileName);
                     } catch (IOException ioe) {
                         System.err.println("Error during clean-up:");
-                        ioe.printStackTrace(System.err);
+                        throw ioe;
                     }
                 }
             }
+        } catch (Throwable t) {
+            success = false;
+            klog.error("Error while processng:");
+            klog.error(t.getMessage());
+            t.printStackTrace(System.err);
         } finally {
             try {
                 if (cwd != null && tmp_working != null) {

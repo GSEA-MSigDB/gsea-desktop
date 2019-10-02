@@ -9,7 +9,6 @@ import edu.mit.broad.genome.alg.Metric;
 import edu.mit.broad.genome.alg.gsea.GeneSetCohortGenerator;
 import edu.mit.broad.genome.alg.gsea.KSTests;
 import edu.mit.broad.genome.math.*;
-import edu.mit.broad.genome.objects.Dataset;
 import edu.mit.broad.genome.objects.GeneSet;
 import edu.mit.broad.genome.objects.RankedList;
 import edu.mit.broad.genome.objects.Template;
@@ -22,7 +21,6 @@ import edu.mit.broad.genome.parsers.EdbFolderParser;
 import edu.mit.broad.genome.parsers.ParserFactory;
 import edu.mit.broad.genome.reports.EnrichmentReports;
 import edu.mit.broad.genome.reports.pages.HtmlReportIndexPage;
-import edu.mit.broad.vdb.chip.Chip;
 import edu.mit.broad.xbench.prefs.XPreferencesFactory;
 import xtools.api.param.*;
 
@@ -60,17 +58,13 @@ public abstract class AbstractGsea2Tool extends AbstractGseaTool {
             new TemplateRandomizerType[]{TemplateRandomizerType.NO_BALANCE,
                     TemplateRandomizerType.EQUALIZE_AND_BALANCE}, true);
 
-    protected ChipOptParam fChipParam = new ChipOptParam(false);
-    protected final FeatureSpaceReqdParam fFeatureSpaceParam = new FeatureSpaceReqdParam();
-    protected final ModeReqdParam fCollapseModeParam = new ModeReqdParam("mode", "Collapsing mode for probe sets => 1 gene", "Collapsing mode for probe sets => 1 gene", new String[]{"Max_probe", "Median_of_probes"});
-    protected final BooleanParam fIncludeOnlySymbols = new BooleanParam("include_only_symbols", "Omit features with no symbol match", "If there is no known gene symbol match for a probe set omit if from the collapsed dataset", true, false);
-
     /**
      * Class constructor
      *
      * @param properties
      */
-    protected AbstractGsea2Tool() {
+    protected AbstractGsea2Tool(String defCollapseMode) {
+        super(defCollapseMode);
     }
 
     protected void doAdditionalParams() {
@@ -84,12 +78,6 @@ public abstract class AbstractGsea2Tool extends AbstractGseaTool {
         fParamSet.addParamAdv(fNumMarkersParam);
         fParamSet.addParamAdv(fSaveRndRankedListsParam);
         fParamSet.addParamAdv(fRndTypeParam);
-        
-        // Collapse Dataset parameters
-        fParamSet.addParamPseudoReqd(fChipParam);
-        fParamSet.addParamPseudoReqd(fFeatureSpaceParam);
-        fParamSet.addParamAdv(fIncludeOnlySymbols);
-        fParamSet.addParamAdv(fCollapseModeParam);
     }
 
     protected EnrichmentDb execute_one(final CollapsedDetails.Data fullCd,
@@ -223,39 +211,6 @@ public abstract class AbstractGsea2Tool extends AbstractGseaTool {
 
         // Make an edb folder thing
         new EdbFolderParser().export(ret.edb, ret.savedInDir);
-    }
-
-    protected CollapsedDetails.Data getDataset(final Dataset origDs) throws Exception {
-        CollapsedDetails.Data cd = new CollapsedDetails.Data();
-        cd.orig = origDs;
-    
-        if (fFeatureSpaceParam.isSymbols()) {
-            if (!fChipParam.isSpecified()) {
-                // dont as the chip param isnt really reqd (and hence isnt caught in the usual way)
-                //throw new MissingReqdParamException(_getMissingChipMessage());
-                throw new BadParamException("Chip parameter must be specified as you asked to analyze" +
-                        " in the space of gene symbols. Chip is used to collapse probe ids into symbols", 1002);
-            }
-    
-            final Chip chip = fChipParam.getChip();
-            Dataset collapsed = new DatasetGenerators().collapse(origDs, chip,
-                    fIncludeOnlySymbols.isTrue(), fCollapseModeParam.getStringIndexChoosen());
-            log.info("Collapsing dataset was done. Original: " + origDs.getQuickInfo() + " collapsed: " + collapsed.getQuickInfo());
-    
-            cd.chip = chip;
-            cd.wasCollapsed = true;
-            cd.collapsed = collapsed;
-            if (cd.getNumRow_orig() != 0 && cd.getNumRow_collapsed() == 0) {
-                throw new BadParamException("The collapsed dataset was empty when used with chip:" + cd.getChipName(), 1005);
-            }
-    
-        } else {
-            cd.wasCollapsed = false;
-            cd.collapsed = origDs;
-            log.info("No dataset collapsing was done .. using original as is");
-        }
-    
-        return cd;
     }
 
     // result hack to allow setting mean / median

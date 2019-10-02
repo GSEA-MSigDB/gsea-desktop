@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package xtools.api.param;
 
 import java.awt.event.ActionListener;
@@ -13,16 +13,11 @@ import java.awt.event.ActionListener;
  */
 public class ModeReqdParam extends StringReqdParam implements ActionListener {
 
-    /**
-     * Class constructor
-     *
-     * @param name
-     * @param nameEnglish
-     * @param desc
-     * @param def_and_hints
-     */
     public ModeReqdParam(String name, String nameEnglish, String desc, String[] def_and_hints) {
         super(name, nameEnglish, desc, def_and_hints);
     }
 
-}    // End class StringsChooserParam2
+    public ModeReqdParam(String name, String nameEnglish, String desc, String def, String[] hints) {
+        super(name, nameEnglish, desc, def, hints);
+    }
+}

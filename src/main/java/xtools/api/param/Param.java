@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package xtools.api.param;
 
 import edu.mit.broad.genome.Constants;
@@ -174,7 +174,7 @@ public interface Param {
     public static final String MSIGDB_DESC = "MSigDB file)";
 
     public static final String FEATURE_SPACE = "collapse";
-    public static final String FEATURE_SPACE_ENGLISH = "Collapse dataset to gene symbols";
+    public static final String FEATURE_SPACE_ENGLISH = "Collapse/Remap to gene symbols";
     public static final String FEATURE_SPACE_DESC = "Perform the analysis in the specified feature space - either gene symbols or as is (any mappings required will be done internally using the Chip/Platform specified)";
 
     public static final String DATASET_MODE = "dmode";

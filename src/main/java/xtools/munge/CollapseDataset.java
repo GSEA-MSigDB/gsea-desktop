@@ -29,7 +29,7 @@ public class CollapseDataset extends AbstractTool {
     private final ChipOptParam fChipParam = new ChipOptParam(true);
     private final DatasetReqdParam fDatasetParam = new DatasetReqdParam();
 
-    private final ModeReqdParam fModeParm = new ModeReqdParam("mode", "Collapsing mode for probe sets => 1 gene", "Collapsing mode for probe sets => 1 gene", new String[]{"Max_probe", "Median_of_probes"});
+    private final ModeReqdParam fModeParm = new ModeReqdParam("mode", "Collapsing mode for probe sets => 1 gene", "Collapsing mode for probe sets => 1 gene", "Max_probe", new String[]{"Max_probe", "Median_of_probes", "Mean_of_probes", "Sum_of_probes", "Remap_only"});
     private final BooleanParam fIncludeOnlySymbols = new BooleanParam("include_only_symbols", "Omit features with no symbol match", "If there is no known gene symbol match for a probe set omit if from the collapsed dataset", true, false);
 
     /**

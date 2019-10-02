@@ -114,9 +114,6 @@ public class GseaWrapper extends AbstractModule {
                 tmp_working = new File(".tmp_gsea");
                 analysis = new File(tmp_working, "analysis");
                 analysis.mkdirs();
-            } else {
-                // Don't set these for regular CLI mode, just pass through -out
-                setOptionValueAsParam("out", cl, paramProps, klog);
             }
             
             // Enable any developer-only settings. For now, this just disables the update check; may do more in the future (verbosity level,
@@ -147,8 +144,10 @@ public class GseaWrapper extends AbstractModule {
             String expressionDataFileName = cl.getOptionValue("res");
             if (StringUtils.isNotBlank(expressionDataFileName)) {
                 // Copy the file to get rid of problematic characters, if necessary. A null return value indicates something went wrong
-                if (gpMode) expressionDataFileName = copyFileWithoutBadChars(expressionDataFileName, tmp_working);
-                paramProcessingError |= (expressionDataFileName == null);
+                if (gpMode) {
+                    expressionDataFileName = copyFileWithoutBadChars(expressionDataFileName, tmp_working);
+                    paramProcessingError |= (expressionDataFileName == null);
+                }
             } else {
                 String paramName = (gpMode) ? "expression.dataset" : "-res";
                 klog.error("Required parameter '" + paramName + "' not found.");
@@ -157,8 +156,10 @@ public class GseaWrapper extends AbstractModule {
 
             String classFileName = cl.getOptionValue("cls");
             if (StringUtils.isNotBlank(classFileName)) {
-                if (gpMode) classFileName = copyFileWithoutBadChars(classFileName, tmp_working);
-                paramProcessingError |= (classFileName == null);
+                if (gpMode) {
+                    classFileName = copyFileWithoutBadChars(classFileName, tmp_working);
+                    paramProcessingError |= (classFileName == null);
+                }
 
                 String targetProfile = cl.getOptionValue("target_profile");
                 if (StringUtils.isNotBlank(targetProfile)) {
@@ -178,14 +179,16 @@ public class GseaWrapper extends AbstractModule {
             }
 
             String chipPlatformFileName = cl.getOptionValue("chip");
-            String isCollapse = cl.getOptionValue("collapse");
+            String collapseParam = cl.getOptionValue("collapse");
 
             if (StringUtils.isNotBlank(chipPlatformFileName)) {
-                if (gpMode) chipPlatformFileName = copyFileWithoutBadChars(chipPlatformFileName, tmp_working);
-                paramProcessingError |= (chipPlatformFileName == null);
-            } else if (isCollapse.equals("true")) {
+                if (gpMode) {
+                    chipPlatformFileName = copyFileWithoutBadChars(chipPlatformFileName, tmp_working);
+                    paramProcessingError |= (chipPlatformFileName == null);
+                }
+            } else if (isCollapseOrRemap(collapseParam)) {
                 String paramName = (gpMode) ? "chip.platform.file" : "-chip";
-                klog.error("collapse is set to true; a '"+ paramName + "' must be provided");
+                klog.error("A '"+ paramName + "' must be provided for collapse/remap");
                 paramProcessingError = true;
             }
 
@@ -224,12 +227,17 @@ public class GseaWrapper extends AbstractModule {
             setParam("res", expressionDataFileName, paramProps, klog);
             setParam("cls", classFileName, paramProps, klog);
             setParam("rpt_label", rptLabel, paramProps, klog);
-            setParam("collapse", isCollapse, paramProps, klog);
+            setParam("collapse", collapseParam, paramProps, klog);
             setParam("zip_report", Boolean.toString(createZip), paramProps, klog);
             setParam("gui", "false", paramProps, klog);
-            if (gpMode) setParam("out", analysis.getPath(), paramProps, klog);
+            if (gpMode) {
+                setParam("out", analysis.getPath(), paramProps, klog);
+            } else {
+                // For regular CLI mode just pass through -out instead of setting tmpdir
+                setOptionValueAsParam("out", cl, paramProps, klog);
+            }
 
-            if (StringUtils.equalsIgnoreCase(isCollapse, "true")) {
+            if (isCollapseOrRemap(collapseParam)) {
                 setParam("chip", chipPlatformFileName, paramProps, klog);
             }
 
@@ -264,7 +272,7 @@ public class GseaWrapper extends AbstractModule {
                 success = AbstractTool.module_main(tool);
             } catch (BadParamException e) {
                 String message = e.getMessage();
-                if (message != null && message.contains("None of the gene sets passed the size thresholds")) {
+                if (message != null && message.contains("none of the gene sets passed size thresholds")) {
                     klog.error("Please verify that the correct chip platform was provided.");
                     throw e;
                 }

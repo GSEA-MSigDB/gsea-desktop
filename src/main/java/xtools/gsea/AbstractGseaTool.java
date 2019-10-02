@@ -47,6 +47,7 @@ public abstract class AbstractGseaTool extends AbstractTool {
     }
 
     protected GeneSetMatrixMultiChooserParam fGeneSetMatrixParam;
+    protected ChipOptParam fChipParam = new ChipOptParam(false);
 
     // These settings for gene set size correspond to that used in the paper
     protected final IntegerParam fGeneSetMinSizeParam = new IntegerParam("set_min", "Min size: exclude smaller sets", "Gene sets smaller than this number are EXLCUDED from the analysis", 15, false);
@@ -54,6 +55,10 @@ public abstract class AbstractGseaTool extends AbstractTool {
 
     protected final IntegerParam fNumPermParam = new IntegerParam("nperm", "Number of permutations", "The number of permutations", 1000, new int[]{0, 1, 10, 100, 1000}, true);
     protected final RandomSeedTypeParam fRndSeedTypeParam = new RandomSeedTypeParam(false);
+
+    protected final ModeReqdParam fCollapseModeParam = new ModeReqdParam("mode", "Collapsing mode for probe sets => 1 gene", "Collapsing mode for probe sets => 1 gene", "Max_probe", new String[]{"Max_probe", "Median_of_probes", "Mean_of_probes", "Sum_of_probes"});
+    protected final FeatureSpaceReqdParam fFeatureSpaceParam;
+    protected final BooleanParam fIncludeOnlySymbols = new BooleanParam("include_only_symbols", "Omit features with no symbol match", "If there is no known gene symbol match for a probe set omit if from the collapsed dataset", true, false);
 
     // restrict to just the regular norm mode??
     protected final NormModeReqdParam fNormModeParam = new NormModeReqdParam();
@@ -64,7 +69,8 @@ public abstract class AbstractGseaTool extends AbstractTool {
      *
      * @param properties
      */
-    protected AbstractGseaTool() {
+    protected AbstractGseaTool(String defFeatureSpace) {
+        fFeatureSpaceParam = new FeatureSpaceReqdParam(defFeatureSpace);
     }
 
     public ToolCategory getCategory() {
@@ -94,7 +100,7 @@ public abstract class AbstractGseaTool extends AbstractTool {
 
     public void declareParams() {
 
-        //this.fChipParam = new ChipChooserMultiParam(false);
+        fParamSet.addParamPseudoReqd(fChipParam);
         this.fGeneSetMatrixParam = new GeneSetMatrixMultiChooserParam(true);
 
         // reqd
@@ -106,10 +112,13 @@ public abstract class AbstractGseaTool extends AbstractTool {
         fParamSet.addParamBasic(fGcohGenReqdParam);
         fParamSet.addParamBasic(fGeneSetMinSizeParam);
         fParamSet.addParamBasic(fGeneSetMaxSizeParam);
+        fParamSet.addParamPseudoReqd(fFeatureSpaceParam);
+        fParamSet.addParamAdv(fCollapseModeParam);
         
         // advanced
         fParamSet.addParamAdv(fRndSeedTypeParam);
         fParamSet.addParamAdv(fNormModeParam);
+        fParamSet.addParamAdv(fIncludeOnlySymbols);
 
         doAdditionalParams();
 

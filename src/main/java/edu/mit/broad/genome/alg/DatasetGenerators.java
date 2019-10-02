@@ -95,7 +95,7 @@ public class DatasetGenerators {
      * @param chip
      * @param includeOnlySymbols  whether to omit features with no symbol match
      * @param collapse_gex_mode   collapsing mode for when multiple probes map to a single gene.  0 is max_probe,
-     *                            1 is median_of_probes.
+     *                            1 is median_of_probes, 2 is mean_of_probes, 3 is sum_of_probes, 4 is remap_only.
      * @return
      */
     public CollapsedDataset collapse_core(final Dataset origDs,
@@ -154,18 +154,31 @@ public class DatasetGenerators {
             } else {
                 // multiple probes mapped to this symbol
                 Vector[] vss = origDs.getRows(new GeneSet("foo", "foo", pss));
+                // TODO: This should really be done with an Enum rather than hard-coded index values
                 if (collapse_gex_mode == 0) {
                     // use max of probe values
                     m.setRow(row, XMath.maxVector(vss));
-                } else {
+                } else if (collapse_gex_mode == 1) {
                     // use median of probe values
                     m.setRow(row, XMath.medianVector(vss));
+                } else if (collapse_gex_mode == 2) {
+                    // use mean of probe values
+                    m.setRow(row, XMath.meanVector(vss));
+                } else if (collapse_gex_mode == 3) {
+                    // use sum of probe values
+                    m.setRow(row, XMath.sumVector(vss));
+                } else {
+                    // Remapping only.  We consider it an error if multiple probes map when in this mode
+                    throw new BadParamException("Multiple rows mapped to the symbol ''" + collapseStruc.symbol
+                            + "'.  This is not allowed in Remap_only mode.", 1020);
                 }
             }
             row++;
         }
 
-        String name = origDs.getName() + "_collapsed_to_symbols";
+        String extendedName = (collapse_gex_mode <= 3) ? "_collapsed_to_symbols" : "_remapped_to_symbols";
+        String name = origDs.getName() + extendedName;
+        log.info("Creating collapsed dataset " + name + ", chosen mode " + collapse_gex_mode);
         Annot annot = new Annot(new FeatureAnnot(name, rowNames, rowDescs,
                 chip), origDs.getAnnot().getSampleAnnot_global());
 
@@ -199,20 +212,15 @@ public class DatasetGenerators {
             final String symbol = chip.getSymbol(ps, nm);
             String title = chip.getTitle(ps, nm);
 
-            if (symbol != null && includeOnlySymbols && ps.equals(symbol)) {
-                // @todo hack as the symbol lookup isnt always removed
-            } else {
-
-                if (symbol != null) {
-                    Object obj = symbolStrucMap.get(symbol);
-                    if (obj == null) {
-                        // Note: we only save the *first* title, so if they differ the subsequent
-                        // ones are ignored.
-                        obj = new CollapseStruc(symbol, title);
-                    }
-                    ((CollapseStruc) obj).add(ps);
-                    symbolStrucMap.put(symbol, obj);
+            if (symbol != null) {
+                Object obj = symbolStrucMap.get(symbol);
+                if (obj == null) {
+                    // Note: we only save the *first* title, so if they differ the subsequent
+                    // ones are ignored.
+                    obj = new CollapseStruc(symbol, title);
                 }
+                ((CollapseStruc) obj).add(ps);
+                symbolStrucMap.put(symbol, obj);
             }
         }
 
@@ -231,19 +239,27 @@ public class DatasetGenerators {
                 //System.out.println("checking for: " + ps);
                 cl_scores.setElement(row, origRL.getScore(ps));
             } else {
+                // TODO: This should really be done with an Enum rather than hard-coded index values
                 float[] fss = origRL.getScores(new GeneSet("foo", "foo", pss));
-                //m.setRow(row, XMath.meanVector(vss));
-                //m.setRow(row, XMath.medianVector(vss));
                 if (collapse_gex_mode == 0) {
                     cl_scores.setElement(row, XMath.max(fss));
-                } else {
+                } else if (collapse_gex_mode == 1) {
                     cl_scores.setElement(row, XMath.median(fss));
+                } else if (collapse_gex_mode == 2) {
+                    cl_scores.setElement(row, XMath.mean(fss));
+                } else if (collapse_gex_mode == 3) {
+                    cl_scores.setElement(row, XMath.sum(fss));
+                } else {
+                    // Remapping only.  We consider it an error if multiple probes map when in this mode
+                    throw new BadParamException("Multiple rows mapped to the symbol ''" + collapseStruc.symbol
+                            + "'.  This is not allowed in Remap_only mode.", 1020);
                 }
             }
             row++;
         }
 
-        String newName = origRL.getName() + "_collapsed";
+        String extendedName = (collapse_gex_mode <= 3) ? "_collapsed" : "_remapped";
+        String newName = origRL.getName() + extendedName;
 
         if (cl_scores.getSize() == 0) {
             throw new BadParamException("The collapsed dataset was empty when used with chip:" + chip.getName(), 1005);

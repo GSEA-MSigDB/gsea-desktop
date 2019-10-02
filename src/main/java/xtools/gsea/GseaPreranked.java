@@ -3,6 +3,7 @@
  */
 package xtools.gsea;
 
+import edu.mit.broad.genome.alg.DatasetGenerators;
 import edu.mit.broad.genome.alg.gsea.GeneSetCohortGenerator;
 import edu.mit.broad.genome.alg.gsea.KSTests;
 import edu.mit.broad.genome.math.RandomSeedGenerator;
@@ -15,6 +16,7 @@ import edu.mit.broad.genome.reports.EnrichmentReports;
 import edu.mit.broad.genome.reports.api.ReportIndexState;
 import edu.mit.broad.genome.reports.pages.HtmlReportIndexPage;
 import edu.mit.broad.vdb.chip.Chip;
+import edu.mit.broad.vdb.chip.FeatureAnnotChip;
 import xtools.api.AbstractTool;
 import xtools.api.param.*;
 
@@ -53,10 +55,12 @@ public class GseaPreranked extends AbstractGseaTool {
      * @param properties
      */
     public GseaPreranked(final Properties properties) {
+        super("Remap_Only");
         super.init(properties);
     }
 
     public GseaPreranked(final String[] args) {
+        super("Remap_Only");
         super.init(args);
     }
 
@@ -66,6 +70,7 @@ public class GseaPreranked extends AbstractGseaTool {
      * @param name
      */
     public GseaPreranked() {
+        super("Remap_Only");
         declareParams();
     }
     
@@ -112,10 +117,6 @@ public class GseaPreranked extends AbstractGseaTool {
         doneExec();
     }
 
-
-    /**
-     * @throws java.lang.Exception
-     */
     private void execute_one(final edu.mit.broad.genome.objects.strucs.CollapsedDetails fullRL,
                              final GeneSet[] gsets,
                              final HtmlReportIndexPage reportIndexPage) throws Exception {
@@ -127,9 +128,15 @@ public class GseaPreranked extends AbstractGseaTool {
         final int minSize = fGeneSetMinSizeParam.getIValue();
         final int maxSize = fGeneSetMaxSizeParam.getIValue();
         final boolean createSvgs = fCreateSvgsParam.isSpecified() && fCreateSvgsParam.isTrue();
-        Chip chip = null;
         RankedList rl = ((CollapsedDetails.Ranked) fullRL).getRankedList();
-        FeatureAnnot fann = new FeatureAnnot(rl.getName(), rl.getRankedNames(), null);
+        Chip chip = null;
+        FeatureAnnot fann = null;
+        if (fChipParam.isSpecified()) {
+            chip = fChipParam.getChip();
+            fann = new FeatureAnnotChip(chip);
+        } else {
+            fann = new FeatureAnnot(rl.getName(), rl.getRankedNames(), null);
+        }
 
         final KSTests tests = new KSTests(getOutputStream());
         
@@ -168,12 +175,50 @@ public class GseaPreranked extends AbstractGseaTool {
         return "Run GSEA on a pre-ranked (with external tools) gene list";
     }
 
-    protected CollapsedDetails.Ranked getRankedList(final RankedList origRL) throws Exception {
+    private CollapsedDetails.Ranked getRankedList(final RankedList origRL) throws Exception {
         CollapsedDetails.Ranked cd = new CollapsedDetails.Ranked();
         cd.orig = origRL;
-        cd.wasCollapsed = false;
-        cd.collapsed = origRL;
+
+        if (fFeatureSpaceParam.isSymbols()) {
+            if (!fChipParam.isSpecified()) {
+                throw new BadParamException("Chip parameter must be specified as you asked to analyze" +
+                        " in the space of gene symbols. Chip is used to collapse probe ids into symbols.", 1002);
+            }
+            final Chip chip = fChipParam.getChip();
+            // Remap_only is actually implemented as a Collapse Mode beneath everything else.
+            int collapseModeIndex = fFeatureSpaceParam.isRemap() ? 4 : fCollapseModeParam.getStringIndexChoosen();
+            RankedList collapsed = new DatasetGenerators().collapse(origRL, chip, fIncludeOnlySymbols.isTrue(), collapseModeIndex);
+            log.info("Collapsing dataset was done. Original: " + origRL.getQuickInfo() + " collapsed: " + collapsed.getQuickInfo());
+
+            cd.chip = chip;
+            cd.wasCollapsed = true;
+            cd.collapsed = collapsed;
+            checkIfCollapsedIsEmpty(cd);
+
+        } else {
+            cd.wasCollapsed = false;
+            cd.collapsed = origRL;
+            log.info("No ranked list collapsing was done .. using original as is");
+        }
+
         return cd;
+    }
+
+    private void checkIfCollapsedIsEmpty(final CollapsedDetails cd) {
+
+        if (!cd.wasCollapsed) {
+            return;
+        }
+
+        if (cd.getNumRow_orig() == 0) { // huh
+            return;
+        }
+
+        if (cd.getNumRow_collapsed() != 0) {
+            return;
+        }
+
+        throw new BadParamException("The collapsed dataset was empty when used with chip:" + cd.getChipName(), 1005);
     }
 
     public static void main(String[] args) {

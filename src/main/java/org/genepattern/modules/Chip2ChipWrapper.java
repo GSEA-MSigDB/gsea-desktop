@@ -89,9 +89,6 @@ public class Chip2ChipWrapper extends AbstractModule {
                 tmp_working = new File(".tmp_gsea");
                 analysis = new File(tmp_working, "analysis");
                 analysis.mkdirs();
-            } else {
-                // Don't set these for regular CLI mode, just pass through -out
-                setOptionValueAsParam("out", cl, paramProps, klog);
             }
 
             // Enable any developer-only settings. For now, this just disables the update check; may do more in the future (verbosity level,
@@ -114,8 +111,10 @@ public class Chip2ChipWrapper extends AbstractModule {
 
             String chipPlatformFileName = cl.getOptionValue("chip");
             if (StringUtils.isNotBlank(chipPlatformFileName)) {
-                if (gpMode) chipPlatformFileName = copyFileWithoutBadChars(chipPlatformFileName, tmp_working);
-                paramProcessingError |= (chipPlatformFileName == null);
+                if (gpMode) {
+                    chipPlatformFileName = copyFileWithoutBadChars(chipPlatformFileName, tmp_working);
+                    paramProcessingError |= (chipPlatformFileName == null);
+                }
             } else {
                 String paramName = (gpMode) ? "chip.platform.file" : "-chip";
                 klog.error("Required parameter '" + paramName + "' not found");
@@ -155,7 +154,12 @@ public class Chip2ChipWrapper extends AbstractModule {
             setParam("rpt_label", rptLabel, paramProps, klog);
             setParam("zip_report", Boolean.toString(createZip), paramProps, klog);
             setParam("gui", "false", paramProps, klog);
-            if (gpMode) setParam("out", analysis.getPath(), paramProps, klog);
+            if (gpMode) {
+                setParam("out", analysis.getPath(), paramProps, klog);
+            } else {
+                // For regular CLI mode just pass through -out instead of setting tmpdir
+                setOptionValueAsParam("out", cl, paramProps, klog);
+            }
 
             if (StringUtils.isNotBlank(altDelim)) {
                 setParam("altDelim", altDelim, paramProps, klog);
@@ -173,9 +177,14 @@ public class Chip2ChipWrapper extends AbstractModule {
                     copyAnalysisToCurrentDir(cwd, analysis, createZip, "chip2chip_results.zip");
                 } catch (IOException ioe) {
                     System.err.println("Error during clean-up:");
-                    ioe.printStackTrace(System.err);
+                    throw ioe;
                 }
             }
+        } catch (Throwable t) {
+            success = false;
+            klog.error("Error while processng:");
+            klog.error(t.getMessage());
+            t.printStackTrace(System.err);
         } finally {
             try {
                 if (cwd != null && tmp_working != null) {

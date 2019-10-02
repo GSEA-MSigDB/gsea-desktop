@@ -282,6 +282,13 @@ public class AbstractModule {
         return (paramProcessingError) ? null : StringUtils.join(geneSetsSelection, delim);
     }
 
+    protected static boolean isCollapseOrRemap(String collapseParam) {
+        // TODO: switch to an Enum rather than hard-coded Strings
+        // The final clause here is included to cover legacy users.
+        return StringUtils.equals("Collapse", collapseParam) || StringUtils.equals("Remap_Only", collapseParam) || 
+                StringUtils.equals("true", collapseParam);
+    }
+    
     public AbstractModule() {
     }
 }
