@@ -62,7 +62,7 @@ public class Gsea extends AbstractGsea2Tool {
      * @param name
      */
     public Gsea() {
-        super("Max_probe");
+        super("Collapse");
         declareParams();
     }
     
