@@ -47,12 +47,12 @@ public class Gsea extends AbstractGsea2Tool {
      * @param properties
      */
     public Gsea(final Properties properties) {
-        super("Max_probe");
+        super("Collapse");
         super.init(properties);
     }
 
     public Gsea(final String[] args) {
-        super("Max_probe");
+        super("Collapse");
         super.init(args);
     }
 
