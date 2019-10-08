@@ -17,6 +17,7 @@ Page instfiles
 UninstPage instfiles
 
 section
+     SetShellVarContext all
      setOutPath "$INSTDIR"
      File /a /r GSEA_@VERSION@\*.*
      createShortCut "$DESKTOP\GSEA_@VERSION@.lnk" "$INSTDIR\gsea.bat" "" "$INSTDIR\GSEA_Icon.ico"
@@ -36,7 +37,10 @@ FunctionEnd
 #RequestExecutionLevel admin
 
 section "Uninstall"
+    SetShellVarContext all
 	setAutoClose true
+	Delete "$SMPROGRAMS\GSEA_@VERSION@\GSEA.lnk"
+	Delete "$SMPROGRAMS\GSEA_@VERSION@\uninstaller.lnk"
 	RMDir /r "$SMPROGRAMS\GSEA_@VERSION@"
 	Delete "$Desktop\GSEA_@VERSION@.lnk"
 	
