@@ -483,9 +483,16 @@ public class Vector {
         double mean = computeset.mean;                    // avoid recalc
 
         if (fixlow) {
+            // Probably better:
+            //double minallowed = (mean != +0.0d && mean != -0.0d) ? (0.20 * Math.abs(mean)) : 0.20;
+            //stddev = Math.max(stddev, minallowed)
+            // ... because a) it's faster, avoiding the math in some case; 
+            // and b) it avoids worries about test-for-zero accuracy for cases we don't care about. 
+            
             double minallowed = (0.20 * Math.abs(mean));
 
             // In the case of a zero mean, assume the mean is 1
+            //if (minallowed == +0.0d || minallowed == -0.0d) {
             if (minallowed == 0) {
                 minallowed = 0.20;
             }
@@ -502,6 +509,10 @@ public class Vector {
         return computeset.stddev;
     }
 
+    public static boolean isNearlyZero(double d) {
+        return (d == +0.0d || d == -0.0d) ? true : Math.abs(d - 0.0d) <= Math.ulp(d);
+    }
+    
     // Specialized versions.
     public double stddevBiasedFixLow() {
         double stddev = Math.sqrt(_varBiased()); // @note call to _var and not var

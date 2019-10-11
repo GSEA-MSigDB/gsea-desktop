@@ -762,7 +762,7 @@ public class EnrichmentMapParameterPanel extends JPanel {
                             String res = (String) rpt.get("param res");
                             if (!(new File(res).exists()))
                                 Application.getWindowManager().showConfirm("Unable to find expression file: " + res);
-                            if (collapse.equalsIgnoreCase("false")) expressionFile = res;
+                            if (collapse.equalsIgnoreCase("false") || collapse.equalsIgnoreCase("No_Collapse")) expressionFile = res;
                             // if the dataset is collapsed and the original analysis was done on the
                             // non-collpased data then we have to either:
                             // 1. try and collapse the expression data
@@ -803,7 +803,8 @@ public class EnrichmentMapParameterPanel extends JPanel {
                                         String tempFile = res_file.getName();
                                         String simplename = "";
 
-                                        simplename = tempFile.replace(".gct", "_collapsed_to_symbols.gct");
+                                        String extendedName = ("Remap_only".equals(mode)) ? "_remapped_to_symbols" : "_collapsed_to_symbols";
+                                        simplename = tempFile.replace(".gct", extendedName);
 
                                         expressionFile = report_dir + System.getProperty("file.separator") + simplename;
                                     } catch (Throwable t) {

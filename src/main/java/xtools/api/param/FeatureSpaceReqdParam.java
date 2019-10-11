@@ -1,11 +1,14 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package xtools.api.param;
 
 import edu.mit.broad.genome.swing.fields.GFieldPlusChooser;
 
 import javax.swing.*;
+
+import org.apache.log4j.Logger;
+
 import java.awt.*;
 import java.awt.event.ActionListener;
 
@@ -14,27 +17,39 @@ import java.awt.event.ActionListener;
  * @version %I%, %G%
  */
 public class FeatureSpaceReqdParam extends StringReqdParam implements ActionListener {
+    private static final Logger klog = Logger.getLogger(FeatureSpaceReqdParam.class);
+    
+    // TODO: switch to an Enum rather than hard-coded Strings
+    private static String[] MODES = new String[]{"Remap_Only", "Collapse", "No_Collapse"};
 
-    private static String[] MODES = new String[]{"true", "false"};
-
-    /**
-     * Class constructor
-     *
-     * @param name
-     * @param type
-     * @param desc
-     */
     public FeatureSpaceReqdParam() {
-        super(FEATURE_SPACE, FEATURE_SPACE_ENGLISH, FEATURE_SPACE_DESC, MODES[0], MODES);
+        super(FEATURE_SPACE, FEATURE_SPACE_ENGLISH, FEATURE_SPACE_DESC, MODES[1], MODES);
     }
 
+    public FeatureSpaceReqdParam(String def) {
+        super(FEATURE_SPACE, FEATURE_SPACE_ENGLISH, FEATURE_SPACE_DESC, def, MODES);
+    }
+
+    // Special case for legacy use: accept "true" for "Collapse" and "false" for "No_Collapse"
+    @Override
+    public void setValue(Object value) {
+        if ("true".equals(value)) {
+            value = "Collapse";
+        }
+        if ("false".equals(value)) {
+            value = "No_Collapse";
+        }
+        super.setValue(value);
+    }
+    
     public boolean isSymbols() {
         int index = getStringIndexChoosen();
-        if (index == 0) {
-            return true;
-        } else {
-            return false;
-        }
+        return (index <= 1);
+    }
+    
+    public boolean isRemap() {
+        int index = getStringIndexChoosen();
+        return (index == 0);
     }
 
     public GFieldPlusChooser getSelectionComponent() {
@@ -58,19 +73,15 @@ public class FeatureSpaceReqdParam extends StringReqdParam implements ActionList
             // doesnt work properly unless called
             super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
 
-            //System.out.println("index=" + index);
-
             if (index == 0) {
-                //this.setText("foo");
-                this.setText(MODES[0] + " (use 'chip' to collapse dataset to symbols before analysis)");
+                this.setText(MODES[0] + " (remap dataset with 'chip' without mathematical collapse)");
             } else if (index == 1) {
-                //this.setText("bar");
-                this.setText(MODES[1] + " (use dataset 'as is' in the original format)");
+                this.setText(MODES[1] + " (use 'chip' to collapse dataset to symbols before analysis)");
+            } else if (index == 2) {
+                this.setText(MODES[2] + " (use dataset 'as is' in the original format)");
             } // @note IMP to do specifically for 0 and 1 sometimes gets -1
 
             return this;
         }
-    }    // End CommonLookListRenderer
-
-
-}    // End class FeatureSpaceReqdParam
+    }
+}

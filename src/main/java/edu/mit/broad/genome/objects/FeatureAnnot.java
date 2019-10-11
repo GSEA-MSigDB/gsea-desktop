@@ -82,9 +82,9 @@ public class FeatureAnnot extends AbstractObject {
 
     private List fRowDescs;
 
-    private Chip fChip;
+    protected Chip fChip;
 
-    private Helper fHelper;
+    protected Helper fHelper;
 
     public FeatureAnnot(final String name,
             final List rowNames,
@@ -157,5 +157,4 @@ public class FeatureAnnot extends AbstractObject {
         return fHelper.getGeneTitle(featureName, fChip);
     }
 
-} // End class FeatureAnnotationDatasetImpl
-
+}

@@ -459,6 +459,23 @@ public class XMath {
         return new Vector(medians);
     }
 
+    public static Vector meanVector(final Vector[] vss) {
+        enforceEqualSize(vss);
+        int size = vss[0].getSize();
+        float[] means = new float[size];
+
+        for (int i = 0; i < size; i++) {
+            Vector v = new Vector(vss.length);
+            for (int c = 0; c < vss.length; c++) {
+                v.setElement(c, vss[c].getElement(i));
+            }
+
+            means[i] = (float) v.mean();
+        }
+
+        return new Vector(means);
+    }
+
     public static Vector maxVector(final Vector[] vss) {
         enforceEqualSize(vss);
         int size = vss[0].getSize();
@@ -476,6 +493,22 @@ public class XMath {
         return new Vector(maxs);
     }
 
+    public static Vector sumVector(final Vector[] vss) {
+        enforceEqualSize(vss);
+        int size = vss[0].getSize();
+        float[] sums = new float[size];
+
+        for (int i = 0; i < size; i++) {
+            Vector v = new Vector(vss.length);
+            for (int c = 0; c < vss.length; c++) {
+                v.setElement(c, vss[c].getElement(i));
+            }
+
+            sums[i] = (float) v.sum();
+        }
+
+        return new Vector(sums);
+    }
 
     public static float median(final float[] x) {
 
@@ -497,6 +530,25 @@ public class XMath {
         } else {
             return v1[ind];
         }
+    }
+
+    public static float mean(final float[] x) {
+
+        if (x.length == 0) {
+            return Float.NaN;
+        }
+
+        return sum(x) / x.length;
+    }
+
+    public static float sum(final float[] x) {
+
+        float sum = 0f;
+        for (float f : x) {
+            sum += f;
+        }
+        
+        return sum;
     }
 
     /**

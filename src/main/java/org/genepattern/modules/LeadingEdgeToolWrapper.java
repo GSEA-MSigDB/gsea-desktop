@@ -83,9 +83,6 @@ public class LeadingEdgeToolWrapper extends AbstractModule {
                 tmp_working = new File(".tmp_gsea");
                 analysis = new File(tmp_working, "analysis");
                 analysis.mkdirs();
-            } else {
-                // Don't set these for regular CLI mode, just pass through -out
-                setOptionValueAsParam("out", cl, paramProps, klog);
             }
             
             // Enable any developer-only settings. For now, this just disables the update check; may do more in the future (verbosity level,
@@ -116,8 +113,10 @@ public class LeadingEdgeToolWrapper extends AbstractModule {
             // Enrichment resultfile
             String enrichmentResultZip = cl.getOptionValue("enrichment_zip");
             if (StringUtils.isNotBlank(enrichmentResultZip)) {
-                if (gpMode) enrichmentResultZip = copyFileWithoutBadChars(enrichmentResultZip, tmp_working);
-                paramProcessingError |= (enrichmentResultZip == null);
+                if (gpMode) {
+                    enrichmentResultZip = copyFileWithoutBadChars(enrichmentResultZip, tmp_working);
+                    paramProcessingError |= (enrichmentResultZip == null);
+                }
             } else {
                 String paramName = (gpMode) ? "enrichment.result.zip.file" : "-enrichment_zip";
                 klog.error("Required parameter '" + paramName + "' not found");
@@ -130,9 +129,8 @@ public class LeadingEdgeToolWrapper extends AbstractModule {
             }
 
             klog.info("Parameters passing to LeadingEdgeTool.main:");
-            setParam("out", analysis.getAbsolutePath(), paramProps, klog);
-
             if (gpMode) {
+                setParam("out", analysis.getAbsolutePath(), paramProps, klog);
                 String dirOption = cl.getOptionValue("dir");
                 if (StringUtils.isNotBlank(dirOption)) {
                         klog.warn("-dir parameter ignored; only valid wih -run_as_genepattern false.");
@@ -144,6 +142,8 @@ public class LeadingEdgeToolWrapper extends AbstractModule {
                 zipUtility.unzip(new File(enrichmentResultZip), inputExpanded);
                 setParam("dir", inputExpanded.getAbsolutePath(), paramProps, klog);
             } else {
+                // For regular CLI mode just pass through -out instead of setting tmpdir
+                setOptionValueAsParam("out", cl, paramProps, klog);
                 setOptionValueAsParam("dir", cl, paramProps, klog);
             }
 
@@ -184,10 +184,15 @@ public class LeadingEdgeToolWrapper extends AbstractModule {
                         copyAnalysisToCurrentDir(cwd, analysis, createZip, outputFileName);
                     } catch (IOException ioe) {
                         klog.error("Error during clean-up:");
-                        ioe.printStackTrace(System.err);
+                        throw ioe;
                     }
                 }
             }
+        } catch (Throwable t) {
+            success = false;
+            klog.error("Error while processng:");
+            klog.error(t.getMessage());
+            t.printStackTrace(System.err);
         } finally {
             try {
                 if (cwd != null && tmp_working != null) {

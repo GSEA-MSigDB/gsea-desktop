@@ -4,6 +4,7 @@
 package xtools.gsea;
 
 import edu.mit.broad.genome.StandardException;
+import edu.mit.broad.genome.alg.DatasetGenerators;
 import edu.mit.broad.genome.alg.Metric;
 import edu.mit.broad.genome.objects.Dataset;
 import edu.mit.broad.genome.objects.GeneSet;
@@ -11,6 +12,7 @@ import edu.mit.broad.genome.objects.Template;
 import edu.mit.broad.genome.objects.strucs.CollapsedDetails;
 import edu.mit.broad.genome.reports.api.ReportIndexState;
 import edu.mit.broad.genome.reports.pages.HtmlReportIndexPage;
+import edu.mit.broad.vdb.chip.Chip;
 import xtools.api.AbstractTool;
 import xtools.api.param.*;
 
@@ -45,10 +47,12 @@ public class Gsea extends AbstractGsea2Tool {
      * @param properties
      */
     public Gsea(final Properties properties) {
+        super("Collapse");
         super.init(properties);
     }
 
     public Gsea(final String[] args) {
+        super("Collapse");
         super.init(args);
     }
 
@@ -58,11 +62,46 @@ public class Gsea extends AbstractGsea2Tool {
      * @param name
      */
     public Gsea() {
+        super("Collapse");
         declareParams();
     }
     
     public String getName() {
         return "GSEA";
+    }
+
+    protected CollapsedDetails.Data getDataset(final Dataset origDs) throws Exception {
+        CollapsedDetails.Data cd = new CollapsedDetails.Data();
+        cd.orig = origDs;
+    
+        if (fFeatureSpaceParam.isSymbols()) {
+            if (!fChipParam.isSpecified()) {
+                // dont as the chip param isnt really reqd (and hence isnt caught in the usual way)
+                //throw new MissingReqdParamException(_getMissingChipMessage());
+                throw new BadParamException("Chip parameter must be specified as you asked to analyze" +
+                        " in the space of gene symbols. Chip is used to collapse probe ids into symbols", 1002);
+            }
+    
+            final Chip chip = fChipParam.getChip();
+            // Remap_only is actually implemented as a Collapse Mode beneath everything else.
+            int collapseModeIndex = fFeatureSpaceParam.isRemap() ? 4 : fCollapseModeParam.getStringIndexChoosen();
+            Dataset collapsed = new DatasetGenerators().collapse(origDs, chip, fIncludeOnlySymbols.isTrue(), collapseModeIndex);
+            log.info("Collapsing dataset was done. Original: " + origDs.getQuickInfo() + " collapsed: " + collapsed.getQuickInfo());
+    
+            cd.chip = chip;
+            cd.wasCollapsed = true;
+            cd.collapsed = collapsed;
+            if (cd.getNumRow_orig() != 0 && cd.getNumRow_collapsed() == 0) {
+                throw new BadParamException("The collapsed dataset was empty when used with chip:" + cd.getChipName(), 1005);
+            }
+    
+        } else {
+            cd.wasCollapsed = false;
+            cd.collapsed = origDs;
+            log.info("No dataset collapsing was done .. using original as is");
+        }
+    
+        return cd;
     }
 
     public void execute() throws Exception {
@@ -99,7 +138,7 @@ public class Gsea extends AbstractGsea2Tool {
         Dataset ds = fDatasetParam.getDataset(fChipParam);
 
         final Dataset fullDs = uniquize(ds);
-        final CollapsedDetails.Data cd = super.getDataset(fullDs);
+        final CollapsedDetails.Data cd = getDataset(fullDs);
 
         // Note that we MUST set the altDelim on the fGeneSetMatrixParam if it's present.  This MUST happen
         // before extracting the param value or it will be parsed incorrectly.  Unfortunately, these params

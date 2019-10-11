@@ -3,6 +3,46 @@
  */
 package xapps.gsea;
 
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Cursor;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.HeadlessException;
+import java.awt.Image;
+import java.awt.event.ActionEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Properties;
+
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.Icon;
+import javax.swing.JCheckBoxMenuItem;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.JToolBar;
+import javax.swing.WindowConstants;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.SystemUtils;
+import org.broad.gsea.ui.DesktopIntegration;
+import org.jfree.ui.about.AboutPanel;
+
 import com.jgoodies.looks.HeaderStyle;
 import com.jgoodies.looks.Options;
 import com.jidesoft.docking.DefaultDockableHolder;
@@ -23,7 +63,13 @@ import edu.mit.broad.xbench.actions.ShowDefaultOutputDirAction;
 import edu.mit.broad.xbench.actions.XAction;
 import edu.mit.broad.xbench.actions.ext.BrowserAction;
 import edu.mit.broad.xbench.core.WrappedComponent;
-import edu.mit.broad.xbench.core.api.*;
+import edu.mit.broad.xbench.core.api.Application;
+import edu.mit.broad.xbench.core.api.FileManager;
+import edu.mit.broad.xbench.core.api.FileManagerImpl;
+import edu.mit.broad.xbench.core.api.ToolManager;
+import edu.mit.broad.xbench.core.api.ToolManagerImpl;
+import edu.mit.broad.xbench.core.api.VdbManager;
+import edu.mit.broad.xbench.core.api.WindowManager;
 import edu.mit.broad.xbench.prefs.XPreferencesFactory;
 import edu.mit.broad.xbench.tui.TaskManager;
 import xapps.api.AppDataLoaderAction;
@@ -37,17 +83,6 @@ import xtools.chip2chip.Chip2Chip;
 import xtools.gsea.Gsea;
 import xtools.gsea.GseaPreranked;
 import xtools.munge.CollapseDataset;
-
-import javax.swing.*;
-
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.SystemUtils;
-import org.broad.gsea.ui.DesktopIntegration;
-import org.jfree.ui.about.AboutPanel;
-
-import java.awt.*;
-import java.awt.event.*;
-import java.util.Properties;
 
 public class GseaFijiTabsApplicationFrame extends DefaultDockableHolder implements Application.Handler {
 
@@ -66,8 +101,17 @@ public class GseaFijiTabsApplicationFrame extends DefaultDockableHolder implemen
     private static String USER_VISIBLE_FRAME_TITLE = "GSEA " + buildProps.getProperty("build.version")
             + " (Gene set enrichment analysis)";
 
-    // Application's Icon that people see in their operating system task bar
-    private static final Image ICON = JarResources.getImage("icon_16x16.png");
+    private static final List<Image> FRAME_ICONS = Arrays.asList(
+        JarResources.getImage("icon_16x16.png"),
+        JarResources.getImage("icon_16x16@2x.png"),
+        JarResources.getImage("icon_32x32.png"),
+        JarResources.getImage("icon_32x32@2x.png"),
+        JarResources.getImage("icon_128x128.png"),
+        JarResources.getImage("icon_128x128@2x.png"),
+        JarResources.getImage("icon_256x256.png"),
+        JarResources.getImage("icon_256x256@2x.png"),
+        JarResources.getImage("icon_512x512.png"),
+        JarResources.getImage("icon_512x512@2x.png"));
 
     // Icon for the Preferences
     private static final Icon PREF_ICON = JarResources.getIcon("Preferences16.gif");
@@ -82,7 +126,7 @@ public class GseaFijiTabsApplicationFrame extends DefaultDockableHolder implemen
     private WindowAdapter fWindowListener;
 
     private MyWindowManagerImplJideTabbedPane fWindowManager;
-
+    
     /**
      * Class constructor
      *
@@ -94,7 +138,7 @@ public class GseaFijiTabsApplicationFrame extends DefaultDockableHolder implemen
         fFrame.setVisible(false);
 
         fFrame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE); // we catch and ask
-        fFrame.setIconImage(ICON);
+        fFrame.setIconImages(FRAME_ICONS);
 
         // add a widnow listener to do clear up when windows closing.
         fWindowListener = new WindowAdapter() {
