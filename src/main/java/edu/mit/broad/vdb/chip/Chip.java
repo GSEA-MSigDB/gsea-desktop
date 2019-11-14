@@ -10,6 +10,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.lang3.StringUtils;
+
 import edu.mit.broad.genome.NamingConventions;
 import edu.mit.broad.genome.objects.AbstractObject;
 import edu.mit.broad.genome.objects.GeneSet;
@@ -92,7 +94,6 @@ public class Chip extends AbstractObject {
         } catch (Throwable t) {
             log.error(t);
             return "";
-            // return Constants.NA;
         }
     }
 
@@ -108,7 +109,6 @@ public class Chip extends AbstractObject {
         } catch (Throwable t) {
             log.error(t);
             return "";
-            // return Constants.NA;
         }
 
     }
@@ -217,7 +217,7 @@ public class Chip extends AbstractObject {
     }
 
     public boolean isProbe(String probeName) throws Exception {
-        if (probeName == null) {
+        if (StringUtils.isEmpty(probeName)) {
             return false;
         }
     

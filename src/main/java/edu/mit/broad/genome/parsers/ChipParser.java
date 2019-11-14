@@ -4,7 +4,6 @@
 package edu.mit.broad.genome.parsers;
 
 import edu.mit.broad.genome.Constants;
-import edu.mit.broad.genome.NamingConventions;
 import edu.mit.broad.genome.objects.PersistentObject;
 import edu.mit.broad.vdb.chip.*;
 import edu.mit.broad.vdb.meg.Gene;
@@ -13,6 +12,7 @@ import java.io.*;
 import java.util.*;
 
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * Parses a chip file
@@ -116,64 +116,45 @@ public class ChipParser extends AbstractParser {
         startImport(sourcepath);
 
         BufferedReader bin = new BufferedReader(new InputStreamReader(is));
-
-        String currLine = nextLine(bin);
-
-        List colHeaders = ParseUtils.string2stringsList(currLine, "\t");
-        int ps_index = indexOf(PROBE_SET_ID, colHeaders, true);
-        int symbol_index = indexOf(GENE_SYMBOL, colHeaders, true);
-        int title_index = indexOf(GENE_TITLE, colHeaders, true);
-
-        // save all rows so that we can determine how many rows exist
-        List probesList = new ArrayList();
-        currLine = nextLine(bin);
-        Set names = new HashSet();
-
-        while (currLine != null) {
-            final String[] fields = ParseUtils.string2strings(currLine, "\t", true);
-
-            /* we are looking up indexs so can be extra OR fewer
-            if (fields.length != 3) {
-                throw new ParserException("Bad format expecting 3 fields but found: " + fields.length + "\nOn line >" + currLine + "<");
-            }
-            */
-
-            String probeName = fields[ps_index];
-
-            if (probeName != null && !names.contains(probeName)) {
-                String symbol = fields[symbol_index];
-                symbol = NamingConventions.symbolize(symbol);
-
-                String title = null;
-                try {
-                    title = fields[title_index];
-                    if (title != null && title.equals("---")) {
-                        title = null;
-                    }
-                } catch (Throwable t) {
-
-                }
-
-                Probe probe = new Probe(probeName, symbol, title);
-                probesList.add(probe);
-            }
-
-            if (probeName != null) {
-                names.add(probeName);
-            }
-
+        try {
+            String currLine = nextLine(bin);
+    
+            List colHeaders = ParseUtils.string2stringsList(currLine, "\t");
+            int ps_index = indexOf(PROBE_SET_ID, colHeaders, true);
+            int symbol_index = indexOf(GENE_SYMBOL, colHeaders, true);
+            int title_index = indexOf(GENE_TITLE, colHeaders, false);
+    
+            // save all rows so that we can determine how many rows exist
+            List<Probe> probesList = new ArrayList<Probe>();
             currLine = nextLine(bin);
+            Set<String> names = new HashSet<String>();
+    
+            while (currLine != null) {
+                final String[] fields = ParseUtils.string2strings(currLine, "\t");
+                String probeName = StringUtils.trimToNull(fields[ps_index]);
+    
+                // Skip empty or duplicate probeNames
+                if (probeName != null && !names.contains(probeName)) {
+                    String symbol = StringUtils.trimToEmpty(fields[symbol_index]);
+                    if ("---".equals(symbol)) symbol = "";
+                    String title = (title_index < 0) ? "" : StringUtils.trimToEmpty(fields[title_index]);
+                    Probe probe = new Probe(probeName, symbol, title);
+                    probesList.add(probe);
+                    names.add(probeName);
+                }
+    
+                currLine = nextLine(bin);
+            }
+    
+            final Probe[] probes = probesList.toArray(new Probe[probesList.size()]);
+            final Chip chip = new Chip(FilenameUtils.getName(sourcepath), sourcepath, probes);
+            log.info("Parsed from dotchip : " + probes.length);
+            doneImport();
+
+            return unmodlist(chip);
         }
-
-        final Probe[] probes = (Probe[]) probesList.toArray(new Probe[probesList.size()]);
-        final Chip chip = new Chip(FilenameUtils.getName(sourcepath), sourcepath, probes);
-
-        bin.close();
-
-        log.info("Parsed from dotchip : " + probes.length);
-        doneImport();
-
-        return unmodlist(chip);
+        finally {
+            bin.close();
+        }
     }
-
-}    // End of class ChipParser
+}

@@ -23,8 +23,8 @@ public class Probe implements Gene {
      * @param title
      */
     public Probe(final String probeId, final String symbol, final String title) {
-        if (probeId == null) {
-            throw new IllegalArgumentException("Param probeId cannot be null");
+        if (probeId == null || symbol == null || title == null) {
+            throw new IllegalArgumentException("Parameters cannot be null; use empty string instead.");
         }
 
         this.fProbeName = probeId;
@@ -58,13 +58,8 @@ public class Probe implements Gene {
         return false;
     }
 
-    // yeah similarly can have multiple Hugos - but that is even more of a huh huh so completely preclude that
     public Gene getGene() {
-        if (fSymbol == null) {
-            return Gene.NULL_GENE;
-        } else {
-            return this;
-        }
+        return this;
     }
 
     @Override

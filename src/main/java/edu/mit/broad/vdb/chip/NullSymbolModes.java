@@ -25,11 +25,11 @@ public class NullSymbolModes {
 
     public static final NullSymbolMode OmitNulls = new NullSymbolMode() {
         public final String getTitle(String probeId, Gene gene) {
-            return NullSymbolModes.getTitle(null, gene);
+            return NullSymbolModes.getTitle("", gene);
         }
 
         public final String getSymbol(String probeId, Gene gene) {
-            return NullSymbolModes.getSymbol(null, gene);
+            return NullSymbolModes.getSymbol("", gene);
         }
     };
 

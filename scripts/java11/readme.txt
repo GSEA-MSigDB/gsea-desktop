@@ -44,8 +44,8 @@ For example:
 Or, more generally
      $ gsea-cli.sh [operationName] [parameters]
      
-Where [operationName] is one of GSEA, GSEAPreranked, CollapseDataset, or Chip2Chip for the
-chosen operation and [parameters] are the corresponding parameters for that operation.
+Where [operationName] is one of GSEA, GSEAPreranked, CollapseDataset, Chip2Chip, or LeadingEdgeTool
+for the chosen operation and [parameters] are the corresponding parameters for that operation.
 Use of the Command feature in the UI is the best way to discover the available parameters 
 for each operation.
 

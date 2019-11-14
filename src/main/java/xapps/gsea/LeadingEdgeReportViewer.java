@@ -1,7 +1,7 @@
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package xapps.gsea;
-/*******************************************************************************
- * Copyright (c) 2003-2018 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
 
 
 import com.jgoodies.forms.builder.PanelBuilder;
@@ -120,7 +120,7 @@ public class LeadingEdgeReportViewer extends AbstractViewer {
             }
         });
 
-        this.fReportParam = new ReportCacheChooserParam("Select a GSEA result from the application cache", false);
+        this.fReportParam = new ReportCacheChooserParam("Select a GSEA result from the application cache");
         this.fDirParam = new DirParam("dir", "[ OR ] Locate a GSEA result folder from the file system", "[ OR ] Locate a GSEA report folder from the file system", false);
         final Param[] params = new Param[]{fReportParam, fDirParam};
 
