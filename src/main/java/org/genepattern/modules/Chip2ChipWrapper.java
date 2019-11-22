@@ -78,6 +78,9 @@ public class Chip2ChipWrapper extends AbstractModule {
                 System.setProperty("debug", "false");
                 System.setProperty("mkdir", "false");
 
+                // Set the GSEA update check String to show this is coming from the modules.
+                System.setProperty("UPDATE_CHECK_EXTRA_PROJECT_INFO", "GP_MODULES");
+
                 String outOption = cl.getOptionValue("out");
                 if (StringUtils.isNotBlank(outOption)) {
                     klog.warn("-out parameter ignored; only valid wih -run_as_genepattern false.");
@@ -89,17 +92,15 @@ public class Chip2ChipWrapper extends AbstractModule {
                 tmp_working = new File(".tmp_gsea");
                 analysis = new File(tmp_working, "analysis");
                 analysis.mkdirs();
+            } else {
+                // Set the GSEA update check String to show this is CLI usage.
+                System.setProperty("UPDATE_CHECK_EXTRA_PROJECT_INFO", "GSEA_CLI");
             }
 
-            // Enable any developer-only settings. For now, this just disables the update check; may do more in the future (verbosity level,
-            // etc)
+            // Enable any developer-only settings. For now, this just disables the update check; may do more in the future
             boolean devMode = StringUtils.equalsIgnoreCase(cl.getOptionValue("dev_mode"), "true");
             if (devMode) {
                 System.setProperty("MAKE_GSEA_UPDATE_CHECK", "false");
-            } else {
-                System.setProperty("MAKE_GSEA_UPDATE_CHECK", "true");
-                // Set the GSEA update check String to show this is coming from the modules.
-                System.setProperty("UPDATE_CHECK_EXTRA_PROJECT_INFO", "GP_MODULES");
             }
 
             boolean createZip = StringUtils.equalsIgnoreCase(cl.getOptionValue("zip_report"), "true");

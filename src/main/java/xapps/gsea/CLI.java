@@ -13,9 +13,8 @@ import org.genepattern.modules.LeadingEdgeToolWrapper;
 
 public class CLI {
     
-    // Note that LeadingEdgeTool is *not* given in the usage message as it is not officially supported as a CLI tool.
     private static final String USAGE_MESSAGE = "Usage: operationName followed by operation-specific arguments "
-            + "where operationName is one of GSEA, GSEAPreranked, CollapseDataset, or Chip2Chip";
+            + "where operationName is one of GSEA, GSEAPreranked, CollapseDataset, Chip2Chip, or LeadingEdgeTool";
 
     public static void main(String[] args) throws Exception {
         if (args == null || args.length == 0) {

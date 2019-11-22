@@ -129,8 +129,8 @@ public class TemplateCreatorWidgets {
                 File file = NamingConventions.createSafeFile(out, tn);
 
                 // spaces allowed in sample names
-                final String[] classASampleNames = ParseUtils.string2strings(taClassA.getText(), "\n\t", false);
-                final String[] classBSampleNames = ParseUtils.string2strings(taClassB.getText(), "\n\t", false);
+                final String[] classASampleNames = ParseUtils.string2strings(taClassA.getText(), "\n\t");
+                final String[] classBSampleNames = ParseUtils.string2strings(taClassB.getText(), "\n\t");
 
                 TemplateImplFromSampleNames tsn = new TemplateImplFromSampleNames(tn, classAName, classASampleNames, classBName, classBSampleNames);
 

@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package xtools.api.param;
 
 import edu.mit.broad.genome.parsers.DataFormat;
@@ -18,6 +18,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Comparator;
 
 /**
  * Custom impl as i want the file listing to happen slowly
@@ -26,8 +27,8 @@ import java.util.ArrayList;
  */
 public class ReportCacheChooserParam extends AbstractObjectChooserParam {
 
-    public ReportCacheChooserParam(final String nameEnglish, final boolean reqd) {
-        super(RPT_DIR, nameEnglish, Report.class, RPT_DIR_DESC, new Report[]{}, new Report[]{}, reqd);
+    public ReportCacheChooserParam(final String nameEnglish) {
+        super(RPT_DIR, nameEnglish, Report.class, RPT_DIR_DESC, new Report[]{}, new Report[]{}, false);
     }
 
     // @note this is the magix -> we set the hints lazilly
@@ -134,12 +135,9 @@ public class ReportCacheChooserParam extends AbstractObjectChooserParam {
 
     private Report[] _getReportsInCache() {
         final File[] files = getReportFiles();
-        java.util.List reports = new ArrayList();
+        java.util.List<Report> reports = new ArrayList<Report>();
         for (int i = 0; i < files.length; i++) {
-            //klog.debug("Found reports: " + files[i]);
             try {
-                // dont! we want to lazily load
-                //Report rpt = ParserFactory.readReport(files[i], true);
                 ReportStub stub = new ReportStub(files[i]);
                 if (stub.getName().indexOf("Gsea") != -1) {
                     Report report = stub.getReport(false);
@@ -151,13 +149,21 @@ public class ReportCacheChooserParam extends AbstractObjectChooserParam {
                 }
             } catch (Throwable t) {
                 log.error(t);
-                // silently suppress
             }
         }
 
-        return (Report[]) reports.toArray(new Report[reports.size()]);
+        Comparator<Report> reportComparator = new Comparator<Report>() {
+            @Override
+            public int compare(Report o1, Report o2) {
+                // NOTE: descending
+                return o2.getDate().compareTo(o1.getDate());
+            }
+        };
+        
+        reports.sort(reportComparator);
+        
+        return reports.toArray(new Report[reports.size()]);
     }
-
 
     private File[] getReportFiles() {
         final File dir = Application.getVdbManager().getReportsCacheDir();

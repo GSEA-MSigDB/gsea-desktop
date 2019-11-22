@@ -301,7 +301,7 @@ public abstract class AbstractParser implements Parser {
                 if (fKeyValues == null) {
                     fKeyValues = new HashMap();
                 }
-                String[] fields = ParseUtils.string2strings(s, "= ", true);
+                String[] fields = ParseUtils.string2strings(s, "= ");
 
                 if (fields.length == 1) {
                     // nothing

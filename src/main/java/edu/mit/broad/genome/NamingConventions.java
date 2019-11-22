@@ -84,44 +84,6 @@ public class NamingConventions {
 
     }
 
-    public static String symbolize(String symbol) {
-
-        if (symbol == null) {
-            return null;
-        }
-
-        symbol = symbol.trim();
-
-        if (symbol.equals("---") ||
-                // symbol.equalsIgnoreCase(Constants.NA) || // this is a problem as there is a gene symbol called NA !!
-                symbol.equalsIgnoreCase(Constants.NULL) ||
-                symbol.length() == 0) {
-
-            return null;
-        }
-
-        // Finally if the symbol is toolung, truncate it
-        // This happens when affy truncates many eaually likely genes into 1
-        // e.g KLRA15 /// KLRA20 ...
-
-        // TODO: this truncation of CHIP symbols really should be considered a bug.
-        // We really should drop these rows entirely.  Either that or figure out how to properly handle multi-mapping.
-        // Consider: if we expand using these truncated "symbol" fields then we get some kind of munged field in the
-        // dataset, which is not going to match anything in the GMT with any certainty (MSigDB definitely doesn't do
-        // anything with it).  Alternatively, if we took the field as-is, then the dataset would end up with all these
-        // (ambiguous) symbols together, but with the /// chars.  That's also not going to match.
-        // Practically speaking, these just end up throwing out the rows but far down the road.  Better to do it here 
-        // directly.
-        // TODO: also consider how we could handle multi-mapping.  That is, expand the field to multiple symbols.
-        // Not sure this is valid statistically.
-        if (symbol.length() > 20) {
-            return symbol.substring(0, 20).trim();
-        } else {
-            return symbol;
-        }
-
-    }
-
     public static String createNiceEnglishDate_for_dirs() {
         // Get today's date
         Date date = new Date();
@@ -138,26 +100,7 @@ public class NamingConventions {
     }
 
     public static boolean isNull(String s) {
-        if (s == null) {
-            return true;
-        }
-
-        s = s.trim();
-
-        if (s.length() == 0) {
-            return true;
-        }
-
-        if (s.equalsIgnoreCase(Constants.NA)) {
-            return true;
-        }
-
-        if (s.equalsIgnoreCase(Constants.NULL)) {
-            return true;
-        }
-
-
-        return false;
+        return StringUtils.isBlank(s);
     }
 
 

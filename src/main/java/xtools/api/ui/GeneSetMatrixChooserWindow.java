@@ -1,10 +1,9 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package xtools.api.ui;
 
 import edu.mit.broad.genome.JarResources;
-import edu.mit.broad.genome.objects.GeneSet;
 import edu.mit.broad.genome.objects.GeneSet;
 import edu.mit.broad.genome.parsers.ParseUtils;
 import edu.mit.broad.genome.parsers.ParserFactory;
@@ -140,7 +139,7 @@ public class GeneSetMatrixChooserWindow {
             String s = taGenes.getText();
 
             if (s != null) {
-                String[] strs = ParseUtils.string2strings(s, "\t\n", false); // we want things synched
+                String[] strs = ParseUtils.string2strings(s, "\t\n"); // we want things synched
                 if (strs.length != 0) {
                     GeneSet gset = new GeneSet("from_text_entry_", strs);
                     try {

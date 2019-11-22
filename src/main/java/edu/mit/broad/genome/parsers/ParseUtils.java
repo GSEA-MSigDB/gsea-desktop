@@ -139,8 +139,7 @@ public class ParseUtils {
     }
 
     public static String[] string2strings(final String s,
-                                          final String delim,
-                                          final boolean useNullonMagicNullWord) throws IllegalArgumentException {
+                                          final String delim) throws IllegalArgumentException {
 
         if (null == s) {
             throw new NullPointerException("Cannot parse on null String");

@@ -1,6 +1,6 @@
-/*******************************************************************************
+/*
  * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+ */
 package xapps.gsea;
 
 import com.jgoodies.forms.builder.PanelBuilder;
@@ -189,7 +189,7 @@ public class GseaPreferencesDialog extends MultiplePageDialog {
         }
 
         private JPanel createAppPreferencesPanel() {
-            final String str = "125dlu,      4dlu,        150dlu"; // columns
+            final String str = "180dlu,      4dlu,        10dlu"; // columns
             //            // 1(label)    2 (spacer)   3(field)
 
             int rowCnt = 5;

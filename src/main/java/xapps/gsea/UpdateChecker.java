@@ -1,3 +1,6 @@
+/*
+ *  Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package xapps.gsea;
 
 import java.awt.Component;
@@ -35,48 +38,56 @@ public class UpdateChecker {
         } else if (MAKE_GSEA_UPDATE_CHECK) {
 
             try {
-                String versionQueryString = GSEA_UPDATE_CHECK_URL + "?currentVersion="
-                        + GseaFijiTabsApplicationFrame.buildProps.getProperty("build.version", "not_available")
-                        + "&extraProjectInfo=" + UPDATE_CHECK_EXTRA_PROJECT_INFO;
-
-                URL url = new URL(versionQueryString);
-                URLConnection connection = url.openConnection();
-                connection.setConnectTimeout(10000);
-                connection.setReadTimeout(20000);
-                String versionCheckInfo = IOUtils.toString(connection.getInputStream(), (Charset) null);
-
-                int currMajor = NumberUtils.toInt(GseaFijiTabsApplicationFrame.buildProps.getProperty("build.major", "4"), 4);
-                int currMinor = NumberUtils.toInt(GseaFijiTabsApplicationFrame.buildProps.getProperty("build.minor", "0"), 0);
-                int currPatch = NumberUtils.toInt(GseaFijiTabsApplicationFrame.buildProps.getProperty("build.patchLevel", "0"), 0);
-                String currVersion = GseaFijiTabsApplicationFrame.buildProps.getProperty("build.version", "4.0.0");
-                Properties latestGseaVersionProps = parseGseaVersionInfo(versionCheckInfo);
-                int latestMajor = NumberUtils.toInt(latestGseaVersionProps.getProperty("build.major", ""), currMajor);
-                int latestMinor = NumberUtils.toInt(latestGseaVersionProps.getProperty("build.minor", ""), currMinor);
-                int latestPatch = NumberUtils.toInt(latestGseaVersionProps.getProperty("build.patchLevel", ""), currPatch);
-
-                // Compare the current website version info to the local info and display/log a message if there's a new version.
-                if (newerVersionExists(currMajor, latestMajor, currMinor, latestMinor, currPatch, latestPatch)) {
-                    String latestVersion = latestGseaVersionProps.getProperty("build.version", "");
-                    String latestTimestamp = latestGseaVersionProps.getProperty("build.timestamp", "");
-                    String updateMessage = latestGseaVersionProps.getProperty("build.updateMessage", "");
-                    String message = "Your current version of GSEA is " + currVersion + ". A newer version";
-                    if (StringUtils.isNotBlank(latestVersion)) {
-                        message += " (" + latestVersion + ")";
-                    }
-                    message += " is available." + IOUtils.LINE_SEPARATOR
-                            + "To update, please download from http://gsea-msigdb.org/gsea/downloads.jsp";
-                    if (StringUtils.isNotBlank(latestTimestamp)) {
-                            message += IOUtils.LINE_SEPARATOR + "(build date: " + latestTimestamp + ")";
-                    }
-                    if (StringUtils.isNotBlank(updateMessage)) {
-                        message += IOUtils.LINE_SEPARATOR + " " + updateMessage;
-                    }
-                    
-                    klog.info(message);
-                    klog.info("Note: GenePattern users should update through GenePattern.");
-                    
-                    if (parent != null) {
-                        UIUtil.showMessageDialog(parent, message);
+                int currMajor = NumberUtils.toInt(GseaFijiTabsApplicationFrame.buildProps.getProperty("build.major", "not_found"), -1);
+                int currMinor = NumberUtils.toInt(GseaFijiTabsApplicationFrame.buildProps.getProperty("build.minor", "not_found"), -1);
+                int currPatch = NumberUtils.toInt(GseaFijiTabsApplicationFrame.buildProps.getProperty("build.patchLevel", "not_found"), -1);
+                String currVersion = GseaFijiTabsApplicationFrame.buildProps.getProperty("build.version", "not_found");
+                
+                // Don't make the update check if the current version is in an unrecognizable form.  This is primarily
+                // for development builds.
+                if (currMajor < 0 || currMinor < 0 || currPatch < 0 || StringUtils.equals(currVersion, "not_found")) {
+                    klog.debug("Current version not recognized; skipping update check.");
+                } else {
+                    String versionQueryString = GSEA_UPDATE_CHECK_URL + "?currentVersion="
+                            + GseaFijiTabsApplicationFrame.buildProps.getProperty("build.version", "not_available")
+                            + "&extraProjectInfo=" + UPDATE_CHECK_EXTRA_PROJECT_INFO;
+    
+                    URL url = new URL(versionQueryString);
+                    URLConnection connection = url.openConnection();
+                    connection.setConnectTimeout(10000);
+                    connection.setReadTimeout(20000);
+                    String versionCheckInfo = IOUtils.toString(connection.getInputStream(), (Charset) null);
+    
+                    Properties latestGseaVersionProps = parseGseaVersionInfo(versionCheckInfo);
+                    int latestMajor = NumberUtils.toInt(latestGseaVersionProps.getProperty("build.major", ""), currMajor);
+                    int latestMinor = NumberUtils.toInt(latestGseaVersionProps.getProperty("build.minor", ""), currMinor);
+                    int latestPatch = NumberUtils.toInt(latestGseaVersionProps.getProperty("build.patchLevel", ""), currPatch);
+    
+                    // Compare the current website version info to the local info and display/log a message if there's a new version.
+                    if (newerVersionExists(currMajor, latestMajor, currMinor, latestMinor, currPatch, latestPatch)) {
+                        String latestVersion = latestGseaVersionProps.getProperty("build.version", "");
+                        String latestTimestamp = latestGseaVersionProps.getProperty("build.timestamp", "");
+                        String updateMessage = latestGseaVersionProps.getProperty("build.updateMessage", "");
+                        String message = "Your current version of GSEA is " + currVersion + ". A newer version";
+                        if (StringUtils.isNotBlank(latestVersion)) {
+                            message += " (" + latestVersion + ")";
+                        }
+                        message += " is available." + IOUtils.LINE_SEPARATOR
+                                + "To update, please download from "
+                                + GseaWebResources.getGseaBaseURL() + "/gsea/downloads.jsp";
+                        if (StringUtils.isNotBlank(latestTimestamp)) {
+                                message += IOUtils.LINE_SEPARATOR + "(build date: " + latestTimestamp + ")";
+                        }
+                        if (StringUtils.isNotBlank(updateMessage)) {
+                            message += IOUtils.LINE_SEPARATOR + " " + updateMessage;
+                        }
+                        
+                        klog.info(message);
+                        klog.info("Note: GenePattern users should update through GenePattern.");
+                        
+                        if (parent != null) {
+                            UIUtil.showMessageDialog(parent, message);
+                        }
                     }
                 }
             } catch (Throwable t) {

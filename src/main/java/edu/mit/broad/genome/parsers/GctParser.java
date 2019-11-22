@@ -191,8 +191,7 @@ public class GctParser extends AbstractParser {
 
             String desc = fields.get(1).toString().trim();
             if (desc.length() == 0) {
-                desc = Constants.NA; // dont exception out - genecluster like behavior
-                //throw new ParserException("Bad rowdescname - cant be empty at: " + i + " >" + currLine);
+                desc = Constants.NA;
             }
 
             if (nameBeforeDesc) {
