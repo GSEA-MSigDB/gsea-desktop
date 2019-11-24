@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 
 import xtools.api.param.BadParamException;
@@ -119,7 +120,7 @@ public class DatasetGenerators {
             String symbol = chip.getSymbol(ps, nm);
             String title = chip.getTitle(ps, nm);
 
-            if (symbol != null) {
+            if (StringUtils.isNotEmpty(symbol)) {
                 Object obj = symbolStrucMap.get(symbol);
                 if (obj == null) {
                     // Note: we only save the *first* title, so if they differ the subsequent
@@ -212,7 +213,7 @@ public class DatasetGenerators {
             final String symbol = chip.getSymbol(ps, nm);
             String title = chip.getTitle(ps, nm);
 
-            if (symbol != null) {
+            if (StringUtils.isNotEmpty(symbol)) {
                 Object obj = symbolStrucMap.get(symbol);
                 if (obj == null) {
                     // Note: we only save the *first* title, so if they differ the subsequent

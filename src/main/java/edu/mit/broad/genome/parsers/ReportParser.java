@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.parsers;
 
 import edu.mit.broad.genome.objects.PersistentObject;
@@ -88,7 +88,7 @@ public class ReportParser extends AbstractParser {
 
         while (currLine != null) {
 
-            String[] fields = ParseUtils.string2strings(currLine, "\t", false); // no spaces -- valid for file names!
+            String[] fields = ParseUtils.string2strings(currLine, "\t"); // no spaces -- valid for file names!
 
             if ((fields.length != 2) && (fields.length != 3)) {
                 throw new ParserException("Bad Report format -- expect 2 or 3, found: " + fields.length + " line: " + currLine);

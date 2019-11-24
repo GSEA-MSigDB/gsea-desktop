@@ -199,7 +199,7 @@ public class GmxParser extends AbstractParser {
     }
 
     private String[] parseNames(final String nameline) {
-        return ParseUtils.string2strings(nameline, "\t", false);
+        return ParseUtils.string2strings(nameline, "\t");
     }
 
 }    // End GmxParser

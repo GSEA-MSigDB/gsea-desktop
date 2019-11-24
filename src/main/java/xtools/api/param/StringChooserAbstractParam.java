@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package xtools.api.param;
 
 import edu.mit.broad.genome.parsers.ParseUtils;
@@ -37,7 +37,7 @@ abstract class StringChooserAbstractParam extends AbstractObjectChooserParam {
     }
 
     protected String[] _parse(String s) {
-        return ParseUtils.string2strings(s, ",", false); // only commas!!
+        return ParseUtils.string2strings(s, ","); // only commas!!
     }
 
     public String[] getStrings() {

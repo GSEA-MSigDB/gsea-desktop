@@ -3,14 +3,10 @@
  */
 package edu.mit.broad.vdb.meg;
 
-import edu.mit.broad.genome.Constants;
-
 /**
  * @author Aravind Subramanian
  */
 public interface Gene {
-
-    public static final Gene NULL_GENE = new DefaultGene(Constants.NULL, Constants.NULL);
 
     public String getSymbol();
 

@@ -211,7 +211,7 @@ public class TxtDatasetParser extends AbstractParser {
             String desc = fields.get(1).toString().trim();
 
             if (desc.length() == 0) {
-                throw new ParserException("Bad rowname - cant have empty desc at: " + i + " >" + currLine);
+                desc = Constants.NA;
             }
 
             rowDescs.add(desc);

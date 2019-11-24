@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.parsers;
 
 import edu.mit.broad.genome.NamingConventions;
@@ -72,7 +72,7 @@ public class RankedListParser extends AbstractParser {
 
         while (currLine != null) {
 
-            String[] fields = ParseUtils.string2strings(currLine, "\t", false); // DONT USE SPACES
+            String[] fields = ParseUtils.string2strings(currLine, "\t"); // DONT USE SPACES
             if (fields.length != 2) {
                 throw new ParserException("Bad rnk file format exception - expected 2 fields but got: " + fields.length + " line>" + currLine + "<");
                 //floats.add(cnt++);

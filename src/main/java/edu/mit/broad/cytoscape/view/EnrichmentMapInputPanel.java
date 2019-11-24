@@ -138,7 +138,7 @@ public class EnrichmentMapInputPanel extends AbstractViewer {
             }
         });
 
-        this.fReportParam = new ReportCacheChooserParam("Select a GSEA result from the application cache", false);
+        this.fReportParam = new ReportCacheChooserParam("Select a GSEA result from the application cache");
         this.fDirParam = new DirParam("dir", "[ OR ] Locate a GSEA result folder from the file system",
                 "[ OR ] Locate a GSEA report folder from the file system", false);
         final Param[] params = new Param[] { fReportParam, fDirParam };
