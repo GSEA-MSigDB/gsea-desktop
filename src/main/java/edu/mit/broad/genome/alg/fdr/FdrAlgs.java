@@ -92,12 +92,16 @@ public class FdrAlgs {
             throw new MismatchedSizeException("real_scores", real_scores.getSize(), "real_scores_norm", real_scores_norm.getSize());
         }
 
+        // NOTE: need to determine how the sort call treats NaN / Infinity.  We want a particular sort here,
+        // where these are NOT considered the greatest.  Note idea of storing Null instead...
         final RankedList real_scores_norm_sorted = real_scores_norm.sort(sort, order);
 
         for (int r = 0; r < real_scores.getSize(); r++) {
             final String name = real_scores.getLabel(r);
             final float real_score_of_name = real_scores.getScore(r);
 
+            // ... then, if storing Null we could just skip fdr.
+            // Or, it might be possible to check for NaN / Infinity here and skip.
             if (doPos && XMath.isPositive(real_score_of_name)) {
                 final SkewCorrectedFdrStruc fdr = new SkewCorrectedFdrStruc(name,
                         real_score_of_name,

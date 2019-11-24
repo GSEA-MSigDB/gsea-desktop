@@ -49,6 +49,13 @@ public class DatasetModed {
     }
 
     // lazilly filled
+    // NOTE: there's no point in doing this lazily since it's only used in one place and is populated
+    // completely in one pass shortly after.
+    // However, the bigger issue here is that the v.sort() call is going to treat NaN as *greater than*
+    // every other element, when in fact we want those to be least where this is used.  At least this is
+    // How it looks.
+    // Probably better to rename this class to make this sort of thing clear.
+    // OR: can we take care of it in FdrAlgs._calc_Fdrs_skewed()?  Maybe that's enough?
     public Vector getColumn_sorted(final int col) {
         Object obj = fColIndexExtractedVectorMap.get(col);
         if (obj == null) {

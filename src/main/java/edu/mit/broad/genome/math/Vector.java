@@ -484,24 +484,8 @@ public class Vector {
 
         if (fixlow) {
             // Probably better:
-            //double minallowed = (mean != +0.0d && mean != -0.0d) ? (0.20 * Math.abs(mean)) : 0.20;
-            //stddev = Math.max(stddev, minallowed)
-            // ... because a) it's faster, avoiding the math in some case; 
-            // and b) it avoids worries about test-for-zero accuracy for cases we don't care about. 
-            
-            double minallowed = (0.20 * Math.abs(mean));
-
-            // In the case of a zero mean, assume the mean is 1
-            //if (minallowed == +0.0d || minallowed == -0.0d) {
-            if (minallowed == 0) {
-                minallowed = 0.20;
-            }
-
-            if (minallowed < stddev) {
-                // keep orig
-            } else {
-                stddev = minallowed;
-            }
+            double minallowed = XMath.isNearlyZero(mean) ? (0.20 * Math.abs(mean)) : 0.20;
+            stddev = Math.max(stddev, minallowed);
         }
 
         computeset.stddev = stddev;
@@ -509,10 +493,6 @@ public class Vector {
         return computeset.stddev;
     }
 
-    public static boolean isNearlyZero(double d) {
-        return (d == +0.0d || d == -0.0d) ? true : Math.abs(d - 0.0d) <= Math.ulp(d);
-    }
-    
     // Specialized versions.
     public double stddevBiasedFixLow() {
         double stddev = Math.sqrt(_varBiased()); // @note call to _var and not var
@@ -728,8 +708,14 @@ public class Vector {
      * (the real value of every element is used)
      * Vector data order DOES change
      */
+    // There's an issue here: with Arrays.sort(), NaN is sorted as *greater than* all other elements.
+    // We want a different order (at least in some cases; or is it all?).  It might be enough to 
+    // instead store the elementData as Float[] and use Null instead of NaN as those (should) simply
+    // sort to the least value naturally.  Will need to be careful what other effects might come of
+    // that, though.  Need to check for Null everywhere?
     public void sort() {
         checkImmutable();
+        // Possible optimization: Arrays.parallelSort()
         Arrays.sort(elementData);
     }
 
@@ -738,6 +724,7 @@ public class Vector {
      * (the real value of every element is used)
      * Vector elements DO change
      */
+    // Note: same issue as above.
     public void revsort() {
         checkImmutable();
         Arrays.sort(elementData);

@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.alg.gsea;
 
 import edu.mit.broad.genome.alg.DatasetGenerators;
@@ -66,11 +66,17 @@ public class PValueCalculatorImpls {
         // the rnd maybe a superset of the null needed for the real ess's
         // so qualify (dont need to do this for the rnd ess as its users are  already
         // name (and not index) aware
+        // TODO: track down NaNs in the following calls (via rndNESS)
+        // Question here is how to represent these bubbling up to later stages.  Could be enough to just
+        // let everything calc to NaN or Infinity as it naturally would, and then just deal with those
+        // possible values in the later stages.
+        // Or, could store them as Null and detect that elsewhere.
         final Dataset rndNESS = new DatasetGenerators().extractRows(rndNESS_full, realESS.getLabels());
         final DatasetModed all_rnd_scores_norm_moded_pos = new DatasetModed(rndNESS, ScoreMode.POS_ONLY, SortMode.REAL, Order.DESCENDING);
         final DatasetModed all_rnd_scores_norm_moded_neg = new DatasetModed(rndNESS, ScoreMode.NEG_ONLY, SortMode.REAL, Order.ASCENDING);
 
         // @note this takes a few seconds to compute <++++ culprit for most time
+        // TODO: track down NaNs in the following call (via realNESS & all_rnd_scores_moded_{pos|neg})
         final FdrAlgs.FdrMap fdrMap = FdrAlgs.calcFdrs_skewed(realESS,
                 rndESS_full,
                 realNESS,
@@ -81,22 +87,27 @@ public class PValueCalculatorImpls {
 
         klog.debug("done fdrMap");
 
-        //final Matrix rndNesMatrix = rndNESS.getMatrix();
-
         final EnrichmentResult[] results = new EnrichmentResult[prev_results.length];
 
-        // @note Loop takes ~ 11 secs for 1500 gsets with 100 perms (123 secs for 1000 perms)!
         klog.debug("Started core calcFdrs in _calcGseaMethod for results: " + prev_results.length);
         for (int r = 0; r < prev_results.length; r++) {
 
 
             final String gsetName = prev_results[r].getGeneSetName();
             final FdrStruc fdrStruc = fdrMap.getFdr(gsetName);
+            
+            // If we store NES NaN / Infinity as Null, then some of these names will have no fdrStruc object 
+            // in the Map.  Or detect them when building and keep them out of the Map.
+            // Then we would skip certain things below...
+            
             final float es = realESS.getScore(gsetName);
             final float nes = realNESS.getScore(gsetName);
             final Vector es_rnd_for_this_set = rndESS_full.getRow(gsetName); // @note fetching by name, not index
+            // Skip this for null fdrStruc per PT's instructions
             final float np = XMath.getPValueTwoTailed_pos_neg_seperate(es, es_rnd_for_this_set); // NP
 
+            // TODO: track down NaNs in the following call (via nes, rndNESS_full)
+            // Or skip as per above
             final float fwer = XMath.getFWERTwoTailed(nes, rndNESS_full.getMatrix()); // FWER
 
             float fdr_value = fdrStruc.getFdr();
@@ -105,7 +116,9 @@ public class PValueCalculatorImpls {
                 //System.out.println("EANNANANA NAN: " + fdr_value + " " + gsetName);
             }
 
-            if (XMath.isSameSign(nes, es) == false) { // @note
+            // TODO: track down NaNs in the following call (via nes)
+            // Or, skip this adjustment in those cases
+            if (! XMath.isSameSign(nes, es)) { // @note
                 fdr_value = 1.0f;
             }
 
@@ -115,8 +128,12 @@ public class PValueCalculatorImpls {
 
             // @note this accessses the rl
 
+            // TODO: track down NaNs in the following call (via nes, fdr_value, fwer)
+            // Or skip as per above.  Either represent this as es_new = null, or with null fields as appropriate
+            // (prob better).  Then the report generation would detect those
             EnrichmentScore es_new = new EnrichmentScoreImpl(prev_results[r].getScore(), nes, np, fdr_value, fwer);
 
+            // TODO: track down NaNs in the following call (via es_new)
             results[r] = new EnrichmentResultImpl(prev_results[r].getRankedList(), prev_results[r].getTemplate(),
                     prev_results[r].getGeneSet(), prev_results[r].getChip(), es_new, prev_results[r].getRndESS(), fdrStruc);
 

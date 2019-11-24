@@ -137,25 +137,40 @@ public class Norms {
             final Vector onlyPos = rnd_orig.extract(ScoreMode.POS_ONLY);
             final Vector onlyNeg = rnd_orig.extract(ScoreMode.NEG_ONLY);
 
+            // Possible optimization here is to avoid the mean() calls and division operations
+            // in the cases where we *know* up-front that the calculation will result in an
+            // NaN or Infinity.  It is questionable whether that's actually faster than just
+            // performing the operation, though.
+            
+            // NOTE: I think we need to avoid Infinity or do something about it.  Better off just
+            // dealing with NaN values instead.  Can this be done?  Is that correct?
+            // Or is it better to just flag all the troublesome items similarly and have callers
+            // detect the flag?  Could maybe store them as Null and detect them that way.
+            
             this.meanPos_orig = (float) onlyPos.mean();
+            // Possible optimization: var value here is unused, though it may still be important
+            // because of its side effects in the Vector instance.  *If* that's the case, then
+            // find a more straightforward way to achieve those.
+            // (Likewise for Neg).
             this.varPos_orig = (float) Math.sqrt(onlyPos.var(false, false));
 
             this.meanNeg_orig = (float) onlyNeg.mean();
             this.varNeg_orig = (float) Math.sqrt(onlyNeg.var(false, false));
 
             // first norm the rnds
-            this.rndNorm = new Vector(rnd_orig.getSize());
-            for (int i = 0; i < rnd_orig.getSize(); i++) {
-                float score = rnd_orig.getElement(i);
-                if (XMath.isPositive(score)) {
-                    score = score / meanPos_orig;
+            int rnd_origSize = rnd_orig.getSize();
+			this.rndNorm = new Vector(rnd_origSize);
+            for (int i = 0; i < rnd_origSize; i++) {
+            	float orig = rnd_orig.getElement(i);
+                if (XMath.isPositive(orig)) {
+                	float score = orig / meanPos_orig;
+                	rndNorm.setElement(i, score);
                     numRndPos++;
                 } else {
-                    score = score / Math.abs(meanNeg_orig); // @note abs
+                	float score = orig / Math.abs(meanNeg_orig); // @note abs
+                    rndNorm.setElement(i, score);
                     numRndNeg++;
                 }
-
-                rndNorm.setElement(i, score);
             }
 
             // then norm the real

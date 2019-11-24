@@ -61,6 +61,7 @@ public class EnrichmentResultImpl implements EnrichmentResult {
      * @param rndEss
      * @param fdr_opt
      */
+    // TODO: track possible NaNs creeping in via the es object. 
     public EnrichmentResultImpl(final RankedList rl,
                                 final Template t_opt,
                                 final GeneSet gset,

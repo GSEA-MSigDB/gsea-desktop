@@ -884,4 +884,8 @@ public class XMath {
         return cnt;
     }
 
+	public static boolean isNearlyZero(double d) {
+	    return (d == +0.0d || d == -0.0d || Math.ulp(d) <= Double.MIN_VALUE);
+	}
+
 }    // End XMath
