@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.objects;
 
 import edu.mit.broad.genome.math.*;
@@ -36,11 +36,11 @@ public interface RankedList extends PersistentObject {
 
     public String getRankName(final int rank);
 
-    public List getRankedNames();
+    public List<String> getRankedNames();
 
     public String[] getRankedNamesArray();
 
-    public List getNamesOfUpOrDnXRanks(final int upOrDnX, final boolean up);
+    public List<String> getNamesOfUpOrDnXRanks(final int upOrDnX, final boolean up);
 
     public RankedList extractRanked(final GeneSet gset);
 
@@ -62,7 +62,7 @@ public interface RankedList extends PersistentObject {
 
             dels = DoubleElement.sort(SortMode.REAL, Order.ASCENDING, dels);
 
-            final List rankedLabels = new ArrayList();
+            final List<String> rankedLabels = new ArrayList<String>();
             final Vector rankedScores = new Vector(dels.length);
 
             for (int i = 0; i < dels.length; i++) {
@@ -71,11 +71,11 @@ public interface RankedList extends PersistentObject {
                 rankedScores.setElement(i, rl.getScore(name));
             }
 
-            return new DefaultRankedList(gset.getName(true), rankedLabels, rankedScores, true, true);
+            return new DefaultRankedList(gset.getName(true), rankedLabels, rankedScores);
         }
 
-        public static List getLabelsOfUpOrDnXRanks(int upOrDnX, boolean up, final RankedList rl) {
-            List list = new ArrayList();
+        public static List<String> getLabelsOfUpOrDnXRanks(int upOrDnX, boolean up, final RankedList rl) {
+            List<String> list = new ArrayList<String>();
             if (upOrDnX > rl.getSize()) {
                 upOrDnX = rl.getSize();
             }
@@ -96,7 +96,7 @@ public interface RankedList extends PersistentObject {
         }
 
         public static RankedList extractRanked(final ScoreMode smode, final RankedList rl) {
-            List rankedNames = new ArrayList();
+            List<String> rankedNames = new ArrayList<String>();
             TFloatArrayList rankedScores = new TFloatArrayList();
             String suffix = smode.getName();
 
@@ -113,9 +113,7 @@ public interface RankedList extends PersistentObject {
                 }
             }
 
-            return new DefaultRankedList(rl.getName() + "_" + suffix, rankedNames, rankedScores);
+            return new DefaultRankedList(rl.getName() + "_" + suffix, rankedNames, new Vector(rankedScores));
         }
     }
-
-} // End RankedList
-
+}

@@ -161,7 +161,7 @@ public class ResParser extends AbstractParser {
 
         currLineNum++;
 
-        ArrayList colArr = new ArrayList();
+        ArrayList<String> colArr = new ArrayList<String>();
         char theDelim = '\t';
         char[] tmpChar = new char[1];
 
@@ -218,7 +218,7 @@ public class ResParser extends AbstractParser {
         log.info("Found meg data as numRows:" + numRows + " numCols:" + numCols);
 
         // Now that dataset has been initialized, assign column names
-        List colNames = new ArrayList(numCols);
+        List<String> colNames = new ArrayList<String>(numCols);
 
         for (int i = 0; i < numCols; ++i) {
             colNames.add(colArr.get(i));
@@ -228,8 +228,8 @@ public class ResParser extends AbstractParser {
         // data line: <row desc> <tab> <row name> <tab> <ex1> <tab> <call1> <tab> <ex2> <tab> <call2>
         Matrix matrix = new Matrix(numRows, numCols);
         APMMatrix apmMatrix = new APMMatrix(numRows, numCols);
-        List rowNames = new ArrayList(numRows);
-        List rowDescs = new ArrayList(numRows);
+        List<String> rowNames = new ArrayList<String>(numRows);
+        List<String> rowDescs = new ArrayList<String>(numRows);
         int dataRowInd = 0;
 
         while (currLine != null) {
@@ -306,7 +306,7 @@ public class ResParser extends AbstractParser {
 
         final SampleAnnot sann = new SampleAnnot(sourcepath, colNames);
 
-        final Dataset ds = new DefaultDataset(sourcepath, matrix, rowNames, colNames, true, new Annot(fann, sann), apmMatrix);
+        final Dataset ds = new DefaultDataset(sourcepath, matrix, rowNames, colNames, new Annot(fann, sann), apmMatrix);
         ds.addComment(fComment.toString());
 
         System.out.println(">>>>> DONE PARSING: " + apmMatrix.getQuickInfo());

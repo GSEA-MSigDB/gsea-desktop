@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.objects;
 
 import edu.mit.broad.genome.math.Matrix;
@@ -62,7 +62,7 @@ public class DatasetProxy extends AbstractObject implements Dataset {
         return fRealDataset.getRows(gset);
     }
 
-    public List getRowNames() {
+    public List<String> getRowNames() {
         return fRealDataset.getRowNames();
     }
 
@@ -70,7 +70,7 @@ public class DatasetProxy extends AbstractObject implements Dataset {
         return fRealDataset.getRowIndex(rowname);
     }
 
-    public List getColumnNames() {
+    public List<String> getColumnNames() {
         return fRealDataset.getColumnNames();
     }
 

@@ -40,8 +40,8 @@ public class LinkedFactory {
         return new LinkedGeneSet(gset);
     }
 
-    public static Linked createLinkedProbeSet(String probeSetName) {
-        return new LinkedProbe(probeSetName);
+    public static Linked createLinkedSymbol(String symbol) {
+        return new LinkedProbe(symbol);
     }
 
     public static class SimpleLinkedPage implements Linked {

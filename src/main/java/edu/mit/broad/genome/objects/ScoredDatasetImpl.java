@@ -32,7 +32,7 @@ public class ScoredDatasetImpl extends AbstractObject implements ScoredDataset {
 
     private AddressedVector fIndVector;
 
-    private List fRowNamesInSdsOrder;
+    private List<String> fRowNamesInSdsOrder;
 
     private GeneSet fRowNamesGeneSet; // lazilly filled
 
@@ -76,7 +76,7 @@ public class ScoredDatasetImpl extends AbstractObject implements ScoredDataset {
         
         this.fDataset = ds;
         this.fIndVector = iv; //new AddressedVector(num, iv);    // data copied
-        this.fRowNamesInSdsOrder = new ArrayList(num);
+        this.fRowNamesInSdsOrder = new ArrayList<String>(num);
         
         for (int sdsrown = 0; sdsrown < num; sdsrown++) {
             int posinds = sdsrown2posinds(sdsrown);
@@ -120,20 +120,20 @@ public class ScoredDatasetImpl extends AbstractObject implements ScoredDataset {
 
     public String getRowName(final int sdsrown) {
         // dont have to sdsrown2posinds as already done at init for efficiency
-        return (String) fRowNamesInSdsOrder.get(sdsrown);
+        return fRowNamesInSdsOrder.get(sdsrown);
     }
 
-    public List getRankedNames() {
+    public List<String> getRankedNames() {
         return Collections.unmodifiableList(fRowNamesInSdsOrder);
     }
 
-    public List getRowNames() {
+    public List<String> getRowNames() {
         return getRankedNames();
     }
 
     public GeneSet getRowNamesGeneSet() {
         if (fRowNamesGeneSet == null) {
-            fRowNamesGeneSet = new GeneSet(getName(), new HashSet(getRankedNames()));
+            fRowNamesGeneSet = new GeneSet(getName(), new HashSet<String>(getRankedNames()));
         }
         return fRowNamesGeneSet;
     }
@@ -182,10 +182,10 @@ public class ScoredDatasetImpl extends AbstractObject implements ScoredDataset {
     }
 
     public String[] getRankedNamesArray() {
-        return (String[]) fRowNamesInSdsOrder.toArray(new String[fRowNamesInSdsOrder.size()]);
+        return fRowNamesInSdsOrder.toArray(new String[fRowNamesInSdsOrder.size()]);
     }
 
-    public List getColumnNames() {
+    public List<String> getColumnNames() {
         return fDataset.getColumnNames();
     }
 
@@ -312,7 +312,7 @@ public class ScoredDatasetImpl extends AbstractObject implements ScoredDataset {
         return scores;
     }
 
-    public List getNamesOfUpOrDnXRanks(int topOrBotX, boolean top) {
+    public List<String> getNamesOfUpOrDnXRanks(int topOrBotX, boolean top) {
         return Helper.getLabelsOfUpOrDnXRanks(topOrBotX, top, this);
     }
 

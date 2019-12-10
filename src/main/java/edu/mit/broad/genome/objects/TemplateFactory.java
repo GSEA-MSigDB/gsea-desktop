@@ -85,14 +85,13 @@ public class TemplateFactory extends TemplateImpl {
         }
 
         final Matrix matrix = new Matrix(fullDs.getNumRow(), origT.getNumItems());
-        final List colNames = new ArrayList(origT.getNumItems());
+        final List<String> colNames = new ArrayList<String>(origT.getNumItems());
         final Template.Item[] newItems = new Template.Item[origT.getNumItems()];
 
         final Template.Item[] orig_items = origT.getItemsOrderedByClassFirstAndThenProfilePos();
         for (int c = 0; c < orig_items.length; c++) {
             // first the dataset
             final int col2use = orig_items[c].getProfilePosition(); // @note extracting using the profile position
-            //log.debug("col2use: " + col2use);
             matrix.setColumn(c, fullDs.getColumn(col2use));
             colNames.add(fullDs.getColumnName(col2use));
             // then the new template
@@ -100,16 +99,10 @@ public class TemplateFactory extends TemplateImpl {
         }
 
         final String name = NamingConventions.generateName(fullDs, origT, true);
-        //log.debug("$$$ gen name: " + name + " " + maybeAuxTemplate.getName());
-        DefaultDataset newds = new DefaultDataset(name, matrix, fullDs.getRowNames(), colNames, true, false, true, fullDs.getAnnot());
+        DefaultDataset newds = new DefaultDataset(name, matrix, new ArrayList<String>(fullDs.getRowNames()), colNames, fullDs.getAnnot());
         newds.setProperty("extracted", "true"); // huh
 
-        //klog.debug(">>>>>>>>>>>>>> origT: " + origT.getName() + " newds: " + newds.getName());
-
         final Template newt = createTemplate(origT.getName() + "_repos", newItems, origT.isContinuous());
-
-        //klog.debug("orig class a: " + origT.getClassName(0) + " made: " + newt.getClassName(0));
-
         return new DatasetTemplate(newds, newt);
     }
 

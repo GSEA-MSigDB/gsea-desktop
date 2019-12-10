@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.alg.gsea;
 
 import edu.mit.broad.genome.Errors;
@@ -22,13 +22,13 @@ public class EdbAlgs {
         _nonNull(results);
 
         Vector v = new Vector(results.length);
-        List labels = new ArrayList();
+        List<String> labels = new ArrayList<String>();
         for (int i = 0; i < results.length; i++) {
             labels.add(results[i].getGeneSetName());
             v.setElement(i, results[i].getScore().getES());
         }
 
-        return new LabelledVector(labels, v, true);
+        return new LabelledVector(labels, v);
     }
 
     public static Dataset createRndESDataset(final String name, final EnrichmentResult[] results) {
@@ -39,7 +39,7 @@ public class EdbAlgs {
         int numPerms = enforceSameNumOfPerms(results);
         Matrix m = new Matrix(results.length, numPerms);
 
-        List rowNames = new ArrayList(results.length);
+        List<String> rowNames = new ArrayList<String>(results.length);
 
         for (int r = 0; r < results.length; r++) {
             Vector v = results[r].getRndESS();
@@ -47,7 +47,7 @@ public class EdbAlgs {
             rowNames.add(results[r].getGeneSetName());
         }
 
-        return new DefaultDataset(name + "_rnd_es", m, rowNames, _permColNames(numPerms), true, null);
+        return new DefaultDataset(name + "_rnd_es", m, rowNames, _permColNames(numPerms), null);
     }
 
     public static GeneSet[] getGeneSets(final EnrichmentResult[] results) {
@@ -56,7 +56,6 @@ public class EdbAlgs {
         final GeneSet[] gsets = new GeneSet[results.length];
         for (int r = 0; r < results.length; r++) {
             gsets[r] = results[r].getGeneSet();
-            //gsets[r] = gsets[r].cloneShallow(gsets[r].getName(true));
         }
 
         return gsets;
@@ -75,11 +74,11 @@ public class EdbAlgs {
      * @param results
      * @return
      */
-    public static Map hashByGeneSetName(final EnrichmentResult[] results) {
+    public static Map<String, EnrichmentResult> hashByGeneSetName(final EnrichmentResult[] results) {
 
         _nonNull(results);
 
-        final Map map = new HashMap();
+        final Map<String, EnrichmentResult> map = new HashMap<String, EnrichmentResult>();
 
         Errors errors = new Errors();
         for (int i = 0; i < results.length; i++) {
@@ -91,17 +90,15 @@ public class EdbAlgs {
             }
         }
 
-
         errors.barfIfNotEmptyRuntime();
-
         return map;
     }
 
-    public static List getGeneSetNames(final EnrichmentResult[] results) {
+    public static List<String> getGeneSetNames(final EnrichmentResult[] results) {
 
         _nonNull(results);
 
-        List list = new ArrayList(results.length);
+        List<String> list = new ArrayList<String>(results.length);
 
         for (int i = 0; i < results.length; i++) {
             list.add(results[i].getGeneSet().getName(true)); // note strip aux
@@ -126,13 +123,12 @@ public class EdbAlgs {
         return num;
     }
 
-    private static List _permColNames(int nperms) {
-        List colNames = new ArrayList();
+    private static List<String> _permColNames(int nperms) {
+        List<String> colNames = new ArrayList<String>(nperms);
         for (int c = 0; c < nperms; c++) {
             colNames.add("perm_" + (c + 1));
         }
 
         return colNames;
     }
-
-} // End EdbAlgs
+}

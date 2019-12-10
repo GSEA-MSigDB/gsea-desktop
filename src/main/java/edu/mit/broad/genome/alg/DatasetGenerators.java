@@ -6,7 +6,6 @@ package edu.mit.broad.genome.alg;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -22,6 +21,7 @@ import edu.mit.broad.genome.math.Matrix;
 import edu.mit.broad.genome.math.Order;
 import edu.mit.broad.genome.math.Range;
 import edu.mit.broad.genome.math.SortMode;
+import edu.mit.broad.genome.math.StringMatrix;
 import edu.mit.broad.genome.math.Vector;
 import edu.mit.broad.genome.math.XMath;
 import edu.mit.broad.genome.objects.Annot;
@@ -33,6 +33,7 @@ import edu.mit.broad.genome.objects.GeneSet;
 import edu.mit.broad.genome.objects.FeatureAnnot;
 import edu.mit.broad.genome.objects.RankedList;
 import edu.mit.broad.genome.objects.ScoredDataset;
+import edu.mit.broad.genome.objects.StringDataframe;
 import edu.mit.broad.genome.objects.Template;
 import edu.mit.broad.genome.objects.TemplateFactory;
 import edu.mit.broad.genome.objects.strucs.DatasetTemplate;
@@ -72,21 +73,8 @@ public class DatasetGenerators {
         }
 
 
-        return new ColorDatasetImpl(new DefaultDataset("foo", m, null), cs);
+        return new ColorDatasetImpl(new DefaultDataset("foo", m), cs);
     }
-
-    public Dataset collapse(final Dataset origDs,
-                            final Chip chip,
-                            final boolean includeOnlySymbols,
-                            final int collapse_gex_mode) {
-
-        return collapse_core(origDs, chip, includeOnlySymbols, collapse_gex_mode).symbolized;
-    }
-
-    // collapse_gex_mode -> 0 max vector
-    // 1 -> median
-    // @note IMP: because the chip files are already processed to remove aliases etc we dont have to do a alias lookup
-    // simply do it against the gene symbol chip
 
     /**
      * Converts an uncollapsed dataset, where rows correspond to probes, to collapsed dataset where row
@@ -99,58 +87,34 @@ public class DatasetGenerators {
      *                            1 is median_of_probes, 2 is mean_of_probes, 3 is sum_of_probes, 4 is remap_only.
      * @return
      */
-    public CollapsedDataset collapse_core(final Dataset origDs,
-                                          final Chip chip,
-                                          final boolean includeOnlySymbols,
-                                          final int collapse_gex_mode) {
+    public CollapsedDataset collapse(final Dataset origDs, final Chip chip, final boolean includeOnlySymbols,
+                                     final int collapse_gex_mode) {
         if (origDs == null) {
             throw new IllegalArgumentException("Param ds cannot be null");
         }
 
-        if (chip == null) {
-            throw new IllegalArgumentException("Param chip cannot be null");
-        }
-
-        final Map symbolStrucMap = new HashMap();
-
-        NullSymbolMode nm = (includeOnlySymbols) ? NullSymbolModes.OmitNulls : NullSymbolModes.ReplaceWithProbeId;
-
-        for (int r = 0; r < origDs.getNumRow(); r++) {
-            String ps = origDs.getRowName(r);
-            String symbol = chip.getSymbol(ps, nm);
-            String title = chip.getTitle(ps, nm);
-
-            if (StringUtils.isNotEmpty(symbol)) {
-                Object obj = symbolStrucMap.get(symbol);
-                if (obj == null) {
-                    // Note: we only save the *first* title, so if they differ the subsequent
-                    // ones are ignored.
-                    obj = new CollapseStruc(symbol, title);
-                }
-                ((CollapseStruc) obj).add(ps);
-                symbolStrucMap.put(symbol, obj);
-            }
-        }
+        CollapsedDataset cds = new CollapsedDataset();
+        cds.orig = origDs;
 
         // symbolStructMap is a mapping of present symbol names to CollapseStruc objects, where
         // CollapseStruc object identifies the collection of probes in the original dataset that
         // were found to map to the symbol.
+        final Map<String, CollapseStruc> symbolCollapseStrucMap = cds.symbolCollapseStrucMap;
+        populateCollapseStrucMap(origDs.getRowNames(), symbolCollapseStrucMap, chip, includeOnlySymbols, collapse_gex_mode);
 
-        Matrix m = new Matrix(symbolStrucMap.size(), origDs.getNumCol());
-        List rowNames = new ArrayList();
+        Matrix m = new Matrix(symbolCollapseStrucMap.size(), origDs.getNumCol());
+        List<String> rowNames = new ArrayList<String>();
         List<String> rowDescs = new ArrayList<String>();
-        Iterator it = symbolStrucMap.keySet().iterator();
+
         int row = 0;
-        while (it.hasNext()) {
-            Object o = it.next();
-            CollapseStruc collapseStruc = (CollapseStruc) symbolStrucMap.get(o);
+        for (String symbol: symbolCollapseStrucMap.keySet()) {
+            CollapseStruc collapseStruc = symbolCollapseStrucMap.get(symbol);
             rowNames.add(collapseStruc.symbol);
             rowDescs.add(collapseStruc.title);
 
             final String[] pss = collapseStruc.getProbes();
             if (pss.length == 1) {
                 String ps = pss[0];
-                //System.out.println("checking for: " + ps);
                 m.setRow(row, origDs.getRow(ps));
             } else {
                 // multiple probes mapped to this symbol
@@ -177,116 +141,130 @@ public class DatasetGenerators {
             row++;
         }
 
-        String extendedName = (collapse_gex_mode <= 3) ? "_collapsed_to_symbols" : "_remapped_to_symbols";
-        String name = origDs.getName() + extendedName;
+        String name = origDs.getName() + getExtendedName(collapse_gex_mode) + "_to_symbols";
         log.info("Creating collapsed dataset " + name + ", chosen mode " + collapse_gex_mode);
         Annot annot = new Annot(new FeatureAnnot(name, rowNames, rowDescs,
                 chip), origDs.getAnnot().getSampleAnnot_global());
 
-        CollapsedDataset cds = new CollapsedDataset();
-        cds.orig = origDs;
-        cds.symbolized = new DefaultDataset(name, m, rowNames, origDs.getColumnNames(), true, annot);
-        cds.symbolCollapseStrucMap = symbolStrucMap;
+        cds.symbolized = new DefaultDataset(name, m, rowNames, origDs.getColumnNames(), annot);
         return cds;
     }
+    
+	public CollapsedRL collapse(final RankedList origRL,
+	                            final Chip chip,
+	                            final boolean includeOnlySymbols,
+	                            final int collapse_gex_mode) {
+	    if (origRL == null) {
+	        throw new IllegalArgumentException("Param origRL cannot be null");
+	    }
+	
+		CollapsedRL collapsedRL = new CollapsedRL();
+	    collapsedRL.orig = origRL;
+	
+	    final Map<String, CollapseStruc> symbolCollapseStrucMap = collapsedRL.symbolCollapseStrucMap;
+	    populateCollapseStrucMap(origRL.getRankedNames(), symbolCollapseStrucMap, chip, includeOnlySymbols, collapse_gex_mode);
+	
+	    final Vector cl_scores = new Vector(symbolCollapseStrucMap.size());
+	    final List<String> cl_rowNames = new ArrayList<String>();
+	
+	    int row = 0;
+	    for (String symbol: symbolCollapseStrucMap.keySet()) {
+	        final CollapseStruc collapseStruc = symbolCollapseStrucMap.get(symbol);
+	        cl_rowNames.add(collapseStruc.symbol);
+	        final String[] pss = collapseStruc.getProbes();
+	        if (pss.length == 1) {
+	            String ps = pss[0];
+	            cl_scores.setElement(row, origRL.getScore(ps));
+	        } else {
+	            // TODO: This should really be done with an Enum rather than hard-coded index values
+	            float[] fss = origRL.getScores(new GeneSet("foo", "foo", pss));
+	            if (collapse_gex_mode == 0) {
+	                cl_scores.setElement(row, XMath.max(fss));
+	            } else if (collapse_gex_mode == 1) {
+	                cl_scores.setElement(row, XMath.median(fss));
+	            } else if (collapse_gex_mode == 2) {
+	                cl_scores.setElement(row, XMath.mean(fss));
+	            } else if (collapse_gex_mode == 3) {
+	                cl_scores.setElement(row, XMath.sum(fss));
+	            } else {
+	                // Remapping only.  We consider it an error if multiple probes map when in this mode
+	                throw new BadParamException("Multiple rows mapped to the symbol ''" + collapseStruc.symbol
+	                        + "'.  This is not allowed in Remap_only mode.", 1020);
+	            }
+	        }
+	        row++;
+	    }
+	
+	    if (cl_scores.getSize() == 0) {
+	        throw new BadParamException("The collapsed dataset was empty when used with chip:" + chip.getName(), 1005);
+	    }
+	
+	    String newName = origRL.getName() + getExtendedName(collapse_gex_mode);
+	    RankedList sortedRL = RankedListGenerators.sortByVectorAndGetRankedList(cl_scores, SortMode.REAL, Order.DESCENDING, cl_rowNames).cloneShallowRL(newName);
+		collapsedRL.symbolized = sortedRL;
+		return collapsedRL;
+	}
 
-    // collapse_gex_mode -> 0 max vector
-    // 1 -> median
-    public RankedList collapse(final RankedList origRL,
-                               final Chip chip,
-                               final boolean includeOnlySymbols,
-                               final int collapse_gex_mode) {
-        if (origRL == null) {
-            throw new IllegalArgumentException("Param origRL cannot be null");
-        }
+	private void populateCollapseStrucMap(List<String> origRowNames, final Map<String, CollapseStruc> symbolCollapseStrucMap,
+    		final Chip chip, final boolean includeOnlySymbols,
+            final int collapse_gex_mode) {
 
         if (chip == null) {
             throw new IllegalArgumentException("Param chip cannot be null");
         }
 
-        final Map symbolStrucMap = new HashMap();
-
         NullSymbolMode nm = (includeOnlySymbols) ? NullSymbolModes.OmitNulls : NullSymbolModes.ReplaceWithProbeId;
 
-        for (int r = 0; r < origRL.getSize(); r++) {
-            final String ps = origRL.getRankName(r);
-            final String symbol = chip.getSymbol(ps, nm);
-            String title = chip.getTitle(ps, nm);
-
+        for (String name: origRowNames) {
+            String symbol = chip.getSymbol(name, nm);
             if (StringUtils.isNotEmpty(symbol)) {
-                Object obj = symbolStrucMap.get(symbol);
-                if (obj == null) {
+            	CollapseStruc struc = symbolCollapseStrucMap.get(symbol);
+                if (struc == null) {
                     // Note: we only save the *first* title, so if they differ the subsequent
                     // ones are ignored.
-                    obj = new CollapseStruc(symbol, title);
+                    struc = new CollapseStruc(symbol, chip.getTitle(name, nm));
+                    symbolCollapseStrucMap.put(symbol, struc);
                 }
-                ((CollapseStruc) obj).add(ps);
-                symbolStrucMap.put(symbol, obj);
+                struc.add(name);
             }
         }
-
-        final Vector cl_scores = new Vector(symbolStrucMap.size());
-        final List cl_rowNames = new ArrayList();
-        final Iterator it = symbolStrucMap.keySet().iterator();
-
-        int row = 0;
-        while (it.hasNext()) {
-            final Object o = it.next();
-            final CollapseStruc collapseStruc = (CollapseStruc) symbolStrucMap.get(o);
-            cl_rowNames.add(collapseStruc.symbol);
-            final String[] pss = collapseStruc.getProbes();
-            if (pss.length == 1) {
-                String ps = pss[0];
-                //System.out.println("checking for: " + ps);
-                cl_scores.setElement(row, origRL.getScore(ps));
-            } else {
-                // TODO: This should really be done with an Enum rather than hard-coded index values
-                float[] fss = origRL.getScores(new GeneSet("foo", "foo", pss));
-                if (collapse_gex_mode == 0) {
-                    cl_scores.setElement(row, XMath.max(fss));
-                } else if (collapse_gex_mode == 1) {
-                    cl_scores.setElement(row, XMath.median(fss));
-                } else if (collapse_gex_mode == 2) {
-                    cl_scores.setElement(row, XMath.mean(fss));
-                } else if (collapse_gex_mode == 3) {
-                    cl_scores.setElement(row, XMath.sum(fss));
-                } else {
-                    // Remapping only.  We consider it an error if multiple probes map when in this mode
-                    throw new BadParamException("Multiple rows mapped to the symbol ''" + collapseStruc.symbol
-                            + "'.  This is not allowed in Remap_only mode.", 1020);
-                }
-            }
-            row++;
-        }
-
-        String extendedName = (collapse_gex_mode <= 3) ? "_collapsed" : "_remapped";
-        String newName = origRL.getName() + extendedName;
-
-        if (cl_scores.getSize() == 0) {
-            throw new BadParamException("The collapsed dataset was empty when used with chip:" + chip.getName(), 1005);
-        }
-
-        return RankedListGenerators.sortByVectorAndGetRankedList(cl_scores, SortMode.REAL, Order.DESCENDING, cl_rowNames).cloneShallowRL(newName);
-        // cant do this ad the scores might have got re-arranged
-        //return new DefaultRankedList(name, cl_rowNames, cl_scores, true, true);
     }
+    
+    private String getExtendedName(final int collapse_gex_mode) {
+		return (collapse_gex_mode <= 3) ? "_collapsed" : "_remapped";
+	}
 
-    public static class CollapsedDataset {
+	public static class CollapsedDataset {
         public Dataset symbolized;
         public Dataset orig;
-        public Map symbolCollapseStrucMap;
+        
+        final Map<String, CollapseStruc> symbolCollapseStrucMap = new HashMap<String, CollapseStruc>();
+
+    	public StringDataframe makeEtiologySdf() {
+            return DatasetGenerators.makeEtiologySdf(symbolCollapseStrucMap, symbolized.getRowNames());
+    	}
+    }
+    
+    public static class CollapsedRL {
+    	public RankedList symbolized;
+    	public RankedList orig;
+        final Map<String, CollapseStruc> symbolCollapseStrucMap = new HashMap<String, CollapseStruc>();
+
+    	public StringDataframe makeEtiologySdf() {
+            return DatasetGenerators.makeEtiologySdf(symbolCollapseStrucMap, symbolized.getRankedNames());
+    	}
     }
 
     public static class CollapseStruc {
 
         String symbol;
         String title;
-        Set probes;
+        Set<String> probes;
 
         CollapseStruc(String symbol, String title) {
             this.symbol = symbol;
             this.title = title;
-            this.probes = new HashSet();
+            this.probes = new HashSet<String>();
         }
 
         private void add(String ps) {
@@ -294,7 +272,7 @@ public class DatasetGenerators {
         }
 
         public String[] getProbes() {
-            return (String[]) probes.toArray(new String[probes.size()]);
+            return probes.toArray(new String[probes.size()]);
         }
 
         public String toString() {
@@ -324,7 +302,7 @@ public class DatasetGenerators {
     /**
      * Create a new dataset with profile data only for specified probes
      */
-    public Dataset extractRows(final String newName, final Dataset ds, final List rowNames) {
+    private Dataset extractRows(final String newName, final Dataset ds, final List<String> rowNames) {
 
         if (newName == null) {
             throw new IllegalArgumentException("Parameter newName cannot be null");
@@ -340,18 +318,14 @@ public class DatasetGenerators {
 
         DatasetBuilder builder = new DatasetBuilder(newName, ds.getColumnNames());
         int misscnt = 0;
-        List hitNames = new ArrayList();
+        List<String> hitNames = new ArrayList<String>();
 
         for (int i = 0; i < rowNames.size(); i++) {
             String probeName = (String) rowNames.get(i);
 
-            //System.out.println("### looking up probe name>" + (String)probenames.get(i) + "<");
             int index = ds.getRowIndex(probeName);
-            //System.out.println("GOT =" + index);
 
             if (index == -1) {
-                //log.debug("No match in dataset for probe: " + probenames.get(i));
-                //System.out.println("Missing: " + probenames.get(i));
                 misscnt++;
             } else {
                 hitNames.add(probeName);
@@ -363,8 +337,6 @@ public class DatasetGenerators {
             log.warn("Not all probes had matches. Total probes:" + rowNames.size()
                     + " missing number:" + misscnt + " hits:" + hitNames.size());
         }
-
-        // need tro
 
         return builder.generate(ds.getAnnot());
     }
@@ -382,7 +354,7 @@ public class DatasetGenerators {
         return extractRows(name, fullDs, gset.getMembers());
     }
 
-    public Dataset extractRows(final Dataset ds, final List rowNames) {
+    public Dataset extractRows(final Dataset ds, final List<String> rowNames) {
         if (rowNames == null) {
             throw new IllegalArgumentException("Parameter names cannot be null");
         }
@@ -409,10 +381,23 @@ public class DatasetGenerators {
         // then the usual extract method picks up rows in the same order as the fset
         GeneSet ofset = new GeneSet(gset, fullSds);
 
-        //System.out.println(">>>> " + ofset.getMembers());
-
         String name = NamingConventions.generateName(fullSds, gset, true);
         return extractRows(name, fullSds, ofset.getMembers());
     }
 
-}    // End DatasetGenerators
+	private static StringDataframe makeEtiologySdf(Map<String, CollapseStruc> symbolCollapseStrucMap, List<String> names) {
+		final String[] colNames = new String[]{"# MATCHING PROBE SETS", "MATCHING PROBE SET(S)"};
+        final String[] rowNames = new String[names.size()];
+        final StringMatrix sm = new StringMatrix(rowNames.length, colNames.length);
+        int r = 0;
+        for (String name: names) {
+            rowNames[r] = name;
+            CollapseStruc cs = symbolCollapseStrucMap.get(name);
+            sm.setElement(r, 0, cs.getProbes().length);
+            sm.setElement(r, 1, cs.getProbes());
+        	r++;
+		}
+
+        return new StringDataframe("Symbol_to_probe_set_mapping_details", sm, rowNames, colNames);
+	}
+}

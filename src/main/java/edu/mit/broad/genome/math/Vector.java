@@ -144,7 +144,7 @@ public class Vector {
         this(values, false);
     }
 
-    public Vector(final List dels) {
+    public Vector(final List<DoubleElement> dels) {
         this(DoubleElement.toFloats(dels));
     }
 
@@ -181,6 +181,7 @@ public class Vector {
      *
      * @param f
      */
+    // TODO: switch to List<Float>
     public Vector(final TFloatArrayList f) {
         this(f.toNativeArray());
     }

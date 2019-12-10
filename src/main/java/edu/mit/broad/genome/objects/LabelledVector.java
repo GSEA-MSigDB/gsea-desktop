@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.objects;
 
 import edu.mit.broad.genome.MismatchedSizeException;
@@ -25,20 +25,9 @@ import java.util.*;
  */
 public class LabelledVector extends AbstractObject {
 
-    private List fLabels;
+    private List<String> fLabels;
 
     private Vector fVector;
-
-    /**
-     * Class constructor
-     *
-     * @param name
-     * @param labels
-     * @param floats
-     */
-    public LabelledVector(final String name, final List labels, final TFloatArrayList floats) {
-        init(name, labels, new Vector(floats));
-    }
 
     /**
      * Class constructor
@@ -46,26 +35,8 @@ public class LabelledVector extends AbstractObject {
      * @param rl
      * @param shareRowNames
      */
-    public LabelledVector(final RankedList rl, final boolean shareRowNames) {
-
-        List labels;
-
-        if (shareRowNames) {
-            labels = rl.getRankedNames();
-        } else {
-            labels = new ArrayList(rl.getSize());
-        }
-
-        Vector values = new Vector(rl.getSize());
-
-        for (int r = 0; r < rl.getSize(); r++) {
-            if (!shareRowNames) {
-                labels.add(rl.getRankName(r));
-            }
-            values.setElement(r, rl.getScore(r));
-        }
-
-        init(rl.getName(), labels, values);
+    public LabelledVector(final RankedList rl) {
+        init(rl.getName(), rl.getRankedNames(), rl.getScoresV(true));
     }
 
     /**
@@ -97,12 +68,19 @@ public class LabelledVector extends AbstractObject {
      * @param v
      * @param shareLabels
      */
-    public LabelledVector(final List labels, final Vector v, final boolean shareLabels) {
-        if (shareLabels) {
-            this.init(labels, v);
-        } else {
-            this.init(new ArrayList(labels), v);
-        }
+    public LabelledVector(String name, final List<String> labels, final Vector v) {
+    	this.init(name, labels, v);
+    }
+
+    /**
+     * Class constructor
+     *
+     * @param labels
+     * @param v
+     * @param shareLabels
+     */
+    public LabelledVector(final List<String> labels, final Vector v) {
+    	this.init(labels, v);
     }
 
     /**
@@ -159,7 +137,7 @@ public class LabelledVector extends AbstractObject {
             throw new MismatchedSizeException("Vector", v.getSize(), "Labels", +alabels.length);
         }
 
-        List labels = new ArrayList(alabels.length);
+        List<String> labels = new ArrayList<String>(alabels.length);
         for (int i = 0; i < alabels.length; i++) {
             labels.add(alabels[i]);
         }
@@ -168,12 +146,12 @@ public class LabelledVector extends AbstractObject {
 
     }
 
-    private void init(final List labels, final Vector v) {
+    private void init(final List<String> labels, final Vector v) {
         init(null, labels, v);
     }
 
     // all duplication (if needed) must be done BEFORE calling this method
-    private void init(String name, final List labels, final Vector v) {
+    private void init(String name, final List<String> labels, final Vector v) {
         if (v == null) {
             throw new IllegalArgumentException("Param v cannot be null");
         }
@@ -217,10 +195,10 @@ public class LabelledVector extends AbstractObject {
     }
 
     public String getLabel(final int i) {
-        return fLabels.get(i).toString();
+        return fLabels.get(i);
     }
 
-    public List getLabels() {
+    public List<String> getLabels() {
         return Collections.unmodifiableList(fLabels);
     }
 
@@ -237,14 +215,14 @@ public class LabelledVector extends AbstractObject {
         DoubleElement[] dels = this.toDoubleElements();
         dels = DoubleElement.sort(sort, order, dels);
 
-        List labels = new ArrayList(dels.length);
+        List<String> labels = new ArrayList<String>(dels.length);
         Vector v = new Vector(dels.length);
         for (int i = 0; i < dels.length; i++) {
             labels.add(this.getLabel(dels[i].fIndex));
             v.setElement(i, (float) dels[i].fValue);
         }
 
-        return new DefaultRankedList(getName(), labels, v, true, true);
+        return new DefaultRankedList(getName(), labels, v);
     }
 
     private int _labelIndex(final String label) {

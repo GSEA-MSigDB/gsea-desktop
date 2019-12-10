@@ -94,7 +94,7 @@ public class Chip2Chip extends AbstractTool {
                 cell_id_linkMap.put(sm.getElementPos(r, 3), new LinkedFactory.SimpleLinkedFile("Details>>", files[r]));
             }
 
-            summary_table = new RichDataframe(new StringDataframe(mapper.getName(), sm, rowNames, colNames, true),
+            summary_table = new RichDataframe(new StringDataframe(mapper.getName(), sm, rowNames, colNames),
                     null, null, cell_id_linkMap);
         } // End etiology
     

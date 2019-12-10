@@ -86,7 +86,6 @@ public class PclParser extends AbstractParser {
     public List parse(String hackINeedFullPath, InputStream is) throws Exception {
 
         startImport(hackINeedFullPath);
-        //int nlines = DataStoreUtils.countLines(is, true); // @note this form doesnt work  / not impl yet
         int nlines = FileUtils.countLines(hackINeedFullPath, true);
         int nfloatlines = nlines - 2;
         log.debug("Number of float lines = " + nfloatlines);
@@ -94,7 +93,7 @@ public class PclParser extends AbstractParser {
         BufferedReader bin = new BufferedReader(new InputStreamReader(is));
         String currLine = nextLine(bin);
 
-        List colNames = ParseUtils.string2stringsList(currLine, "\t"); // spaces allowed in col names
+        List<String> colNames = ParseUtils.string2stringsList(currLine, "\t"); // spaces allowed in col names
         int expectedNCols = colNames.size();
         colNames.remove(0); // get rid of UNIQUID field name
         colNames.remove(0); // get rid of NAME field name
@@ -105,15 +104,15 @@ public class PclParser extends AbstractParser {
         nextLine(bin);
 
         // Initialize the Dataset and Annotation
-        List rowNames = new ArrayList(nfloatlines);
-        List rowDescs = new ArrayList(nfloatlines);
+        List<String> rowNames = new ArrayList<String>(nfloatlines);
+        List<String> rowDescs = new ArrayList<String>(nfloatlines);
         Matrix matrix = new Matrix(nfloatlines, colNames.size());
 
         int r = 0;
         currLine = nextLineTrimless(bin); // first line of float data @note trimless as may be missing fields
         while (currLine != null) {
             //System.out.println(">> " + currLine);
-            List fields = string2stringsV2(currLine, expectedNCols); // spaces allowed in name & desc field so DONT tokenize them
+            List<String> fields = string2stringsV2(currLine, expectedNCols); // spaces allowed in name & desc field so DONT tokenize them
 
             if (fields.size() != expectedNCols) { // silly check
                 throw new ParserException("Invalid format on line: " + currLine + " expected # fields = " + expectedNCols + " but found: " + fields.size());
@@ -164,7 +163,7 @@ public class PclParser extends AbstractParser {
 
         final SampleAnnot sann = new SampleAnnot(name, colNames);
 
-        Dataset ds = new DefaultDataset(name, matrix, rowNames, colNames, true, new Annot(fann, sann));
+        Dataset ds = new DefaultDataset(name, matrix, rowNames, colNames, new Annot(fann, sann));
         ds.addComment(fComment.toString());
 
         doneImport();

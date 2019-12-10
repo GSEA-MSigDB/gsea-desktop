@@ -340,7 +340,7 @@ public abstract class AbstractParser implements Parser {
 
     }
 
-    protected static List string2stringsV2(String s, int expectedLen) throws IllegalArgumentException {
+    protected static List<String> string2stringsV2(String s, int expectedLen) throws IllegalArgumentException {
 
         if (null == s) {
             throw new NullPointerException("Cannot work on null String");
@@ -348,9 +348,8 @@ public abstract class AbstractParser implements Parser {
 
         String delim = "\t"; // @note, always
         StringTokenizer tok = new StringTokenizer(s, delim, true); // note including the delim in rets
-        List ret = new ArrayList();
+        List<String> ret = new ArrayList<String>();
         String prev = null;
-        //System.out.println("PARSING>" + s + "<"  + tok.countTokens());
 
         int cnt = 0;
         while (tok.hasMoreTokens()) {
@@ -386,17 +385,17 @@ public abstract class AbstractParser implements Parser {
         } else {
             // @note added Nov 28, 2005
             // delete any extra tabs (ret.size() > expectedLen
-            List real_ret = new ArrayList();
+            List<String> real_ret = new ArrayList<String>();
             for (int i = 0; i < ret.size(); i++) {
                 if (i < expectedLen) {
                     real_ret.add(ret.get(i));
                 } else {
                     // dont add empty
-                    Object obj = ret.get(i);
-                    if (obj == null || obj.toString().trim().length() == 0) {
+                    String item = ret.get(i);
+                    if (item == null || item.trim().length() == 0) {
                         // dont add
                     } else {
-                        real_ret.add(obj); // cant do anything  might be a genuine format error
+                        real_ret.add(item); // cant do anything  might be a genuine format error
                     }
                 }
             }

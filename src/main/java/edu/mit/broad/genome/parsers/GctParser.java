@@ -136,7 +136,7 @@ public class GctParser extends AbstractParser {
         // First 2 fields name and desc are to be ignored
         currLine = nextLine(bin);
         //System.out.println(currLine);
-        List colnames = ParseUtils.string2stringsList(currLine, "\t"); // colnames can have spaces
+        List<String> colnames = ParseUtils.string2stringsList(currLine, "\t"); // colnames can have spaces
 
         colnames.remove(0);                                 // first elem is always nonsense
         colnames.remove(0);
@@ -147,7 +147,7 @@ public class GctParser extends AbstractParser {
 
         // At this point, currLine should contain the first data line
         // data line: <row name> <tab> <ex1> <tab> <ex2> <tab>
-        List lines = new ArrayList();
+        List<String> lines = new ArrayList<String>();
 
         currLine = nextLineTrimless(bin);
 
@@ -167,15 +167,15 @@ public class GctParser extends AbstractParser {
         return _parseHasDesc(objName, lines, colnames, nameBeforeDesc);
     }
 
-    private List _parseHasDesc(String objName, List lines, List colNames, boolean nameBeforeDesc) throws Exception {
+    private List _parseHasDesc(String objName, List<String> lines, List<String> colNames, boolean nameBeforeDesc) throws Exception {
         objName = NamingConventions.removeExtension(objName);
         Matrix matrix = new Matrix(lines.size(), colNames.size());
-        List rowNames = new ArrayList();
-        List rowDescs = new ArrayList();
+        List<String> rowNames = new ArrayList<String>();
+        List<String> rowDescs = new ArrayList<String>();
 
         for (int i = 0; i < lines.size(); i++) {
             String currLine = (String) lines.get(i);
-            List fields = string2stringsV2(currLine, colNames.size() + 2); // spaces allowed in name & desc field so DONT tokenize them
+            List<String> fields = string2stringsV2(currLine, colNames.size() + 2); // spaces allowed in name & desc field so DONT tokenize them
 
             if (fields.size() != colNames.size() + 1 + 1) {
                 //System.out.println(">> " + fields);
@@ -227,7 +227,7 @@ public class GctParser extends AbstractParser {
         ann.addComment(fComment.toString());
         final SampleAnnot sann = new SampleAnnot(objName, colNames);
 
-        final Dataset ds = new DefaultDataset(objName, matrix, rowNames, colNames, true, new Annot(ann, sann));
+        final Dataset ds = new DefaultDataset(objName, matrix, rowNames, colNames, new Annot(ann, sann));
         ds.addComment(fComment.toString());
         doneImport();
         return unmodlist(new PersistentObject[]{ds});

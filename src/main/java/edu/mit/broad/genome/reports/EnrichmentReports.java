@@ -34,6 +34,7 @@ import gnu.trove.TIntObjectHashMap;
 import org.apache.commons.io.FileUtils;
 import org.apache.ecs.StringElement;
 import org.apache.ecs.html.*;
+import org.apache.log4j.Logger;
 import org.genepattern.io.ImageUtil;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
@@ -63,6 +64,7 @@ import org.jfree.data.xy.XYSeriesCollection;
 
 import java.awt.*;
 import java.awt.Font;
+import java.awt.geom.Ellipse2D;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -74,7 +76,12 @@ import java.util.List;
 /**
  * Several enrichemnt related reports
  */
-public class EnrichmentReports extends ChartHelper {
+public class EnrichmentReports {
+    protected static final transient Logger klog = Logger.getLogger(EnrichmentReports.class);
+
+    public static Shape createCircleShape() {
+        return new Ellipse2D.Float(2f, 2f, 2f, 2f);
+    }
     //                                                             // 0   1          2        3     4     5
     protected static final String[] BASIC_COL_NAMES = new String[]{"GS<br> follow link to MSigDB",
             "GS DETAILS", "SIZE", "ES", "NES", "NOM p-val",
@@ -317,9 +324,9 @@ public class EnrichmentReports extends ChartHelper {
         final String name = edb.getName();
 
         // Then the GENE LIST AMD MARKER SELECTION REPORTS
-        out.println("Creating marker selection reports ...");
-        final RichDataframe rdfGeneList = MiscReports.annotateProbesNames(name, rlReal, fann_opt);
-        final File real_gene_list_file_xls = report.savePageXls(rdfGeneList.getDataframe(), "ranked_gene_list_" + classA_name_opt + "_versus_" + classB_name_opt + "_" + report.getTimestamp(), saveInThisDir);
+        klog.info("Creating marker selection reports ...");
+        final IDataframe sdfGeneList = MiscReports.createRankOrderedGeneList(name, rlReal, fann_opt);
+        final File real_gene_list_file_xls = report.savePageXls(sdfGeneList, "ranked_gene_list_" + classA_name_opt + "_versus_" + classB_name_opt + "_" + report.getTimestamp(), saveInThisDir);
         
         File real_gene_list_heat_map_corr_plot_html_file = null;
         if (my_gex_ds_for_heat_map != null && template != null) {
@@ -345,7 +352,7 @@ public class EnrichmentReports extends ChartHelper {
         }
 
         // Then the FDR reports
-        out.println("Creating FDR reports ...");
+        klog.info("Creating FDR reports ...");
         final EnrichmentResult[] results_pos = edb.getResults(new ComparatorFactory.EnrichmentResultByNESComparator(Order.DESCENDING), true);
         final BasicReportStruc pos_basic = createReport(results_pos, name, phenotypeName_opt, classA_name_opt, classB_name_opt,
                 rlReal, template, fann_opt,
@@ -353,7 +360,7 @@ public class EnrichmentReports extends ChartHelper {
                 topXSets, makeGeneSetsReport, createSvgs, createGcts, saveInThisDir);
         final RichDataframe pos_basic_rdf = pos_basic.rdf;
 
-        out.println("Done FDR reports for positive phenotype");
+        klog.info("Done FDR reports for positive phenotype");
 
         final EnrichmentResult[] results_neg = edb.getResults(new ComparatorFactory.EnrichmentResultByNESComparator(Order.ASCENDING), false);
         final BasicReportStruc neg_basic = createReport(results_neg, name,
@@ -363,7 +370,7 @@ public class EnrichmentReports extends ChartHelper {
                 topXSets, makeGeneSetsReport, createSvgs, createGcts, saveInThisDir);
         final RichDataframe neg_basic_rdf = neg_basic.rdf;
 
-        out.println("Done FDR reports for negative phenotype");
+        klog.info("Done FDR reports for negative phenotype");
 
         // Ok done calcs; begin formatting and outputting reports
         final String pos_name = "gsea_report_for_" + classA_name_opt + "_" + report.getTimestamp();
@@ -546,7 +553,7 @@ public class EnrichmentReports extends ChartHelper {
         reportIndexPage.addBlock(div, false);
 
         // ADVANCED REPORTS
-        out.println("Creating global reports ...");
+        klog.info("Creating global reports ...");
         div = new Div();
         ul = new UL();
         div.addElement(new H4("Global statistics and plots"));
@@ -580,15 +587,15 @@ public class EnrichmentReports extends ChartHelper {
             ((HtmlReportIndexPage) reportIndexPage).setAddBrowseFooter(false); // turn off the little browse footer
         }
 
-        out.println("Done all reports!!");
+        klog.info("Done all reports!!");
 
         // @todo @note always save the dataset and template also
 
-        List all_reports = new ArrayList(Arrays.asList(pos_basic.reports));
+        List<EnrichmentReport> all_reports = new ArrayList<EnrichmentReport>(Arrays.asList(pos_basic.reports));
         all_reports.addAll(Arrays.asList(neg_basic.reports));
 
         Ret ret = new Ret();
-        ret.rdb = new EnrichmentReportDbImpl((EnrichmentReport[]) all_reports.toArray(new EnrichmentReport[all_reports.size()]));
+        ret.rdb = new EnrichmentReportDbImpl(all_reports.toArray(new EnrichmentReport[all_reports.size()]));
         ret.savedInDir = saveInThisDir;
         ret.edb = edb;
         return ret;
@@ -619,7 +626,7 @@ public class EnrichmentReports extends ChartHelper {
         // for the bg shading of the hit plot -- just needs to be made once for all sets on this rl
         final IntervalMarker[] markers = _markers(rl);
 
-        List ereports = new ArrayList();
+        List<EnrichmentReport> ereports = new ArrayList<EnrichmentReport>();
         for (int r = 0; r < results.length; r++) {
             int coln = 0;
             final EnrichmentResult result = results[r];
@@ -676,7 +683,7 @@ public class EnrichmentReports extends ChartHelper {
             }
         }
 
-        StringDataframe sdf = new StringDataframe(dsName + "_basic", sm, gsetNames, BASIC_COL_NAMES, true);
+        StringDataframe sdf = new StringDataframe(dsName + "_basic", sm, gsetNames, BASIC_COL_NAMES);
         TIntIntHashMap colPrecision = new TIntIntHashMap();
         // TODO: evaluate these settings for report precision consistency
         colPrecision.put(COL_ES, 2);
@@ -686,9 +693,9 @@ public class EnrichmentReports extends ChartHelper {
         colPrecision.put(COL_FWER, 3);
 
         BasicReportStruc struc = new BasicReportStruc();
-        RichDataframe.MetaData md = new RichDataframe.MetaData(title, null, null, null, colPrecision);
+        RichDataframe.MetaData md = new RichDataframe.MetaData(title, colPrecision);
         struc.rdf = new RichDataframe(sdf, md, null, cell_id_linkMap);
-        struc.reports = (EnrichmentReport[]) ereports.toArray(new EnrichmentReport[ereports.size()]);
+        struc.reports = ereports.toArray(new EnrichmentReport[ereports.size()]);
         return struc;
     }
 
@@ -721,13 +728,7 @@ public class EnrichmentReports extends ChartHelper {
             }
         }
 
-        String name;
-        if (pos) {
-            name = "pos_snapshot";
-        } else {
-            name = "neg_snapshot";
-        }
-
+        String name = (pos) ? "pos_snapshot" : "neg_snapshot";
         HtmlPage page = new HtmlPage(name, "Snapshot of " + reports.length + " enrichment plots");
         page.addTable("Snapshot of enrichment results", table);
         return page;
@@ -844,7 +845,6 @@ public class EnrichmentReports extends ChartHelper {
 
         MyEnrichmentReportImpl mer = new MyEnrichmentReportImpl();
         mer.fHtmlPage = htmlPage;
-        mer.fPlot = combo;
         mer.fExcelPage = excelPage;
         return mer;
     }
@@ -874,30 +874,26 @@ public class EnrichmentReports extends ChartHelper {
 
         final TIntIntHashMap colIndexFloatPrecMap = new TIntIntHashMap();
         String[] colNames;
-        int symbolIndex;
-        int signalIndex;
         if (fann_opt != null && fann_opt.hasNativeDescriptions()) {
-            //                         0         1                                2          3
-            colNames = new String[]{"PROBE", "DESCRIPTION<br>(from dataset)", "GENE SYMBOL", "GENE_TITLE",
-                    "RANK IN GENE LIST", // 4
-                    "RANK METRIC SCORE", "RUNNING ES", // 5 and 6
+            //                         0         1
+            colNames = new String[]{"SYMBOL", "TITLE", 
+                    "RANK IN GENE LIST", // 2
+                    "RANK METRIC SCORE", "RUNNING ES", // 3 and 4
                     "CORE ENRICHMENT"};
             // TODO: evaluate this setting for report precision consistency
-            colIndexFloatPrecMap.put(5, 3);
-            colIndexFloatPrecMap.put(6, 4);
-            symbolIndex = 2;
+            colIndexFloatPrecMap.put(3, 3);
+            colIndexFloatPrecMap.put(4, 4);
         } else {
-            colNames = new String[]{"PROBE", "GENE SYMBOL", "GENE_TITLE",
-                    "RANK IN GENE LIST", // 3
-                    "RANK METRIC SCORE", "RUNNING ES", // 4 and 5
+            colNames = new String[]{"SYMBOL", // 0
+                    "RANK IN GENE LIST", // 1
+                    "RANK METRIC SCORE", "RUNNING ES", // 2 and 3
                     "CORE ENRICHMENT"};
-            symbolIndex = 1;
             // TODO: evaluate this setting for report precision consistency
-            colIndexFloatPrecMap.put(4, 3);
-            colIndexFloatPrecMap.put(5, 4);
+            colIndexFloatPrecMap.put(2, 3);
+            colIndexFloatPrecMap.put(3, 4);
         }
 
-        signalIndex = colNames.length - 1;
+        int signalIndex = colNames.length - 1;
 
         final TIntObjectHashMap cell_id_linkMap = new TIntObjectHashMap();
         final TIntObjectHashMap cell_id_colorMap = new TIntObjectHashMap();
@@ -906,45 +902,22 @@ public class EnrichmentReports extends ChartHelper {
         for (int r = 0; r < hitIndices.length; r++) {
             int coln = 0;
             final int rank = hitIndices[r];
-            final String probeName = rl.getRankName(rank);
+            final String symbol = rl.getRankName(rank);
             final double metricScore = rl.getScore(rank);
             final float res = esProfile.getElement(r);
-            String desc = null;
-            String geneSymbol = null;
-            String geneTitle = null;
 
-            try {
-                if (fann_opt != null) {
-                    desc = fann_opt.getNativeDesc(probeName);
-                    geneTitle = fann_opt.getGeneTitle(probeName);
-                    geneSymbol = fann_opt.getGeneSymbol(probeName);
-                }
-                if (geneSymbol != null) {
-                    cell_id_linkMap.put(sm.getElementPos(r, symbolIndex), LinkedFactory.createLinkedGeneSymbol(geneSymbol));
-                }
-            } catch (Throwable t) {
-                if (r == 0) {
-                    t.printStackTrace();
-                }
-            }
+            cell_id_linkMap.put(sm.getElementPos(r, 0), LinkedFactory.createLinkedSymbol(symbol));
 
-            cell_id_linkMap.put(sm.getElementPos(r, 0), LinkedFactory.createLinkedProbeSet(probeName));
-
-            sm.setElement(r, coln++, probeName);
+            sm.setElement(r, coln++, symbol);
             if (fann_opt != null && fann_opt.hasNativeDescriptions()) {
-                sm.setElement(r, coln++, desc);
+            	sm.setElement(r, coln++, fann_opt.getNativeDesc(symbol));
             }
-            sm.setElement(r, coln++, geneSymbol);
-            sm.setElement(r, coln++, geneTitle);
             sm.setElement(r, coln++, new Integer(rank));
 
-            //System.out.println("### >" + probeName + "< " + gset.getPosition(probeName) + "<<<< " + gset.getNumMembers() + " ismember: " + gset.isMember(probeName) + " members: " + gset.getMembers());
-
-            if (!gset.isMember(probeName)) {
-                klog.warn("The ranked list content doesnt match the gene set content. Missing mamber: " + probeName);
+            if (!gset.isMember(symbol)) {
+                klog.warn("The ranked list content doesnt match the gene set content. Missing member: " + symbol);
             }
 
-            //sm.setElement(r, coln++, new Integer(gset.getPosition(probeName)));
             sm.setElement(r, coln++, new Double(metricScore));
             sm.setElement(r, coln++, new Float(res));
 
@@ -956,8 +929,8 @@ public class EnrichmentReports extends ChartHelper {
             }
         }
 
-        final StringDataframe sdf = new StringDataframe(name, sm, colNames, true);
-        final RichDataframe.MetaData metaData = new RichDataframe.MetaData("GSEA details", "some caption", null, null, colIndexFloatPrecMap);
+        final StringDataframe sdf = new StringDataframe(name, sm, colNames);
+        final RichDataframe.MetaData metaData = new RichDataframe.MetaData("GSEA details", colIndexFloatPrecMap);
         return new RichDataframe(sdf, metaData, cell_id_colorMap, cell_id_linkMap);
     }
 
@@ -1446,7 +1419,7 @@ public class EnrichmentReports extends ChartHelper {
                     }
                 }
 
-                geneSets_sizes_file = report.savePageXls(new StringDataframe("gene_set_sizes", sm, rowNames, colNames, true));
+                geneSets_sizes_file = report.savePageXls(new StringDataframe("gene_set_sizes", sm, rowNames, colNames));
             } catch (Throwable t) {
                 klog.error(t); // dont penalize - not a critical error
                 geneSets_sizes_file = report.createFile("gene_set_sizes_errored_out.txt", "List of gene sets that errored out");
@@ -1473,7 +1446,6 @@ public class EnrichmentReports extends ChartHelper {
         private File fPlotFile;
         private File fHtmlFile;
 
-        private EnrichmentCharts fPlot;
         private HtmlPage fHtmlPage;
         private ExcelTxtPage fExcelPage;
 
@@ -1590,7 +1562,8 @@ public class EnrichmentReports extends ChartHelper {
             this.fGroup = g;
         }
 
-        public int indexOf(java.lang.Comparable comparable) {
+        // TODO: parameterize the type on the comparable
+        public int indexOf(Comparable comparable) {
             return 0;
         }
 
@@ -1612,7 +1585,8 @@ public class EnrichmentReports extends ChartHelper {
             return DomainOrder.NONE;
         }
 
-        public java.lang.Comparable getSeriesKey(int series) {
+        // TODO: parameterize the type on the comparable
+        public Comparable getSeriesKey(int series) {
             if (fSeriesNames == null) throw new IllegalStateException("Dataset has no series");
 
             return fSeriesNames[series];
@@ -1689,7 +1663,8 @@ public class EnrichmentReports extends ChartHelper {
             this.fGroup = g;
         }
 
-        public int indexOf(final java.lang.Comparable comparable) {
+        // TODO: parameterize the type on the comparable
+        public int indexOf(final Comparable comparable) {
             return 0;
         }
 
@@ -1711,7 +1686,8 @@ public class EnrichmentReports extends ChartHelper {
             return DomainOrder.NONE;
         }
 
-        public java.lang.Comparable getSeriesKey(int series) {
+        // TODO: parameterize the type on the comparable
+        public Comparable getSeriesKey(int series) {
             if (fSeriesNames == null) throw new IllegalStateException("Dataset has no series");
 
             return fSeriesNames[series];
@@ -1723,7 +1699,7 @@ public class EnrichmentReports extends ChartHelper {
     // but dont do the log thing for y-axis
     public static XChart createButterflyChart(final PermutationTest ptest) {
     
-        List xValues = new ArrayList();
+        List<Vector> xValues = new ArrayList<Vector>();
     
         Dataset pos_sig_levels = ptest.getSigLevels(true);
         Dataset neg_sig_levels = ptest.getSigLevels(false);
@@ -1732,7 +1708,7 @@ public class EnrichmentReports extends ChartHelper {
             yValues.setElement(i, i + 1);
         }
         final float[] sigLevels = ptest.getSigLevels();
-        final List xLabels = new ArrayList();
+        final List<String> xLabels = new ArrayList<String>();
         xLabels.add("Observed pos");
         xLabels.add("Observed neg");
         final RankedList rlReal = ptest.getRankedList();
@@ -1768,8 +1744,8 @@ public class EnrichmentReports extends ChartHelper {
     
         return new XChartImpl("butterfly_plot", "Butterfly plot of significance",
                 _createButterflyChart("Butterfly plot for: " + ptest.getName(), "Score (" + ptest.getMetric().getName() + ")",
-                        (Vector[]) xValues.toArray(new Vector[xValues.size()])
-                        , (String[]) xLabels.toArray(new String[xLabels.size()]), "Gene rank",
+                        xValues.toArray(new Vector[xValues.size()]),
+                        xLabels.toArray(new String[xLabels.size()]), "Gene rank",
                         yValues, classAName, classBName));
     }
 
@@ -1833,14 +1809,15 @@ public class EnrichmentReports extends ChartHelper {
         renderer.setSeriesLinesVisible(1, false); // real neg
     
         // Make colors same for pos and neg for teh same sig level
-        List colors = new ArrayList(Arrays.asList(new Color[]{Color.BLACK, Color.PINK, Color.GREEN}));
+        // TODO: this should be static, and wrapping the array should be unnecessary
+        List<Color> colors = new ArrayList<Color>(Arrays.asList(new Color[]{Color.BLACK, Color.PINK, Color.GREEN}));
         int ii = 0;
         for (int i = 2; i < serieses.length; i = i + 2) {
             renderer.setSeriesShapesVisible(i, false);
             renderer.setSeriesShapesVisible(i + 1, false);
             Paint color;
             if (ii < colors.size()) {
-                color = (Color) colors.get(ii);
+                color = colors.get(ii);
             } else {
                 color = renderer.getSeriesPaint(i);
             }

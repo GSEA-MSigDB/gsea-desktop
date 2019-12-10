@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.math;
 
 import edu.mit.broad.genome.objects.LabelledVector;
@@ -145,7 +145,7 @@ public class LabelledVectorProcessors {
             float stop_point_pos = stop_point;
             float start_point_neg = orig.getSize() - stop_point;
 
-            List names = new ArrayList();
+            List<String> names = new ArrayList<String>();
             TFloatArrayList scores = new TFloatArrayList();
 
             for (int r = 0; r < orig.getSize(); r++) {
@@ -161,7 +161,7 @@ public class LabelledVectorProcessors {
                 names.add(orig.getLabel(r));
             }
 
-            return new LabelledVector(orig.getName() + "_linearized", names, scores);
+            return new LabelledVector(orig.getName() + "_linearized", names, new Vector(scores));
         }
 
     }

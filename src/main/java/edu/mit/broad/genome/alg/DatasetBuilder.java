@@ -24,10 +24,10 @@ import java.util.List;
 public class DatasetBuilder {
 
     public String fName;
-    public List fRows;
-    public List fRowNames;
-    public List fRowDescs;
-    public List fColNames;
+    public List<Vector> fRows;
+    public List<String> fRowNames;
+    public List<String> fRowDescs;
+    public List<String> fColNames;
     public boolean fDoneBuilding;
 
     /**
@@ -35,7 +35,7 @@ public class DatasetBuilder {
      * <p/>
      * New dataset made has NO data shared with input params.
      */
-    public DatasetBuilder(final String name, final List colNames) {
+    public DatasetBuilder(final String name, final List<String> colNames) {
 
         if (name == null) {
             throw new IllegalArgumentException("Name param cant be null");
@@ -47,10 +47,10 @@ public class DatasetBuilder {
 
         this.fName = name;
         this.fDoneBuilding = false;
-        this.fColNames = new ArrayList(colNames); // safe copy
-        this.fRowNames = new ArrayList();
-        this.fRows = new ArrayList();
-        this.fRowDescs = new ArrayList();
+        this.fColNames = new ArrayList<String>(colNames); // safe copy
+        this.fRowNames = new ArrayList<String>();
+        this.fRows = new ArrayList<Vector>();
+        this.fRowDescs = new ArrayList<String>();
     }
 
     /**
@@ -74,12 +74,12 @@ public class DatasetBuilder {
         Matrix matrix = new Matrix(fRows.size(), fColNames.size());
 
         for (int i = 0; i < fRows.size(); i++) {
-            matrix.setRow(i, (Vector) fRows.get(i)); // this does a copy of the vector's floats so safe
+            matrix.setRow(i, fRows.get(i)); // this does a copy of the vector's floats so safe
         }
 
         // we reuse the data from this class in the default constructor as this class has NO
         // shared data with anyone else & hence safe.
-        DefaultDataset ds = new DefaultDataset(fName, matrix, fRowNames, fColNames, true, ann);
+        DefaultDataset ds = new DefaultDataset(fName, matrix, fRowNames, fColNames, ann);
         fDoneBuilding = true;
         return ds;
     }

@@ -93,7 +93,7 @@ public class TxtDatasetParser extends AbstractParser {
         String currLine = nextLine(bin);
 
         // 1st  non-empty, non-comment line are the column names
-        List colnames = ParseUtils.string2stringsList(currLine, "\t"); // colnames can have spaces
+        List<String> colnames = ParseUtils.string2stringsList(currLine, "\t"); // colnames can have spaces
 
         colnames.remove(0);                                 // first elem is always nonsense
 
@@ -110,7 +110,7 @@ public class TxtDatasetParser extends AbstractParser {
 
         // At this point, currLine should contain the first data line
         // data line: <row name> <tab> <ex1> <tab> <ex2> <tab>
-        List lines = new ArrayList();
+        List<String> lines = new ArrayList<String>();
 
         currLine = nextLineTrimless(bin);
 
@@ -121,7 +121,6 @@ public class TxtDatasetParser extends AbstractParser {
             currLine = nextLineTrimless(bin); /// imp for mv datasets -> last col(s) can be a tab
         }
 
-
         bin.close();
 
         if (hasDesc) {
@@ -130,15 +129,15 @@ public class TxtDatasetParser extends AbstractParser {
         return _parseNoDesc(objName, lines, colnames);
     }
 
-    private List _parseNoDesc(String objName, List lines, List colNames) throws Exception {
+    private List _parseNoDesc(String objName, List<String> lines, List<String> colNames) throws Exception {
         objName = NamingConventions.removeExtension(objName);
         Matrix matrix = new Matrix(lines.size(), colNames.size());
-        List rowNames = new ArrayList();
-        List rowDescs = new ArrayList();
+        List<String> rowNames = new ArrayList<String>();
+        List<String> rowDescs = new ArrayList<String>();
 
         for (int i = 0; i < lines.size(); i++) {
             String currLine = (String) lines.get(i);
-            List fields = string2stringsV2(currLine, colNames.size() + 1); // spaces allowed in name & desc field so DONT tokenize them
+            List<String> fields = string2stringsV2(currLine, colNames.size() + 1); // spaces allowed in name & desc field so DONT tokenize them
 
             if (fields.size() != colNames.size() + 1) {
                 //System.out.println(">> " + fields);
@@ -147,7 +146,7 @@ public class TxtDatasetParser extends AbstractParser {
                         + currLine + "<\nIf this dataset has missing values, use ImputeDataset to fill these in before importing as a Dataset");
             }
 
-            String rowname = fields.get(0).toString().trim();
+            String rowname = fields.get(0).trim();
             if (rowname.length() == 0) {
                 throw new ParserException("Bad rowname - cant be empty at: " + i + " >" + currLine);
             }
@@ -159,7 +158,7 @@ public class TxtDatasetParser extends AbstractParser {
 
             int coln = 0;
             for (int f = 1; f < fields.size(); f++) {
-                String s = fields.get(f).toString().trim();
+                String s = fields.get(f).trim();
                 float val;
                 if (s.length() == 0) {
                     val = Float.NaN;
@@ -180,21 +179,21 @@ public class TxtDatasetParser extends AbstractParser {
         ann.addComment(fComment.toString());
         final SampleAnnot sann = new SampleAnnot(objName, colNames);
 
-        final Dataset ds = new DefaultDataset(objName, matrix, rowNames, colNames, true, new Annot(ann, sann));
+        final Dataset ds = new DefaultDataset(objName, matrix, rowNames, colNames, new Annot(ann, sann));
         ds.addComment(fComment.toString());
         doneImport();
         return unmodlist(new PersistentObject[]{ds});
     }
 
-    private List _parseHasDesc(String objName, List lines, List colNames) throws Exception {
+    private List _parseHasDesc(String objName, List<String> lines, List<String> colNames) throws Exception {
         objName = NamingConventions.removeExtension(objName);
         Matrix matrix = new Matrix(lines.size(), colNames.size());
-        List rowNames = new ArrayList();
-        List rowDescs = new ArrayList();
+        List<String> rowNames = new ArrayList<String>();
+        List<String> rowDescs = new ArrayList<String>();
 
         for (int i = 0; i < lines.size(); i++) {
             String currLine = (String) lines.get(i);
-            List fields = string2stringsV2(currLine, colNames.size() + 2); // spaces allowed in name & desc field so DONT tokenize them
+            List<String> fields = string2stringsV2(currLine, colNames.size() + 2); // spaces allowed in name & desc field so DONT tokenize them
 
             if (fields.size() != colNames.size() + 2) {
                 //System.out.println(">> " + fields);
@@ -203,12 +202,12 @@ public class TxtDatasetParser extends AbstractParser {
                         + currLine + "<\nIf this dataset has missing values, use ImputeDataset to fill these in before importing as a Dataset");
             }
 
-            String rowname = fields.get(0).toString().trim();
+            String rowname = fields.get(0).trim();
             if (rowname.length() == 0) {
                 throw new ParserException("Bad rowname - cant be empty at: " + i + " >" + currLine);
             }
 
-            String desc = fields.get(1).toString().trim();
+            String desc = fields.get(1).trim();
 
             if (desc.length() == 0) {
                 desc = Constants.NA;
@@ -219,7 +218,7 @@ public class TxtDatasetParser extends AbstractParser {
 
             int coln = 0;
             for (int f = 2; f < fields.size(); f++) {
-                String s = fields.get(f).toString().trim();
+                String s = fields.get(f).trim();
                 float val;
                 if (s.length() == 0) {
                     val = Float.NaN;
@@ -240,11 +239,9 @@ public class TxtDatasetParser extends AbstractParser {
         ann.addComment(fComment.toString());
         final SampleAnnot sann = new SampleAnnot(objName, colNames);
 
-        final Dataset ds = new DefaultDataset(objName, matrix, rowNames, colNames, true, new Annot(ann, sann));
+        final Dataset ds = new DefaultDataset(objName, matrix, rowNames, colNames, new Annot(ann, sann));
         ds.addComment(fComment.toString());
         doneImport();
         return unmodlist(new PersistentObject[]{ds});
     }
-
-}    // End TxtDatasetParser
-
+}

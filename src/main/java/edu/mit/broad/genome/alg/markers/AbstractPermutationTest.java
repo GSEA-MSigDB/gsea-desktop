@@ -158,20 +158,20 @@ public abstract class AbstractPermutationTest implements PermutationTest {
     public Dataset getSigLevels(final boolean up) {
         checkCalced();
         checkCalced();
-        List ranks = new ArrayList();
+        List<String> ranks = new ArrayList<String>();
         for (int i = 0; i < getNumMarkers(); i++) {
             ranks.add("rank_" + i);
         }
 
-        List siglevel = new ArrayList();
+        List<String> siglevel = new ArrayList<String>();
         for (int i = 0; i < getSigLevels().length; i++) {
             siglevel.add("sig_" + getSigLevels()[i]);
         }
 
         if (up) {
-            return new DefaultDataset(getName() + "_up_rnd", fUpSignificanceLevelsMatrix, ranks, siglevel, true, null);
+            return new DefaultDataset(getName() + "_up_rnd", fUpSignificanceLevelsMatrix, ranks, siglevel, null);
         } else {
-            return new DefaultDataset(getName() + "_dn_rnd", fDnSignificanceLevelsMatrix, ranks, siglevel, true, null);
+            return new DefaultDataset(getName() + "_dn_rnd", fDnSignificanceLevelsMatrix, ranks, siglevel, null);
         }
     }
 

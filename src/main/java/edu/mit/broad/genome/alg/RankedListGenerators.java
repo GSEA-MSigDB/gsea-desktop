@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.alg;
 
 import edu.mit.broad.genome.math.*;
@@ -14,12 +14,8 @@ import java.util.List;
  */
 public class RankedListGenerators {
 
-    /**
-     * Class constructor
-     */
     private RankedListGenerators() {
     }
-
 
     /**
      * @param rl
@@ -28,7 +24,7 @@ public class RankedListGenerators {
      * @return
      */
     public static RankedList createBySorting(final RankedList rl, final SortMode sort, final Order order) {
-        LabelledVector lv = new LabelledVector(rl, true);
+        LabelledVector lv = new LabelledVector(rl);
         return lv.sort(sort, order); // creates a completely new LV
     }
 
@@ -37,34 +33,17 @@ public class RankedListGenerators {
         return lv.sort(sort, order); // creates a completely new LV
     }
 
-    /**
-     * @param iv
-     * @param sort
-     * @param order
-     * @param names
-     * @return
-     */
-    public static RankedList sortByVectorAndGetRankedList(final String name, final Vector iv, final SortMode sort,
-                                                          final Order order, final List names) {
-
-        final DoubleElement[] dels = _sort(new AddressedVector(iv, true), sort, order);
-        final Vector v = new Vector(dels.length);
-        final List clonedLabels = new ArrayList();
-        for (int i = 0; i < dels.length; i++) {
-            v.setElement(i, (float) dels[i].fValue);
-            clonedLabels.add(names.get(dels[i].fIndex));
-        }
-
-        if (name == null) {
-            return new DefaultRankedList(clonedLabels, v, true, true);
-        } else {
-            return new DefaultRankedList(name, clonedLabels, v, true, true);
-        }
-    }
-
     public static RankedList sortByVectorAndGetRankedList(final Vector iv, final SortMode sort,
-                                                          final Order order, final List names) {
-        return RankedListGenerators.sortByVectorAndGetRankedList(null, iv, sort, order, names);
+                                                          final Order order, final List<String> names) {
+        final DoubleElement[] dels = RankedListGenerators._sort(new AddressedVector(iv, true), sort, order);
+		final Vector v = new Vector(dels.length);
+		final List<String> clonedLabels = new ArrayList<String>();
+		for (int i = 0; i < dels.length; i++) {
+		    v.setElement(i, (float) dels[i].fValue);
+		    clonedLabels.add(names.get(dels[i].fIndex));
+		}
+		
+		return new DefaultRankedList(null, clonedLabels, v);
     }
 
     protected static DoubleElement[] _sort(final AddressedVector av, final SortMode sort, final Order order) {
@@ -75,6 +54,4 @@ public class RankedListGenerators {
 
         return DoubleElement.sort(sort, order, dels);
     }
-
-
-} // End class RankedListGenerators
+}

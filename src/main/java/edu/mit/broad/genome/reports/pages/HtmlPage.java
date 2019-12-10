@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.reports.pages;
 
 import edu.mit.broad.genome.*;
@@ -317,14 +317,6 @@ public class HtmlPage implements Page {
                     }
 
                     td = HtmlFormat._td(s, rdf.getElementColor(r, c), rdf.getElementLink(r, c));
-
-                    // additional formatting
-                    if (metaData != null) {
-                        String align = metaData.getColumnAlignment(c);
-                        if (align != null) {
-                            td.setAlign(align);
-                        }
-                    }
 
                 } else {
                     td = new TD(); // empty to keep the synch up

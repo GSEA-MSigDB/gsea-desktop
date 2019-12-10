@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.objects;
 
 import edu.mit.broad.genome.math.ScoreMode;
@@ -59,7 +59,7 @@ public class RankedListJITImpl extends AbstractObject implements RankedList {
         return _rl().getRankName(rank);
     }
 
-    public List getRankedNames() {
+    public List<String> getRankedNames() {
         return _rl().getRankedNames();
     }
 
@@ -100,7 +100,7 @@ public class RankedListJITImpl extends AbstractObject implements RankedList {
         return _rl().getSize(smode);
     }
 
-    public List getNamesOfUpOrDnXRanks(int topOrBotX, boolean top) {
+    public List<String> getNamesOfUpOrDnXRanks(int topOrBotX, boolean top) {
         return _rl().getNamesOfUpOrDnXRanks(topOrBotX, top);
     }
 

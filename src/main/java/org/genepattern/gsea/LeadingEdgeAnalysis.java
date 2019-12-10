@@ -98,7 +98,7 @@ public class LeadingEdgeAnalysis {
         }
 
         return new DefaultDataset(ds.getName(), m, ds.getRowNames(), ds
-                .getColumnNames(), true, ds.getAnnot());
+                .getColumnNames(), ds.getAnnot());
     }
 
     public void setResultDirectory(File file) {
@@ -153,15 +153,14 @@ public class LeadingEdgeAnalysis {
         // reorder genesets so that they are in the same order as the clustered
         // gene sets
         GeneSet[] reorderedGeneSets = new GeneSet[gsets.length];
-        Map geneSetName2Index = new HashMap();
+        Map<String, Integer> geneSetName2Index = new HashMap<String, Integer>();
         for (int i = 0; i < gsets.length; i++) {
-            geneSetName2Index.put(gsets[i].getName(true), new Integer(i));
+            geneSetName2Index.put(gsets[i].getName(true), i);
         }
 
         for (int i = 0; i < gsets.length; i++) {
             String geneSetName = lev_ds_clustered_m.getRowName(i);
-            reorderedGeneSets[i] = gsets[((Integer) geneSetName2Index
-                    .get(geneSetName)).intValue()];
+            reorderedGeneSets[i] = gsets[geneSetName2Index.get(geneSetName)];
         }
 
         geneSetSimilarityPanel.setGeneSets(reorderedGeneSets);

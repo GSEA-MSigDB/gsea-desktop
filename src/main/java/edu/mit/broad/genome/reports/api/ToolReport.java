@@ -58,12 +58,6 @@ public class ToolReport implements Report {
     private transient Logger log = Logger.getLogger(this.getClass());
     private transient static Logger klog = Logger.getLogger(ToolReport.class);
 
-    /**
-     * @maint ALL OF THE OBJECTS STORED NEED TO BE SERIALIZABLE (as stored in http session)
-     * @maint IMP IMP IMP
-     * If you add more objects make sure to check if the sizeXXX and allXXX methods
-     * need to be updated
-     */
     private static String COMMON_ERROR_PREFIX = "The Tool ran successfully but at least one part of the reports production failed\nwith the following details\nThe reports is INcomplete";
 
     /**
@@ -74,6 +68,7 @@ public class ToolReport implements Report {
     // // (see Web stuff for example where each page is a tool and we dont want to cache)
     private Tool fTool_opt; // not always cached
 
+    // TODO: parameterize the type of the Class
     private Class fProducerClass;
 
     private String fProducerName;
@@ -105,7 +100,7 @@ public class ToolReport implements Report {
      */
     private File fReportParamsFile;
 
-    private List fErrors;
+    private List<Throwable> fErrors;
 
     /**
      * Contains Page objects
@@ -370,17 +365,15 @@ public class ToolReport implements Report {
     }
 
     public File[] getFilesProduced() {
-        List files = fPages.getFiles_list();
+        List<File> files = fPages.getFiles_list();
         if (fHtmlIndexPageFile != null && fHtmlIndexPageFile.exists() && !files.contains(fHtmlIndexPageFile)) {
             files.add(fHtmlIndexPageFile);
         }
 
-        return (File[]) files.toArray(new File[files.size()]);
+        return files.toArray(new File[files.size()]);
     }
 
     public int getNumPagesMade() {
-        //System.out.println("$$$$$$$$$$$$$$$$$$ " + fPages.size() + " " + fNumPagesAdded);
-        //return fPages.size();
         return fNumPagesAdded;
     }
 
@@ -391,7 +384,7 @@ public class ToolReport implements Report {
     // this must never fail
     public void addError(final String msg, final Throwable t) {
         if (fErrors == null) {
-            fErrors = new ArrayList();
+            fErrors = new ArrayList<Throwable>();
         }
 
         fErrors.add(t);
@@ -536,6 +529,7 @@ public class ToolReport implements Report {
         }
 
         if (idf instanceof StringDataframe) {
+        	// TODO: Note questionable NaN behavior
             ((StringDataframe) idf).replace("NaN", ""); // @note default bhaviour
         }
 
@@ -1042,8 +1036,8 @@ public class ToolReport implements Report {
      */
     private static class Pages implements java.io.Serializable {
 
-        private List plist;
-        private List flist;
+        private List<Page> plist;
+        private List<File> flist;
 
         /**
          * Utility fields for the event firing mechanism
@@ -1053,8 +1047,8 @@ public class ToolReport implements Report {
         //private PropertyChangeSupport pageAddedSupport;
 
         Pages() {
-            this.plist = new ArrayList();
-            this.flist = new ArrayList();
+            this.plist = new ArrayList<Page>();
+            this.flist = new ArrayList<File>();
         }
 
         private void writeObject(java.io.ObjectOutputStream out) {
@@ -1075,7 +1069,7 @@ public class ToolReport implements Report {
             flist.add(page.getFile());
         }
 
-        List getFiles_list() {
+        List<File> getFiles_list() {
             return flist;
         }
     }

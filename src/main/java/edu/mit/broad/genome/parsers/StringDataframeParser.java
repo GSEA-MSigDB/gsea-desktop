@@ -158,9 +158,7 @@ public class StringDataframeParser extends AbstractParser {
         for (int i = 0; i < lines.size(); i++) {
             String currLine = (String) lines.get(i);
 
-            List fields = string2stringsV2(currLine, colNames.size() + 1); // + 1 for the name col
-
-
+            List<String> fields = string2stringsV2(currLine, colNames.size() + 1); // + 1 for the name col
             if (fields.size() != colNames.size() + 1) {
                 throw new ParserException("Bad format - expect ncols: " + (colNames.size() + 1)
                         + " but found: " + fields.size() + " on line: "
@@ -181,10 +179,8 @@ public class StringDataframeParser extends AbstractParser {
 
         }
 
-        StringDataframe sdf = new StringDataframe(objname, matrix, rowNames, colNames, true);
+        StringDataframe sdf = new StringDataframe(objname, matrix, rowNames, colNames);
         sdf.addComment(fComment.toString());
-
         return sdf;
-
     }
 }

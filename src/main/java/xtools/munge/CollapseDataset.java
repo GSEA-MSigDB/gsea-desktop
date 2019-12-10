@@ -4,9 +4,7 @@
 package xtools.munge;
 
 import edu.mit.broad.genome.alg.DatasetGenerators;
-import edu.mit.broad.genome.math.StringMatrix;
 import edu.mit.broad.genome.objects.Dataset;
-import edu.mit.broad.genome.objects.StringDataframe;
 import edu.mit.broad.vdb.chip.Chip;
 import xtools.api.AbstractTool;
 import xtools.api.ToolCategory;
@@ -64,28 +62,15 @@ public class CollapseDataset extends AbstractTool {
         final Chip chip = fChipParam.getChip();
 
         Dataset ds = fDatasetParam.getDataset();
-
-        DatasetGenerators.CollapsedDataset cds = new DatasetGenerators().collapse_core(ds, chip,
+        DatasetGenerators.CollapsedDataset cds = new DatasetGenerators().collapse(ds, chip,
                 fIncludeOnlySymbols.isTrue(), fModeParm.getStringIndexChoosen());
 
         log.debug("# after collapsing: " + cds.symbolized.getNumRow());
 
         fReport.savePage(cds.symbolized);
 
-        // Make a report with the etiology
-
         // Make a summary etiology always
-        final String[] colNames = new String[]{"# MATCHING PROBE SETS", "MATCHING PROBE SET(S)"};
-        final String[] rowNames = new String[cds.symbolized.getNumRow()];
-        final StringMatrix sm = new StringMatrix(rowNames.length, colNames.length);
-        for (int r = 0; r < cds.symbolized.getNumRow(); r++) {
-            rowNames[r] = cds.symbolized.getRowName(r);
-            DatasetGenerators.CollapseStruc cs = (DatasetGenerators.CollapseStruc) cds.symbolCollapseStrucMap.get(cds.symbolized.getRowName(r));
-            sm.setElement(r, 0, cs.getProbes().length);
-            sm.setElement(r, 1, cs.getProbes());
-        }
-
-        fReport.savePageXls(new StringDataframe("Symbol_to_probe_set_mapping_details", sm, rowNames, colNames, true));
+        fReport.savePageXls(cds.makeEtiologySdf());
 
         doneExec();
     }

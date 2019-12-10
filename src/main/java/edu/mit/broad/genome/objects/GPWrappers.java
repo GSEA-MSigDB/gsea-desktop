@@ -12,12 +12,17 @@ import org.genepattern.heatmap.ColorScheme;
 import org.genepattern.heatmap.image.FeatureAnnotator;
 import org.genepattern.heatmap.image.SampleAnnotator;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
-import java.awt.*;
+
+import java.awt.Color;
+import java.awt.Component;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 /**
  * @author Aravind Subramanian
@@ -149,7 +154,7 @@ public class GPWrappers {
             synched_annot = new Annot(annot_opt.getFeatureAnnot(), annot_opt.getSampleAnnot_synched(colNames));
         }
 
-        return new DefaultDataset("conv", m, rowNames, colNames, true, synched_annot);
+        return new DefaultDataset("conv", m, rowNames, colNames, synched_annot);
     }
 
     public static FeatureAnnotator createFeatureAnnotator(final Dataset ds) {
@@ -186,8 +191,8 @@ public class GPWrappers {
                 return 2; // symbol and title
             }
 
-            public java.util.List getColors(final String featureName) {
-                return Collections.EMPTY_LIST;
+            public List<Color> getColors(final String featureName) {
+                return Collections.emptyList();
             }
         };
     }
@@ -205,13 +210,11 @@ public class GPWrappers {
                     return t_opt.getItemColor(ds.getColumnIndex(sampleName));
                 } else {
                     return Color.WHITE;
-                    //return Color.GRAY; // @todo fix
                 }
             }
 
             public boolean hasPhenotypeColors() {
                 return true;
-                //return t_opt != null;
             }
 
             public String getLabel(int i) {
@@ -223,13 +226,13 @@ public class GPWrappers {
             }
 
             // the colors for the sample at the given column
-            public java.util.List getColors(final String sampleName) {
+            public List<Color> getColors(final String sampleName) {
 
                 if (ds.getAnnot() == null || ds.getAnnot().getSampleAnnot_global() == null) {
-                    return new ArrayList();
+                    return new ArrayList<Color>();
                 }
 
-                java.util.List list = new ArrayList();
+                List<Color> list = new ArrayList<Color>();
                 SampleAnnot sa = ds.getAnnot().getSampleAnnot_global();
 
                 ColorMap.Columns cm = sa.getColorMap();
@@ -292,15 +295,15 @@ public class GPWrappers {
             return fDataset.getColumnName(i);
         }
 
-        public int getRowIndex(java.lang.String pmid) {
+        public int getRowIndex(String pmid) {
             return fDataset.getRowIndex(pmid);
         }
 
-        public int getColumnIndex(final java.lang.String pmid) {
+        public int getColumnIndex(final String pmid) {
             return fDataset.getColumnIndex(pmid);
         }
 
-        public java.lang.String getValueAsString(final int i, final int i1) {
+        public String getValueAsString(final int i, final int i1) {
             return Double.toString(getValue(i, i1));
         }
 

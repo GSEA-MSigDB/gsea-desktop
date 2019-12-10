@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.alg.gsea;
 
 import edu.mit.broad.genome.math.Matrix;
@@ -56,7 +56,7 @@ public class Norms {
 
         final Vector normRealScores = new Vector(realScores.getSize());
         final String[] labels = new String[realScores.getSize()];
-        final List labels_list = new ArrayList();
+        final List<String> labels_list = new ArrayList<String>();
 
         // @note end ds may have more rows that in the real scores
         // we pick only those that we want
@@ -77,7 +77,7 @@ public class Norms {
 
         Struc struc = new Struc();
         struc.normReal = new LabelledVector(realScores.getName() + "_norm", labels, normRealScores);
-        struc.normRnd = new DefaultDataset("norm", normRndScoresMatrix, labels_list, rndScores_full.getColumnNames(), true, rndScores_full.getAnnot());
+        struc.normRnd = new DefaultDataset("norm", normRndScoresMatrix, labels_list, rndScores_full.getColumnNames(), rndScores_full.getAnnot());
 
         return struc;
     }

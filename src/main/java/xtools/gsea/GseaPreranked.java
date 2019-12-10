@@ -187,8 +187,12 @@ public class GseaPreranked extends AbstractGseaTool {
             final Chip chip = fChipParam.getChip();
             // Remap_only is actually implemented as a Collapse Mode beneath everything else.
             int collapseModeIndex = fFeatureSpaceParam.isRemap() ? 4 : fCollapseModeParam.getStringIndexChoosen();
-            RankedList collapsed = new DatasetGenerators().collapse(origRL, chip, fIncludeOnlySymbols.isTrue(), collapseModeIndex);
+            DatasetGenerators.CollapsedRL collapsedRL = new DatasetGenerators().collapse(origRL, chip, fIncludeOnlySymbols.isTrue(), collapseModeIndex);
+			RankedList collapsed = collapsedRL.symbolized;
             log.info("Collapsing dataset was done. Original: " + origRL.getQuickInfo() + " collapsed: " + collapsed.getQuickInfo());
+
+            // Make a summary etiology always
+            fReport.savePageXls(collapsedRL.makeEtiologySdf());
 
             cd.chip = chip;
             cd.wasCollapsed = true;

@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.reports;
 
 import edu.mit.broad.genome.Printf;
@@ -8,7 +8,6 @@ import edu.mit.broad.genome.objects.AbstractObject;
 import edu.mit.broad.genome.objects.IDataframe;
 import edu.mit.broad.genome.objects.StringDataframe;
 import edu.mit.broad.genome.objects.strucs.Linked;
-import edu.mit.broad.genome.reports.pages.KeyValTable;
 import gnu.trove.TIntIntHashMap;
 import gnu.trove.TIntObjectHashMap;
 
@@ -65,16 +64,6 @@ public class RichDataframe extends AbstractObject implements IDataframe {
         if (sdf == null) {
             throw new IllegalArgumentException("Parameter sdf cannot be null");
         }
-
-        this.init(sdf, metaData, cell_id_colorMap, cell_id_linkMap);
-    }
-
-    /**
-     */
-    private void init(final StringDataframe sdf,
-                      final MetaData metaData,
-                      final TIntObjectHashMap cell_id_colorMap,
-                      final TIntObjectHashMap cell_id_linkMap) {
 
         super.initialize(sdf.getName());
         this.fIdf = sdf;
@@ -159,47 +148,23 @@ public class RichDataframe extends AbstractObject implements IDataframe {
      */
     public static class MetaData {
 
-        private KeyValTable fKvt;
-
-        private TIntObjectHashMap fColIndexAlignMap;
         private TIntIntHashMap fColIndexFloatPrecisionMap;
 
         private String fTitle;
-        private String fCaption;
 
         /**
          * Class constructor
          *
          * @param title
-         * @param caption
-         * @param kvt
-         * @param colIndexAlignMap
          */
         public MetaData(final String title,
-                        final String caption,
-                        final KeyValTable kvt,
-                        final TIntObjectHashMap colIndexAlignMap,
                         final TIntIntHashMap colIndexFloatPrecisionMap) {
             this.fTitle = title;
-            this.fCaption = caption;
-            this.fKvt = kvt;
-            this.fColIndexAlignMap = colIndexAlignMap;
             this.fColIndexFloatPrecisionMap = colIndexFloatPrecisionMap;
         }
 
         public String getTitle() {
             return fTitle;
-        }
-
-        public String getColumnAlignment(int coln) {
-            if (fColIndexAlignMap != null) {
-                Object align = fColIndexAlignMap.get(coln);
-                if (align != null) {
-                    return align.toString();
-                }
-            }
-
-            return null;
         }
 
         boolean gotNfe = false; // opt so that on one error we stop

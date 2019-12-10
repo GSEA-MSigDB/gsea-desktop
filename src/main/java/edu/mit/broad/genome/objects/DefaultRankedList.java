@@ -7,9 +7,7 @@ import edu.mit.broad.genome.MismatchedSizeException;
 import edu.mit.broad.genome.math.ScoreMode;
 import edu.mit.broad.genome.math.Vector;
 import edu.mit.broad.genome.objects.strucs.DefaultMetricWeightStruc;
-import gnu.trove.TFloatArrayList;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -20,22 +18,9 @@ import java.util.Map;
  */
 public class DefaultRankedList extends AbstractObject implements RankedList {
 
-    private List fRankedNames;
+    private List<String> fRankedNames;
 
     private Vector fRankedScores;
-
-
-    public DefaultRankedList(final String name, final List rankedNames, final TFloatArrayList rankedScores) {
-        init(name, rankedNames, new Vector(rankedScores));
-    }
-
-    public DefaultRankedList(final List rankedNames,
-                             final Vector rankedScores,
-                             final boolean shareNames,
-                             final boolean shareScores) {
-
-        this(null, rankedNames, rankedScores, shareNames, shareScores);
-    }
 
     /**
      * Class constructor
@@ -43,25 +28,11 @@ public class DefaultRankedList extends AbstractObject implements RankedList {
      * @param name
      * @param rankedNames
      * @param rankedScores
-     * @param shareNames
-     * @param shareScores
      */
     public DefaultRankedList(final String name,
-                             final List rankedNames,
-                             final Vector rankedScores,
-                             final boolean shareNames,
-                             final boolean shareScores) {
-
-        final Vector scores = new Vector(rankedScores, shareScores);
-
-        List names;
-        if (shareNames) {
-            names = rankedNames;
-        } else {
-            names = new ArrayList(rankedNames);
-        }
-
-        this.init(name, names, scores);
+                             final List<String> rankedNames,
+                             final Vector rankedScores) {
+        this.init(name, rankedNames, new Vector(rankedScores, true));
     }
 
     public RankedList cloneShallowRL(final String newName) {
@@ -71,7 +42,7 @@ public class DefaultRankedList extends AbstractObject implements RankedList {
 
     // all duplication (if needed) and SORTING must be done BEFORE calling this method
     // the vector must already be sorted as desired!!
-    private void init(final String name, final List rankedNames, final Vector rankedScores) {
+    private void init(final String name, final List<String> rankedNames, final Vector rankedScores) {
         if (rankedScores == null) {
             throw new IllegalArgumentException("Param v cannot be null");
         }
@@ -102,10 +73,10 @@ public class DefaultRankedList extends AbstractObject implements RankedList {
     }
 
     public String getRankName(final int rank) {
-        return fRankedNames.get(rank).toString();
+        return fRankedNames.get(rank);
     }
 
-    public List getRankedNames() {
+    public List<String> getRankedNames() {
         return Collections.unmodifiableList(fRankedNames);
     }
 
@@ -163,7 +134,7 @@ public class DefaultRankedList extends AbstractObject implements RankedList {
         if (fRowNameSdsRowIndexMap == null) {
             fRowNameSdsRowIndexMap = new HashMap<String, Integer>();
             for (int r = 0; r < getSize(); r++) {
-                fRowNameSdsRowIndexMap.put(fRankedNames.get(r).toString(), Integer.valueOf(r));
+                fRowNameSdsRowIndexMap.put(fRankedNames.get(r), Integer.valueOf(r));
             }
         }
     }
@@ -189,7 +160,7 @@ public class DefaultRankedList extends AbstractObject implements RankedList {
         return fRankedScores.getSize(smode);
     }
 
-    public List getNamesOfUpOrDnXRanks(int topOrBotX, boolean top) {
+    public List<String> getNamesOfUpOrDnXRanks(int topOrBotX, boolean top) {
         return Helper.getLabelsOfUpOrDnXRanks(topOrBotX, top, this);
     }
 

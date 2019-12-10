@@ -28,8 +28,8 @@ public class DefaultDataset extends AbstractObject implements Dataset {
     // these are Lists and not Sets as we want to be able to maintain the order
     // we however check for duplicates in the constructors
 
-    private List fRowNames;
-    private List fColNames;
+    private List<String> fRowNames;
+    private List<String> fColNames;
     private GeneSet rowNamesGeneSet; // lazilly filled
 
     private Annot fAnn;
@@ -39,85 +39,44 @@ public class DefaultDataset extends AbstractObject implements Dataset {
     private String fQuickInfo;
 
     // Not always available
-    private APMMatrix fAPMMatrix;
+    private APMMatrix fAPMMatrix = null;
 
     public APMMatrix getAPMMatrix() {
         return fAPMMatrix;
-    }
-
-    /**
-     * subclasses MUST call init after using this form of the constructor.
-     */
-    protected DefaultDataset() {
-    }
-
-    /**
-     * @param name
-     * @param matrix
-     * @param rowNames
-     * @param colNames
-     * @param shareAll
-     */
-    public DefaultDataset(final String name,
-                          final Matrix matrix,
-                          final List rowNames,
-                          final List colNames,
-                          final boolean shareAll,
-                          final Annot annOpt) {
-        this(name, matrix, rowNames, colNames, shareAll, shareAll, shareAll, annOpt);
-    }
-
-    public DefaultDataset(final String name,
-                          final Matrix matrix,
-                          final List rowNames,
-                          final List colNames,
-                          final boolean shareAll,
-                          final Annot annOpt,
-                          final APMMatrix apm) {
-        this(name, matrix, rowNames, colNames, shareAll, shareAll, shareAll, annOpt, apm);
-        //log.debug("SETTING APM TO: " + apm);
     }
 
     public DefaultDataset(final String name,
                           final Matrix matrix,
                           final String[] rowNames,
                           final String[] colNames,
-                          final boolean shareMatrix,
                           final Annot annOpt) {
-        this(name, matrix, toList(rowNames), toList(colNames), shareMatrix, true, true, annOpt);
+        this(name, matrix, toList(rowNames), toList(colNames), annOpt);
     }
 
-    /**
-     * Class constructor
-     *
-     * @param name
-     * @param matrix
-     */
-    public DefaultDataset(final String name, final Matrix matrix, final Annot annOpt) {
+    public DefaultDataset(final String name, final Matrix matrix) {
 
-        List rowNames = new ArrayList(matrix.getNumRow());
-        List colNames = new ArrayList(matrix.getNumCol());
+        int numRow = matrix.getNumRow();
+		List<String> rowNames = new ArrayList<String>(numRow);
+        int numCol = matrix.getNumCol();
+		List<String> colNames = new ArrayList<String>(numCol);
 
-        for (int r = 0; r < matrix.getNumRow(); r++) {
+        for (int r = 0; r < numRow; r++) {
             rowNames.add("row_" + r);
         }
 
-        for (int c = 0; c < matrix.getNumCol(); c++) {
+        for (int c = 0; c < numCol; c++) {
             colNames.add("col_" + c);
         }
-
-        init(name, matrix, rowNames, colNames, annOpt);
+		init_rows_and_cols(name, rowNames, colNames);
+		initMatrix(matrix, numRow, numCol);
     }
 
     public DefaultDataset(final String name,
                           final Matrix matrix,
-                          final List rowNames,
-                          final List colNames,
-                          final boolean shareMatrix,
-                          final boolean shareRowNames,
-                          final boolean shareColNames,
+                          final List<String> rowNames,
+                          final List<String> colNames,
                           final Annot annOpt) {
-        this(name, matrix, rowNames, colNames, shareMatrix, shareRowNames, shareColNames, annOpt, null);
+        this(name, matrix, rowNames, colNames, annOpt, null);
     }
 
     /**
@@ -130,11 +89,8 @@ public class DefaultDataset extends AbstractObject implements Dataset {
      */
     public DefaultDataset(final String name,
                           final Matrix matrix,
-                          final List rowNames,
-                          final List colNames,
-                          final boolean shareMatrix,
-                          final boolean shareRowNames,
-                          final boolean shareColNames,
+                          final List<String> rowNames,
+                          final List<String> colNames,
                           final Annot annOpt,
                           final APMMatrix apm) {
 
@@ -150,85 +106,38 @@ public class DefaultDataset extends AbstractObject implements Dataset {
             throw new IllegalArgumentException("Param colNames cant be null");
         }
 
-        Matrix dmatrix;
-        List drowNames;
-        List dcolNames;
+        init_rows_and_cols(name, rowNames, colNames);
+        initAnnot(annOpt);
+		initMatrix(matrix, rowNames.size(), colNames.size());
 
-        if (shareMatrix) {
-            dmatrix = matrix;
-        } else {
-            dmatrix = matrix.cloneDeep();
-        }
-
-        if (shareRowNames) {
-            drowNames = rowNames;
-        } else {
-            drowNames = new ArrayList(rowNames);
-        }
-
-        if (shareColNames) {
-            dcolNames = colNames;
-        } else {
-            dcolNames = new ArrayList(colNames);
-        }
-
-        init(name, dmatrix, drowNames, dcolNames, annOpt, apm);
+        this.fAPMMatrix = apm;
 
     }
 
-    protected void init(final String dsname,
-                        final Matrix matrix,
-                        final List rowNames,
-                        final List colNames,
-                        final Annot annOpt) {
-        init(dsname, matrix, rowNames, colNames, annOpt, null);
-    }
-
-    /**
-     * assumes that when i am called the data has already been duplicated
-     * i.e callers within this method are responsible for passing me
-     * already duplicated (or manipulated/subsetted) data.
-     * <p/>
-     */
-    protected void init(final String dsName,
-                        final Matrix matrix,
-                        final List rowNames,
-                        final List colNames,
-                        final Annot annOpt,
-                        final APMMatrix apm) {
-
-        init_rows_and_cols(dsName, rowNames, colNames, annOpt, apm);
-        initMatrix(matrix, rowNames, colNames);
-    }
-
-    // This is one half of the CORE init (see below)
-    private void initMatrix(final Matrix matrix, final List rowNames, final List colNames) {
+    private void initMatrix(final Matrix matrix, final int numRow, final int numCol) {
 
         if (matrix == null) {
             throw new IllegalArgumentException("Matrix cannot be null");
         }
 
 
-        if (matrix.getNumRow() != rowNames.size()) {
+        if (matrix.getNumRow() != numRow) {
             throw new IllegalArgumentException("Matrix nrows: " + matrix.getNumRow() + " and rownames: "
-                    + rowNames.size() + " do not match in size");
+                    + numRow + " do not match in size");
         }
 
-        if (matrix.getNumCol() != colNames.size()) {
+        if (matrix.getNumCol() != numCol) {
             throw new IllegalArgumentException("Matrix ncols: " + matrix.getNumCol() + " and colnames: "
-                    + colNames.size() + " do not match in size");
+                    + numCol + " do not match in size");
         }
 
         this.fMatrix = matrix;
         this.fMatrix.setImmutable();    // IMP notice.
     }
 
-    // This is one half of the CORE init (see above)
-    protected void init_rows_and_cols(final String dsName,
-                                      final List rowNames,
-                                      final List colNames,
-                                      final Annot annOpt,
-                                      final APMMatrix apm) {
+    private void init_rows_and_cols(final String dsName,
+                                    final List<String> rowNames,
+                                    final List<String> colNames) {
 
         super.initialize(dsName);
 
@@ -245,7 +154,13 @@ public class DefaultDataset extends AbstractObject implements Dataset {
         this.fColNames = colNames;
         this.fColNames = Collections.unmodifiableList(fColNames);
 
-        // annot sanity checks
+        // data integrity checks: no column names must be duplicated
+        // ditto for rows but we avoid doing that as its sloooow
+        ensureAllUniqueValues(fColNames);
+    }
+
+	private void initAnnot(final Annot annOpt) {
+		// annot sanity checks
         if (annOpt != null) {
             FeatureAnnot fa = annOpt.getFeatureAnnot();
 
@@ -255,27 +170,21 @@ public class DefaultDataset extends AbstractObject implements Dataset {
             }
 
             if (fa.hasNativeDescriptions() && fRowNames.size() > 1) {
-                fa.getNativeDesc(fRowNames.get(0).toString()); // just a check
+                fa.getNativeDesc(fRowNames.get(0)); // just a check
             }
         }
         this.fAnn = annOpt;
-
-        // data integrity checks: no column names must be duplicated
-        // ditto for rows but we avoid doing that as its sloooow
-        ensureAllUniqueValues(fColNames);
-
-        this.fAPMMatrix = apm;
-    }
+	}
 
 
-    protected static void ensureAllUniqueValues(List list) {
-        Set set = new HashSet();
-        for (int i = 0; i < list.size(); i++) {
-            Object obj = list.get(i);
-            if (set.contains(obj)) {
-                throw new IllegalArgumentException("Duplicate COL names are NOT allowed in Datasets. The offending entry was: " + obj + " at pos: " + i);
+    private static void ensureAllUniqueValues(List<String> cols) {
+        Set<String> set = new HashSet<String>();
+        for (int i = 0; i < cols.size(); i++) {
+            String item = cols.get(i);
+            if (set.contains(item)) {
+                throw new IllegalArgumentException("Duplicate COL names are NOT allowed in Datasets. The offending entry was: " + item + " at pos: " + i);
             }
-            set.add(obj);
+            set.add(item);
         }
 
         set.clear();
@@ -297,7 +206,7 @@ public class DefaultDataset extends AbstractObject implements Dataset {
         return (String) fRowNames.get(rown);
     }
 
-    public List getRowNames() {
+    public List<String> getRowNames() {
         return Collections.unmodifiableList(fRowNames);
     }
 
@@ -329,13 +238,13 @@ public class DefaultDataset extends AbstractObject implements Dataset {
         return index;
     }
 
-    public List getColumnNames() {
+    public List<String> getColumnNames() {
         return Collections.unmodifiableList(fColNames);
     }
 
     public GeneSet getRowNamesGeneSet() {
         if (rowNamesGeneSet == null) {
-            rowNamesGeneSet = new GeneSet(getName(), new HashSet(fRowNames));
+            rowNamesGeneSet = new GeneSet(getName(), new HashSet<String>(fRowNames));
         }
         return rowNamesGeneSet;
     }
@@ -405,7 +314,7 @@ public class DefaultDataset extends AbstractObject implements Dataset {
                 log.debug("LAZY loading dataset from: " + dsFile.getPath());
                 // @note the annotation, row names , col names etc are NOT used
                 final Dataset ds = ParserFactory.readDataset(dsFile, true, true);
-                this.initMatrix(((DefaultDataset) ds).fMatrix, fRowNames, fColNames);
+                this.initMatrix(((DefaultDataset) ds).fMatrix, fRowNames.size(), fColNames.size());
 
             } catch (Exception e) {
                 throw new RuntimeException(e);
@@ -425,7 +334,7 @@ public class DefaultDataset extends AbstractObject implements Dataset {
 
     private void _setQuickInfo() {
 
-        StringBuffer buf = new StringBuffer().append(getNumRow()).append('x').append(getNumCol());
+        StringBuilder buf = new StringBuilder().append(getNumRow()).append('x').append(getNumCol());
         if (this.getAnnot() != null && getAnnot().getFeatureAnnot() != null && getAnnot().getSampleAnnot_global() != null) {
             FeatureAnnot fa = getAnnot().getFeatureAnnot();
             SampleAnnot sa = getAnnot().getSampleAnnot_global();
@@ -459,15 +368,12 @@ public class DefaultDataset extends AbstractObject implements Dataset {
 
     }
 
-    private static List toList(final String[] ss) {
-        final List list = new ArrayList(ss.length);
+    private static List<String> toList(final String[] ss) {
+        final List<String> list = new ArrayList<String>(ss.length);
         for (int i = 0; i < ss.length; i++) {
             list.add(ss[i]);
         }
 
         return list;
     }
-
-}    // End DefaultDataset
-
-/*--- Formatted in Sun Java Convention Style on Fri, Sep 27, '02 ---*/
+}

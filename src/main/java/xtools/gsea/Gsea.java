@@ -85,7 +85,10 @@ public class Gsea extends AbstractGsea2Tool {
             final Chip chip = fChipParam.getChip();
             // Remap_only is actually implemented as a Collapse Mode beneath everything else.
             int collapseModeIndex = fFeatureSpaceParam.isRemap() ? 4 : fCollapseModeParam.getStringIndexChoosen();
-            Dataset collapsed = new DatasetGenerators().collapse(origDs, chip, fIncludeOnlySymbols.isTrue(), collapseModeIndex);
+            DatasetGenerators.CollapsedDataset cds = new DatasetGenerators().collapse(origDs, chip,
+                    fIncludeOnlySymbols.isTrue(), collapseModeIndex);
+
+    		Dataset collapsed = cds.symbolized;
             log.info("Collapsing dataset was done. Original: " + origDs.getQuickInfo() + " collapsed: " + collapsed.getQuickInfo());
     
             cd.chip = chip;

@@ -12,7 +12,6 @@ import java.util.List;
  * Captures it (double) value and position in the array.
  *
  * @author Aravind Subramanian
- * @version %I%, %G%
  */
 public class DoubleElement {
 
@@ -48,15 +47,11 @@ public class DoubleElement {
      * @param delist A list with DoubleElement as elements
      *               Typically used after a sort.
      */
-    public static int[] indexArray(List delist) {
-
-        //log.debug("## " + delist);
+    public static int[] indexArray(List<DoubleElement> delist) {
         int[] indexes = new int[delist.size()];
-
         for (int i = 0; i < delist.size(); i++) {
-            indexes[i] = ((DoubleElement) delist.get(i)).fIndex;
+            indexes[i] = delist.get(i).fIndex;
         }
-
         return indexes;
     }
 
@@ -64,14 +59,11 @@ public class DoubleElement {
      * @param delist A list with DoubleElement as elements
      * @return
      */
-    public static double[] valueArray(List delist) {
-
+    public static double[] valueArray(List<DoubleElement> delist) {
         double[] values = new double[delist.size()];
-
         for (int i = 0; i < delist.size(); i++) {
-            values[i] = ((DoubleElement) delist.get(i)).fValue;
+            values[i] = delist.get(i).fValue;
         }
-
         return values;
     }
 
@@ -80,16 +72,14 @@ public class DoubleElement {
         for (int i = 0; i < dels.length; i++) {
             list.add(dels[i]);
         }
-
         return list;
     }
 
-    public static float[] toFloats(List dels) {
+    public static float[] toFloats(List<DoubleElement> dels) {
         float[] floats = new float[dels.size()];
         for (int i = 0; i < dels.size(); i++) {
-            floats[i] = (float) ((DoubleElement) dels.get(i)).fValue;
+            floats[i] = (float) dels.get(i).fValue;
         }
-
         return floats;
     }
 

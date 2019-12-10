@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.math;
 
 import edu.mit.broad.genome.MismatchedSizeException;
@@ -74,39 +74,28 @@ public class AddressedVector {
     /**
      * Class Constructor.
      * Data is NOT shared - it is copied.
-     *
-     * @param v
-     * @param addresses
-     */
-    public AddressedVector(final Vector v, final int[] addresses, final boolean share) {
-
-        if (v == null) {
-            throw new IllegalArgumentException("Param v cannot be null");
-        }
-
-        if (addresses == null) {
-            throw new IllegalArgumentException("Parameter addresses cannot be null");
-        }
-
-        if (share) {
-            init(v, addresses);
-        } else {
-            Vector dupv = new Vector(v);
-            int[] dadd = new int[addresses.length];
-            System.arraycopy(addresses, 0, dadd, 0, addresses.length);
-            init(dupv, dadd);
-        }
-    }
-
-    /**
-     * Class Constructor.
-     * Data is NOT shared - it is copied.
      * Indices are inferred (in order) from the specified vector
      *
      * @param v
      */
     public AddressedVector(final Vector v, final boolean share) {
-        this(v, rangeAsElements(0, _max(v)), share);
+        final int[] addresses = rangeAsElements(0, _max(v));
+		if (v == null) {
+		    throw new IllegalArgumentException("Param v cannot be null");
+		}
+		
+		if (addresses == null) {
+		    throw new IllegalArgumentException("Parameter addresses cannot be null");
+		}
+		
+		if (share) {
+		    init(v, addresses);
+		} else {
+		    Vector dupv = new Vector(v);
+		    int[] dadd = new int[addresses.length];
+		    System.arraycopy(addresses, 0, dadd, 0, addresses.length);
+		    init(dupv, dadd);
+		}
     }
 
     private static int _max(Vector v) {
@@ -133,10 +122,10 @@ public class AddressedVector {
 
     /**
      * Class Constructor.
-     * Data is NOT chared - it is copied.
+     * Data is NOT shared - it is copied.
      * list of DoubleElements
      */
-    public AddressedVector(final List listWithDoubleElements) {
+    public AddressedVector(final List<DoubleElement> listWithDoubleElements) {
 
         if (listWithDoubleElements == null) {
             throw new IllegalArgumentException("Param listWithDoubleElements cannot be null");
@@ -147,7 +136,7 @@ public class AddressedVector {
         init(v, addr);
     }
 
-    // things must already be duplicated (if neccessary) before calling here
+    // things must already be duplicated (if necessary) before calling here
     private void init(final Vector v, final int[] addresses) {
 
         if (v == null) {

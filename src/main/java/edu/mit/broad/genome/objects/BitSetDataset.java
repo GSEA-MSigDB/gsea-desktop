@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.objects;
 
 import edu.mit.broad.genome.NamingConventions;
@@ -26,20 +26,21 @@ public class BitSetDataset extends AbstractObject {
     /**
      * aka column names
      */
-    private List fcBitNames;
+    private List<String> fcBitNames;
 
     /**
      * aka row names
      */
-    private List frBitSetNames;
+    private List<String> frBitSetNames;
 
     public BitSetDataset(final GeneSetMatrix gm) {
 
         // the UNION (
-        List bitNames = new ArrayList(gm.getAllMemberNamesOnlyOnceS());
+    	// TODO: review GeneSetMatrix and related for type safety
+        List<String> bitNames = new ArrayList<String>(gm.getAllMemberNamesOnlyOnceS());
 
         BitSet[] bss = new BitSet[gm.getNumGeneSets()];
-        List bitSetNames = new ArrayList(gm.getNumGeneSets());
+        List<String> bitSetNames = new ArrayList<String>(gm.getNumGeneSets());
         for (int i = 0; i < gm.getNumGeneSets(); i++) {
             bss[i] = new BitSet(bitNames.size());
             //System.out.println("AAT>> " + bitNames.size() + " " + (bss[i].size() - 1) + " " + bss[i].length() + " " + bss[i].get(bitNames.size() + 1000));
@@ -67,8 +68,8 @@ public class BitSetDataset extends AbstractObject {
      * already duplicated (or manipulated/subsetted) data.
      * Remeber BitSets are ROWS
      */
-    protected void init(final String bsname, final BitSet[] bss, final List bitSetNames, final List bitNames,
-                        final boolean shareBitSets) {
+    private void init(final String bsname, final BitSet[] bss, final List<String> bitSetNames, final List<String> bitNames,
+                      final boolean shareBitSets) {
 
         super.initialize(bsname);
 
@@ -142,28 +143,28 @@ public class BitSetDataset extends AbstractObject {
         ensureAllUniqueValues(frBitSetNames);
     }
 
-    protected static void ensureAllUniqueValues(final List list) {
+    private static void ensureAllUniqueValues(final List<String> list) {
 
         if (list == null) {
             throw new IllegalArgumentException("Parameter list cannot be null");
         }
 
-        Set set = new HashSet();
+        Set<String> set = new HashSet<String>();
         for (int i = 0; i < list.size(); i++) {
-            Object obj = list.get(i);
-            if (set.contains(obj)) {
-                throw new IllegalArgumentException("Duplicate COL names are NOT allowed in Datasets. The offending entry was: " + obj + " at pos: " + i + "\n" + set);
+            String item = list.get(i);
+            if (set.contains(item)) {
+                throw new IllegalArgumentException("Duplicate COL names are NOT allowed in Datasets. The offending entry was: " + item + " at pos: " + i + "\n" + set);
             }
-            set.add(obj);
+            set.add(item);
         }
 
         set.clear();
     }
 
     public Dataset toDataset() {
-        List colNames = new ArrayList(fcBitNames);
-        return new DefaultDataset(getName(), toMatrix(),
-                frBitSetNames, colNames, true, false, false, null);
+    	List<String> rowNames = new ArrayList<String>(frBitSetNames);
+        List<String> colNames = new ArrayList<String>(fcBitNames);
+        return new DefaultDataset(getName(), toMatrix(), rowNames, colNames, null);
     }
 
     // returns a safe copy
@@ -229,8 +230,7 @@ public class BitSetDataset extends AbstractObject {
     }
 
     public Dataset and_by_or(String name) {
-        return new DefaultDataset(name, and_by_orMatrix(),
-                frBitSetNames, frBitSetNames, true, false, false, null);
+        return new DefaultDataset(name, and_by_orMatrix(), frBitSetNames, frBitSetNames, null);
     }
 
     public Matrix and_by_orMatrix() {

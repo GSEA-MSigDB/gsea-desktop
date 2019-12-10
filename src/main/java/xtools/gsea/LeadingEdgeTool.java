@@ -101,7 +101,7 @@ public class LeadingEdgeTool extends AbstractTool {
             }
         }
 
-        return new DefaultDataset(ds.getName(), m, ds.getRowNames(), ds.getColumnNames(), true, ds.getAnnot());
+        return new DefaultDataset(ds.getName(), m, ds.getRowNames(), ds.getColumnNames(), ds.getAnnot());
     }
 
     /**

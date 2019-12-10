@@ -3,7 +3,6 @@
  */
 package edu.mit.broad.genome.reports;
 
-import edu.mit.broad.genome.Headers;
 import edu.mit.broad.genome.alg.*;
 import edu.mit.broad.genome.charts.XChart;
 import edu.mit.broad.genome.math.*;
@@ -11,9 +10,7 @@ import edu.mit.broad.genome.objects.*;
 import edu.mit.broad.genome.parsers.GctParser;
 import edu.mit.broad.genome.reports.pages.HtmlFormat;
 import edu.mit.broad.genome.reports.pages.HtmlPage;
-import edu.mit.broad.genome.reports.web.LinkedFactory;
 import edu.mit.broad.xbench.heatmap.GramImagerImpl;
-import gnu.trove.TIntObjectHashMap;
 
 import java.io.File;
 import java.util.*;
@@ -49,7 +46,7 @@ public class MiscReports {
         
         if (fullDs_opt != null) {
             try {
-                List useNames = rl.getNamesOfUpOrDnXRanks(topBotXGenes, true);
+                List<String> useNames = rl.getNamesOfUpOrDnXRanks(topBotXGenes, true);
                 useNames.addAll(rl.getNamesOfUpOrDnXRanks(topBotXGenes, false));
                 Dataset ds = new DatasetGenerators().extractRows(fullDs_opt, useNames);
                 HeatMap heatMap = new GramImagerImpl().createBpogHeatMap(ds, template);
@@ -94,45 +91,24 @@ public class MiscReports {
         return htmlPage;
     }
 
-    /**
-     * Exception safe
-     *
-     * @param name
-     * @param rl
-     * @param fann_opt
-     * @return
-     */
-    public static RichDataframe annotateProbesNames(final String name, final RankedList rl, final FeatureAnnot fann_opt) {
-        final String[] colnames = new String[]{Headers.DESCRIPTION, Headers.GENE_SYMBOL, Headers.GENE_TITLE, "SCORE"};
+    public static IDataframe createRankOrderedGeneList(final String name, final RankedList rl, final FeatureAnnot fann_opt) {
+        final String[] colnames = new String[]{"TITLE", "SCORE"};
         StringMatrix sm = new StringMatrix(rl.getSize(), colnames.length);
-        TIntObjectHashMap linkMap = new TIntObjectHashMap();
         for (int r = 0; r < rl.getSize(); r++) {
             int coln = 0;
             String probeName = rl.getRankName(r);
 
             if (fann_opt != null) {
-                sm.setElement(r, coln++, fann_opt.getNativeDesc(probeName));
-                sm.setElement(r, coln++, fann_opt.getGeneSymbol(probeName));
-                sm.setElement(r, coln++, fann_opt.getGeneTitle(probeName));
+                String title = fann_opt.getNativeDesc(probeName);
+                if (title == null) title = "";
+				sm.setElement(r, coln++, title);
             } else {
-                coln += 3;
+                sm.setElement(r, coln++, "");
             }
 
             sm.setElement(r, coln, Float.toString(rl.getScore(r)));
-
-            linkMap.put(sm.getElementPos(r, 0), LinkedFactory.createLinkedProbeSet(probeName));
-
-            if (fann_opt != null) {
-                if (fann_opt.getGeneSymbol(probeName) != null) {
-                    linkMap.put(sm.getElementPos(r, 1), LinkedFactory.createLinkedGeneSymbol(fann_opt.getGeneSymbol(probeName)));
-                }
-            }
-
         }
 
-        StringDataframe sdf = new StringDataframe(name, sm, rl.getRankedNames(), colnames, true, true);
-        return new RichDataframe(sdf, null, null, linkMap);
+        return new StringDataframe(name, sm, rl.getRankedNames(), colnames);
     }
-
-} // End class CannedReports
-
+}

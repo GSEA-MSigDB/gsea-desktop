@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.objects;
 
 import edu.mit.broad.genome.math.StringMatrix;
@@ -9,70 +9,43 @@ import java.util.*;
 
 /**
  * @author Aravind Subramanian
- * @version %I%, %G%
  */
 
 public class StringDataframe extends AbstractObject implements IDataframe {
 
-    protected StringMatrix fMatrix;
+    private StringMatrix fMatrix;
 
-    protected List fRowNames;
-
-    protected List fColNames;
+    private List<String> fRowNames;
+    private List<String> fColNames;
 
     // name of the first row
     private String fRowLabelName;
 
-    /**
-     * Class Constructor.
-     * Specified data is copied over - data is NOT shared
-     *
-     * @param name
-     * @param smatrix
-     * @param rowNames
-     * @param colNames
-     */
-    public StringDataframe(final String name,
-                           final StringMatrix smatrix,
-                           final List rowNames,
-                           final List colNames,
-                           boolean shareAll) {
-        this(name, smatrix, rowNames, colNames, shareAll, shareAll, shareAll);
-    }
-
-    /**
-     * Class constructor
-     *
-     * @param name
-     * @param smatrix
-     * @param rowNames
-     * @param colNames
-     * @param shareAll
-     */
     public StringDataframe(final String name,
                            final StringMatrix smatrix,
                            final String[] rowNames,
-                           final String[] colNames,
-                           boolean shareAll) {
-        this(name, smatrix, toList(rowNames), toList(colNames), shareAll, shareAll, shareAll);
+                           final String[] colNames) {
+    	this(name, smatrix, toList(rowNames), toList(colNames));
     }
 
     public StringDataframe(final String name,
                            final StringMatrix smatrix,
-                           final String[] colNames,
-                           final boolean shareAll) {
+                           final String[] colNames) {
         this(name, smatrix, createSeriesStrings(0, smatrix.getNumRow(), "row_"),
-                toList(colNames), shareAll, shareAll, shareAll);
+                toList(colNames));
     }
 
     public StringDataframe(final String name,
                            final StringMatrix smatrix,
-                           final List rowNames,
-                           final List colNames,
-                           final boolean shareMatrix,
-                           final boolean shareRowNames,
-                           final boolean shareColNames) {
+                           final List<String> rowNames,
+                           final String[] colNames) {
+        this(name, smatrix, rowNames, toList(colNames));
+    }
 
+    public StringDataframe(final String name,
+                           final StringMatrix smatrix,
+                           final List<String> rowNames,
+                           final List<String> colNames) {
         if (smatrix == null) {
             throw new IllegalArgumentException("Param matrix cant be null");
         }
@@ -84,52 +57,6 @@ public class StringDataframe extends AbstractObject implements IDataframe {
         if (colNames == null) {
             throw new IllegalArgumentException("Param rowNames cant be null");
         }
-
-        //log.debug(rowNames);
-
-        StringMatrix dmatrix;
-        List drowNames;
-        List dcolNames;
-
-        if (shareMatrix) {
-            dmatrix = smatrix;
-        } else {
-            dmatrix = smatrix.cloneDeep();
-        }
-
-        if (shareRowNames) {
-            drowNames = rowNames;
-        } else {
-            drowNames = new ArrayList(rowNames);
-        }
-
-        if (shareColNames) {
-            dcolNames = colNames;
-        } else {
-            dcolNames = new ArrayList(colNames);
-        }
-
-        init(name, dmatrix, drowNames, dcolNames);
-    }
-
-    public StringDataframe(final String name,
-                           final StringMatrix smatrix,
-                           final List rowNames,
-                           final String[] colNames,
-                           final boolean shareMatrix,
-                           final boolean shareRowNames) {
-        this(name, smatrix, rowNames, toList(colNames), shareMatrix, shareRowNames, true);
-    }
-
-    /**
-     * assumes that when i am called the data has already been duplicated
-     * i.e callers within this method are responsible for passing me
-     * already duplicated data.
-     */
-    protected void init(final String name,
-                        final StringMatrix smatrix,
-                        final List rowNames,
-                        final List colNames) {
 
         super.initialize(name);
 
@@ -148,7 +75,6 @@ public class StringDataframe extends AbstractObject implements IDataframe {
         }
 
         if (smatrix.getNumRow() == 0) {
-            //TraceUtils.showTrace();
             log.debug("zero rows in StringMatrix");
         }
 
@@ -176,7 +102,7 @@ public class StringDataframe extends AbstractObject implements IDataframe {
     }
 
     public String[] getRowNamesArray() {
-        return (String[]) fRowNames.toArray(new String[fRowNames.size()]);
+        return fRowNames.toArray(new String[fRowNames.size()]);
     }
 
     public String getColumnName(int coln) {
@@ -200,8 +126,8 @@ public class StringDataframe extends AbstractObject implements IDataframe {
         return buf.toString();
     }
 
-    public static List createSeriesStrings(int start, int stop, String commonPrefix) {
-        List list = new ArrayList(stop - start);
+    private static List<String> createSeriesStrings(int start, int stop, String commonPrefix) {
+        List<String> list = new ArrayList<String>(stop - start);
         for (int i = start; i < stop; i++) {
             list.add(commonPrefix + i);
         }
@@ -209,8 +135,8 @@ public class StringDataframe extends AbstractObject implements IDataframe {
         return list;
     }
 
-    private static List toList(String[] ss) {
-        List list = new ArrayList(ss.length);
+    private static List<String> toList(String[] ss) {
+        List<String> list = new ArrayList<String>(ss.length);
         for (int i = 0; i < ss.length; i++) {
             list.add(ss[i]);
         }
@@ -221,5 +147,4 @@ public class StringDataframe extends AbstractObject implements IDataframe {
     public void replace(String thisStr, String withThisStr) {
         fMatrix.replace(thisStr, withThisStr);
     }
-
-}    // End StringDataframe
+}
