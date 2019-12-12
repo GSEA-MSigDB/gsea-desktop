@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.alg;
 
 import edu.mit.broad.genome.math.Vector;
@@ -14,16 +14,11 @@ import java.util.*;
  * Object that captures statistics for dataset rows
  *
  * @author Aravind Subramanian
- * @version %I%, %G%
  */
 public class DatasetStatsCore {
 
     private Logger log = Logger.getLogger(DatasetStatsCore.class);
 
-    /**
-     * Class constructor
-     * Stateless
-     */
     public DatasetStatsCore() {
     }
 
@@ -115,16 +110,14 @@ public class DatasetStatsCore {
     // Currently only called from PermutationTestBuilder, which does not make use of the
     // return value.  Relies on this for error checks and nothing more.
     //TODO: refactor to separate error checks from the rest.
-    public Map calc2ClassCategoricalMetricMarkerScores(final Dataset ds,
-                                                       final Template template,
-                                                       final Metric metric,
-                                                       final Map params) {
+    public Map<String, TwoClassMarkerStats> calc2ClassCategoricalMetricMarkerScores(final Dataset ds,
+    		final Template template, final Metric metric, final Map<String, Boolean> params) {
 
         if (!metric.isCategorical()) {
             throw new IllegalArgumentException("Not a 2 class categorical metric: " + metric);
         }
 
-        Map all = new HashMap();
+        Map<String, TwoClassMarkerStats> all = new HashMap<String, TwoClassMarkerStats>();
 
         boolean usebiased = AlgMap.isBiased(params);
         boolean fixlow = AlgMap.isFixLowVar(params);

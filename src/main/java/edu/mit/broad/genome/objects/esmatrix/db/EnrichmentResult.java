@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.objects.esmatrix.db;
 
 import edu.mit.broad.genome.math.Vector;
@@ -12,39 +12,90 @@ import edu.mit.broad.genome.objects.strucs.FdrStruc;
 import edu.mit.broad.vdb.chip.Chip;
 
 /**
- * Object capturing one "cell" of info in the gsea matrix
- * Note that the dataset, template, gset everything can be different b/w
- * er's
+ * Class representing a single result
  */
-public interface EnrichmentResult {
+public class EnrichmentResult {
 
-    /// @note dont provide this because its not always clear what a generic  name is:
-    // is it the name of the gset, the template or the rl??
-    //public String getName();
+    private EnrichmentScore fScore;
 
-    public EnrichmentScore getScore();
+    private Vector fRndESS;
 
-    public FdrStruc getFDR();
+    private RankedList fRankedList;
 
-    public Vector getRndESS();
+    private Template fTemplate_opt;
 
-    public int getNumPerms();
+    private GeneSet fGeneSet;
 
-    public GeneSetSignal getSignal();
+    private Chip fChip;
+
+    private FdrStruc fFdr;
+
+    // TODO: track possible NaNs creeping in via the es object. 
+    public EnrichmentResult(final RankedList rl, final Template t_opt, final GeneSet gset, final Chip chip,
+    		final EnrichmentScore es, final Vector rndEss, final FdrStruc fdr) {
+        if (es == null) {
+            throw new IllegalArgumentException("Param esStruc cannot be null");
+        }
+        if (gset == null) {
+            throw new IllegalArgumentException("Param gset cannot be null");
+        }
+
+        this.fTemplate_opt = t_opt;
+        this.fRankedList = rl;
+        this.fGeneSet = gset;
+        this.fChip = chip;
+        this.fScore = es;
+        this.fRndESS = rndEss;
+        this.fGeneSet = gset;
+        this.fFdr = fdr;
+    }
+
+    private GeneSetSignal fSignal;
+
+    public GeneSetSignal getSignal() {
+        if (fSignal == null) {
+            this.fSignal = new GeneSetSignalImpl(this);
+        }
+
+        return fSignal;
+    }
+
+    public Vector getRndESS() {
+        return fRndESS;
+    }
+
+    public FdrStruc getFDR() {
+        return fFdr;
+    }
+
+    public EnrichmentScore getScore() {
+        return fScore;
+    }
 
     // DATA RELATED APIs
 
-    // Results are never from datasets. Some are but not all are made from datasets
-    //public Dataset getDataset();
+    public RankedList getRankedList() {
+        return fRankedList;
+    }
 
-    public RankedList getRankedList();
+    public Template getTemplate() {
+        return fTemplate_opt;
+    }
 
-    public Template getTemplate();
+    public GeneSet getGeneSet() {
+        return fGeneSet;
+    }
 
-    public GeneSet getGeneSet();
+    public String getGeneSetName() {
+        return fGeneSet.getName(true);
+    }
 
-    public String getGeneSetName(); // @for convenience
+    public Chip getChip() {
+        return fChip;
+    }
 
-    public Chip getChip();
+    public int getNumPerms() {
+        return fRndESS.getSize();
+    }
 
-} // End EnrichmentResult
+} // End lass EnrichmentResult

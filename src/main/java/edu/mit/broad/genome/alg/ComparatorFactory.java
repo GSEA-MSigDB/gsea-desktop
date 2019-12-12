@@ -14,17 +14,16 @@ import edu.mit.broad.genome.objects.ScoredDataset;
 import edu.mit.broad.genome.objects.esmatrix.db.EnrichmentResult;
 
 /**
- * Collection of usefule comparators
+ * Collection of useful comparators
  *
  * @author Aravind Subramanian
- * @version %I%, %G%
  */
 public class ComparatorFactory {
 
     private ComparatorFactory() {
     }
 
-    public static class EnrichmentResultByNESComparator implements Comparator {
+    public static class EnrichmentResultByNESComparator implements Comparator<EnrichmentResult> {
 
         Order fOrder;
 
@@ -32,22 +31,33 @@ public class ComparatorFactory {
             this.fOrder = order;
         }
 
-        public int compare(final Object pn1, final Object pn2) {
+        public int compare(final EnrichmentResult result1, final EnrichmentResult result2) {
 
-            if ((pn1 == null) && (pn2 == null)) {
+            if ((result1 == null) && (result2 == null)) {
                 return 0;     // cant compare
-            } else if (pn1 == null) {
+            } else if (result1 == null) {
                 return fOrder.isAscending() ? -1 : +1;    // null is always least
-            } else if (pn2 == null) {
+            } else if (result2 == null) {
                 return fOrder.isAscending() ? +1 : -1;    // null is always least
             }
-
-            final EnrichmentResult result1 = (EnrichmentResult) pn1;
-            final EnrichmentResult result2 = (EnrichmentResult) pn2;
 
             final float nes1 = result1.getScore().getNES();
             final float nes2 = result2.getScore().getNES();
 
+            // TODO: Here is the location for the key change to dealing with FP NaN issues.
+            // NaN will natively sort as the *greatest* value among the floats, but we don't
+            // want it to land at the top of our report summary list.  Instead, we will sort
+            // it as the *least* value.
+            // Thus, the sign of the comparison results should be reversed here.
+            // Also, if we don't flag these elsewhere they should definitely be flagged here.
+            // TODO: Also handle Infinity in the same way.
+            // That gives us three different types of special case FP numbers to handle (NaN,
+            // +Infinity, -Infinity).  We don't really care about the order of these in the list
+            // as they will all be flagged and handled in the same way, but for the sake of
+            // a stable / repeatable ordering we will use:
+            //     NaN > +Infinity > -Infinity
+            // NOTE: I am holding off making these changes right now so that we can test the
+            // other changes already in the works.
             if (Float.isNaN(nes1) && Float.isNaN(nes2)) {
                 return 0;
             } else if (Float.isNaN(nes1)) {
@@ -55,7 +65,6 @@ public class ComparatorFactory {
             } else if (Float.isNaN(nes2)) {
                 return fOrder.isAscending() ? +1 : -1;
             }
-
 
             if (fOrder.isAscending()) {
                 if (nes1 < nes2) {
@@ -87,15 +96,10 @@ public class ComparatorFactory {
     }    // End class EnrichmentResultComparator
 
 
-    public static class PobComparator implements Comparator {
+    public static class PobComparator implements Comparator<PersistentObject> {
 
-        /**
-         * Return -1 if o1 is less than o2, 0 if they're equal, +1 if o1 is greater than o2.
-         */
-        public int compare(Object pn1, Object pn2) {
+        public int compare(PersistentObject pob1, PersistentObject pob2) {
 
-            PersistentObject pob1 = (PersistentObject) pn1;
-            PersistentObject pob2 = (PersistentObject) pn2;
             return pob1.getName().compareTo(pob2.getName());
         }
 
@@ -105,28 +109,22 @@ public class ComparatorFactory {
         public boolean equals(Object o2) {
             return false;
         }
-    }    // End FileExtComparator
+    }
 
-    public static class FileExtComparator implements Comparator {
+    public static class FileExtComparator implements Comparator<String> {
 
-        /**
-         * Return -1 if o1 is less than o2, 0 if they're equal, +1 if o1 is greater than o2.
-         */
-        public int compare(Object pn1, Object pn2) {
+        public int compare(String pn1, String pn2) {
 
-            String ext1 = FilenameUtils.getExtension(pn1.toString());
-            String ext2 = FilenameUtils.getExtension(pn2.toString());
+            String ext1 = FilenameUtils.getExtension(pn1);
+            String ext2 = FilenameUtils.getExtension(pn2);
 
             return ext1.compareTo(ext2);
         }
 
-        /**
-         * Return true if this equals o2.
-         */
         public boolean equals(Object o2) {
             return false;
         }
-    }    // End FileExtComparator
+    }
 
     public static class ScoredDatasetScoreComparator implements Comparator<String> {
         final ScoredDataset fSds;
@@ -135,9 +133,6 @@ public class ComparatorFactory {
             this.fSds = sds;
         }
 
-        /**
-         * Return -1 if o1 is less than o2, 0 if they're equal, +1 if o1 is greater than o2.
-         */
         public int compare(String pn1, String pn2) {
 
             int rank1 = fSds.getRank(pn1);
@@ -150,9 +145,6 @@ public class ComparatorFactory {
             return rank1 - rank2;
         }
 
-        /**
-         * Return true if this equals o2.
-         */
         public boolean equals(Object o2) {
             return false;
         }
@@ -214,11 +206,8 @@ public class ComparatorFactory {
             return s1.compareTo(s2);
         }
 
-        /**
-         * Return true if this equals o2.
-         */
         public boolean equals(Object o2) {
             return false;
         }
-    }    // End ChipNameComparator
+    }
 }

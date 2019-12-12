@@ -17,12 +17,6 @@ public class RankedListGenerators {
     private RankedListGenerators() {
     }
 
-    /**
-     * @param rl
-     * @param sort
-     * @param order
-     * @return
-     */
     public static RankedList createBySorting(final RankedList rl, final SortMode sort, final Order order) {
         LabelledVector lv = new LabelledVector(rl);
         return lv.sort(sort, order); // creates a completely new LV
@@ -35,7 +29,7 @@ public class RankedListGenerators {
 
     public static RankedList sortByVectorAndGetRankedList(final Vector iv, final SortMode sort,
                                                           final Order order, final List<String> names) {
-        final DoubleElement[] dels = RankedListGenerators._sort(new AddressedVector(iv, true), sort, order);
+        final DoubleElement[] dels = RankedListGenerators._sort(new AddressedVector(iv), sort, order);
 		final Vector v = new Vector(dels.length);
 		final List<String> clonedLabels = new ArrayList<String>();
 		for (int i = 0; i < dels.length; i++) {
@@ -46,7 +40,7 @@ public class RankedListGenerators {
 		return new DefaultRankedList(null, clonedLabels, v);
     }
 
-    protected static DoubleElement[] _sort(final AddressedVector av, final SortMode sort, final Order order) {
+    private static DoubleElement[] _sort(final AddressedVector av, final SortMode sort, final Order order) {
         DoubleElement[] dels = new DoubleElement[av.getSize()];
         for (int i = 0; i < av.getSize(); i++) {
             dels[i] = new DoubleElement(av.getAddress(i), av.getScore(i));

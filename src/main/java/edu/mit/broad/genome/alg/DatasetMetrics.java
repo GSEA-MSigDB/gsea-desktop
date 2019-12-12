@@ -10,36 +10,18 @@ import java.util.*;
 
 /**
  * @author Aravind Subramanian
- * @version %I%, %G%
  */
 public class DatasetMetrics {
 
-    /**
-     * Class Constructor.
-     */
     public DatasetMetrics() {
     }
 
     /**
      * Score AND sort/order a Dataset according to specified parameters
      * <p/>
-     * Also see the Unsorted version below for better perf in some
-     * cases.
-     *
-     * @param metric
-     * @param sort
-     * @param order
-     * @param ds
-     * @param template
-     * @return
      */
-    public ScoredDataset scoreDataset(final Metric metric,
-                                      final SortMode sort,
-                                      final Order order,
-                                      final Map metricParams,
-                                      final LabelledVectorProcessor lvp,
-                                      final Dataset ds,
-                                      final Template template) {
+    public ScoredDataset scoreDataset(final Metric metric, final SortMode sort, final Order order, 
+    		final Map<String, Boolean> metricParams, final LabelledVectorProcessor lvp, final Dataset ds, final Template template) {
 
         if (ds == null) {
             throw new IllegalArgumentException("Param ds cannot be null");
@@ -70,4 +52,4 @@ public class DatasetMetrics {
         
         return new ScoredDatasetImpl(new AddressedVector(dels), ds);
     }
-}    // End DatasetMetrics
+}

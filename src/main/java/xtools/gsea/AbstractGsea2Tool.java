@@ -6,7 +6,6 @@ package xtools.gsea;
 import edu.mit.broad.genome.Headers;
 import edu.mit.broad.genome.alg.DatasetGenerators;
 import edu.mit.broad.genome.alg.Metric;
-import edu.mit.broad.genome.alg.gsea.GeneSetCohortGenerator;
 import edu.mit.broad.genome.alg.gsea.KSTests;
 import edu.mit.broad.genome.math.*;
 import edu.mit.broad.genome.objects.GeneSet;
@@ -80,24 +79,12 @@ public abstract class AbstractGsea2Tool extends AbstractGseaTool {
         fParamSet.addParamAdv(fRndTypeParam);
     }
 
-    protected EnrichmentDb execute_one(final CollapsedDetails.Data fullCd,
-                                       final Template template,
-                                       final GeneSet[] gsets,
-                                       List store_rnd_ranked_lists_here_opt
-
-    ) throws Exception {
-
-        final int nperms = fNumPermParam.getIValue();
-        final Metric metric = fMetricParam.getMetric();
-        final SortMode sort = fSortParam.getMode();
-        final Order order = fOrderParam.getOrder();
-
+    private EnrichmentDb execute_one(final CollapsedDetails.Data fullCd,
+                                     final Template template, final GeneSet[] gsets,
+                                     List<RankedList> store_rnd_ranked_lists_here_opt) throws Exception {
         final LabelledVectorProcessor lvp = new LabelledVectorProcessors.None(); // @note
 
         final RandomSeedGenerator rst = fRndSeedTypeParam.createSeed();
-        final Map mps = getMetricParams(fMedianParam);
-        final GeneSetCohortGenerator gcohgen = fGcohGenReqdParam.createGeneSetCohortGenerator(false);
-
         final DatasetTemplate dt = new DatasetGenerators().extract(fullCd.getDataset(), template);
 
         log.debug(">>>>> Using samples: " + dt.getDataset().getColumnNames());
@@ -110,43 +97,19 @@ public abstract class AbstractGsea2Tool extends AbstractGseaTool {
                     ((RandomSeedGenerators.Timestamp)rst).getTimestamp());
         }
 
-        return tests.executeGsea(
-                dt,
-                gsets,
-                nperms,
-                metric,
-                sort,
-                order,
-                lvp,
-                rst,
-                fRndTypeParam.getRandomizerType(),
-                mps,
-                gcohgen,
-                fPermuteTypeParamType.permuteTemplate(),
-                fNumMarkersParam.getIValue(),
-                store_rnd_ranked_lists_here_opt
-        );
+        return tests.executeGsea(dt, gsets, fNumPermParam.getIValue(), fMetricParam.getMetric(),
+        		fSortParam.getMode(), fOrderParam.getOrder(), lvp, rst,
+                fRndTypeParam.getRandomizerType(), getMetricParams(fMedianParam),
+                fGcohGenReqdParam.createGeneSetCohortGenerator(), fPermuteTypeParamType.permuteTemplate(),
+                fNumMarkersParam.getIValue(), store_rnd_ranked_lists_here_opt);
 
     }
 
-    protected void execute_one_with_reporting(final CollapsedDetails.Data fullCd,
-                                              final Template template,
-                                              final GeneSet[] gsets,
-                                              final HtmlReportIndexPage reportIndexPage,
-                                              final boolean makeSubDir,
-                                              final GeneSet[] origGeneSets,
-                                              final int showDetailsForTopXSets,
-                                              final boolean makeZippedReport,
-                                              final boolean makeGeneSetReports,
-                                              final boolean createSvgs,
-                                              final boolean createGcts
-
-    ) throws Exception {
-
-        List store_rnd_ranked_lists_here_opt = null;
-        if (fSaveRndRankedListsParam.isTrue()) {
-            store_rnd_ranked_lists_here_opt = new ArrayList();
-        }
+    protected void execute_one_with_reporting(final CollapsedDetails.Data fullCd, final Template template, 
+    		final GeneSet[] gsets, final HtmlReportIndexPage reportIndexPage, final boolean makeSubDir,
+    		final GeneSet[] origGeneSets, final int showDetailsForTopXSets, final boolean makeZippedReport, 
+    		final boolean makeGeneSetReports, final boolean createSvgs, final boolean createGcts) throws Exception {
+        List<RankedList> store_rnd_ranked_lists_here_opt = fSaveRndRankedListsParam.isTrue() ? new ArrayList<RankedList>() : null;
 
         final EnrichmentDb edb = execute_one(fullCd, template, gsets, store_rnd_ranked_lists_here_opt);
 
@@ -160,37 +123,24 @@ public abstract class AbstractGsea2Tool extends AbstractGseaTool {
         final DatasetTemplate dt = new DatasetGenerators().extract(fullCd.getDataset(), template);
 
         // Make the report
-        EnrichmentReports.Ret ret = EnrichmentReports.createGseaLikeReport(
-                edb,
-                getOutputStream(),
-                fullCd,
-                reportIndexPage,
-                makeSubDir,
-                fReport,
-                showDetailsForTopXSets,
-                minSize, maxSize,
-                makeGeneSetReports,
-                makeZippedReport,
-                createSvgs,
-                createGcts,
-                origGeneSets,
-                metric.getName(),
-                fNormModeParam.getNormModeName());
+        EnrichmentReports.Ret ret = EnrichmentReports.createGseaLikeReport(edb, getOutputStream(), fullCd,
+        		reportIndexPage, makeSubDir, fReport, showDetailsForTopXSets, minSize, maxSize, makeGeneSetReports,
+                makeZippedReport, createSvgs, createGcts, origGeneSets, metric.getName(), fNormModeParam.getNormModeName());
 
         // Save the rnd ranked lists
         // Note: carrying this list through until after the algorithm completes has negative memory usage implications.
         // This is fine with the way things are currently structured but could change if we restructure in other ways,
         // e.g. to generate the lists on demand as we go rather than up-front.  Then we could generate & save the list,
         // run the iteration, then drop it so it doesn't consume memory.
-        if (store_rnd_ranked_lists_here_opt != null && store_rnd_ranked_lists_here_opt.isEmpty() == false) {
+        if (store_rnd_ranked_lists_here_opt != null && !store_rnd_ranked_lists_here_opt.isEmpty()) {
             File dir = fReport.createSubDir("random_ranked_lists");
             for (int r = 0; r < store_rnd_ranked_lists_here_opt.size(); r++) {
-                RankedList rl = (RankedList) store_rnd_ranked_lists_here_opt.get(r);
+                RankedList rl = store_rnd_ranked_lists_here_opt.get(r);
                 // Prepend the list position for uniqueness; append the extension if necessary.
                 String name = r + "_" + rl.getName();
                 if (!StringUtils.endsWith(name, ".rnk")) name += ".rnk";
                 File file = new File(dir, name);
-                ParserFactory.save(rl, file, false);
+                ParserFactory.save(rl, file);
             }
         }
 

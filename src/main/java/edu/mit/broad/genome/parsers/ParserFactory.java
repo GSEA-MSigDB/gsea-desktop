@@ -908,15 +908,8 @@ public class ParserFactory implements Constants {
     }
 
     public static void save(final RankedList rl, final File toFile) throws Exception {
-        save(rl, toFile, false);
-    }
-
-    public static void save(final RankedList rl, final File toFile, final boolean add2cache) throws Exception {
         Parser parser = new RankedListParser();
         parser.export(rl, toFile);
-        if (add2cache) {
-            _getCache().add(toFile, rl, RankedList.class);
-        }
     }
 
     /**
@@ -1126,4 +1119,4 @@ public class ParserFactory implements Constants {
         parser.export(gmt, toFile);
         _getCache().add(toFile, gmt, GeneSetMatrix.class);
     }
-}    // End ParserFactory
+}

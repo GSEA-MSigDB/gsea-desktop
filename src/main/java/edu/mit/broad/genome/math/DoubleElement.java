@@ -26,21 +26,13 @@ public class DoubleElement {
         this.fValue = value;
     }
 
-    /**
-     * a list with DoubleElement as elements
-     */
-    public static void sort(final SortMode sort, final Order order, final List<DoubleElement> felist) {
-
-        Collections.sort(felist, new DoubleElementComparator(sort, order.isAscending()));
-
-    }
-
     public static DoubleElement[] sort(final SortMode sort, final Order order, final DoubleElement[] dels) {
         List<DoubleElement> list = DoubleElement.toList(dels);
-        
-        sort(sort, order, list);
+        // TODO: evaluate for performance: can use Arrays.parallelSort() instead
+        // (either on a copy or the array itself?), but the effect might be minimal. 
+		Collections.sort(list, new DoubleElementComparator(sort, order.isAscending()));
 
-        return (DoubleElement[]) list.toArray(new DoubleElement[list.size()]);
+        return list.toArray(new DoubleElement[list.size()]);
     }
 
     /**

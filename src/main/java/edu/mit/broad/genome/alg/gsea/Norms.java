@@ -69,6 +69,10 @@ public class Norms {
             final float real = realScores.getScore(rowName);
             final Norm norm = Norms.createNorm(normName, real, rndScores_full.getRow(rowName));
 
+            // Note from Pablo:
+            // I think the NES with NaN (because of the skewness) should ... 
+            // be excluded from the computation of p-values or FDRs.
+            
             normRndScoresMatrix.setRow(r, norm.getRandomNorm());
             normRealScores.setElement(r, norm.getRealNorm());
             labels[r] = rowName;

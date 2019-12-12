@@ -1,8 +1,9 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.parsers;
 
+import edu.mit.broad.genome.Errors;
 import edu.mit.broad.genome.Headers;
 import edu.mit.broad.genome.NamingConventions;
 import edu.mit.broad.genome.Printf;
@@ -51,24 +52,15 @@ public class EdbFolderParser extends AbstractParser {
     private static final String RANK_SCORE_AT_ES = "RANK_SCORE_AT_ES";
     private static final String ES_PROFILE = "ES_PROFILE";
 
-
-    // -------------------------------------------------------------------------------------------- //
     // well known file names
     private static final String EDB_FILE_NAME = "results.edb";
-
-    // -------------------------------------------------------------------------------------------- //
-
-    // key -> pob id, value -> file in which it has been saved
-    private Map fPobidFileMap;
-
-    // -------------------------------------------------------------------------------------------- //
 
     public EdbFolderParser() {
         super(EnrichmentDb.class);
     }
 
     // @note duplicated code below
-    protected EnrichmentDbImpl_one_shared_rl parseEdb(final File gseaResultDir) throws Exception {
+    protected EnrichmentDb parseEdb(final File gseaResultDir) throws Exception {
 
         final File edb_dir = _getEdbDir(gseaResultDir);
 
@@ -90,11 +82,11 @@ public class EdbFolderParser extends AbstractParser {
         int numPerms = Integer.parseInt(root.attribute(Headers.NUM_PERMS).getValue());
 
         // then onto the elements
-        List dtgs = new ArrayList();
+        List<EnrichmentResult> dtgs = new ArrayList<EnrichmentResult>();
 
         int cnt = 0;
         // each element is converted into a Edb.Data Object
-        for (Iterator i = root.elementIterator(DTG); i.hasNext();) {
+        for (Iterator<Element> i = getDomIterator(root); i.hasNext();) {
             Element el = (Element) i.next();
 
             // @note template na if pre-ranked
@@ -130,7 +122,7 @@ public class EdbFolderParser extends AbstractParser {
             EnrichmentScore score = new EnrichmentScoreImpl(es, rankAtES,
                     corrAtES, nes, np, fdr, fwer, hitIndices.length, hitIndices, esProfile, null);
 
-            dtgs.add(new EnrichmentResultImpl(rl, template_opt, gset, chip, score, rndESS));
+            dtgs.add(new EnrichmentResult(rl, template_opt, gset, chip, score, rndESS, null));
 
             if (cnt % 500 == 0) {
                 System.out.println("read in from edb dtg: " + (cnt + 1));
@@ -139,7 +131,7 @@ public class EdbFolderParser extends AbstractParser {
             cnt++;
         }
 
-        Map mps = new HashMap();
+        Map<String, Boolean> mps = new HashMap<String, Boolean>();
 
         Boolean use_median = _boolean(root, Headers.USE_MEDIAN);
         if (use_median != null) {
@@ -156,13 +148,69 @@ public class EdbFolderParser extends AbstractParser {
             mps.put(Headers.USE_BIASED, use_biased);
         }
 
-        final EnrichmentResult[] results = (EnrichmentResult[]) dtgs.toArray(new EnrichmentResult[dtgs.size()]);
-        final EnrichmentDbImpl_one_shared_rl edb = new EnrichmentDbImpl_one_shared_rl(NamingConventions.removeExtension(edb_file.getName()),
-                results, null, lvp, metric, mps, sort, order, numPerms, gseaResultDir);
+        final EnrichmentResult[] results = dtgs.toArray(new EnrichmentResult[dtgs.size()]);
+        // Verify the loaded results.
+        RankedList rankedList = _rl_shared(results);
+        Template template = template_shared(results);
+        final EnrichmentDb edb = new EnrichmentDb(NamingConventions.removeExtension(edb_file.getName()), 
+        		rankedList, null, template, results, lvp, metric, mps, sort, order, numPerms, edb_dir, null);
         edb.addComment(fComment.toString());
         doneImport();
         return edb;
     }
+
+    // Lifted this call just to isolate the unchecked warning
+    @SuppressWarnings("unchecked")
+	private final Iterator<Element> getDomIterator(Element root) {
+		return root.elementIterator(DTG);
+	}
+
+	private RankedList _rl_shared(final EnrichmentResult[] results) {
+
+		final Errors errors = new Errors();
+		final String theName = results[0].getRankedList().getName();
+		final int theSize = results[0].getRankedList().getSize();
+
+		for (int r = 0; r < results.length; r++) {
+			String name = results[r].getRankedList().getName();
+			int size = results[r].getRankedList().getSize();
+			if (!name.equals(theName)) {
+				errors.add("Mismatched rl theName: " + theName + " name: " + name + " at r: " + r + " # rls: "
+						+ results.length);
+			}
+
+			if (size != theSize) {
+				errors.add("Mismatched rl theName: " + theName + " name: " + name + " at r: " + r + " # rls: "
+						+ results.length);
+			}
+		}
+
+		errors.barfIfNotEmptyRuntime();
+
+		return results[0].getRankedList();
+	}
+
+	private Template template_shared(final EnrichmentResult[] results) {
+		final Errors errors = new Errors();
+
+		if (results[0].getTemplate() == null) {
+			return null;
+		}
+
+		final String theName = results[0].getTemplate().getName();
+
+		for (int r = 0; r < results.length; r++) {
+			String name = results[r].getTemplate().getName();
+			if (!name.equals(theName)) {
+				errors.add("Mismatched template theName: " + theName + " name: " + name + " at r: " + r + " # results: "
+						+ results.length);
+			}
+		}
+
+		errors.barfIfNotEmptyRuntime();
+
+		return results[0].getTemplate();
+	}
 
     private static File _getEdbDir(final File gseaResultDir) throws ParserException {
         if (gseaResultDir.exists() == false || gseaResultDir.isDirectory() == false) {
@@ -252,8 +300,8 @@ public class EdbFolderParser extends AbstractParser {
         final Struc struc = new Struc(edb.getNumResults());
 
         if (exportTheGeneSetMatrix) {
-            Set names = new HashSet();
-            java.util.List gsets = new ArrayList();
+            Set<String> names = new HashSet<String>();
+            List<GeneSet> gsets = new ArrayList<GeneSet>();
             for (int i = 0; i < edb.getNumResults(); i++) {
                 GeneSet gset = edb.getResult(i).getGeneSet();
                 String name = gset.getName(true);
@@ -281,7 +329,7 @@ public class EdbFolderParser extends AbstractParser {
         root.addAttribute(Headers.NUM_PERMS, edb.getNumPerm() + "");
 
         // metric params
-        Map map = edb.getMetricParams();
+        Map<String, Boolean> map = edb.getMetricParams();
         Object use_median = map.get(Headers.USE_MEDIAN);
         if (use_median != null) {
             root.addAttribute(Headers.USE_MEDIAN, use_median.toString());
@@ -369,11 +417,11 @@ public class EdbFolderParser extends AbstractParser {
         return name;
     }
 
-    private Map rankedListNameRankedListObject;
+    private Map<String, RankedList> rankedListNameRankedListObject;
 
     private RankedList _readRankedList(final Element el, final File edb_dir) throws Exception {
         if (rankedListNameRankedListObject == null) {
-            rankedListNameRankedListObject = new HashMap();
+            rankedListNameRankedListObject = new HashMap<String, RankedList>();
         }
 
         String name = el.attribute(Headers.RANKED_LIST).getValue();
@@ -381,17 +429,17 @@ public class EdbFolderParser extends AbstractParser {
             throw new IllegalArgumentException("No ranked list element in the xml: " + el);
         }
 
-        Object obj = rankedListNameRankedListObject.get(name);
-        if (obj == null) {
+        RankedList rankedList = rankedListNameRankedListObject.get(name);
+        if (rankedList == null) {
             File file = new File(edb_dir, NamingConventions.createSafeFileName(name));
-            obj = new RankedListJITImpl(file);
+            rankedList = new RankedListJITImpl(file);
         }
-        rankedListNameRankedListObject.put(name, obj);
+        rankedListNameRankedListObject.put(name, rankedList);
 
-        return (RankedList) obj;
+        return rankedList;
     }
 
-    static class Struc {
+	static class Struc {
         File[] templateFiles;
         File[] rankedListFiles;
         File gmFile;
@@ -401,26 +449,28 @@ public class EdbFolderParser extends AbstractParser {
             rankedListFiles = new File[numResults];
         }
     }
+	
+	// key -> pob id, value -> file in which it has been saved
+	private Map<String, File> fPobidFileMap;
 
     private File saveIfNeeded(final String name, final PersistentObject pob, final File inDir) throws Exception {
 
         if (fPobidFileMap == null) {
-            this.fPobidFileMap = new HashMap();
+            this.fPobidFileMap = new HashMap<String, File>();
         }
 
         final String id = name + "." + pob.getClass().getName();
         if (fPobidFileMap.containsKey(id)) {
-            return (File) fPobidFileMap.get(id);
+            return fPobidFileMap.get(id);
         }
 
         File file = NamingConventions.createSafeFile(inDir, name);
         if (file.exists()) {
             log.warn("Overwriting extant file: " + file);
-            //throw new IllegalStateException("Extant file: " + file);
         }
 
         if (pob instanceof RankedList) {
-            ParserFactory.save((RankedList) pob, file, false);
+            ParserFactory.save((RankedList) pob, file);
         } else if (pob instanceof Template) {
             ParserFactory.save((Template) pob, file, false);
         } else {

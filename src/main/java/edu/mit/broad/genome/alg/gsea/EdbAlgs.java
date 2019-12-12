@@ -31,7 +31,7 @@ public class EdbAlgs {
         return new LabelledVector(labels, v);
     }
 
-    public static Dataset createRndESDataset(final String name, final EnrichmentResult[] results) {
+    public static Dataset createRndESDataset(final EnrichmentResult[] results) {
 
         _nonNull(results);
 
@@ -47,7 +47,7 @@ public class EdbAlgs {
             rowNames.add(results[r].getGeneSetName());
         }
 
-        return new DefaultDataset(name + "_rnd_es", m, rowNames, _permColNames(numPerms), null);
+        return new DefaultDataset("some_name_rnd_es", m, rowNames, _permColNames(numPerms), null);
     }
 
     public static GeneSet[] getGeneSets(final EnrichmentResult[] results) {
@@ -94,17 +94,17 @@ public class EdbAlgs {
         return map;
     }
 
-    public static List<String> getGeneSetNames(final EnrichmentResult[] results) {
+    public static String[] getGeneSetNames(final EnrichmentResult[] results) {
 
         _nonNull(results);
 
-        List<String> list = new ArrayList<String>(results.length);
+        String[] names = new String[results.length];
 
         for (int i = 0; i < results.length; i++) {
-            list.add(results[i].getGeneSet().getName(true)); // note strip aux
+        	names[i] = results[i].getGeneSet().getName(true); // note strip aux
         }
 
-        return list;
+        return names;
     }
 
     public static int enforceSameNumOfPerms(final EnrichmentResult[] results) {

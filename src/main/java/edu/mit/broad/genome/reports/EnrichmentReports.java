@@ -337,9 +337,9 @@ public class EnrichmentReports {
 
         File butterfly_file = null;
         File butterfly_file_svg = null;
-        if (edb instanceof EnrichmentDbImplWithPermTest && ((EnrichmentDbImplWithPermTest) edb).getPermutationTest() != null) {
+        if (edb.getPermutationTest() != null) {
             try {
-                final XChart xc = EnrichmentReports.createButterflyChart(((EnrichmentDbImplWithPermTest) edb).getPermutationTest());
+                final XChart xc = EnrichmentReports.createButterflyChart(edb.getPermutationTest());
                 butterfly_file = new File(saveInThisDir, "butterfly_plot.png");
                 xc.saveAsPNG(butterfly_file, 500, 500);
                 if (createSvgs) {

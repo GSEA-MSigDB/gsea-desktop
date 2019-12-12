@@ -19,7 +19,6 @@ import java.util.List;
  * method uses DefaultDataset which does the data duplication upon creation.
  *
  * @author Aravind Subramanian
- * @version %I%, %G%
  */
 public class DatasetBuilder {
 

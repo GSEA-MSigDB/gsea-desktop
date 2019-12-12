@@ -14,9 +14,6 @@ import java.util.List;
  * So, every element: score (as usual) + address (eg a row index in a ds)
  * <p/>
  * So really a collection of DoubleElements
- *
- * @author
- * @version %I%, %G%
  */
 
 //Dont extend, rather compose. There are methods in Vector that change
@@ -73,12 +70,11 @@ public class AddressedVector {
 
     /**
      * Class Constructor.
-     * Data is NOT shared - it is copied.
      * Indices are inferred (in order) from the specified vector
      *
      * @param v
      */
-    public AddressedVector(final Vector v, final boolean share) {
+    public AddressedVector(final Vector v) {
         final int[] addresses = rangeAsElements(0, _max(v));
 		if (v == null) {
 		    throw new IllegalArgumentException("Param v cannot be null");
@@ -88,14 +84,7 @@ public class AddressedVector {
 		    throw new IllegalArgumentException("Parameter addresses cannot be null");
 		}
 		
-		if (share) {
-		    init(v, addresses);
-		} else {
-		    Vector dupv = new Vector(v);
-		    int[] dadd = new int[addresses.length];
-		    System.arraycopy(addresses, 0, dadd, 0, addresses.length);
-		    init(dupv, dadd);
-		}
+	    init(v, addresses);
     }
 
     private static int _max(Vector v) {
@@ -172,7 +161,4 @@ public class AddressedVector {
     public int getSize() {
         return fVector.getSize();
     }
-
-}    // End AddressedVector
-
-
+}

@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.alg;
 
 import edu.mit.broad.genome.math.Vector;
@@ -12,7 +12,6 @@ import java.util.Map;
  * Specification of a Metric
  *
  * @author Aravind Subramanian
- * @version %I%, %G%
  */
 public interface Metric {
 
@@ -31,7 +30,7 @@ public interface Metric {
      * keys of the params map correspond to one of the constants defined above.
      * Typical example of params are USE_MEDIAN and USE_BIASED
      */
-    public double getScore(Vector profile, Template template, Map params);
+    public double getScore(Vector profile, Template template, Map<String, Boolean> params);
 
     public boolean isCategorical();
 

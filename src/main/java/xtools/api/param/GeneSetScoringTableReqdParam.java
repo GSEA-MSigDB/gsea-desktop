@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package xtools.api.param;
 
 import edu.mit.broad.genome.alg.gsea.*;
@@ -15,18 +15,11 @@ import java.awt.event.ActionListener;
  * Object to capture commandline params</p>
  *
  * @author Aravind Subramanian
- * @version %I%, %G%
  */
 public class GeneSetScoringTableReqdParam extends AbstractParam implements ActionListener {
 
     private GComboBoxField cbOptions;
 
-    /**
-     * Class constructor
-     *
-     * @param name
-     * @param desc
-     */
     public GeneSetScoringTableReqdParam() {
         this(new GeneSetScoringTables.Weighted());
     }
@@ -36,9 +29,9 @@ public class GeneSetScoringTableReqdParam extends AbstractParam implements Actio
                 def, GeneSetScoringTables.createAllScoringTables(), true);
     }
 
-    public GeneSetCohortGenerator createGeneSetCohortGenerator(boolean silent) {
+    public GeneSetCohort.Generator createGeneSetCohortGenerator() {
         GeneSetScoringTable table = getGeneSetScoringTable();
-        return new DefaultGeneSetCohort.Generator(table, silent);
+        return new GeneSetCohort.Generator(table);
     }
 
     public GeneSetScoringTable getGeneSetScoringTable() {
@@ -77,6 +70,4 @@ public class GeneSetScoringTableReqdParam extends AbstractParam implements Actio
     public void actionPerformed(ActionEvent evt) {
         this.setValue((GeneSetScoringTable) ((JComboBox) cbOptions.getComponent()).getSelectedItem());
     }
-
-
-}    // End class GeneSetCohortReqdParam
+}

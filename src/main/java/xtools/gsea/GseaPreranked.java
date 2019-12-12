@@ -4,7 +4,7 @@
 package xtools.gsea;
 
 import edu.mit.broad.genome.alg.DatasetGenerators;
-import edu.mit.broad.genome.alg.gsea.GeneSetCohortGenerator;
+import edu.mit.broad.genome.alg.gsea.GeneSetCohort;
 import edu.mit.broad.genome.alg.gsea.KSTests;
 import edu.mit.broad.genome.math.RandomSeedGenerator;
 import edu.mit.broad.genome.math.RandomSeedGenerators;
@@ -32,7 +32,6 @@ import org.apache.commons.lang3.StringUtils;
  * Its NOT representative of xtool code!!
  *
  * @author Aravind Subramanian
- * @version %I%, %G%
  */
 public class GseaPreranked extends AbstractGseaTool {
 
@@ -49,11 +48,6 @@ public class GseaPreranked extends AbstractGseaTool {
 
     private GeneSet[] fOrigGeneSets;
 
-    /**
-     * Class constructor
-     *
-     * @param properties
-     */
     public GseaPreranked(final Properties properties) {
         super("Remap_Only");
         super.init(properties);
@@ -117,14 +111,13 @@ public class GseaPreranked extends AbstractGseaTool {
         doneExec();
     }
 
-    private void execute_one(final edu.mit.broad.genome.objects.strucs.CollapsedDetails fullRL,
-                             final GeneSet[] gsets,
+    private void execute_one(final edu.mit.broad.genome.objects.strucs.CollapsedDetails fullRL, final GeneSet[] gsets,
                              final HtmlReportIndexPage reportIndexPage) throws Exception {
 
         final int nperms = fNumPermParam.getIValue();
         final int topXSets = fShowDetailsForTopXSetsParam.getIValue();
         final RandomSeedGenerator rst = fRndSeedTypeParam.createSeed();
-        final GeneSetCohortGenerator gcohgen = fGcohGenReqdParam.createGeneSetCohortGenerator(false);
+        final GeneSetCohort.Generator gcohgen = fGcohGenReqdParam.createGeneSetCohortGenerator();
         final int minSize = fGeneSetMinSizeParam.getIValue();
         final int maxSize = fGeneSetMaxSizeParam.getIValue();
         final boolean createSvgs = fCreateSvgsParam.isSpecified() && fCreateSvgsParam.isTrue();
@@ -146,14 +139,7 @@ public class GseaPreranked extends AbstractGseaTool {
                     ((RandomSeedGenerators.Timestamp)rst).getTimestamp());
         }
 
-        EnrichmentDb edb = tests.executeGsea(
-                rl,
-                gsets,
-                nperms,
-                rst,
-                chip,
-                gcohgen
-        );
+        EnrichmentDb edb = tests.executeGsea(rl, gsets, nperms, rst, chip, gcohgen);
 
         // Make the report
         EnrichmentReports.Ret ret = EnrichmentReports.createGseaLikeReport(edb, getOutputStream(),
@@ -247,5 +233,4 @@ public class GseaPreranked extends AbstractGseaTool {
 
         return null;
     }
-
-}    // End GseaPreranked
+}

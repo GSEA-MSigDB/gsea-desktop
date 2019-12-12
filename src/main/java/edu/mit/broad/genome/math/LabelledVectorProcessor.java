@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.math;
 
 import edu.mit.broad.genome.objects.LabelledVector;
@@ -16,6 +16,6 @@ public interface LabelledVectorProcessor {
 
     public LabelledVector process(LabelledVector lv);
 
-    public void process(List dels);
+    public void process(List<DoubleElement> dels);
 
 }

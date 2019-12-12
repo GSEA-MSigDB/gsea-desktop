@@ -9,7 +9,6 @@ import edu.mit.broad.genome.math.*;
 import edu.mit.broad.genome.objects.Dataset;
 import edu.mit.broad.genome.objects.LabelledVector;
 import edu.mit.broad.genome.objects.esmatrix.db.EnrichmentResult;
-import edu.mit.broad.genome.objects.esmatrix.db.EnrichmentResultImpl;
 import edu.mit.broad.genome.objects.esmatrix.db.EnrichmentScore;
 import edu.mit.broad.genome.objects.esmatrix.db.EnrichmentScoreImpl;
 import edu.mit.broad.genome.objects.strucs.FdrStruc;
@@ -43,7 +42,7 @@ public class PValueCalculatorImpls {
                                                       final EnrichmentResult[] results) {
 
         final LabelledVector realESS = EdbAlgs.createRealES(results);
-        final Dataset rndESS = EdbAlgs.createRndESDataset("some_name", results);
+        final Dataset rndESS = EdbAlgs.createRndESDataset(results);
 
         klog.debug("Norm mode: " + normName);
 
@@ -60,7 +59,6 @@ public class PValueCalculatorImpls {
                                                       final Dataset rndESS_full,
                                                       final Dataset rndNESS_full,
                                                       final EnrichmentResult[] prev_results) {
-
         klog.debug("Started calcFdrs_skewed");
 
         // the rnd maybe a superset of the null needed for the real ess's
@@ -134,7 +132,7 @@ public class PValueCalculatorImpls {
             EnrichmentScore es_new = new EnrichmentScoreImpl(prev_results[r].getScore(), nes, np, fdr_value, fwer);
 
             // TODO: track down NaNs in the following call (via es_new)
-            results[r] = new EnrichmentResultImpl(prev_results[r].getRankedList(), prev_results[r].getTemplate(),
+            results[r] = new EnrichmentResult(prev_results[r].getRankedList(), prev_results[r].getTemplate(),
                     prev_results[r].getGeneSet(), prev_results[r].getChip(), es_new, prev_results[r].getRndESS(), fdrStruc);
 
             /*

@@ -154,7 +154,7 @@ public class Metrics {
          * Template needs to be equal in length to profile.
          * Always determining distance of profile to template.
          */
-        public double getScore(Vector profile, Template template, Map params) {
+        public double getScore(Vector profile, Template template, Map<String, Boolean> params) {
             return XMath.euclidean(template.synchProfile(profile), template.toVector());
         }
 
@@ -186,7 +186,7 @@ public class Metrics {
          * Template needs to be equal in length to profile.
          * Always determining distance of profile to template.
          */
-        public double getScore(Vector profile, Template template, Map params) {
+        public double getScore(Vector profile, Template template, Map<String, Boolean> params) {
             return XMath.manhatten(template.synchProfile(profile), template.toVector());
         }
 
@@ -218,7 +218,7 @@ public class Metrics {
          * Template needs to be equal in length to profile.
          * Always determining distance of profile to template.
          */
-        public double getScore(Vector profile, Template template, Map params) {
+        public double getScore(Vector profile, Template template, Map<String, Boolean> params) {
             final Vector v = template.synchProfile(profile);
             return XMath.pearson(v, template.toVector());
         }
@@ -248,7 +248,7 @@ public class Metrics {
          *
          * @IMP IMP is low good or bad? i think its different in that higher is better
          */
-        public double getScore(Vector profile, Template template, Map params) {
+        public double getScore(Vector profile, Template template, Map<String, Boolean> params) {
             return XMath.cosine(template.synchProfile(profile), template.toVector());
         }
 
@@ -277,7 +277,7 @@ public class Metrics {
          * Template is NOT required.
          * Not a *distance* metric -> just measures variation within the profile.
          */
-        public double getScore(Vector profile, Template template, Map params) {
+        public double getScore(Vector profile, Template template, Map<String, Boolean> params) {
 
             boolean usebiased = AlgMap.isBiased(params);
             boolean fixlow = AlgMap.isFixLowVar(params);
@@ -313,7 +313,7 @@ public class Metrics {
          * Template is NOT required.
          * Not a *distance* metric -> just measures variation within the profile.
          */
-        public double getScore(Vector profile, Template template, Map params) {
+        public double getScore(Vector profile, Template template, Map<String, Boolean> params) {
 
             boolean usebiased = AlgMap.isBiased(params);
             boolean fixlow = AlgMap.isFixLowVar(params);
@@ -368,7 +368,7 @@ public class Metrics {
          * Template is required.
          */
         // TODO: Ignore these params.  Instead, config the metric ahead of the computation
-        public double getScore(Vector profile, Template template, Map params) {
+        public double getScore(Vector profile, Template template, Map<String, Boolean> params) {
 
             boolean usebiased = AlgMap.isBiased(params);
             boolean fixlow = AlgMap.isFixLowVar(params);
@@ -421,7 +421,7 @@ public class Metrics {
          * FIX_LOW    -> true or false (Boolean objects). Default is TRUE
          * Template is required.
          */
-        public double getScore(Vector profile, Template template, Map params) {
+        public double getScore(Vector profile, Template template, Map<String, Boolean> params) {
 
             boolean usebiased = AlgMap.isBiased(params);
             boolean fixlow = AlgMap.isFixLowVar(params);
@@ -469,7 +469,7 @@ public class Metrics {
          * FIX_LOW    -> true or false (Boolean objects). Default is TRUE
          * Template is required.
          */
-        public double getScore(Vector profile, Template template, Map params) {
+        public double getScore(Vector profile, Template template, Map<String, Boolean> params) {
             return profile.getElement(0);
         }
 
@@ -496,7 +496,7 @@ public class Metrics {
          * FIX_LOW    -> true or false (Boolean objects). Default is TRUE
          * Template is required.
          */
-        public double getScore(Vector profile, Template template, Map params) {
+        public double getScore(Vector profile, Template template, Map<String, Boolean> params) {
 
             boolean usemedian = AlgMap.isMedian(params);
             boolean usebiased = AlgMap.isBiased(params);
@@ -537,7 +537,7 @@ public class Metrics {
          * FIX_LOW    -> true or false (Boolean objects). Default is TRUE
          * Template is required.
          */
-        public double getScore(Vector profile, Template template, Map params) {
+        public double getScore(Vector profile, Template template, Map<String, Boolean> params) {
 
             boolean usebiased = AlgMap.isBiased(params);
             boolean fixlow = AlgMap.isFixLowVar(params);
@@ -572,7 +572,7 @@ public class Metrics {
         /**
          * Template is required.
          */
-        public double getScore(Vector profile, Template template, Map params) {
+        public double getScore(Vector profile, Template template, Map<String, Boolean> params) {
             boolean usebiased = AlgMap.isBiased(params);
             boolean fixlow = AlgMap.isFixLowVar(params);
 
@@ -613,7 +613,7 @@ public class Metrics {
          * <p/>
          * usebiased and usemedian are meaningless??
          */
-        public double getScore(Vector profile, Template template, Map params) {
+        public double getScore(Vector profile, Template template, Map<String, Boolean> params) {
 
 
             Vector[] vs = fSplitter.splitBiphasic_nansafe(profile, template);
@@ -654,7 +654,7 @@ public class Metrics {
          * Diff in means between classes as split by template
          * (NOT b/w profile and template)
          */
-        public double getScore(Vector profile, Template template, Map params) {
+        public double getScore(Vector profile, Template template, Map<String, Boolean> params) {
 
             Vector[] vs = fSplitter.splitBiphasic_nansafe(profile, template);
             int coiIndex = template.getClassOfInterestIndex();
@@ -690,7 +690,7 @@ public class Metrics {
          * Diff in means between classes as split by template
          * (NOT b/w profile and template)
          */
-        public double getScore(Vector profile, Template template, Map params) {
+        public double getScore(Vector profile, Template template, Map<String, Boolean> params) {
 
             Vector[] vs = fSplitter.splitBiphasic(profile, template);
             int coiIndex = template.getClassOfInterestIndex();
@@ -726,7 +726,7 @@ public class Metrics {
          * Diff in means between classes as split by template
          * (NOT b/w profile and template)
          */
-        public double getScore(Vector profile, Template template, Map params) {
+        public double getScore(Vector profile, Template template, Map<String, Boolean> params) {
 
             Vector[] vs = fSplitter.splitBiphasic(profile, template);
             int coiIndex = template.getClassOfInterestIndex();
@@ -765,7 +765,7 @@ public class Metrics {
          * Diff in means between classes as split by template
          * (NOT b/w profile and template)
          */
-        public double getScore(Vector profile, Template template, Map params) {
+        public double getScore(Vector profile, Template template, Map<String, Boolean> params) {
 
             Vector[] vs = fSplitter.splitBiphasic(profile, template);
             int coiIndex = template.getClassOfInterestIndex();
@@ -803,7 +803,7 @@ public class Metrics {
          * Diff in means between classes as split by template
          * (NOT b/w profile and template)
          */
-        public double getScore(Vector profile, Template template, Map params) {
+        public double getScore(Vector profile, Template template, Map<String, Boolean> params) {
 
             Vector[] vs = fSplitter.splitBiphasic(profile, template);
             int coiIndex = template.getClassOfInterestIndex();
@@ -842,7 +842,7 @@ public class Metrics {
          * Diff in means between classes as split by template
          * (NOT b/w profile and template)
          */
-        public double getScore(Vector profile, Template template, Map params) {
+        public double getScore(Vector profile, Template template, Map<String, Boolean> params) {
 
             Vector[] vs = fSplitter.splitBiphasic(profile, template);
             int coiIndex = template.getClassOfInterestIndex();
@@ -878,7 +878,7 @@ public class Metrics {
          * Diff in means between classes as split by template
          * (NOT b/w profile and template)
          */
-        public double getScore(Vector profile, Template template, Map params) {
+        public double getScore(Vector profile, Template template, Map<String, Boolean> params) {
 
             Vector[] vs = fSplitter.splitBiphasic_nansafe(profile, template);
             int coiIndex = template.getClassOfInterestIndex();
@@ -916,7 +916,7 @@ public class Metrics {
          * Diff in means between classes as split by template
          * (NOT b/w profile and template)
          */
-        public double getScore(Vector profile, Template template, Map params) {
+        public double getScore(Vector profile, Template template, Map<String, Boolean> params) {
 
             Vector[] vs = fSplitter.splitBiphasic_nansafe(profile, template);
             int coiIndex = template.getClassOfInterestIndex();
@@ -956,7 +956,7 @@ public class Metrics {
          * No parameters.
          * Template is reqd
          */
-        public double getScore(Vector profile, Template template, Map params) {
+        public double getScore(Vector profile, Template template, Map<String, Boolean> params) {
 
             Vector[] vs = fSplitter.splitBiphasic_nansafe(profile, template);
             int coiIndex = template.getClassOfInterestIndex();
@@ -992,7 +992,7 @@ public class Metrics {
          * No parameters.
          * Template is reqd
          */
-        public double getScore(Vector profile, Template template, Map params) {
+        public double getScore(Vector profile, Template template, Map<String, Boolean> params) {
 
             Vector[] vs = fSplitter.splitBiphasic_nansafe(profile, template);
             int coiIndex = template.getClassOfInterestIndex();
@@ -1027,7 +1027,7 @@ public class Metrics {
          * Diff in medians between classes as split by template
          * (NOT b/w profile and template)
          */
-        public double getScore(Vector profile, Template template, Map params) {
+        public double getScore(Vector profile, Template template, Map<String, Boolean> params) {
 
             Vector[] vs = fSplitter.splitBiphasic_nansafe(profile, template);
             int coiIndex = template.getClassOfInterestIndex();
@@ -1044,5 +1044,4 @@ public class Metrics {
         }
 
     }
-
-}    // End Metrics
+}

@@ -60,8 +60,7 @@ public class LeadingEdgeAnalysis {
                 .calcNPValuesAndFDR(edb_original.getResults());
         final EnrichmentDb edb = edb_original.cloneDeep(results);
         EnrichmentResult[] enrichmentResults = edb
-                .getResults(new ComparatorFactory.EnrichmentResultByNESComparator(
-                        Order.DESCENDING));
+                .getResults(new ComparatorFactory.EnrichmentResultByNESComparator(Order.DESCENDING));
         return enrichmentResults;
     }
 

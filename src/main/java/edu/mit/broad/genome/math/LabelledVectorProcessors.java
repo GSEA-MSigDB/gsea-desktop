@@ -69,10 +69,10 @@ public class LabelledVectorProcessors {
             return (process(new LabelledVector("foo", v))).getScoresV(false);
         }
 
-        public void process(final List dels) {
+        public void process(final List<DoubleElement> dels) {
             Vector v = process(new Vector(dels));
             for (int i = 0; i < dels.size(); i++) {
-                DoubleElement del = (DoubleElement) dels.get(i);
+                DoubleElement del = dels.get(i);
                 del.fValue = v.getElement(i); // change value but not the index
                 dels.set(i, del);
             }
@@ -94,7 +94,7 @@ public class LabelledVectorProcessors {
             return v;
         }
 
-        public void process(final List dels) {
+        public void process(final List<DoubleElement> dels) {
         }
     }
 
@@ -238,7 +238,6 @@ public class LabelledVectorProcessors {
 
     }
 
-
     public static class NormalizeToMaxThenAreaTwoSided extends AbstractLabelledVectorProcessor {
 
         public String getName() {
@@ -251,7 +250,4 @@ public class LabelledVectorProcessors {
         }
 
     }
-
-} // End class RankedListProcessors
-
-
+}
