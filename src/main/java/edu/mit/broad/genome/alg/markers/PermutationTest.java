@@ -19,7 +19,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
-import org.ujmp.core.enums.ValueType;
 
 /**
  * NamingConventions permutation tests
@@ -170,8 +169,11 @@ public class PermutationTest {
             siglevel.add("sig_" + fSigLevels.get(i));
         }
 
-		String dsName = fName + (up ? "_up_rnd" : "_dn_rnd");
-		return new DefaultDataset(dsName, fUpSignificanceLevelsMatrix, ranks, siglevel, null);
+		if (up) {
+		    return new DefaultDataset(fName + "_up_rnd", fUpSignificanceLevelsMatrix, ranks, siglevel, null);
+		} else {
+		    return new DefaultDataset(fName + "_dn_rnd", fDnSignificanceLevelsMatrix, ranks, siglevel, null);
+		}
     }
 
     /**
@@ -224,15 +226,15 @@ public class PermutationTest {
 		this.fDnSignificanceLevelsMatrix = new Matrix(nMarkersDnMatrix.getNumRow(), numSigLevels);
 		
 		for (int r = 0; r < numMarkers; r++) {
-		    Vector v = nMarkersUpMatrix.getRowV(r);
+		    Vector v1 = nMarkersUpMatrix.getRowV(r);
 		    for (int c = 0; c < numSigLevels; c++) {
-		        float level = _getSignificanceLevel(v, fSigLevels.get(c), fSort, fOrder);
+		        float level = _getSignificanceLevel(v1, fSigLevels.get(c), fSort, fOrder);
 		        this.fUpSignificanceLevelsMatrix.setElement(r, c, level);
 		    }
 		
-		    v = nMarkersDnMatrix.getRowV(r);
+		    Vector v2 = nMarkersDnMatrix.getRowV(r);
 		    for (int c = 0; c < numSigLevels; c++) {
-		        float level = _getSignificanceLevel(v, 1.0f - fSigLevels.get(c), fSort, fOrder); // other side
+		        float level = _getSignificanceLevel(v2, 1.0f - fSigLevels.get(c), fSort, fOrder); // other side
 		        this.fDnSignificanceLevelsMatrix.setElement(r, c, level);
 		    }
 		}

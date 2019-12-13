@@ -11,7 +11,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
-import edu.mit.broad.genome.Errors;
 import edu.mit.broad.genome.alg.Metric;
 import edu.mit.broad.genome.alg.gsea.EdbAlgs;
 import edu.mit.broad.genome.alg.markers.PermutationTest;
@@ -90,6 +89,7 @@ public class EnrichmentDb extends AbstractObject {
 		this.fOrder = order;
 		this.fNumPerms = numPerm;
 		this.fEdbDir_opt = edb_dir_opt;
+		this.fPermTest = ptest_opt;
 
 		// Enforce that gene sets are unique (barf here)
 		this.fGeneSetNameResultMap = EdbAlgs.hashByGeneSetName(getResults());

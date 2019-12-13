@@ -159,28 +159,28 @@ public class XMath {
      * @see sampleWithoutReplacement for a diff way
      *      Creates an array whose elements are randomly arranged between
      *      0 and num - 1
-     *      Example: randomize(5) could yeild: 0, 3, 1, 2, 4
+     *      Example: randomize(5) could yield: 0, 3, 1, 2, 4
      *      <p/>
      *      The same random number generator is employed (in this instance of the jvm)
      *      so safe to call multiple times.
      *      But as it uses the same seed each time, the rnd stays the same from
-     *      jvm inoc to jvm invoc. See link below for more.
+     *      jvm invoc to jvm invoc. See link below for more.
      * @see http://mindprod.com/gotchas.html#RANDOM
      */
     public static int[] randomizeWithoutReplacement(final int num, final Random rnd) {
-
-        List seen = new ArrayList(num);
+        // TODO: evaluate performance of using a Set
+        List<Integer> seen = new ArrayList<Integer>(num);
         int[] inds = new int[num];
         int cnt = 0;
 
         for (int i = 0; i < num;) {
             int r = rnd.nextInt(num);
 
-            if (seen.contains(new Integer(r))) {
+            if (seen.contains(r)) {
                 continue;
             }
 
-            seen.add(new Integer(r));
+            seen.add(r);
 
             inds[cnt++] = r;
 
