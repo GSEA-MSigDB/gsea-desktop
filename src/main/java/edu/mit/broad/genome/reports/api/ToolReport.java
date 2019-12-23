@@ -55,7 +55,6 @@ import java.util.*;
 // dont extend abstractobject -- easier to impl ourselves here as impl not pob but reports
 public class ToolReport implements Report {
 
-    private transient Logger log = Logger.getLogger(this.getClass());
     private transient static Logger klog = Logger.getLogger(ToolReport.class);
 
     private static String COMMON_ERROR_PREFIX = "The Tool ran successfully but at least one part of the reports production failed\nwith the following details\nThe reports is INcomplete";
@@ -247,12 +246,12 @@ public class ToolReport implements Report {
             FileUtils.moveFile(tmp_zipped_file, zipped_file);
 
         } catch (Throwable t) {
-            log.error(t);
+            klog.error(t);
             try {
                 FileUtils.writeStringToFile(zipped_file, t.getMessage());
             }
             catch (IOException ie) {
-                log.error(ie);
+                klog.error(ie);
             }
         }
 
@@ -282,16 +281,16 @@ public class ToolReport implements Report {
                 File errorDir = new File(fReportDir.getParentFile(), "error_" + fReportDir.getName());
                 if (!fRptDirMadeExternally) {
                     closeReport(false); // @note added june6 dont add to cache
-                    log.info("Renaming rpt dir on error to: " + errorDir);
+                    klog.info("Renaming rpt dir on error to: " + errorDir);
                     boolean renamed = fReportDir.renameTo(errorDir);
                     if (!renamed) {
-                        log.warn("Could not rename for error to: " + errorDir);
+                        klog.warn("Could not rename for error to: " + errorDir);
                     }
                 } else {
-                    log.info("Pseudo Renaming rpt dir on error to: " + errorDir + " (ext made report dir so not renamed)");
+                    klog.info("Pseudo Renaming rpt dir on error to: " + errorDir + " (ext made report dir so not renamed)");
                 }
             } else {
-                log.info("No report dir was made yet (but an error condition was detected)");
+                klog.info("No report dir was made yet (but an error condition was detected)");
             }
         } catch (Throwable t) {
             System.out.println("Error while erroring out! (setErroredOut in ToolReport");
@@ -331,11 +330,11 @@ public class ToolReport implements Report {
     public void display() {
 
         if (SystemUtils.isHeadless()) {
-            log.info("Suppressing display reports as headless mode");
+            klog.info("Suppressing display reports as headless mode");
         } else if (SystemUtils.isPropertyTrue("GSEA")) {
-            log.info("Suppressing display reports as gsea app");
+            klog.info("Suppressing display reports as gsea app");
         } else {
-            log.info("Displaying reports ...");
+            klog.info("Displaying reports ...");
             ToolReportDisplay display = new ToolReportDisplay(this);
             display.show();
         }
@@ -388,7 +387,7 @@ public class ToolReport implements Report {
         }
 
         fErrors.add(t);
-        log.error(msg, t);
+        klog.error(msg, t);
     }
 
     public String getComment() {
@@ -454,48 +453,38 @@ public class ToolReport implements Report {
         }
     }
 
-    private File savePage(final Page page, final boolean addInvisibly2Cache) {
+    private File savePage(final Page page) {
         File file = null;
-
         try {
-
             file = _createFile(page.getName(), page.getExt(), fReportDir);
             page.write(new FileOutputStream(file));
-            if (!addInvisibly2Cache) {
-                _centralAddPage(page, file);
-            }
-
+            _centralAddPage(page, file);
         } catch (Throwable t) {
             addError("Trouble saving Page", t);
         }
-
         return file;
     }
 
     public File savePage(final Page page, final File inDir) {
         File file = null;
-
         try {
-
             file = _createFile(page.getName(), page.getExt(), inDir);
             page.write(new FileOutputStream(file));
-
         } catch (Throwable t) {
             addError("Trouble saving Page", t);
         }
-
         return file;
     }
 
-    public File savePage(final PersistentObject pob) {
+    public File savePage(final PersistentObject pob, boolean add2cache) {
         if (pob == null) {
-            addError("Null pob specified for saving + " + pob, new Throwable());
+            String msg = "Null pob specified for saving + " + pob;
+			addError(msg, new NullPointerException(msg));
             return null;
         }
 
         try {
-            final File inDir = fReportDir;
-            return savePage(pob.getName(), pob.getQuickInfo(), pob, inDir, true);
+            return savePage(pob.getName(), pob.getQuickInfo(), pob, fReportDir, add2cache);
         } catch (Throwable t) {
             addError("Trouble saving pob to report", t);
         }
@@ -503,17 +492,7 @@ public class ToolReport implements Report {
         return null;
     }
 
-    public File savePage(final PersistentObject pob, boolean add2cache) {
-        try {
-            return savePage(pob.getName(), pob.getQuickInfo(), pob, getReportDir(), add2cache);
-        } catch (Throwable t) {
-            addError("Trouble saving pob to report", t);
-        }
-
-        return null;
-    }
-
-    public File savePageTsv(final IDataframe idf) {
+    public File savePageTsv(final StringDataframe idf) {
         return this.savePageTsv(idf, idf.getName(), this.fReportDir);
     }
 
@@ -526,20 +505,16 @@ public class ToolReport implements Report {
 
         if (idf instanceof StringDataframe) {
         	// TODO: Note questionable NaN behavior
-            ((StringDataframe) idf).replace("NaN", ""); // @note default bhaviour
+            ((StringDataframe) idf).replace("NaN", "---"); // @note default behavior
         }
 
         File file = _createFile(fileName, Constants.TSV, inDir);
         try {
-
             ParserFactory.saveInvisibly2Cache(idf, file);
             _centralAddPage(new FileWrapperPage(file, idf.getQuickInfo()));    // @note
-
-
         } catch (Throwable t) {
             addError("Trouble saving sdf to report", t);
         }
-
         return file;
     }
 
@@ -590,38 +565,25 @@ public class ToolReport implements Report {
         final File saveInDir = fReportDir;
         StringBuffer name = new StringBuffer(gmx.getName()).append('.').append(DataFormat.GMX_FORMAT.getExtension());
         File file = createSafeReportFile(name.toString(), saveInDir);
-        log.debug("saving gmt in: " + file);
-        
+        klog.debug("saving gmt in: " + file);
         try {
-        
             ParserFactory.save(gmx, file);
             _centralAddPage(new FileWrapperPage(file, gmx.getQuickInfo()));    // @note
-        
         } catch (Throwable t) {
             addError("Could not save object to reports object: " + gmx + " in file: " + file.getPath(), t);
         }
-        
         return file;
     }
 
     private File savePage(final String name, final String desc, final String content) {
         StringBuffer fname = new StringBuffer(name).append('.').append(Constants.TSV);
         File file = createSafeReportFile(fname.toString(), getReportDir());
-        
         try {
-        
-            if (!false) {
-                log.debug("saving in: " + file);
-            }
             FileUtils.writeStringToFile(file, content);
-            if (true) {
-                _centralAddPage(new FileWrapperPage(file, desc));  // @note
-            }
-        
+            _centralAddPage(new FileWrapperPage(file, desc));  // @note
         } catch (Throwable t) {
             addError("Could not save object to reports data: " + name + " in file: " + file.getPath(), t);
         }
-        
         return file;
     }
 
@@ -629,38 +591,23 @@ public class ToolReport implements Report {
         if (fReportIndexState.keepTrackOfPages() && !(page instanceof HtmlReportIndexPage)) {
             fPages.add(page, file);
         }
-
         fNumPagesAdded++;
 
-        // NOW FOR THE BUSINESS LOGIC associated with adding pages
-
-        // 1) for html pages, auto add a CSS file. Only do this once
+        // for html pages, auto add a CSS file. Only do this once
         if (page instanceof HtmlPage) {
             createCss();
         }
-
     }
 
     private void createCss() {
-
-        if (!fDoneAddingCss) {
-            createCss(fReportDir);
-        }
-
-        fDoneAddingCss = true;
-    }
-
-    private void createCss(final File inDir) {
-
+        if (fDoneAddingCss)  return;
         try {
-
-            File cssFile = _createFile("xtools", "css", inDir);
+            File cssFile = _createFile("xtools", "css", fReportDir);
             FileUtils.copyURLToFile(JarResources.toURL("xtools.css"), cssFile);
-
+            fDoneAddingCss = true;
         } catch (Throwable t) {
-            log.error("Trouble copying over CSS", t);
+            klog.error("Trouble copying over CSS", t);
         }
-
     }
 
     public File createSubDir(final String name) {
@@ -671,7 +618,7 @@ public class ToolReport implements Report {
                 throw new IllegalStateException("Unable to make an output folder for the report at: " + subDir.getPath());
             }
         }
-        createCss(subDir); // @note
+        createCss(); // @note
         return subDir;
     }
 
@@ -731,7 +678,7 @@ public class ToolReport implements Report {
                 savePage("there_were_reporting_errors", "reporting errors", ebuf.toString());
             }
         } catch (Throwable t) {
-            log.error("Errors adding errors to reports!", t);
+            klog.error("Errors adding errors to reports!", t);
         }
 
         // deal with the index page (if one was made)
@@ -744,14 +691,11 @@ public class ToolReport implements Report {
                 if (fKvt != null && fReportIndexState.keepTrackOfPagesInHtmlIndex()) {
                     this.fHtmlReportIndexPage.addTable("Result files produced in this analysis", fKvt);
                 }
-                this.fHtmlIndexPageFile = savePage(fHtmlReportIndexPage, false); // we very much want it to be visible!
-
+                this.fHtmlIndexPageFile = savePage(fHtmlReportIndexPage);
             } catch (Throwable t) {
-                log.error("Error making HtmlIndexPage -- report content may otherwise be OK", t);
+                klog.error("Error making HtmlIndexPage -- report content may otherwise be OK", t);
             }
         }
-
-        //log.debug(">>>>>>>>>>>>>>>. " + fTool_opt + " " + add2ParserFactory + " fReportParamsFile: " + fReportParamsFile);
 
         if (fTool_opt != null && add2ParserFactory && fReportParamsFile != null && !fReportParamsFile.exists()) {
             try {
@@ -759,7 +703,7 @@ public class ToolReport implements Report {
                 ParserFactory.save(this, fReportParamsFile);
 
             } catch (Throwable t) {
-                log.error("Error closing report -- suppressing", t);
+                klog.error("Error closing report -- suppressing", t);
             }
         }
 
@@ -774,7 +718,7 @@ public class ToolReport implements Report {
                     ParserFactory.save(this, cacheFile, false);
                 }
             } catch (Throwable t) {
-                log.error("Error saving report to cahche -- suppressing", t);
+                klog.error("Error saving report to cahche -- suppressing", t);
             }
         }
 
@@ -800,7 +744,7 @@ public class ToolReport implements Report {
             } else if (gmf.getDataFormat() == DataFormat.GMX_FORMAT) {
                 return savePage(desc, gm);
             } else {
-                log.warn("Unkown gm format: " + gmf.getDataFormat());
+                klog.warn("Unkown gm format: " + gmf.getDataFormat());
                 return savePageGmt(desc, gm);
             }
         } catch (Throwable t) {
@@ -814,7 +758,7 @@ public class ToolReport implements Report {
     public File savePageGmt(final String desc, final GeneSetMatrix gmt) {
         StringBuffer name = new StringBuffer(gmt.getName()).append('.').append(DataFormat.GMT_FORMAT.getExtension());
         File file = createSafeReportFile(name.toString());
-        log.debug("saving gmt in: " + file);
+        klog.debug("saving gmt in: " + file);
     
         try {
     
@@ -842,7 +786,7 @@ public class ToolReport implements Report {
     public File savePage(String desc, final GeneSetMatrix gmx, final File saveInDir) {
         StringBuffer name = new StringBuffer(gmx.getName()).append('.').append(DataFormat.GMX_FORMAT.getExtension());
         File file = createSafeReportFile(name.toString(), saveInDir);
-        log.debug("saving gmt in: " + file);
+        klog.debug("saving gmt in: " + file);
     
         try {
     
@@ -874,7 +818,7 @@ public class ToolReport implements Report {
         try {
     
             if (!silent) {
-                log.debug("saving in: " + file);
+                klog.debug("saving in: " + file);
             }
             
             FileUtils.writeStringToFile(file, content);
@@ -1035,24 +979,21 @@ public class ToolReport implements Report {
         private List<Page> plist;
         private List<File> flist;
 
-        /**
-         * Utility fields for the event firing mechanism
-         * <p/>
-         * Maybe make a better event type later
-         */
-        //private PropertyChangeSupport pageAddedSupport;
-
         Pages() {
             this.plist = new ArrayList<Page>();
             this.flist = new ArrayList<File>();
         }
 
         private void writeObject(java.io.ObjectOutputStream out) {
-            klog.debug("Ignoring: " + out);
+        	if (klog.isDebugEnabled()) {
+        		klog.debug("Ignoring: " + out);
+        	}
         }
 
         private void readObject(java.io.ObjectInputStream in) {
-            klog.debug("Ignoring: " + in);
+        	if (klog.isDebugEnabled()) {
+        		klog.debug("Ignoring: " + in);
+        	}
         }
 
         void add(Page page, File file) {

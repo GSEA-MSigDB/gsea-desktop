@@ -91,7 +91,7 @@ public class MiscReports {
         return htmlPage;
     }
 
-    public static IDataframe createRankOrderedGeneList(final String name, final RankedList rl, final FeatureAnnot fann_opt) {
+    public static StringDataframe createRankOrderedGeneList(final String name, final RankedList rl, final FeatureAnnot fann_opt) {
         final String[] colnames = new String[]{"TITLE", "SCORE"};
         StringMatrix sm = new StringMatrix(rl.getSize(), colnames.length);
         for (int r = 0; r < rl.getSize(); r++) {

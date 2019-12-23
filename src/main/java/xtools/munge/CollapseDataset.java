@@ -67,7 +67,7 @@ public class CollapseDataset extends AbstractTool {
 
         log.debug("# after collapsing: " + cds.symbolized.getNumRow());
 
-        fReport.savePage(cds.symbolized);
+        fReport.savePage(cds.symbolized, true);
 
         // Make a summary etiology always
         fReport.savePageTsv(cds.makeEtiologySdf());

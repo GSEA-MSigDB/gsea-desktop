@@ -65,7 +65,8 @@ public class Chip2Chip extends AbstractTool {
     
     
         ReportBlocks.SimpleBlockListing list_etiology = null;
-        RichDataframe summary_table = null;
+        StringDataframe summaryTable = null;
+        RichDataframe summaryTableRich = null;
 
         final MGeneSetMatrix mgm = mapper.map(gm_to_map, showEtiology);
 
@@ -94,8 +95,8 @@ public class Chip2Chip extends AbstractTool {
                 cell_id_linkMap.put(sm.getElementPos(r, 3), new LinkedFactory.SimpleLinkedFile("Details>>", files[r]));
             }
 
-            summary_table = new RichDataframe(new StringDataframe(mapper.getName(), sm, rowNames, colNames),
-                    null, null, cell_id_linkMap);
+            summaryTable = new StringDataframe(mapper.getName(), sm, rowNames, colNames);
+			summaryTableRich = new RichDataframe(summaryTable, null, null, cell_id_linkMap);
         } // End etiology
     
         final GeneSetMatrix mapped_gm = Chip2ChipMapper.createCombinedGeneSetMatrix(NamingConventions.removeExtension(gm_to_map.getName()) + "_mapped_to_" + mapper.getTargetChip().getName(), mgm);
@@ -112,8 +113,8 @@ public class Chip2Chip extends AbstractTool {
     
         HtmlReportIndexPage htmlPageHtml = report.getIndexPage();
         if (showEtiology) {
-            final File tsvFile = report.savePageTsv(summary_table);
-            htmlPageHtml.addTable(summary_table, tsvFile.getName(), true, true);
+            final File tsvFile = report.savePageTsv(summaryTable);
+            htmlPageHtml.addTable(summaryTableRich, tsvFile.getName(), true, true);
         }
     
         report.getIndexPage().setAddBrowseFooter(false);

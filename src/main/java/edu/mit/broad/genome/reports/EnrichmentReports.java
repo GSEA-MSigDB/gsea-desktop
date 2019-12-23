@@ -86,7 +86,6 @@ public class EnrichmentReports {
     protected static final String[] BASIC_COL_NAMES = new String[]{"GS<br> follow link to MSigDB",
             "GS DETAILS", "SIZE", "ES", "NES", "NOM p-val",
             "FDR q-val", "FWER p-val", "RANK AT MAX", "LEADING EDGE"
-
     };
     private static final int COL_ES = 3;
     private static final int COL_NES = 4;
@@ -96,7 +95,6 @@ public class EnrichmentReports {
     public static final String ENPLOT_ = "enplot_";
     
     public static final Color CHART_FRAME_COLOR = new Color(0xf2, 0xf2, 0xf2);
-
 
     public static class Ret {
         public EnrichmentReportDbImpl rdb;
@@ -180,7 +178,7 @@ public class EnrichmentReports {
 
         return createGseaLikeReport(edb_original, out, cd, reportIndexPage, _createSubDir(edb_original, report, makeSubDir), report,
                 topXSets, minSize, maxSize,
-                makeGeneSetsReport, makeZippedFile, createSvgs, createGcts, origGeneSets_opt, metricName, normModeName, fann, null, null, null);
+                makeGeneSetsReport, makeZippedFile, createSvgs, createGcts, origGeneSets_opt, metricName, normModeName, fann);
     }
 
     public static Ret createGseaLikeReport(
@@ -204,41 +202,25 @@ public class EnrichmentReports {
         // Note we never create GCTs for this call; this corresponds to Preranked, which has no heatmaps in the report.
         return createGseaLikeReport(edb_original, out, cd, reportIndexPage, _createSubDir(edb_original, report, makeSubDir), report,
                 topXSets, minSize, maxSize,
-                makeGeneSetsReport, makeZippedFile, createSvgs, false, origGeneSets_opt, metricName, normModeName, fann_opt, null, null, null);
+                makeGeneSetsReport, makeZippedFile, createSvgs, false, origGeneSets_opt, metricName, normModeName, fann_opt);
     }
 
     private static String _createPhenotypeName(EnrichmentDb edb) {
-        String phenotypeName;
-
         final Template templatex = edb.getTemplate();
-        if (templatex != null) {
-            phenotypeName = templatex.getName();
-        } else {
-            phenotypeName = "NoPhenotypeAvailable";
-        }
-
-        return phenotypeName;
+        return (templatex != null) ? templatex.getName() : "NoPhenotypeAvailable";
     }
 
     private static String[] _createClassNames(final Template template_opt) {
-
-        String classA_name;
-        String classB_name;
         if (template_opt != null) {
             if (template_opt.isContinuous()) {
                 String nn = AuxUtils.getAuxNameOnlyNoHash(template_opt);
-                classA_name = nn + "_pos";
-                classB_name = nn + "_neg";
+                return new String[] { nn + "_pos", nn + "_neg"};
             } else {
-                classA_name = template_opt.getClassName(0);
-                classB_name = template_opt.getClassName(1);
+                return new String[] { template_opt.getClassName(0) + "_pos", template_opt.getClassName(1) + "_neg"};
             }
         } else {
-            classA_name = Constants.NA + "_pos";
-            classB_name = Constants.NA + "_neg";
+            return new String[] { Constants.NA + "_pos", Constants.NA + "_neg"};
         }
-
-        return new String[]{classA_name, classB_name};
     }
 
     // @note this is the CORE CORE CORE CORE report making method
@@ -259,12 +241,7 @@ public class EnrichmentReports {
             final GeneSet[] origGeneSets_opt,
             final String metricName,
             final String normModeName,
-            final FeatureAnnot fann_opt,
-            String phenotypeName_opt,
-            String classA_name_opt,
-            String classB_name_opt) {
-
-
+            final FeatureAnnot fann_opt) {
         if (normModeName == null) {
             throw new IllegalArgumentException("Param normModeName cannot be null");
         }
@@ -273,19 +250,15 @@ public class EnrichmentReports {
             throw new IllegalArgumentException("Param saveInThisDir cannot be null");
         }
 
-        if (saveInThisDir.exists() == false) {
+        if (!saveInThisDir.exists()) {
             saveInThisDir.mkdir();
         }
 
-        if (phenotypeName_opt == null) {
-            phenotypeName_opt = _createPhenotypeName(edb_original);
-        }
+        String phenotypeName = _createPhenotypeName(edb_original);
 
-        if (classA_name_opt == null || classB_name_opt == null) {
-            final String[] classNames = _createClassNames(edb_original.getTemplate());
-            classA_name_opt = classNames[0];
-            classB_name_opt = classNames[1];
-        }
+        final String[] classNames = _createClassNames(edb_original.getTemplate());
+        String classA_name_opt = classNames[0];
+        String classB_name_opt = classNames[1];
 
         final PValueCalculator pvc = new PValueCalculatorImpls.GseaImpl(normModeName);
         final EnrichmentResult[] results = pvc.calcNPValuesAndFDR(edb_original.getResults());
@@ -325,7 +298,7 @@ public class EnrichmentReports {
 
         // Then the GENE LIST AMD MARKER SELECTION REPORTS
         klog.info("Creating marker selection reports ...");
-        final IDataframe sdfGeneList = MiscReports.createRankOrderedGeneList(name, rlReal, fann_opt);
+        final StringDataframe sdfGeneList = MiscReports.createRankOrderedGeneList(name, rlReal, fann_opt);
         final File real_gene_list_file_tsv = report.savePageTsv(sdfGeneList, "ranked_gene_list_" + classA_name_opt + "_versus_" + classB_name_opt + "_" + report.getTimestamp(), saveInThisDir);
         
         File real_gene_list_heat_map_corr_plot_html_file = null;
@@ -354,7 +327,7 @@ public class EnrichmentReports {
         // Then the FDR reports
         klog.info("Creating FDR reports ...");
         final EnrichmentResult[] results_pos = edb.getResults(new ComparatorFactory.EnrichmentResultByNESComparator(Order.DESCENDING), true);
-        final BasicReportStruc pos_basic = createReport(results_pos, name, phenotypeName_opt, classA_name_opt, classB_name_opt,
+        final BasicReportStruc pos_basic = createReport(results_pos, name, phenotypeName, classA_name_opt, classB_name_opt,
                 rlReal, template, fann_opt,
                 "Gene sets enriched in phenotype <b>" + classA_name_long + "<b>",
                 topXSets, makeGeneSetsReport, createSvgs, createGcts, saveInThisDir);
@@ -364,7 +337,7 @@ public class EnrichmentReports {
 
         final EnrichmentResult[] results_neg = edb.getResults(new ComparatorFactory.EnrichmentResultByNESComparator(Order.ASCENDING), false);
         final BasicReportStruc neg_basic = createReport(results_neg, name,
-                phenotypeName_opt, classA_name_opt, classB_name_opt,
+                phenotypeName, classA_name_opt, classB_name_opt,
                 rlReal, template, fann_opt,
                 "Gene sets enriched in phenotype <b>" + classB_name_long + "<b>",
                 topXSets, makeGeneSetsReport, createSvgs, createGcts, saveInThisDir);
@@ -400,7 +373,7 @@ public class EnrichmentReports {
             report.savePageSvg(pvalues_nes_plot_xc, 500, 500, pvalues_nes_plot_svg_file);
         }
 
-        final XChart global_es_histogram_xc = createGlobalESHistogram(AuxUtils.getAuxNameOnlyNoHash(phenotypeName_opt), edb.getESS_lv());
+        final XChart global_es_histogram_xc = createGlobalESHistogram(AuxUtils.getAuxNameOnlyNoHash(phenotypeName), edb.getESS_lv());
         final File global_es_histogram_file = report.savePage(global_es_histogram_xc, 500, 500, saveInThisDir);
         File global_es_histogram_svg_file = null;
         if (createSvgs) {
