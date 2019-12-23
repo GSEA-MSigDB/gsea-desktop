@@ -1,9 +1,9 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.reports.api;
 
-import edu.mit.broad.genome.Constants;
+import edu.mit.broad.genome.NamingConventions;
 import edu.mit.broad.genome.charts.XChart;
 import edu.mit.broad.genome.reports.pages.HtmlFormat;
 
@@ -63,70 +63,12 @@ public class PicFile {
     private static int kImageCounter = 1;
 
     public static String generateName(final XChart xchart) {
-        return createSafeFileName(xchart.getName()) + "_" + kImageCounter++;
+        return NamingConventions.createSafeFileName(xchart.getName()) + "_" + kImageCounter++;
     }
 
     public static String generateNameForImage(final String title) {
-        return createSafeFileName(title) + "_" + kImageCounter++;
+        return NamingConventions.createSafeFileName(title) + "_" + kImageCounter++;
     }
-
-    public static String createSafeFileName(String name) {
-        name = name.trim();
-        String safename = name.replace('@', '_'); // this does all occurrences
-        safename = safename.replace('#', '_');
-        safename = safename.replace(' ', '_'); // get rid of whitespace
-        safename = safename.replace('%', '_');
-        safename = safename.replace('$', '_');
-        safename = safename.replace(':', '_'); // IE often doesnt like colons in linked to files
-        safename = safename.replace('*', '_');
-        safename = safename.replace('\\', '_');
-        safename = safename.replace('/', '_');
-        safename = safename.replace(Constants.INTRA_FIELD_DELIM, '_');
-
-        if (safename.length() >= 125) {
-            String ext = getExtension(safename);
-            safename = safename.substring(0, 125) + "." + ext; // too many chars make excel (for instance) not recognize the file
-        }
-
-        return safename;
-    }
-
-    /**
-     * Gets the extension of a specified file name. The extension is
-     * everything after the last dot.
-     * <p/>
-     * <pre>
-     * foo.txt    --> "txt"
-     * a\b\c.jpg  --> "jpg"
-     * foo        --> ""
-     * </pre>
-     *
-     * @param f String representing the file name
-     * @return extension of the file (or <code>""</code> if it had none)
-     */
-    public static String getExtension(final String f) {
-
-        String ext;
-        int pos;
-
-        pos = f.lastIndexOf(".");
-
-        if (pos == -1) {
-            //log.warn("No extension found - returning \"\" file=" + f);
-            ext = "";
-        } else {
-            ext = f.substring(pos + 1);
-        }
-
-        //og.debug("got: " + f + " foind: " + ext);
-
-        if (f.indexOf(".meta.") != -1) {
-            return "meta." + ext;
-        } else {
-            return ext;
-        }
-    }
-
 
     // common init routine
     private void init(final File saveInDir,

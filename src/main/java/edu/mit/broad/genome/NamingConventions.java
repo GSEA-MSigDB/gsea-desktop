@@ -32,7 +32,6 @@ public class NamingConventions {
 
     private static final int MAX_FILE_LEN_ALLOWED = 100;
 
-
     public static String splitLongHashName(final String possibleLongNameWithHashes, final String prefixStr) {
         if (possibleLongNameWithHashes == null ||
                 possibleLongNameWithHashes.indexOf("#") == -1 ||
@@ -102,13 +101,6 @@ public class NamingConventions {
     public static boolean isNull(String s) {
         return StringUtils.isBlank(s);
     }
-
-
-    // keep the list small as we dont want to enforce too many rules
-    // mostly to ensure that stringtokenizers dont barf
-    private static final char[] BAD_PROBE_NAME_CHARS = new char[]{'?', ',', '\t', '\n', Constants.INTRA_FIELD_DELIM};
-
-    private static final String DMEG_ = Headers.DMEG + "_";
 
     public static String removeExtension(final File file) {
         return removeExtension(file.getName());
@@ -188,7 +180,10 @@ public class NamingConventions {
         safename = safename.replace('*', '_');
         safename = safename.replace('\\', '_');
         safename = safename.replace('/', '_');
-        safename = safename.replace(Constants.INTRA_FIELD_DELIM, '_');
+        // TODO: review the need for this.
+        // Not sure the reason for this one; keeping for now.  Clearly we don't want control-backslash in our file names,
+        // but we don't want *any* control chars in file names, so why target just this one?
+        safename = safename.replace(Constants.LEGACY_FIELD_DELIM, '_');
 
         if (safename.length() >= MAX_FILE_LEN_ALLOWED) {
             String ext = getExtension(safename);
@@ -204,12 +199,10 @@ public class NamingConventions {
         if (tok.countTokens() != 4) {
             throw new IllegalArgumentException("Invalid rpt name format: " + rptname + " got tokens #: " + tok.countTokens());
         }
-        StringBuffer buf = new StringBuffer();
-
+        StringBuilder buf = new StringBuilder();
         buf.append(tok.nextToken()).append('.');
         buf.append(tok.nextToken());
-
-        return new Object[]{buf.toString(), new Long(Long.parseLong(tok.nextToken()))};
+        return new Object[]{buf.toString(), Long.parseLong(tok.nextToken())};
     }
 
 

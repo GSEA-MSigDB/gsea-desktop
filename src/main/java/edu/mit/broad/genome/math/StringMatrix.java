@@ -1,9 +1,8 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.math;
 
-import edu.mit.broad.genome.Constants;
 import edu.mit.broad.genome.utils.ImmutedException;
 
 import org.ujmp.core.Matrix;
@@ -13,6 +12,8 @@ import org.ujmp.core.stringmatrix.impl.DefaultDenseStringMatrix2D;
 import org.ujmp.core.util.MathUtil;
 
 public class StringMatrix {
+
+    public static final char INTRA_FIELD_DELIM = ':';
 
     // Wrapped data structure; to be unwrapped and used directly if possible.
     // If this remains wrapped, can probably just use Matrix instead of the direct Impl class.
@@ -207,7 +208,7 @@ public class StringMatrix {
 
         StringBuilder buf = new StringBuilder();
         for (int i = 0; i < values.length; i++) {
-            if (i > 0) buf.append(Constants.INTRA_FIELD_DELIM);
+            if (i > 0) buf.append(INTRA_FIELD_DELIM);
             buf.append(values[i]);
         }
 

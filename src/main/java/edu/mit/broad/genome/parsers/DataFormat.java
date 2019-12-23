@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.parsers;
 
 import edu.mit.broad.genome.Constants;
@@ -24,13 +24,11 @@ import java.util.Map;
 /**
  * Central repository for data formats.
  * A DataFormat is primarily identified by a file extension.
- * Also associates thungs like a desc, icon etc with DataFprmats.
+ * Also associates things like a desc, icon etc with DataFormats.
  *
  * @author Aravind Subramanian
- * @version %I%, %G%
  */
 public class DataFormat extends DataType implements Constants {
-
 
     /**
      * Class constructor
@@ -39,9 +37,6 @@ public class DataFormat extends DataType implements Constants {
     public DataFormat() {
     }
 
-    /**
-     * For logging support
-     */
     private static final Logger klog = Logger.getLogger(DataFormat.class);
 
     public static final DataFormat XLS_FORMAT = new DataFormat(ExtFormat.class, "Excel",
@@ -53,6 +48,9 @@ public class DataFormat extends DataType implements Constants {
     public static final DataFormat XML_FORMAT = new DataFormat(ExtFormat.class, "XML",
             "Extensible Markup Language", Constants.XML,
             JarResources.getIcon("Xml.gif"), null);
+    public static final DataFormat TSV_FORMAT = new DataFormat(ExtFormat.class, "TSV",
+            "Tab-separated values", Constants.TSV,
+            JarResources.getIcon("Xls.gif"), null);
 
     /**
      * BROAD CANCER res format for datasets
@@ -123,7 +121,7 @@ public class DataFormat extends DataType implements Constants {
             RPT_FORMAT,
             EDB_FORMAT,
             CHIP_FORMAT,
-            XLS_FORMAT, TXT_FORMAT, XML_FORMAT
+            XLS_FORMAT, TXT_FORMAT, XML_FORMAT, TSV_FORMAT
     };
 
     /**

@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome;
 
 /**
@@ -13,8 +13,8 @@ package edu.mit.broad.genome;
  * parsers.Headers
  *
  * @author Aravind Subramanian
- * @version %I%, %G%
  */
+// TODO: inline some of these constants as appropriate.
 public interface Constants {
 
     public static final String SEQ_ACCESSION = "SEQ_ACCESSION";
@@ -22,8 +22,7 @@ public interface Constants {
     public static final String UNIGENE = "UNIGENE";
     public static final String STANFORD_SOURCE_ACCESSIONS = "STANFORD_SOURCE_ACCESSIONS";
 
-    public static final char INTRA_FIELD_DELIM = '';
-    public static final String INTRA_FIELD_DELIM_S = "";
+    public static final char LEGACY_FIELD_DELIM = ''; // control-backslash
 
     // DO NOT place GUI constants here. That goes in GuiHelper.
     public static final String NA = "na";
@@ -69,6 +68,7 @@ public interface Constants {
     public static final String XML = "xml";
     public static final String HTML = "html";
     public static final String CSV = "csv";
+    public static final String TSV = "tsv";
 
     /**
      * Vacillated a bit about whether to use # or to use # preferred as its the

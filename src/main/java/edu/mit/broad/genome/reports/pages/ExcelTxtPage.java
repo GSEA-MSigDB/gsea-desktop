@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.reports.pages;
 
 import edu.mit.broad.genome.NotImplementedException;
@@ -14,7 +14,7 @@ import edu.mit.broad.genome.reports.RichDataframe;
 import java.io.OutputStream;
 
 /**
- * A simple txt representation of an 'excel format' (i.e tab delimited)
+ * A simple txt representation of a spreadsheet format (i.e tab delimited)
  */
 public class ExcelTxtPage implements Page {
     private String fName;
@@ -44,7 +44,7 @@ public class ExcelTxtPage implements Page {
     }
 
     public String getExt() {
-        return "xls";
+        return "tsv";
     }
 
     // @maint add more support and cleanup interface later
@@ -61,5 +61,4 @@ public class ExcelTxtPage implements Page {
             throw new NotImplementedException("idf object: " + fIdf);
         }
     }
-
-} // End class ExcelTxtpage
+}

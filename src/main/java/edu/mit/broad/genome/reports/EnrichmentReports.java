@@ -653,7 +653,7 @@ public class EnrichmentReports {
                 try {
                     File htmlFile = new File(saveDetailFilesInDir, mer.fHtmlPage.getName() + ".html");
                     htmlPage.write(new FileOutputStream(htmlFile));
-                    mer.fExcelPage.write(new FileOutputStream(new File(saveDetailFilesInDir, mer.fExcelPage.getName() + ".xls")));
+                    mer.fExcelPage.write(new FileOutputStream(new File(saveDetailFilesInDir, mer.fExcelPage.getName() + ".tsv")));
 
                     PicFile[] pfs = htmlPage.getPicFiles();
                     File plotFile = pfs[0].getFile(); // because image write likes to rename stuff

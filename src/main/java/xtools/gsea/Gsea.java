@@ -90,7 +90,10 @@ public class Gsea extends AbstractGsea2Tool {
 
     		Dataset collapsed = cds.symbolized;
             log.info("Collapsing dataset was done. Original: " + origDs.getQuickInfo() + " collapsed: " + collapsed.getQuickInfo());
-    
+
+            // Make a summary etiology always
+            fReport.savePageXls(cds.makeEtiologySdf());
+
             cd.chip = chip;
             cd.wasCollapsed = true;
             cd.collapsed = collapsed;

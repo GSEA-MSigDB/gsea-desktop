@@ -483,24 +483,24 @@ public class Vector {
         double stddev = Math.sqrt(_var(biased));    // @note call to _var and not var
         double mean = computeset.mean;                    // avoid recalc
 
-//        if (fixlow) {
+        if (fixlow) {
 //            // Probably better:
 //            double minallowed = XMath.isNearlyZero(mean) ? (0.20 * Math.abs(mean)) : 0.20;
 //            stddev = Math.max(stddev, minallowed);
 //        }
-        double minallowed = (0.20 * Math.abs(mean));
+            double minallowed = (0.20 * Math.abs(mean));
 
-        // In the case of a zero mean, assume the mean is 1
-        if (minallowed == 0) {
-            minallowed = 0.20;
+            // In the case of a zero mean, assume the mean is 1
+            if (minallowed == 0) {
+                minallowed = 0.20;
+            }
+
+            if (minallowed < stddev) {
+                // keep orig
+            } else {
+                stddev = minallowed;
+            }
         }
-
-        if (minallowed < stddev) {
-            // keep orig
-        } else {
-            stddev = minallowed;
-        }
-
         computeset.stddev = stddev;
 
         return computeset.stddev;

@@ -533,7 +533,7 @@ public class ToolReport implements Report {
             ((StringDataframe) idf).replace("NaN", ""); // @note default bhaviour
         }
 
-        File file = _createFile(fileName, DataFormat.XLS_FORMAT.getExtension(), inDir);
+        File file = _createFile(fileName, Constants.TSV, inDir);
         try {
 
             ParserFactory.saveInvisibly2Cache(idf, file);

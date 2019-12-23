@@ -44,7 +44,7 @@ public class FileBrowserAction extends ExtAction {
             super.putValue(NAME, "Web Browser");
             super.putValue(SMALL_ICON, JarResources.getIcon("Htm.gif"));
         }
-        else if (ext.equalsIgnoreCase(Constants.CSV) || ext.equalsIgnoreCase(Constants.XLS)) {
+        else if (ext.equalsIgnoreCase(Constants.CSV) || ext.equalsIgnoreCase(Constants.TSV) || ext.equalsIgnoreCase(Constants.XLS)) {
             super.putValue(NAME, "Launch in Excel");
             super.putValue(SMALL_ICON, JarResources.getIcon("Xls.gif"));
         }
