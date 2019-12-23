@@ -326,7 +326,7 @@ public class EnrichmentReports {
         // Then the GENE LIST AMD MARKER SELECTION REPORTS
         klog.info("Creating marker selection reports ...");
         final IDataframe sdfGeneList = MiscReports.createRankOrderedGeneList(name, rlReal, fann_opt);
-        final File real_gene_list_file_xls = report.savePageXls(sdfGeneList, "ranked_gene_list_" + classA_name_opt + "_versus_" + classB_name_opt + "_" + report.getTimestamp(), saveInThisDir);
+        final File real_gene_list_file_tsv = report.savePageTsv(sdfGeneList, "ranked_gene_list_" + classA_name_opt + "_versus_" + classB_name_opt + "_" + report.getTimestamp(), saveInThisDir);
         
         File real_gene_list_heat_map_corr_plot_html_file = null;
         if (my_gex_ds_for_heat_map != null && template != null) {
@@ -379,16 +379,16 @@ public class EnrichmentReports {
         final String neg_title = "Report for " + classB_name_opt + " " + report.getTimestamp() + " [GSEA]";
 
         // Basic statistics
-        final File pos_basic_xls = report.savePageXls(pos_basic_rdf, pos_name, saveInThisDir);
-        final File neg_basic_xls = report.savePageXls(neg_basic_rdf, neg_name, saveInThisDir);
+        final File pos_basic_tsv = report.savePageTsv(pos_basic_rdf, pos_name, saveInThisDir);
+        final File neg_basic_tsv = report.savePageTsv(neg_basic_rdf, neg_name, saveInThisDir);
 
         HtmlPage htmlPage = new HtmlPage(pos_name, pos_title);
-        htmlPage.addTable(pos_basic_rdf, pos_basic_xls.getName(), false, true); // dont show row names (ditto to gs name)
+        htmlPage.addTable(pos_basic_rdf, pos_basic_tsv.getName(), false, true); // dont show row names (ditto to gs name)
         final File pos_basic_html = report.savePage(htmlPage, saveInThisDir);
         final File pos_snapshot_html = report.savePage(createSnapshotPage(true, pos_basic.reports), saveInThisDir);
 
         htmlPage = new HtmlPage(neg_name, neg_title);
-        htmlPage.addTable(neg_basic_rdf, neg_basic_xls.getName(), false, true); // dont show row names (ditto to gs name)
+        htmlPage.addTable(neg_basic_rdf, neg_basic_tsv.getName(), false, true); // dont show row names (ditto to gs name)
         final File neg_basic_html = report.savePage(htmlPage, saveInThisDir);
         final File neg_snapshot_html = report.savePage(createSnapshotPage(false, neg_basic.reports), saveInThisDir);
 
@@ -425,7 +425,7 @@ public class EnrichmentReports {
             StringElement line3 = new StringElement(edb.getNumFDRSig(0.25f, true) + " gene sets are significant at FDR < 25%");
             StringElement line4 = HtmlFormat.Links.hyper("Snapshot", pos_snapshot_html, "of enrichment results", saveInThisDir);
             StringElement line5 = HtmlFormat.Links.hyper("Detailed", "enrichment results in html", pos_basic_html, " format", saveInThisDir);
-            StringElement line6 = HtmlFormat.Links.hyper("Detailed", "enrichment results in excel", pos_basic_xls, " format (tab delimited text)", saveInThisDir);
+            StringElement line6 = HtmlFormat.Links.hyper("Detailed", "enrichment results in TSV", pos_basic_tsv, " format (tab delimited text)", saveInThisDir);
 
             ul.addElement(new LI(line1));
             ul.addElement(new LI(line3));
@@ -456,7 +456,7 @@ public class EnrichmentReports {
             StringElement line3 = new StringElement(edb.getNumFDRSig(0.25f, false) + " gene sets are significantly enriched at FDR < 25%");
             StringElement line4 = HtmlFormat.Links.hyper("Snapshot", neg_snapshot_html, "of enrichment results", saveInThisDir);
             StringElement line5 = HtmlFormat.Links.hyper("Detailed", "enrichment results in html", neg_basic_html, " format", saveInThisDir);
-            StringElement line6 = HtmlFormat.Links.hyper("Detailed", "enrichment results in excel", neg_basic_xls, " format (tab delimited text)", saveInThisDir);
+            StringElement line6 = HtmlFormat.Links.hyper("Detailed", "enrichment results in TSV", neg_basic_tsv, " format (tab delimited text)", saveInThisDir);
             ul.addElement(new LI(line1));
             ul.addElement(new LI(line3));
             ul.addElement(new LI(line2a));
@@ -525,7 +525,7 @@ public class EnrichmentReports {
         StringElement line1 = new StringElement("The dataset has " + rlReal.getSize() + " features (genes)");
         StringElement line2 = new StringElement("# of markers for phenotype <b>" + classA_name_opt + "</b>: " + mws.getTotalPosLength() + " (" + Printf.format(mws.getTotalPosLength_frac() * 100, 1) + "% )" + " with correlation area " + Printf.format(mws.getTotalPosWeight_frac() * 100, 1) + "%");
         StringElement line3 = new StringElement("# of markers for phenotype <b>" + classB_name_opt + "</b>: " + mws.getTotalNegLength() + " (" + Printf.format(mws.getTotalNegLength_frac() * 100, 1) + "% )" + " with correlation area " + Printf.format(mws.getTotalNegWeight_frac() * 100, 1) + "%");
-        StringElement line4 = HtmlFormat.Links.hyper("Detailed", "rank ordered gene list", real_gene_list_file_xls, " for all features in the dataset", saveInThisDir);
+        StringElement line4 = HtmlFormat.Links.hyper("Detailed", "rank ordered gene list", real_gene_list_file_tsv, " for all features in the dataset", saveInThisDir);
 
 
         ul = new UL();
@@ -653,8 +653,8 @@ public class EnrichmentReports {
                 try {
                     File htmlFile = new File(saveDetailFilesInDir, mer.fHtmlPage.getName() + ".html");
                     htmlPage.write(new FileOutputStream(htmlFile));
-                    mer.fExcelPage.write(new FileOutputStream(new File(saveDetailFilesInDir, mer.fExcelPage.getName() + ".tsv")));
-
+                    mer.fTsvPage.write(new FileOutputStream(new File(saveDetailFilesInDir, 
+                            mer.fTsvPage.getName() + "." + Constants.TSV)));
                     PicFile[] pfs = htmlPage.getPicFiles();
                     File plotFile = pfs[0].getFile(); // because image write likes to rename stuff
 
@@ -744,7 +744,7 @@ public class EnrichmentReports {
     }
 
     // does the real page creation
-// one html page and one excel page
+    // one html page and one TSV page
     public static MyEnrichmentReportImpl createReport(final String dsName,
                                                       final String phenotypeName,
                                                       final String classAName_opt,
@@ -767,9 +767,7 @@ public class EnrichmentReports {
                                                       boolean createSvgs,
                                                       boolean createGcts,
                                                       final IntervalMarker[] markers, final boolean horizontal, File saveDetailFilesInDir) {
-
-
-        ExcelTxtPage excelPage = null;
+        TsvPage tsvPage = null;
         EnrichmentCharts combo = null;
 
         try {
@@ -790,9 +788,9 @@ public class EnrichmentReports {
             }
 
             final RichDataframe rdf = createDetailTable(dsName, hitIndices, esProfile, rl, gset, fann_opt);
-            // add summary table and link to details table (excel)
-
-            excelPage = new ExcelTxtPage(htmlPage.getName(), rdf);
+            
+            // add summary table and link to details table (TSV)
+            tsvPage = new TsvPage(htmlPage.getName(), rdf);
             String upInClass;
 
             if (XMath.isPositive(es)) {
@@ -814,7 +812,7 @@ public class EnrichmentReports {
             htmlPage.addChart(combo.comboChart, 500, 500, saveDetailFilesInDir, createSvgs);
 
             // add detailed report table
-            htmlPage.addTable(rdf, excelPage.getName() + "." + excelPage.getExt(), false, true);
+            htmlPage.addTable(rdf, tsvPage.getName() + "." + tsvPage.getExt(), false, true);
 
             // add rest of the images
             if (rl instanceof ScoredDataset && doBpog) {
@@ -845,7 +843,7 @@ public class EnrichmentReports {
 
         MyEnrichmentReportImpl mer = new MyEnrichmentReportImpl();
         mer.fHtmlPage = htmlPage;
-        mer.fExcelPage = excelPage;
+        mer.fTsvPage = tsvPage;
         return mer;
     }
 
@@ -912,14 +910,14 @@ public class EnrichmentReports {
             if (fann_opt != null && fann_opt.hasNativeDescriptions()) {
             	sm.setElement(r, coln++, fann_opt.getNativeDesc(symbol));
             }
-            sm.setElement(r, coln++, new Integer(rank));
+            sm.setElement(r, coln++, rank);
 
             if (!gset.isMember(symbol)) {
                 klog.warn("The ranked list content doesnt match the gene set content. Missing member: " + symbol);
             }
 
-            sm.setElement(r, coln++, new Double(metricScore));
-            sm.setElement(r, coln++, new Float(res));
+            sm.setElement(r, coln++, metricScore);
+            sm.setElement(r, coln++, res);
 
             if ((pos && hitIndices[r] <= maxminIndex) || (!pos && hitIndices[r] >= maxminIndex)) {
                 sm.setElement(r, coln, "Yes");
@@ -1419,7 +1417,7 @@ public class EnrichmentReports {
                     }
                 }
 
-                geneSets_sizes_file = report.savePageXls(new StringDataframe("gene_set_sizes", sm, rowNames, colNames));
+                geneSets_sizes_file = report.savePageTsv(new StringDataframe("gene_set_sizes", sm, rowNames, colNames));
             } catch (Throwable t) {
                 klog.error(t); // dont penalize - not a critical error
                 geneSets_sizes_file = report.createFile("gene_set_sizes_errored_out.txt", "List of gene sets that errored out");
@@ -1447,7 +1445,7 @@ public class EnrichmentReports {
         private File fHtmlFile;
 
         private HtmlPage fHtmlPage;
-        private ExcelTxtPage fExcelPage;
+        private TsvPage fTsvPage;
 
         public File getESPlotFile() {
             return fPlotFile;

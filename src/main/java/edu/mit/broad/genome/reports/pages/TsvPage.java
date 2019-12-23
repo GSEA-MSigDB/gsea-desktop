@@ -3,6 +3,7 @@
  */
 package edu.mit.broad.genome.reports.pages;
 
+import edu.mit.broad.genome.Constants;
 import edu.mit.broad.genome.NotImplementedException;
 import edu.mit.broad.genome.objects.Dataframe;
 import edu.mit.broad.genome.objects.IDataframe;
@@ -16,7 +17,7 @@ import java.io.OutputStream;
 /**
  * A simple txt representation of a spreadsheet format (i.e tab delimited)
  */
-public class ExcelTxtPage implements Page {
+public class TsvPage implements Page {
     private String fName;
     private IDataframe fIdf;
 
@@ -25,7 +26,7 @@ public class ExcelTxtPage implements Page {
      *
      * @param idf
      */
-    public ExcelTxtPage(final String name, final IDataframe idf) {
+    public TsvPage(final String name, final IDataframe idf) {
         if (idf == null) {
             throw new IllegalArgumentException("Param idf cannot be null");
         }
@@ -44,7 +45,7 @@ public class ExcelTxtPage implements Page {
     }
 
     public String getExt() {
-        return "tsv";
+        return Constants.TSV;
     }
 
     // @maint add more support and cleanup interface later

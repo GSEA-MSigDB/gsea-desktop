@@ -424,11 +424,7 @@ public class ToolReport implements Report {
         }
     }
 
-    /**
-     * Report impl
-     *
-     * @return
-     */
+    // TODO: parameterize the Class
     public Class getProducer() {
         return fProducerClass;
     }
@@ -517,15 +513,15 @@ public class ToolReport implements Report {
         return null;
     }
 
-    public File savePageXls(final IDataframe idf) {
-        return this.savePageXls(idf, idf.getName(), this.fReportDir);
+    public File savePageTsv(final IDataframe idf) {
+        return this.savePageTsv(idf, idf.getName(), this.fReportDir);
     }
 
-    public File savePageXls(final IDataframe idf, final String fileName, final File inDir) {
+    public File savePageTsv(final IDataframe idf, final String fileName, final File inDir) {
 
         if (idf instanceof RichDataframe) { // @note hack
             StringDataframe sdf = (StringDataframe) ((RichDataframe) idf).getDataframe();
-            return savePageXls(sdf, fileName, inDir); // recall this
+            return savePageTsv(sdf, fileName, inDir); // recall this
         }
 
         if (idf instanceof StringDataframe) {
@@ -553,7 +549,7 @@ public class ToolReport implements Report {
         try {
 
             if (pob instanceof RankedList) {
-                file = _createFile(name, "xls", inDir);
+                file = _createFile(name, Constants.TSV, inDir);
                 ParserFactory.save((RankedList) pob, file);
             } else if (pob instanceof Dataset) {
                 file = _createFile(name, DataFormat.GCT_FORMAT.getExtension(), inDir);
@@ -609,7 +605,7 @@ public class ToolReport implements Report {
     }
 
     private File savePage(final String name, final String desc, final String content) {
-        StringBuffer fname = new StringBuffer(name).append('.').append("xls");
+        StringBuffer fname = new StringBuffer(name).append('.').append(Constants.TSV);
         File file = createSafeReportFile(fname.toString(), getReportDir());
         
         try {

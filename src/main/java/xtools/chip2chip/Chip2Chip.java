@@ -112,8 +112,8 @@ public class Chip2Chip extends AbstractTool {
     
         HtmlReportIndexPage htmlPageHtml = report.getIndexPage();
         if (showEtiology) {
-            final File xlsFile = report.savePageXls(summary_table);
-            htmlPageHtml.addTable(summary_table, xlsFile.getName(), true, true);
+            final File tsvFile = report.savePageTsv(summary_table);
+            htmlPageHtml.addTable(summary_table, tsvFile.getName(), true, true);
         }
     
         report.getIndexPage().setAddBrowseFooter(false);

@@ -178,7 +178,7 @@ public class GseaPreranked extends AbstractGseaTool {
             log.info("Collapsing dataset was done. Original: " + origRL.getQuickInfo() + " collapsed: " + collapsed.getQuickInfo());
 
             // Make a summary etiology always
-            fReport.savePageXls(collapsedRL.makeEtiologySdf());
+            fReport.savePageTsv(collapsedRL.makeEtiologySdf());
 
             cd.chip = chip;
             cd.wasCollapsed = true;

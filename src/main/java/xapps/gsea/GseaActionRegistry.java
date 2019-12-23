@@ -1,17 +1,28 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package xapps.gsea;
 
 import edu.mit.broad.genome.Constants;
+import edu.mit.broad.genome.NamingConventions;
 import edu.mit.broad.genome.objects.*;
+import edu.mit.broad.genome.parsers.ParserFactory;
 import edu.mit.broad.genome.parsers.ParserWorker;
 import edu.mit.broad.genome.reports.api.Report;
 import edu.mit.broad.genome.viewers.*;
 import edu.mit.broad.vdb.chip.Chip;
 import edu.mit.broad.xbench.actions.ChipViewerAction;
+import edu.mit.broad.xbench.actions.ExtAction;
+import edu.mit.broad.xbench.actions.FileAction;
+import edu.mit.broad.xbench.actions.FileObjectAction;
+import edu.mit.broad.xbench.actions.FilesAction;
+import edu.mit.broad.xbench.actions.ObjectAction;
 import edu.mit.broad.xbench.actions.PobActions;
+import edu.mit.broad.xbench.actions.ProxyFileAction;
+import edu.mit.broad.xbench.actions.ProxyFileObjectAction;
+import edu.mit.broad.xbench.actions.ProxyObjectAction;
 import edu.mit.broad.xbench.actions.XAction;
+import edu.mit.broad.xbench.actions.ext.FileBrowserAction;
 import edu.mit.broad.xbench.actions.ext.OsExplorerAction;
 import edu.mit.broad.xbench.actions.misc_actions.GeneSetMatrix2GeneSetAction;
 import edu.mit.broad.xbench.actions.misc_actions.GeneSetMatrix2GeneSetsAction;
@@ -22,13 +33,18 @@ import edu.mit.broad.xbench.core.api.Application;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 
-import xapps.api.frameworks.AbstractActionLookup;
-
 import java.awt.*;
 import java.io.File;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
+import javax.swing.JComponent;
+import javax.swing.JMenuItem;
+import javax.swing.JPopupMenu;
+import javax.swing.JSeparator;
 
 /**
  * The grand registry for gsea actions.
@@ -37,16 +53,11 @@ import java.util.List;
  * are nice and easier to maintain than updating a text file.
  *
  * @author Aravind Subramanian
- * @version %I%, %G%
  */
-class GseaActionRegistry extends AbstractActionLookup implements Constants {
+public class GseaActionRegistry {
 
-    static final Logger klog = Logger.getLogger(GseaActionRegistry.class);
-
-    static {
-        klog.debug("Initializing GseaActionRegistry");
-        //TraceUtils.showTrace();
-    }
+    private final Map<String, PobActions> fExtActionsMap = new HashMap<String, PobActions>();
+    private static final Logger klog = Logger.getLogger(GseaActionRegistry.class);
 
     /**
      * @maint IMP Conventions:
@@ -57,7 +68,7 @@ class GseaActionRegistry extends AbstractActionLookup implements Constants {
      * better placed in the menu/tool bar
      */
 
-    // declre this first
+    // declare this first
     private static PobActions COMMON_ACTIONS = new PobActions(new XAction[]{
             new LoadAction(),
             null,
@@ -74,7 +85,6 @@ class GseaActionRegistry extends AbstractActionLookup implements Constants {
     private static PobActions GRP_ACTIONS = _addCommon(new XAction[]{
             new GeneSetViewerAction(),
             null,
-            //new GeneSet2RankedListAction(),
             new GeneSetRemoveDuplicatesAction()
     });
 
@@ -101,7 +111,7 @@ class GseaActionRegistry extends AbstractActionLookup implements Constants {
 
     private static GseaActionRegistry kSingleton;
 
-    protected static GseaActionRegistry getInstance() {
+    public static GseaActionRegistry getInstance() {
         if (kSingleton == null) {
             kSingleton = new GseaActionRegistry();
         }
@@ -110,38 +120,36 @@ class GseaActionRegistry extends AbstractActionLookup implements Constants {
     }
 
     /**
-     * /**
      * List of file extensions that are parsable (for example gif is a
      * recognized file ext but isnt parsable
      */
 
     private GseaActionRegistry() {
 
-        fExtActionsMap.put(RES, GEX_ACTIONS);
-        fExtActionsMap.put(TXT, GEX_ACTIONS);
-        fExtActionsMap.put(PCL, GEX_ACTIONS);
-        fExtActionsMap.put(GCT, GEX_ACTIONS);
+        fExtActionsMap.put(Constants.RES, GEX_ACTIONS);
+        fExtActionsMap.put(Constants.TXT, GEX_ACTIONS);
+        fExtActionsMap.put(Constants.PCL, GEX_ACTIONS);
+        fExtActionsMap.put(Constants.GCT, GEX_ACTIONS);
 
-        fExtActionsMap.put(CLS, CLS_ACTIONS);
-        fExtActionsMap.put(GRP, GRP_ACTIONS);
+        fExtActionsMap.put(Constants.CLS, CLS_ACTIONS);
+        fExtActionsMap.put(Constants.GRP, GRP_ACTIONS);
 
-        fExtActionsMap.put(GMX, GMX_ACTIONS);
-        fExtActionsMap.put(GMT, GMT_ACTIONS);
+        fExtActionsMap.put(Constants.GMX, GMX_ACTIONS);
+        fExtActionsMap.put(Constants.GMT, GMT_ACTIONS);
 
-        fExtActionsMap.put(DEF, COMMON_ACTIONS);
+        fExtActionsMap.put(Constants.DEF, COMMON_ACTIONS);
 
-        fExtActionsMap.put(RPT, RPT_ACTIONS);
+        fExtActionsMap.put(Constants.RPT, RPT_ACTIONS);
 
-        fExtActionsMap.put(CHIP, CHIP_ACTIONS);
-
-        fExtActionsMap.put(RNK, RNK_ACTIONS);
+        fExtActionsMap.put(Constants.CHIP, CHIP_ACTIONS);
+        fExtActionsMap.put(Constants.RNK, RNK_ACTIONS);
     }
 
     // dont use directly -- for instantiating only
     // Make this snappy as its called whenever a right click is done etc
     private static PobActions _addCommon(final XAction[] customs) {
 
-        List all = new ArrayList();
+        List<XAction> all = new ArrayList<XAction>();
         int cnt = 0;
         for (int i = 0; i < customs.length; i++, cnt++) {
             all.add(customs[i]);
@@ -155,26 +163,24 @@ class GseaActionRegistry extends AbstractActionLookup implements Constants {
             all.add(COMMON_ACTIONS.allActions[i]);
         }
 
-        // klog.debug("Loked up actions for: " + obj + " got: " + all.length);
-
-        return new PobActions((XAction[]) all.toArray(new XAction[all.size()]));
+        return new PobActions(all.toArray(new XAction[all.size()]));
     }
 
-    protected PobActions lookupActions(final Object obj) {
+    private PobActions lookupActions(final Object obj) {
 
         String name = "";
 
-        if (obj instanceof Dataset || name.endsWith(RES) || name.endsWith(GCT) || name.endsWith(PCL) || name.endsWith(TXT)) {
+        if (obj instanceof Dataset || name.endsWith(Constants.RES) || name.endsWith(Constants.GCT) || name.endsWith(Constants.PCL) || name.endsWith(Constants.TXT)) {
             return GEX_ACTIONS;
-        } else if (obj instanceof GeneSet || name.endsWith(".grp")) {
+        } else if (obj instanceof GeneSet || name.endsWith(Constants.GRP)) {
             return GRP_ACTIONS;
-        } else if (obj instanceof GeneSetMatrix || name.endsWith(GMX) || name.endsWith(GMT)) {
+        } else if (obj instanceof GeneSetMatrix || name.endsWith(Constants.GMX) || name.endsWith(Constants.GMT)) {
             return GMX_ACTIONS;
-        } else if (obj instanceof Report || name.endsWith(RPT)) {
+        } else if (obj instanceof Report || name.endsWith(Constants.RPT)) {
             return RPT_ACTIONS;
-        } else if (obj instanceof Chip || name.endsWith(CHIP)) {
+        } else if (obj instanceof Chip || name.endsWith(Constants.CHIP)) {
             return CHIP_ACTIONS;
-        } else if (obj instanceof Template || name.endsWith(CLS)) {
+        } else if (obj instanceof Template || name.endsWith(Constants.CLS)) {
             return CLS_ACTIONS;
         } else if (obj instanceof RankedList) {
             return RNK_ACTIONS;
@@ -183,7 +189,6 @@ class GseaActionRegistry extends AbstractActionLookup implements Constants {
         }
     }
 
-    // simply import
     public boolean runDefaultAction(final Object obj) {
 
         if (obj instanceof File || obj instanceof File[]) {
@@ -195,10 +200,10 @@ class GseaActionRegistry extends AbstractActionLookup implements Constants {
                 files = (File[]) obj;
             }
 
-            // if a single file with extension "html" or "xls", then launch in browser
+            // if a single file with extension "html" or "tsv", then launch in browser
             if (files.length == 1) {
                 String filename = files[0].getName();                
-                if (StringUtils.endsWithIgnoreCase(filename,"html") || StringUtils.endsWithIgnoreCase(filename,"xls")) {
+                if (StringUtils.endsWithIgnoreCase(filename, Constants.HTML) || StringUtils.endsWithIgnoreCase(filename, Constants.TSV)) {
                     URI fileURI = files[0].toURI();
                     try {
                         // we need to add an (empty) authority designator for compatibility with all platforms
@@ -219,8 +224,149 @@ class GseaActionRegistry extends AbstractActionLookup implements Constants {
         } else {
             return false; // @todo
         }
-
     }
 
-}    // End GseaActionsRegistry
+    /**
+     * @param file
+     * @return
+     * @maint file association - popup menu options are set here.
+     */
+    public JPopupMenu createPopup(final File file) {
+    
+        String ext = NamingConventions.getExtension(file);
+        Object obj = fExtActionsMap.get(ext);
+        
+        if (obj == null) {
+    
+            JPopupMenu p = new JPopupMenu();
+    
+            // We can at least try to open unknown files in Desktop.browser
+            if (!file.isDirectory()) {
+                p.add(new FileBrowserAction(file));
+            }
+    
+            p.add(new OsExplorerAction(file));
+    
+            return p;
+        } else {
+            PobActions da = (PobActions) obj;
+            return _createPopup(da.allActions, file);
+        }
+    }
 
+    /**
+     * @param obj
+     * @return
+     * @maint Object <-> actions mapping mainatined here
+     */
+    public JPopupMenu createPopup(final Object obj) {
+    
+        //klog.debug("createPopup Object: " + obj);
+    
+        if (obj instanceof File) {
+            return createPopup((File) obj);
+        } else {
+    
+            final PobActions pa = lookupActions(obj);
+            final XAction[] actions = pa.allActions;
+    
+            if (actions != null && actions.length > 0) {
+                return createPopupForObject(actions, obj);
+            } else {
+                return new JPopupMenu();
+            }
+        }
+    }
+
+    public JPopupMenu createPopupForObject(final XAction[] actions, final Object obj) {
+    
+        JPopupMenu menu = new JPopupMenu();
+        List<JComponent> list = new ArrayList<JComponent>();
+    
+        for (int i = 0; i < actions.length; i++) {
+            if (actions[i] == null) {
+                list.add(new JSeparator());
+            } else {
+                try {
+                    list.add(new JMenuItem(createAction(actions[i], obj)));
+                } catch (Throwable e) {
+                    klog.error("Error making popup", e);
+                    list.add(new JMenuItem("Error making popup: " + e));
+                }
+            }
+        }
+    
+        for (int i = 0; i < list.size(); i++) {
+            menu.add(list.get(i));
+        }
+    
+        return menu;
+    }
+
+    private JPopupMenu _createPopup(XAction[] actions, File file) {
+    
+        JPopupMenu menu = new JPopupMenu();
+        if (actions == null) {
+            return menu;
+        }
+    
+        List<JComponent> list = new ArrayList<JComponent>();
+        for (int i = 0; i < actions.length; i++) {
+            if (actions[i] == null) {
+                list.add(new JSeparator());
+            } else {
+                try {
+                    JMenuItem item = new JMenuItem(createAction(actions[i], file));
+                    list.add(item);
+                } catch (Throwable e) {
+                    klog.error(e);
+                    list.add(new JMenuItem("Error making popup: " + e));
+                }
+            }
+        }
+    
+        for (int i = 0; i < list.size(); i++) {
+            menu.add(list.get(i));
+        }
+    
+        return menu;
+    }
+
+    /**
+     * data can be a File, an Object
+     *
+     * @param action
+     * @param data
+     * @return
+     */
+    public XAction createAction(final XAction action, final Object data) throws Exception {
+        // TODO: parameterize classes here, work on getting rid of casts.
+        if (action instanceof FileObjectAction) {
+            return (new ProxyFileObjectAction((FileObjectAction) action, data));
+        } else if (action instanceof ObjectAction) {
+            return (new ProxyObjectAction((ObjectAction) action, data));
+        } else if ((action instanceof FileAction) && (data instanceof File)) { // @note file action and a file type
+            return (new ProxyFileAction((FileAction) action, (File) data));
+        } else if ((action instanceof FileAction) && data instanceof PersistentObject &&
+                (ParserFactory.getCache().isCached((PersistentObject) data))) { // @note file action and a file type
+            return (new ProxyFileAction((FileAction) action, ParserFactory.getCache().getSourceFile(data)));
+        } else if ((action instanceof FilesAction) && (data instanceof File[])) {
+            return (new ProxyFileAction((FilesAction) action, (File[]) data));
+        } else if ((action instanceof ExtAction) && (data instanceof File)) {
+            Class cl = action.getClass();
+            ExtAction real = (ExtAction) cl.newInstance();
+            real.setPath(((File) data));
+            return real;
+        } else if ((action instanceof ExtAction) && (data instanceof PersistentObject)) {
+            Class cl = action.getClass();
+            ExtAction real = (ExtAction) cl.newInstance();
+            real.setPath(ParserFactory.getCache().getSourceFile(data));
+            return real;
+        } else if (action instanceof XAction) {    // simple, data-less widget opening
+            Class cl = action.getClass();
+            return (XAction) cl.newInstance();
+        } else {
+            throw new Exception("Unknown action type: " + action + " and object combo: " + data);
+        }
+    }
+}

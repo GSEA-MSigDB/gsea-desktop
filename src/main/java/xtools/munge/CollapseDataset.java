@@ -70,7 +70,7 @@ public class CollapseDataset extends AbstractTool {
         fReport.savePage(cds.symbolized);
 
         // Make a summary etiology always
-        fReport.savePageXls(cds.makeEtiologySdf());
+        fReport.savePageTsv(cds.makeEtiologySdf());
 
         doneExec();
     }

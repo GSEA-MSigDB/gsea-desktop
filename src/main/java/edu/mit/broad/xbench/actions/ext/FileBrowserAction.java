@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.xbench.actions.ext;
 
 import edu.mit.broad.genome.Constants;
@@ -12,8 +12,6 @@ import java.awt.Desktop;
 import java.awt.event.ActionEvent;
 import java.io.File;
 import java.net.URI;
-
-import javax.swing.Icon;
 
 import org.apache.commons.io.FilenameUtils;
 
@@ -45,6 +43,7 @@ public class FileBrowserAction extends ExtAction {
             super.putValue(SMALL_ICON, JarResources.getIcon("Htm.gif"));
         }
         else if (ext.equalsIgnoreCase(Constants.CSV) || ext.equalsIgnoreCase(Constants.TSV) || ext.equalsIgnoreCase(Constants.XLS)) {
+            // Note: keeping XLS here for historical jobs produce by earlier versions.  Might drop this later.
             super.putValue(NAME, "Launch in Excel");
             super.putValue(SMALL_ICON, JarResources.getIcon("Xls.gif"));
         }
