@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2020 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.genome.parsers;
 
@@ -28,6 +28,7 @@ import java.util.Map;
  *
  * @author Aravind Subramanian
  */
+// TODO: parameterize class, throughout
 public class DataFormat extends DataType implements Constants {
 
     /**
@@ -169,34 +170,28 @@ public class DataFormat extends DataType implements Constants {
     /**
      * key -> Class (one of the pobs), value -> string ext
      */
-    private static final Map kClassExtMap;
+    private static final Map<Class, String> kClassExtMap = new HashMap<Class, String>();
 
     /**
      * key -> ext, value -> DataFormat that represents that ext
      */
-    private static final Map kExtDfMap;
+    private static final Map<String, DataFormat> kExtDfMap = new HashMap<String, DataFormat>();
 
     /**
      * key -> classname, value -> icon to represent the class
      */
-    private static final Map kClassIconMap;
+    private static final Map<Class, Icon> kClassIconMap = new HashMap<Class, Icon>();
 
     /**
      * key -> class, value->corresp dataformats name
      */
-    private static final Map kClassNameMap;
+    private static final Map<Class, String> kClassNameMap = new HashMap<Class, String>();
 
     static {
-
-        /**
+        /*
          * Hash the internal data formats as client code deals with them
          * in object form and nees to lookup things like, extension, icon etc.
          */
-        kClassExtMap = new HashMap();
-        kExtDfMap = new HashMap();
-        kClassIconMap = new HashMap();
-        kClassNameMap = new HashMap();
-
         for (int i = 0; i < ALL.length; i++) {
             kExtDfMap.put(ALL[i].getExtension(), ALL[i]);
 
@@ -208,20 +203,19 @@ public class DataFormat extends DataType implements Constants {
 
                 // use the first one as the default
                 if (!kClassNameMap.containsKey(repClass)) {
-                    kClassNameMap.put(ALL[i].getRepresentationClass(), ALL[i].getName());
+                    kClassNameMap.put(repClass, ALL[i].getName());
                 }
                 if (!kClassExtMap.containsKey(repClass)) {
-                    kClassExtMap.put(ALL[i].getRepresentationClass(), ALL[i].getExtension());
+                    kClassExtMap.put(repClass, ALL[i].getExtension());
                 }
-
                 if (!kClassIconMap.containsKey(repClass)) {
-                    kClassIconMap.put(ALL[i].getRepresentationClass(), ALL[i].getIcon());
+                    kClassIconMap.put(repClass, ALL[i].getIcon());
                 }
             }
         }
     }
 
-    /**
+    /*
      * Class variables
      */
     private String fName;
@@ -327,16 +321,6 @@ public class DataFormat extends DataType implements Constants {
 
     /**
      * @return Extension for this DataFormat
-     * @see "IMP to NOT use. As this makes a
-     *      String(foo) equal to an Extension("foo")"
-     */
-
-    //public int hashCode() {
-    //return fExt.hashCode();
-    //}
-
-    /**
-     * @return Extension for this DataFormat
      */
     public String getExtension() {
         return fExt;
@@ -356,7 +340,7 @@ public class DataFormat extends DataType implements Constants {
      * (dont leave spaces though as needs to be used in cmd line also)
      */
     public String toString() {
-        return new StringBuffer(getName()).append("[").append(getExtension()).append("]").toString();
+        return new StringBuilder(getName()).append("[").append(getExtension()).append("]").toString();
     }
 
     /**
@@ -381,10 +365,7 @@ public class DataFormat extends DataType implements Constants {
         return false;
     }
 
-    //------------------------------------------------------------------------------//
     // --------------------------- STATIC LOOKUP METHODS ---------------------------//
-    //------------------------------------------------------------------------------//
-
     /**
      * @param obj Typically a DataFormat or ext.
      *            Ok, to specify the toString value alos (for example: Foo[bar])
@@ -677,14 +658,7 @@ public class DataFormat extends DataType implements Constants {
             return true; // disable check
         }
 
-        /*
-        if (obj instanceof GeneSetMatrix && cl.getName().equals(DefaultGeneSetMatrix.class.getName())) {
-            return true;
-        }
-        */
-
-        // ok, thats its
+        // ok, thats it
         return false;
     }
-
-}    // End DataFormat
+}
