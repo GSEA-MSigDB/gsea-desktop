@@ -90,7 +90,7 @@ task fullJar(type: Jar, dependsOn: jar) {
             "Built-By": System.getProperty('user.name'),
             "Main-Class": mainClassName,
             "GSEA-Build-Date": timestamp,
-            "Codebase": "http://*.broadinstitute.org/gsea/software https://*.broadinstitute.org/gsea/software http://*.broadinstitute.org:8080/gsea/software https://*.broadinstitute.org:8080/gsea/software http://*.gsea-msigdb.org/gsea/software https://*.gsea-msigdb.org/gsea/software http://*.msigdb.org/gsea/software https://*.msigdb.org/gsea/software",
+            "Codebase": "http://*.broadinstitute.org/gsea/software https://*.broadinstitute.org/gsea/software https://*.broadinstitute.org/gsea-msigdb/gsea/software/desktop/jnlp http://*.broadinstitute.org:8080/gsea/software https://*.broadinstitute.org:8080/gsea/software http://*.gsea-msigdb.org/gsea/software https://*.gsea-msigdb.org/gsea/software http://*.msigdb.org/gsea/software https://*.msigdb.org/gsea/software",
 //            "Codebase": "http://*.broadinstitute.org/gsea-msigdb/gsea/software/test http://*.broadinstitute.org/gsea/software https://*.broadinstitute.org/gsea/software http://*.broadinstitute.org:8080/gsea/software https://*.broadinstitute.org:8080/gsea/software http://*.gsea-msigdb.org/gsea/software https://*.gsea-msigdb.org/gsea/software http://*.msigdb.org/gsea/software https://*.msigdb.org/gsea/software",
 //            "Codebase": "http://127.0.0.1:8092/gsea-public/software",
             "Class-Path": configurations.jarsToShipUntouched.collect { it.getName() }.join(' ')
@@ -130,6 +130,26 @@ task createDist(type: Copy, dependsOn: optimizeJar)  {
         include 'gsea.sh'
         include 'readme.txt'
         filter (ReplaceTokens, tokens: [ VERSION: version ])
+    }
+    from ("scripts") {
+        include 'gsea_template.jnlp'
+        filter (ReplaceTokens, tokens: [ VERSION: version, HEAP_MAX: "8192", HEAP_MIN: "1024" ])
+        rename "gsea_template.jnlp", "gsea_8192m.jnlp"
+    }
+    from ("scripts") {
+        include 'gsea_template.jnlp'
+        filter (ReplaceTokens, tokens: [ VERSION: version, HEAP_MAX: "4096", HEAP_MIN: "512" ])
+        rename "gsea_template.jnlp", "gsea_4096m.jnlp"
+    }
+    from ("scripts") {
+        include 'gsea_template.jnlp'
+        filter (ReplaceTokens, tokens: [ VERSION: version, HEAP_MAX: "2048", HEAP_MIN: "256" ])
+        rename "gsea_template.jnlp", "gsea_2048m.jnlp"
+    }
+    from ("scripts") {
+        include 'gsea_template.jnlp'
+        filter (ReplaceTokens, tokens: [ VERSION: version, HEAP_MAX: "1024", HEAP_MIN: "128" ])
+        rename "gsea_template.jnlp", "gsea_1024m.jnlp"
     }
     with copySpec {
         from ("${buildDir}/libs") {
