@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2020 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.vdb.chip;
 
@@ -58,6 +58,8 @@ public class Chip extends AbstractObject {
 
     public Chip(final String chipName, final String sourcePath, final Probe[] probes) {
         initHere(chipName, sourcePath, probes);
+        checkForDupProbes(probes);
+
         // dont allow normal data init'ing as thats already done
         this.fDeepDataInited = true;
     }
@@ -132,6 +134,14 @@ public class Chip extends AbstractObject {
             throw new IllegalArgumentException("Param chipName cannot be null");
         }
     
+        // all set now, so init
+        this.fSourcePath = sourcePath;
+    }
+
+    private void checkForDupProbes(final Probe[] probes) {
+        // This is only used in debugging
+        if (!log.isDebugEnabled()) return;
+        
         Set<String> names = new HashSet<String>();
         Set<String> duplicates = new HashSet<String>();
         this.fProbes = new Probe[probes.length];
@@ -151,9 +161,6 @@ public class Chip extends AbstractObject {
     
         names.clear();
         duplicates.clear();
-    
-        // all set now, so init
-        this.fSourcePath = sourcePath;
     }
 
     private void readDeepData() throws Exception {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2020 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.genome.alg.gsea;
 
@@ -49,20 +49,19 @@ public class KSTests {
     }
 
     public EnrichmentDb executeGsea(final DatasetTemplate dt, final GeneSet[] gsets, final int nperm, final Metric metric,
-    		final SortMode sort, final Order order, final LabelledVectorProcessor lvp, final RandomSeedGenerator rst,
-    		final TemplateRandomizerType rt, final Map<String, Boolean> mps, final GeneSetCohort.Generator gcohgen,
-    		final boolean permuteTemplate, final int numMarkers,
-    		final List<RankedList> store_rnd_ranked_lists_here_opt) throws Exception {
+    		final SortMode sort, final Order order, final RandomSeedGenerator rst, final TemplateRandomizerType rt, 
+    		final Map<String, Boolean> mps, final GeneSetCohort.Generator gcohgen, final boolean permuteTemplate, 
+    		final int numMarkers, final List<RankedList> store_rnd_ranked_lists_here_opt) throws Exception {
         final Dataset ds = dt.getDataset(false);
         final Template t = dt.getTemplate();
 		log.debug("!!!! Executing for: " + ds.getName() + " # samples: " + ds.getNumCol());
 		
 		try {
 			if (permuteTemplate) {
-			    return shuffleTemplate(nperm, metric, sort, order, mps, lvp,
+			    return shuffleTemplate(nperm, metric, sort, order, mps, 
 			    		ds, t, gsets, gcohgen, rt, rst, numMarkers, store_rnd_ranked_lists_here_opt);
 			} else {
-			    return shuffleGeneSet(nperm, metric, sort, order, mps, lvp, ds, t, gsets, gcohgen, rst);
+			    return shuffleGeneSet(nperm, metric, sort, order, mps, ds, t, gsets, gcohgen, rst);
 			}
 		}
 		finally {
@@ -76,18 +75,17 @@ public class KSTests {
 
         EnrichmentResult[] results = shuffleGeneSet_precannedRankedList(nperm, rl_real, null, gsets, chip, gcohgen, rst);
         return new EnrichmentDb(rl_real.getName(),
-                rl_real, null, null, results, new LabelledVectorProcessors.None(),
-                new Metrics.None(), new HashMap<String, Boolean>(), SortMode.REAL, Order.DESCENDING, nperm, null, null);
+                rl_real, null, null, results, new Metrics.None(), new HashMap<String, Boolean>(), 
+                SortMode.REAL, Order.DESCENDING, nperm, null, null);
     }
 
     // ------------------------------------------------------------------------ //
     // --------------------------- TEMPLATE CALCULATIONS ----------------------//
     // ------------------------------------------------------------------------ //
     private EnrichmentDb shuffleTemplate(final int nperm, final Metric metric, final SortMode sort, final Order order,
-    		final Map<String, Boolean> metricParams, final LabelledVectorProcessor lvp, final Dataset ds, 
-    		final Template template, final GeneSet[] gsets, final GeneSetCohort.Generator gcohgen, 
-    		final TemplateRandomizerType rt, final RandomSeedGenerator rst, final int numMarkers, 
-    		final List<RankedList> store_rnd_ranked_lists_here_opt) {
+    		final Map<String, Boolean> metricParams, final Dataset ds, final Template template, final GeneSet[] gsets, 
+    		final GeneSetCohort.Generator gcohgen, final TemplateRandomizerType rt, final RandomSeedGenerator rst, 
+    		final int numMarkers, final List<RankedList> store_rnd_ranked_lists_here_opt) {
         final Template[] rndTemplates = TemplateFactoryRandomizer.createRandomTemplates(nperm, template, rt, rst);
         log.debug("Done generating rnd templates: " + rndTemplates.length);
 
@@ -97,10 +95,10 @@ public class KSTests {
 
         final DatasetMetrics dm = new DatasetMetrics();
         final RankedList rlReal;
-        PermutationTest ptest = new PermutationTest(dstName, numMarkers, rndTemplates.length, lvp,
+        PermutationTest ptest = new PermutationTest(dstName, numMarkers, rndTemplates.length, 
                 metric, sort, order, metricParams, ds, template, null, template.isCategorical());
 
-        rlReal = dm.scoreDataset(metric, sort, order, metricParams, lvp, ds, template);
+        rlReal = dm.scoreDataset(metric, sort, order, metricParams, ds, template);
 
         // calc real scores
         if (rlReal.getSize() != ds.getNumRow()) {// sanity check
@@ -116,7 +114,7 @@ public class KSTests {
 
         // Each row is a "geneset", and each column a randomization
         for (int c = 0; c < rndTemplates.length; c++) {
-            final RankedList rndRl = dm.scoreDataset(metric, sort, order, metricParams, lvp, ds, rndTemplates[c]);
+            final RankedList rndRl = dm.scoreDataset(metric, sort, order, metricParams, ds, rndTemplates[c]);
 
             if (store_rnd_ranked_lists_here_opt != null) {
                 store_rnd_ranked_lists_here_opt.add(rndRl);
@@ -161,7 +159,7 @@ public class KSTests {
         ptest.doCalc();
 
         return new EnrichmentDb(dstName, rlReal, ds, template,
-                results, lvp, metric, metricParams, sort, order, rndTemplates.length, null, ptest);
+                results, metric, metricParams, sort, order, rndTemplates.length, null, ptest);
     }
 
     // ------------------------------------------------------------------------ //
@@ -212,16 +210,15 @@ public class KSTests {
     }
 
     private EnrichmentDb shuffleGeneSet(final int nperm, final Metric metric, final SortMode sort, final Order order,
-    		final Map<String, Boolean> metricParams, final LabelledVectorProcessor lvp, final Dataset ds, 
-    		final Template template, final GeneSet[] gsets, final GeneSetCohort.Generator gen, 
-    		final RandomSeedGenerator rst) {
+    		final Map<String, Boolean> metricParams, final Dataset ds, final Template template, final GeneSet[] gsets, 
+    		final GeneSetCohort.Generator gen, final RandomSeedGenerator rst) {
         if (ds == null) {
             throw new IllegalArgumentException("Param ds cannot be null");
         }
 
         // The same (real template) scored dataset for all gsets
         final DatasetMetrics dm = new DatasetMetrics();
-        final ScoredDataset rlReal = dm.scoreDataset(metric, sort, order, metricParams, lvp, ds, template);
+        final ScoredDataset rlReal = dm.scoreDataset(metric, sort, order, metricParams, ds, template);
         final Chip chip = ds.getAnnot().getChip();
 
         final EnrichmentResult[] results = shuffleGeneSet_precannedRankedList(nperm,
@@ -229,6 +226,6 @@ public class KSTests {
 
         final String name = NamingConventions.generateName(ds, template, true);
         return new EnrichmentDb(name, rlReal, ds, template,
-                results, lvp, metric, metricParams, sort, order, nperm, null, null);
+                results, metric, metricParams, sort, order, nperm, null, null);
     }
 }

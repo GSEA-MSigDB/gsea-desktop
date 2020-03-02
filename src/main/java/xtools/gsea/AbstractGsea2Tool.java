@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2020 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package xtools.gsea;
 
@@ -82,8 +82,6 @@ public abstract class AbstractGsea2Tool extends AbstractGseaTool {
     private EnrichmentDb execute_one(final CollapsedDetails.Data fullCd,
                                      final Template template, final GeneSet[] gsets,
                                      List<RankedList> store_rnd_ranked_lists_here_opt) throws Exception {
-        final LabelledVectorProcessor lvp = new LabelledVectorProcessors.None(); // @note
-
         final RandomSeedGenerator rst = fRndSeedTypeParam.createSeed();
         final DatasetTemplate dt = new DatasetGenerators().extract(fullCd.getDataset(), template);
 
@@ -98,7 +96,7 @@ public abstract class AbstractGsea2Tool extends AbstractGseaTool {
         }
 
         return tests.executeGsea(dt, gsets, fNumPermParam.getIValue(), fMetricParam.getMetric(),
-        		fSortParam.getMode(), fOrderParam.getOrder(), lvp, rst,
+        		fSortParam.getMode(), fOrderParam.getOrder(), rst,
                 fRndTypeParam.getRandomizerType(), getMetricParams(fMedianParam),
                 fGcohGenReqdParam.createGeneSetCohortGenerator(), fPermuteTypeParamType.permuteTemplate(),
                 fNumMarkersParam.getIValue(), store_rnd_ranked_lists_here_opt);

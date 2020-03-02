@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2020 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.genome.objects.esmatrix.db;
 
@@ -14,7 +14,6 @@ import java.util.Map;
 import edu.mit.broad.genome.alg.Metric;
 import edu.mit.broad.genome.alg.gsea.EdbAlgs;
 import edu.mit.broad.genome.alg.markers.PermutationTest;
-import edu.mit.broad.genome.math.LabelledVectorProcessor;
 import edu.mit.broad.genome.math.Order;
 import edu.mit.broad.genome.math.SortMode;
 import edu.mit.broad.genome.math.Vector;
@@ -32,7 +31,6 @@ import edu.mit.broad.genome.objects.strucs.FdrStruc;
  */
 public class EnrichmentDb extends AbstractObject {
 
-	private LabelledVectorProcessor fLvp;
 	private Metric fMetric;
 	private Map<String, Boolean> fMetricParams;
 	private SortMode fSortMode;
@@ -54,17 +52,13 @@ public class EnrichmentDb extends AbstractObject {
 
 	public EnrichmentDb(final String name, final RankedList ranked_list_shared,
 			final Dataset ds_shared_opt, final Template template_shared_opt, final EnrichmentResult[] results,
-			final LabelledVectorProcessor lvp, final Metric metric, final Map<String, Boolean> metricParams,
-			final SortMode sort, final Order order, final int numPerm, final File edb_dir_opt,
-            final PermutationTest ptest_opt) {
+			final Metric metric, final Map<String, Boolean> metricParams, final SortMode sort, final Order order, 
+			final int numPerm, final File edb_dir_opt, final PermutationTest ptest_opt) {
 		if (results == null) {
 			throw new IllegalArgumentException("Param results cannot be null");
 		}
 		if (ranked_list_shared == null) {
 			throw new IllegalArgumentException("Shared ranked list cannot be null");
-		}
-		if (lvp == null) {
-			throw new IllegalArgumentException("Param lvp cannot be null");
 		}
 		if (metric == null) {
 			throw new IllegalArgumentException("Param metric cannot be null");
@@ -82,7 +76,6 @@ public class EnrichmentDb extends AbstractObject {
 		this.fRankedList_shared = ranked_list_shared;
 		this.fTemplate_opt_shared = template_shared_opt;
 		this.fDataset_shared = ds_shared_opt;
-		this.fLvp = lvp;
 		this.fMetric = metric;
 		this.fMetricParams = metricParams;
 		this.fSortMode = sort;
@@ -96,9 +89,8 @@ public class EnrichmentDb extends AbstractObject {
 	}
 
 	public EnrichmentDb cloneDeep(final EnrichmentResult[] results) {
-		return new EnrichmentDb(getName(), getRankedList(), getDataset(), getTemplate(), results,
-				getRankedListProcessor(), getMetric(), getMetricParams(), getSortMode(), getOrder(), getNumPerm(),
-				getEdbDir(), getPermutationTest());
+		return new EnrichmentDb(getName(), getRankedList(), getDataset(), getTemplate(), results, getMetric(), 
+		        getMetricParams(), getSortMode(), getOrder(), getNumPerm(), getEdbDir(), getPermutationTest());
 	}
 
 	public EnrichmentResult getResultForGeneSet(String gsetName_no_aux) {
@@ -248,7 +240,6 @@ public class EnrichmentDb extends AbstractObject {
 	}
 
 	// @todo using gse names for the lss is not always ok
-
 	public LabelledVector getESS_lv() {
 		final Vector ess = new Vector(fResults.length);
 		for (int i = 0; i < fResults.length; i++) {
@@ -284,10 +275,6 @@ public class EnrichmentDb extends AbstractObject {
 		}
 
 		return fdrs;
-	}
-
-	public LabelledVectorProcessor getRankedListProcessor() {
-		return fLvp;
 	}
 
 	public Metric getMetric() {

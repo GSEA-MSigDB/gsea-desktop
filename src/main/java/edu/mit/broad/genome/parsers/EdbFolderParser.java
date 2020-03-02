@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2020 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.genome.parsers;
 
@@ -75,7 +75,6 @@ public class EdbFolderParser extends AbstractParser {
         Element root = document.getRootElement();
 
         // first ensure that the meg exists
-        LabelledVectorProcessor lvp = LabelledVectorProcessors.lookupProcessor(root.attribute(Headers.LV_PROC).getValue());
         SortMode sort = SortMode.lookup(root.attribute(Headers.SORT_MODE).getValue());
         Order order = Order.lookup(root.attribute(Headers.ORDER).getValue());
         Metric metric = Metrics.lookupMetric(root.attribute(Headers.METRIC).getValue());
@@ -153,7 +152,7 @@ public class EdbFolderParser extends AbstractParser {
         RankedList rankedList = _rl_shared(results);
         Template template = template_shared(results);
         final EnrichmentDb edb = new EnrichmentDb(NamingConventions.removeExtension(edb_file.getName()), 
-        		rankedList, null, template, results, lvp, metric, mps, sort, order, numPerms, edb_dir, null);
+        		rankedList, null, template, results, metric, mps, sort, order, numPerms, edb_dir, null);
         edb.addComment(fComment.toString());
         doneImport();
         return edb;
@@ -322,7 +321,8 @@ public class EdbFolderParser extends AbstractParser {
         final Document document = DocumentHelper.createDocument();
         final Element root = document.addElement(EDB);
 
-        root.addAttribute(Headers.LV_PROC, edb.getRankedListProcessor().toString());
+        // LV_PROC is always unused.
+        root.addAttribute(Headers.LV_PROC, "none");
         root.addAttribute(Headers.SORT_MODE, edb.getSortMode().toString());
         root.addAttribute(Headers.ORDER, edb.getOrder().toString());
         root.addAttribute(Headers.METRIC, edb.getMetric().toString());

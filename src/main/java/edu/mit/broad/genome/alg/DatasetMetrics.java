@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2020 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.genome.alg;
 
@@ -18,10 +18,9 @@ public class DatasetMetrics {
 
     /**
      * Score AND sort/order a Dataset according to specified parameters
-     * <p/>
      */
     public ScoredDataset scoreDataset(final Metric metric, final SortMode sort, final Order order, 
-    		final Map<String, Boolean> metricParams, final LabelledVectorProcessor lvp, final Dataset ds, final Template template) {
+    		final Map<String, Boolean> metricParams, final Dataset ds, final Template template) {
 
         if (ds == null) {
             throw new IllegalArgumentException("Param ds cannot be null");
@@ -47,9 +46,6 @@ public class DatasetMetrics {
         
         Arrays.parallelSort(sorted, new DoubleElement.DoubleElementComparator(sort, order.isAscending()));
         List<DoubleElement> dels = Arrays.asList(sorted);
-        
-        lvp.process(dels); // @note
-        
         return new ScoredDatasetImpl(new AddressedVector(dels), ds);
     }
 }

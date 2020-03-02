@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2020 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.genome.parsers;
 
@@ -128,7 +128,8 @@ public class ChipParser extends AbstractParser {
             List<Probe> probesList = new ArrayList<Probe>();
             currLine = nextLine(bin);
             Set<String> names = new HashSet<String>();
-    
+            Set<String> duplicates = new HashSet<String>();
+
             while (currLine != null) {
                 final String[] fields = ParseUtils.string2strings(currLine, "\t");
                 String probeName = StringUtils.trimToNull(fields[ps_index]);
@@ -141,14 +142,21 @@ public class ChipParser extends AbstractParser {
                     Probe probe = new Probe(probeName, symbol, title);
                     probesList.add(probe);
                     names.add(probeName);
+                } else if (probeName != null && log.isDebugEnabled()) {
+                    // Track the duplicates if we are debugging
+                    duplicates.add(probeName);
                 }
     
                 currLine = nextLine(bin);
             }
     
             final Probe[] probes = probesList.toArray(new Probe[probesList.size()]);
-            final Chip chip = new Chip(FilenameUtils.getName(sourcepath), sourcepath, probes);
+            String chipName = FilenameUtils.getName(sourcepath);
+            final Chip chip = new Chip(chipName, sourcepath, probes);
             log.info("Parsed from dotchip : " + probes.length);
+            if (!duplicates.isEmpty()) {
+                log.debug("There were duplicate probes: " + duplicates.size() + "\n" + duplicates + "\n" + chipName);
+            }
             doneImport();
 
             return unmodlist(chip);

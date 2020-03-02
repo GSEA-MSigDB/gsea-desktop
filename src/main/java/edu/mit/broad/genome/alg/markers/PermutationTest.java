@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2020 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.genome.alg.markers;
 
@@ -37,7 +37,6 @@ public class PermutationTest {
 
     private int fNumPerms;
 
-    private LabelledVectorProcessor fLabelledVectorProc;
     private Metric fMetric;
     private SortMode fSort;
     private Order fOrder;
@@ -66,7 +65,7 @@ public class PermutationTest {
     private Matrix nMarkersUpMatrix;
     private Matrix nMarkersDnMatrix;
 
-    public PermutationTest(final String name, final int numMarkers, final int nperm, final LabelledVectorProcessor lvp,
+    public PermutationTest(final String name, final int numMarkers, final int nperm, 
     		final Metric metric, final SortMode sort, final Order order, final Map<String, Boolean> metricParams, 
     		final Dataset ds, final Template template, final float[] siglevels, final boolean categorical) {
         if (numMarkers > ds.getNumRow()) {
@@ -97,7 +96,6 @@ public class PermutationTest {
 		this.fName = name;
 		this.fNumMarkers = numMarkers;
 		this.fNumPerms = nperm;
-		this.fLabelledVectorProc = lvp;
 		this.fMetric = metric;
 		this.fSort = sort;
 		this.fOrder = order;
@@ -114,7 +112,7 @@ public class PermutationTest {
 
         final DatasetMetrics dm = new DatasetMetrics();
         // calc real metric levels
-        this.fRealScoredDataset = dm.scoreDataset(fMetric, fSort, fOrder, fMetricParams, fLabelledVectorProc, fDataset, fTemplate);
+        this.fRealScoredDataset = dm.scoreDataset(fMetric, fSort, fOrder, fMetricParams, fDataset, fTemplate);
 
         // calc mean/median and stdev for each class for each marker
         if (categorical) {
@@ -176,14 +174,8 @@ public class PermutationTest {
 		}
     }
 
-    /**
-     * significance level -> have a vector of n scores. have the level of significance.
-     * the score at index in sorted vector -> n * level
-     *
-     * @param scores
-     * @param level
-     * @return
-     */
+    // significance level -> have a vector of n scores. have the level of significance.
+    // the score at index in sorted vector -> n * level
     private static float _getSignificanceLevel(final Vector scores, final float level, final SortMode sort, 
     		final Order order) {
     	// TODO: we can avoid this if we can prove something about the size elsewhere
