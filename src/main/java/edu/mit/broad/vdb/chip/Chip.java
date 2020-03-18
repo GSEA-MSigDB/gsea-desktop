@@ -58,7 +58,6 @@ public class Chip extends AbstractObject {
 
     public Chip(final String chipName, final String sourcePath, final Probe[] probes) {
         initHere(chipName, sourcePath, probes);
-        checkForDupProbes(probes);
 
         // dont allow normal data init'ing as thats already done
         this.fDeepDataInited = true;
@@ -94,7 +93,7 @@ public class Chip extends AbstractObject {
                 return nmode.getSymbol(probeName, null);
             }
         } catch (Throwable t) {
-            log.error(t);
+            log.error("Error on symbol lookup", t);
             return "";
         }
     }
@@ -136,23 +135,21 @@ public class Chip extends AbstractObject {
     
         // all set now, so init
         this.fSourcePath = sourcePath;
-    }
 
-    private void checkForDupProbes(final Probe[] probes) {
-        // This is only used in debugging
+        fProbes = probes;
+        
+        // Duplicate Probe Check.  This is only used in debugging, so avoid it otherwise to skip hashing, etc.
         if (!log.isDebugEnabled()) return;
         
         Set<String> names = new HashSet<String>();
         Set<String> duplicates = new HashSet<String>();
-        this.fProbes = new Probe[probes.length];
         for (int i = 0; i < probes.length; i++) {
-            this.fProbes[i] = probes[i];
             if (names.contains(probes[i].getName())) {
                 duplicates.add(probes[i].getName());
             }
             names.add(probes[i].getName());
         }
-    
+        
         if (!duplicates.isEmpty()) {
             log.debug("There were duplicate probes: " + duplicates.size() + "\n" + duplicates + "\n" + getName());
         } else {
