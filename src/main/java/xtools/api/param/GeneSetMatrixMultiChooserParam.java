@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2020 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package xtools.api.param;
 
@@ -37,7 +37,6 @@ import java.util.List;
 
 /**
  * @author Aravind Subramanian
- * @version %I%, %G%
  */
 public class GeneSetMatrixMultiChooserParam extends AbstractParam {
 
@@ -172,14 +171,15 @@ public class GeneSetMatrixMultiChooserParam extends AbstractParam {
             throw new IllegalArgumentException("Must specify GeneSetMatrix parameter: " + getNameEnglish() + " (" + getDesc() + ")");
         }
 
-        List gsets = new ArrayList();
+        List<GeneSet> gsets = new ArrayList<GeneSet>();
 
         String name = _getName(objs);
         for (int i = 0; i < objs.length; i++) {
             if (objs[i] instanceof GeneSetMatrix) {
+                // TODO: fix type safety of GeneSetMatrix.getGeneSetsL().  Should return List<GeneSet>
                 gsets.addAll(((GeneSetMatrix) objs[i]).getGeneSetsL());
             } else if (objs[i] instanceof GeneSet) {
-                gsets.add(objs[i]);
+                gsets.add((GeneSet)objs[i]);
             } else if (objs[i] instanceof Dataset) {
                 gsets.add(((Dataset) objs[i]).getRowNamesGeneSet());
             } else if (objs[i] instanceof Chip) {
@@ -198,12 +198,12 @@ public class GeneSetMatrixMultiChooserParam extends AbstractParam {
             throw new IllegalArgumentException("Parameter s cannot be null");
         }
 
-        Set vals = ParseUtils.string2stringsSet(s, delimiter);
+        Set<String> vals = ParseUtils.string2stringsSet(s, delimiter);
 
         System.out.println("to parse>" + s + "< got: " + vals);
 
-        Set use = new HashSet();
-        for (Iterator it = vals.iterator(); it.hasNext();) {
+        Set<String> use = new HashSet<String>();
+        for (Iterator<String> it = vals.iterator(); it.hasNext();) {
             String key = it.next().toString();
             if (key.length() > 0) {
                 use.add(key);
@@ -418,7 +418,7 @@ public class GeneSetMatrixMultiChooserParam extends AbstractParam {
                 }
                 else {
                     highestVersion = version1;
-                    highestVersionId = p2.getVersionId();
+                    highestVersionId = p1.getVersionId();
                 }
             }
             else {
@@ -459,7 +459,6 @@ public class GeneSetMatrixMultiChooserParam extends AbstractParam {
         static String MSIGDB_VERSION_V1 = "v1";
         static String MSIGDB_VERSION_V2 = "v2";
 
-        private String filename = null;
         private String versionId = null;
         private String collectionId = null;
         private String subsetId = null;
@@ -468,7 +467,6 @@ public class GeneSetMatrixMultiChooserParam extends AbstractParam {
         public MSigDBFilenameParser(String filename) {
             if (filename == null)
                 throw new IllegalArgumentException("MSigDB Filename cannot be null");
-            this.filename = filename;
 
             collectionId = filename.substring(0,2);
             if (collectionId.substring(0,1).equals("h")) {
@@ -602,5 +600,5 @@ public class GeneSetMatrixMultiChooserParam extends AbstractParam {
 
             return this;
         }
-    }    // End CommonLookListRenderer
+    }
 }
