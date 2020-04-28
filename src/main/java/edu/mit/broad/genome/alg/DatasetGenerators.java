@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2020 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.genome.alg;
 
@@ -47,7 +47,6 @@ import edu.mit.broad.vdb.chip.NullSymbolModes;
  * 2) by splitting in pre-existing datasets
  *
  * @author Aravind Subramanian
- * @version %I%, %G%
  */
 public class DatasetGenerators {
 
@@ -58,7 +57,6 @@ public class DatasetGenerators {
      */
     public DatasetGenerators() {
     }
-
 
     public ColorDataset createColorDataset(final int numRanges, final RankedList rl, final ColorScheme cs) {
 
@@ -248,7 +246,7 @@ public class DatasetGenerators {
     public static class CollapsedRL {
     	public RankedList symbolized;
     	public RankedList orig;
-        final Map<String, CollapseStruc> symbolCollapseStrucMap = new HashMap<String, CollapseStruc>();
+        public final Map<String, CollapseStruc> symbolCollapseStrucMap = new HashMap<String, CollapseStruc>();
 
     	public StringDataframe makeEtiologySdf() {
             return DatasetGenerators.makeEtiologySdf(symbolCollapseStrucMap, symbolized.getRankedNames());
@@ -287,7 +285,10 @@ public class DatasetGenerators {
             return symbol.equals(obj);
         }
 
-    } // End class CollapseStruc
+        public String getTitle() {
+            return title;
+        }
+    }
 
     public DatasetTemplate extract(final Dataset fullDs, final Template template) {
         return extract(fullDs, template, true);

@@ -1,8 +1,11 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2020 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.objects.strucs;
 
+import java.util.Map;
+
+import edu.mit.broad.genome.alg.DatasetGenerators.CollapseStruc;
 import edu.mit.broad.genome.objects.Dataset;
 import edu.mit.broad.genome.objects.RankedList;
 import edu.mit.broad.vdb.chip.Chip;
@@ -52,10 +55,12 @@ public class CollapsedDetails {
 
         }
 
-    } // End class Dataset
+    }
 
     public static class Ranked extends CollapsedDetails {
-
+        
+        public Map<String, CollapseStruc> collapseStrucMap;
+        
         public RankedList getRankedList() {
             if (wasCollapsed) {
                 return (RankedList) collapsed;
@@ -63,7 +68,5 @@ public class CollapsedDetails {
                 return (RankedList) orig;
             }
         }
-
-    } // End class RankedList
-
-} // End class CollapsedDetails
+    }
+}

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2020 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package xtools.gsea;
 
@@ -111,7 +111,7 @@ public class GseaPreranked extends AbstractGseaTool {
         doneExec();
     }
 
-    private void execute_one(final edu.mit.broad.genome.objects.strucs.CollapsedDetails fullRL, final GeneSet[] gsets,
+    private void execute_one(final CollapsedDetails.Ranked fullRL, final GeneSet[] gsets,
                              final HtmlReportIndexPage reportIndexPage) throws Exception {
 
         final int nperms = fNumPermParam.getIValue();
@@ -121,12 +121,18 @@ public class GseaPreranked extends AbstractGseaTool {
         final int minSize = fGeneSetMinSizeParam.getIValue();
         final int maxSize = fGeneSetMaxSizeParam.getIValue();
         final boolean createSvgs = fCreateSvgsParam.isSpecified() && fCreateSvgsParam.isTrue();
-        RankedList rl = ((CollapsedDetails.Ranked) fullRL).getRankedList();
+        RankedList rl = fullRL.getRankedList();
         Chip chip = null;
         FeatureAnnot fann = null;
         if (fChipParam.isSpecified()) {
             chip = fChipParam.getChip();
-            fann = new FeatureAnnotChip(chip);
+            
+            if (fullRL.wasCollapsed) {
+                // Should always be true
+                fann = new FeatureAnnotCollapseStrucMap("", fullRL.collapseStrucMap);
+            } else {
+                fann = new FeatureAnnotChip(chip);
+            }
         } else {
             fann = new FeatureAnnot(rl.getName(), rl.getRankedNames(), null);
         }
@@ -183,6 +189,7 @@ public class GseaPreranked extends AbstractGseaTool {
             cd.chip = chip;
             cd.wasCollapsed = true;
             cd.collapsed = collapsed;
+            cd.collapseStrucMap = collapsedRL.symbolCollapseStrucMap;
             checkIfCollapsedIsEmpty(cd);
 
         } else {
