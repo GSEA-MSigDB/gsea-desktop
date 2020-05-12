@@ -270,10 +270,10 @@ public class GseaFijiTabsApplicationFrame extends DefaultDockableHolder implemen
 
         // rhs buttons
         int width = 75;
-        int height = 60;
+        int height = 55;
         Font font = new Font("Arial", Font.BOLD, 12);
 
-        int struth = 15;
+        int struth = 12;
 
         // put the main thing first
 
@@ -330,7 +330,7 @@ public class GseaFijiTabsApplicationFrame extends DefaultDockableHolder implemen
         tb3.setFloatable(false);
 
         tb3.add(JarResources.toURL("past_analysis32.gif"), "Analysis history", new PastAnalysisAction(), width, height, font, true);
-        tb3.add(Box.createVerticalStrut(50));
+        tb3.add(Box.createVerticalStrut(struth));
 
         WorkspaceToolBar tb = new WorkspaceToolBar(JToolBar.VERTICAL);
         tb.setFloatable(false);
