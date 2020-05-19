@@ -21,7 +21,11 @@ import org.apache.log4j.Logger;
 
 import javax.swing.*;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Font;
+import java.awt.Toolkit;
+//import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.ClipboardOwner;
 import java.awt.datatransfer.Transferable;
@@ -29,6 +33,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Class JRecentFilesList
@@ -209,6 +216,7 @@ public class JRecentFilesList extends JList implements DndSource, FilesSelectabl
                 JPopupMenu popup = null;
 
                 log.debug(">> sel = " + sel.length);
+                PurgeSelectedFilesAction purgeSelectedAction = null;
                 if (sel.length > 1) {
                     popup = new JPopupMenu();
                     File[] files = new File[sel.length];
@@ -221,15 +229,19 @@ public class JRecentFilesList extends JList implements DndSource, FilesSelectabl
                     //popup.add(new ParserAction(files));
                     // new way simply loads
                     popup.add(new ImportFilesAction(files));
+                    purgeSelectedAction = new PurgeSelectedFilesAction(files);
 
                 } else if (sel.length == 1) {
-                    popup = Application.getWindowManager().createPopupMenu(new File(sel[0].toString()));
+                    File file = new File(sel[0].toString());
+                    popup = Application.getWindowManager().createPopupMenu(file);
+                    purgeSelectedAction = new PurgeSelectedFilesAction(file);
                 }
 
                 if (popup != null) {
                     popup.add(new JSeparator());
                     popup.add(fCopyAction);
                     popup.add(new JSeparator());
+                    if (purgeSelectedAction != null) popup.add(purgeSelectedAction);
                     popup.add(fPurgeAllAction);
                     popup.show(e.getComponent(), e.getX(), e.getY());
                 }
@@ -281,13 +293,45 @@ public class JRecentFilesList extends JList implements DndSource, FilesSelectabl
         }
     }
 
+    static class PurgeSelectedFilesAction extends AbstractAction {
+
+        File[] files;
+
+        PurgeSelectedFilesAction(File file) {
+            this.files = new File[] { file };
+            this.putValue(Action.NAME, "Purge Selected File");
+            this.putValue(Action.SHORT_DESCRIPTION, "Purge Selected File");
+        }
+
+        PurgeSelectedFilesAction(File[] files) {
+            this.files = files;
+            this.putValue(Action.NAME, "Purge " + files.length + " Selected Files");
+            this.putValue(Action.SHORT_DESCRIPTION, "Purge Selected Files");
+        }
+
+        public void actionPerformed(ActionEvent evt) {
+            boolean proceed = Application.getWindowManager().showConfirm("Delete file history for selected file(s)?", "<html><body><b>" +
+                    "This will remove these files from this list (but NOT delete the files themselves)</b>" +
+                    "</body></html>"
+            );
+
+            if (proceed) {
+                List<String> filePaths = new ArrayList<String>();
+                for (File file : files) {
+                    filePaths.add(file.toString());
+                }
+                Application.getFileManager().getRecentFilesStore().removeAndSave(filePaths);
+            }
+        }
+    }
+
     static class ImportFilesAction extends AbstractAction {
 
         File[] files;
 
         ImportFilesAction(File[] files) {
             this.files = files;
-            this.putValue(Action.NAME, "Import data from selected " + files.length + " files");
+            this.putValue(Action.NAME, "Import data from " + files.length + " selected files");
             this.putValue(Action.SHORT_DESCRIPTION, "Import data from selected files");
         }
 

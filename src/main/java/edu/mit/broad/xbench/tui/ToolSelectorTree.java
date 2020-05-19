@@ -9,6 +9,8 @@ import edu.mit.broad.genome.reports.api.Report;
 import edu.mit.broad.genome.swing.GuiHelper;
 import edu.mit.broad.genome.utils.DateUtils;
 import edu.mit.broad.xbench.ComparatorFactory2;
+
+import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import xtools.api.Tool;
 import xtools.api.ToolCategory;
@@ -66,7 +68,7 @@ public class ToolSelectorTree extends JTree {
     }
 
     public Tool selectTool(final String toolName) {
-        if (toolName == null) {
+        if (StringUtils.isBlank(toolName)) {
             return null;
         }
 
