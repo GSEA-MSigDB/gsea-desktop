@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2020 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.xbench.actions.misc_actions;
 
 import edu.mit.broad.genome.JarResources;
@@ -18,22 +18,13 @@ import java.io.File;
  * force reloading a file, ignoring if it has been cached or not
  *
  * @author Aravind Subramanian
- * @version %I%, %G%
  */
-
 public class LoadAction extends FileObjectAction {
 
     private Object fFileOrObject;
 
     private static final Icon RELOAD_ICON = JarResources.getIcon("Refresh16_2.gif");
 
-    /**
-     * Class constructor
-     *
-     * @param name
-     * @param id
-     * @param desc
-     */
     public LoadAction() {
         super("ForceReloadAction", "Force data reload", 
                 "Reload data from source file overwriting the cache", 
@@ -49,15 +40,11 @@ public class LoadAction extends FileObjectAction {
     }
 
     public Widget getWidget() {
-
         // the load is non-blocking so better to use a null widget mechanism
         Widget widget = null;
-
         try {
-
             if (fFileOrObject != null) {
                 File sourceFile;
-
                 if (fFileOrObject instanceof File) {
                     sourceFile = (File) fFileOrObject;
                 } else {
@@ -70,18 +57,17 @@ public class LoadAction extends FileObjectAction {
                 PersistentObject pob = ParserFactory.read(sourceFile, false);
                 if (pob != null) {
                     Application.getWindowManager().showMessage("<html><body><b>Successfully reloaded: " + pob.getName() + "</b><br>From file: " + sourceFile + "</body></html>");
+                    Application.getFileManager().getRecentFilesStore().refresh(sourceFile.toString());
                 } else {
                     log.info("Cancelled data import!!");
                 }
-
             } else {
                 Application.getWindowManager().showMessage("No file or object to load/reload was specified");
             }
-
         } catch (Throwable t) {
             Application.getWindowManager().showError("Error loading data from file", t);
         }
 
         return widget;
     }
-}    // End ForceReloadAction
+}

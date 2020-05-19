@@ -1,23 +1,25 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2020 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.xbench.core.api;
 
-import edu.mit.broad.genome.JarResources;
 import edu.mit.broad.genome.parsers.ObjectCache;
 import edu.mit.broad.genome.parsers.ParserFactory;
 import edu.mit.broad.xbench.RendererFactory2;
 import edu.mit.broad.xbench.explorer.filemgr.*;
 import org.apache.log4j.Logger;
 
-import javax.swing.*;
+import javax.swing.JList;
 import javax.swing.filechooser.FileFilter;
-import java.awt.*;
+
+import java.awt.Component;
+import java.awt.HeadlessException;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -30,6 +32,7 @@ import java.util.Set;
  *
  * @author Aravind Subramanian
  */
+// TODO: simplify class hierarchy.  This is the only implementer of the interface.
 public class FileManagerImpl implements FileManager {
 
     private static final Logger klog = Logger.getLogger(FileManagerImpl.class);
@@ -59,16 +62,11 @@ public class FileManagerImpl implements FileManager {
 
     private void initFC() {
         if (fFileChooser == null) {
+            // TODO: evaluate whether RecentDirsModel can just be a ComboBoxModel
+            // Looks like it just wraps one and delegates to it, so can we use it directly?
             RecentDirsModel model = new RecentDirsModel(getRecentFilesStore_as_dirs(), new String[]{});
             JList jlRecent = new JList(model);
             jlRecent.setCellRenderer(new ListCellRenderer());
-
-            /* @note changed after webstart
-            JList jlStd = new JList(Application.getVdbManager().getDescriptedFiles());
-            jlStd.setCellRenderer(new ListCellRenderer());
-
-            //fFileChooser = new XFileChooserImpl(jlStd, jlRecent);
-            */
 
             fFileChooser = new XFileChooserImpl(jlRecent);
 
@@ -101,17 +99,15 @@ public class FileManagerImpl implements FileManager {
         getRecentFilesStore();
         getRecentDirsStore();
 
-        Set dirs = new HashSet();
-        java.util.List lines = new ArrayList();
-        lines.addAll(getRecentDirsStore().fLines);
-        lines.addAll(getRecentFilesStore().fLines);
-
-        klog.debug("# of lines: " + lines.size());
+        Set<File> dirs = new HashSet<File>();
+        List<String> lines = new ArrayList<String>();
+        lines.addAll(getRecentDirsStore().getLines());
+        lines.addAll(getRecentFilesStore().getLines());
 
         for (int i = 0; i < lines.size(); i++) {
-            Object obj = lines.get(i);
-            if (obj != null) {
-                File file = new File(obj.toString());
+            String str = lines.get(i);
+            if (str != null) {
+                File file = new File(str);
                 if (file.exists()) {
                     if (file.isFile()) {
                         dirs.add(file.getParentFile());
@@ -122,7 +118,7 @@ public class FileManagerImpl implements FileManager {
             }
         }
 
-        return (File[]) dirs.toArray(new File[dirs.size()]);
+        return dirs.toArray(new File[dirs.size()]);
     }
 
     /**
@@ -137,10 +133,10 @@ public class FileManagerImpl implements FileManager {
             return null;
         }
 
-        Object obj = xs.getElementAt(xs.getSize() - 1);
+        String str = xs.getElementAt(xs.getSize() - 1);
 
-        if (obj != null) {
-            return new File(obj.toString());
+        if (str != null) {
+            return new File(str);
         } else {
             return null;
         }
@@ -153,7 +149,6 @@ public class FileManagerImpl implements FileManager {
 
     public XFileChooser getFileChooser(final FileFilter[] filts) throws HeadlessException {
         initFC();
-        // @todo filt
         return fFileChooser;
     }
 
@@ -164,7 +159,6 @@ public class FileManagerImpl implements FileManager {
             if (lastDir != null && lastDir.exists()) {
                 fDirChooser.setCurrentLocation(lastDir.getPath());
             }
-
         }
 
         fDirChooser.resetState(); // @note
@@ -193,11 +187,12 @@ public class FileManagerImpl implements FileManager {
                     "recent_files.txt"));
 
             try {
-                java.util.List rems = new ArrayList();
+                List<String> rems = new ArrayList<String>();
                 for (int i = 0; i < fRecentFilesStore_as_files.getSize(); i++) {
-                    File f = new File(fRecentFilesStore_as_files.getElementAt(i).toString());
+                    String filePath = fRecentFilesStore_as_files.getElementAt(i);
+                    File f = new File(filePath);
                     if (!f.exists()) {
-                        rems.add(fRecentFilesStore_as_files.getElementAt(i));
+                        rems.add(filePath);
                     }
                 }
 
@@ -210,10 +205,8 @@ public class FileManagerImpl implements FileManager {
             }
         }
 
-
         return fRecentFilesStore_as_files;
     }
-
 
     public XStore getRecentDirsStore() {
         if (fRecentDirsStore == null) {
@@ -239,7 +232,6 @@ public class FileManagerImpl implements FileManager {
      * for Listening to cache events and adding to recent files mechanism
      *
      * @author Aravind Subramanian
-     * @version %I%, %G%
      */
     class MyPropertyChangeListener implements PropertyChangeListener {
         public void propertyChange(PropertyChangeEvent evt) {
@@ -257,12 +249,9 @@ public class FileManagerImpl implements FileManager {
      * Class ListCellRenderer
      *
      * @author Aravind Subramanian
-     * @version %I%, %G%
      */
-    // class ListCellRenderer extends DefaultListCellRenderer {
+    // TODO: evaluate direct use of the superclass
     private static class ListCellRenderer extends RendererFactory2.CommonLookListRenderer {
-        private static final Icon ICON = JarResources.getIcon("pinned_ovr.gif");
-
         public ListCellRenderer() {
         }
 
@@ -276,8 +265,5 @@ public class FileManagerImpl implements FileManager {
             super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
             return this;
         }
-
     }
-
-
-} // End interface FileManagerImpl
+}

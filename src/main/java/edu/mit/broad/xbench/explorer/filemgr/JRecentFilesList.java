@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2020 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.xbench.explorer.filemgr;
 
 import edu.mit.broad.genome.JarResources;
@@ -39,7 +39,6 @@ import java.io.File;
  * This is NOT a drag receiver
  *
  * @author Aravind Subramanian
- * @version %I%, %G%
  */
 public class JRecentFilesList extends JList implements DndSource, FilesSelectable {
 
@@ -149,18 +148,11 @@ public class JRecentFilesList extends JList implements DndSource, FilesSelectabl
                             return;
                         }
 
-                        File file = new File(fInstance.getSelectedValue().toString());
+                        String item = fInstance.getSelectedValue().toString();
+                        File file = new File(item);
                         log.info("Loading ... " + file.getPath());
                         Application.getWindowManager().runDefaultAction(file);
-
-                        /*
-                        if (file.exists()) {
-                            boolean success = Application.getWindowManager().runDefaultAction(file);
-                            if (success) {
-                                Application.getWindowManager().showMessage("Successfully loaded: " + file.getName());
-                            }
-                        }
-                        */
+                        Application.getFileManager().getRecentFilesStore().refresh(item);
                     }
                 }
             });
@@ -196,7 +188,7 @@ public class JRecentFilesList extends JList implements DndSource, FilesSelectabl
 
             return this;
         }
-    }    // End ListCellRenderer
+    }
 
     /**
      * Popup displayer
@@ -249,7 +241,6 @@ public class JRecentFilesList extends JList implements DndSource, FilesSelectabl
      * Class CopyFilePathAction
      *
      * @author Aravind Subramanian
-     * @version %I%, %G%
      */
     class CopyFilePathAction extends AbstractAction {
 
@@ -274,7 +265,7 @@ public class JRecentFilesList extends JList implements DndSource, FilesSelectabl
             this.putValue(Action.NAME, "Purge All Files");
             // Couldn't find a good icon...
             this.putValue(Action.SMALL_ICON, null);
-            this.putValue(Action.SHORT_DESCRIPTION, "Copy File(s)");
+            this.putValue(Action.SHORT_DESCRIPTION, "Purge All");
         }
 
         public void actionPerformed(ActionEvent evt) {
@@ -290,7 +281,6 @@ public class JRecentFilesList extends JList implements DndSource, FilesSelectabl
         }
     }
 
-
     static class ImportFilesAction extends AbstractAction {
 
         File[] files;
@@ -303,8 +293,9 @@ public class JRecentFilesList extends JList implements DndSource, FilesSelectabl
 
         public void actionPerformed(ActionEvent evt) {
             new ParserWorker(files).execute();
+            for (File file : files) {
+                Application.getFileManager().getRecentFilesStore().refresh(file.toString());
+            }
         }
     }
-}    // End JRecentFilesList
-
-/*--- Formatted in Sun Java Convention Style on Mon, Oct 21, '02 ---*/
+}
