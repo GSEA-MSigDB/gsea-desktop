@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2020 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package xapps.gsea;
 
@@ -158,7 +158,7 @@ public class GseaPreferencesDialog extends MultiplePageDialog {
             builder.setDefaultDialogBorder();
             final CellConstraints cc = new CellConstraints();
 
-            builder.add(new JLabel("Path to Cytoscape (for Enrichment Map Visualization)"), cc.xy(1, rowCnt));
+            builder.add(new JLabel("Cytoscape REST port (for Enrichment Map Visualization)"), cc.xy(1, rowCnt));
             rowCnt += 2; // because the spaces also count as a row
             builder.add(XPreferencesFactory.kCytoscapeRESTPort.getSelectionComponent().getComponent(), cc.xy(1, rowCnt));
             
@@ -305,5 +305,4 @@ public class GseaPreferencesDialog extends MultiplePageDialog {
         return BorderFactory.createCompoundBorder(BorderFactory.createTitledBorder(
                 new PartialLineBorder(Color.gray, 1, true), title), BorderFactory.createEmptyBorder(0, 6, 4, 6));
     }
-
-} // End class GseaPreferencesDialog
+}

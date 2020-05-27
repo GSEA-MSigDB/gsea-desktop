@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2020 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package xtools.gsea;
 
@@ -43,7 +43,6 @@ import java.util.Properties;
  * Runs it on a ffn of dataset+template+geneSetmatrix
  *
  * @author Aravind Subramanian
- * @version %I%, %G%
  */
 public class LeadingEdgeTool extends AbstractTool {
     private DirParam fGseaResultDirParam = new DirParam(true);
@@ -113,7 +112,7 @@ public class LeadingEdgeTool extends AbstractTool {
         final ReportIndexState state = new ReportIndexState(true, false, false, getHeader(fGseaResultDirParam));
         startExec(state);
 
-        final File gseaResultDir = fGseaResultDirParam.getFile();
+        final File gseaResultDir = fGseaResultDirParam.getDir();
         final EnrichmentDb edb = ParserFactory.readEdb(gseaResultDir, true);
         // Note that we MUST set the altDelim on the fGeneSetNamesParam if it's present.  This MUST happen
         // before extracting the param value or it will be parsed incorrectly.  Unfortunately, these params
@@ -334,4 +333,4 @@ public class LeadingEdgeTool extends AbstractTool {
 
         return null;
     }
-}    // End LeadingEdgeTool
+}

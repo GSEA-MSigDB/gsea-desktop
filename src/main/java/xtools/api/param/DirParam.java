@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2020 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package xtools.api.param;
 
 import edu.mit.broad.genome.swing.fields.GDirFieldPlusChooser;
@@ -10,48 +10,21 @@ import java.io.File;
 
 /**
  * @author Aravind Subramanian
- * @version %I%, %G%
  */
-public class DirParam extends FileParam {
+public class DirParam extends AbstractParam {
 
     protected GDirFieldPlusChooser fChooser;
 
-    /**
-     * Class constructor
-     *
-     * @param name
-     * @param type
-     * @param desc
-     */
     public DirParam(String name, String nameEnglish, String desc, File hint, boolean reqd) {
-        this(name, nameEnglish, desc, new File[]{hint}, reqd);
+        super(name, nameEnglish, File.class, desc, new File[]{hint}, reqd);
     }
 
     public DirParam(boolean reqd) {
-        this(DIR, DIR_ENGLISH, DIR_DESC, new File[]{}, reqd);
+        super(DIR, DIR_ENGLISH, File.class, DIR_DESC, new File[]{}, reqd);
     }
 
-    /**
-     * Class constructor
-     *
-     * @param name
-     * @param desc
-     * @param hints
-     * @param reqd
-     */
-    public DirParam(final String name, final String nameEnglish, final String desc, final File[] hints, final boolean reqd) {
-        super(name, nameEnglish, desc, hints, reqd);
-    }
-
-    /**
-     * Class constructor
-     *
-     * @param name
-     * @param desc
-     * @param reqd
-     */
     public DirParam(final String name, final String nameEnglish, final String desc, final boolean reqd) {
-        super(name, nameEnglish, desc, new File[]{}, reqd);
+        super(name, nameEnglish, File.class, desc, new File[]{}, reqd);
     }
 
     public void setValue(Object value) {
@@ -73,13 +46,6 @@ public class DirParam extends FileParam {
     }
 
     public void setValue(File dir) {
-        /*
-        if( !dir.isDirectory()) {
-            throw new IllegalArgumentException("Only a dir allowed. Specified: "
-                                               + dir.getAbsolutePath());
-        }
-        */
-
         super.setValue(dir);
     }
 
@@ -94,8 +60,12 @@ public class DirParam extends FileParam {
         if (val == null) {
             throw new NullPointerException("Null param value. Always check isSpecified() before calling");
         }
-
-        return (File) val;
+    
+        if (val instanceof File) {
+            return (File) val;
+        } else {
+            return new File(val.toString());
+        }
     }
 
     public String getValueStringRepresentation(boolean full) {
@@ -130,7 +100,5 @@ public class DirParam extends FileParam {
         }
 
         return fChooser;
-
     }
-
-}    // End class DirParam
+}
