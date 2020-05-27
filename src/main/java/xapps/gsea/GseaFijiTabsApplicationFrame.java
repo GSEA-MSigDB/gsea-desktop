@@ -65,7 +65,7 @@ import edu.mit.broad.xbench.actions.ext.BrowserAction;
 import edu.mit.broad.xbench.core.WrappedComponent;
 import edu.mit.broad.xbench.core.api.Application;
 import edu.mit.broad.xbench.core.api.FileManager;
-import edu.mit.broad.xbench.core.api.FileManagerImpl;
+import edu.mit.broad.xbench.core.api.FileManager;
 import edu.mit.broad.xbench.core.api.ToolManager;
 import edu.mit.broad.xbench.core.api.ToolManagerImpl;
 import edu.mit.broad.xbench.core.api.VdbManager;
@@ -652,7 +652,7 @@ public class GseaFijiTabsApplicationFrame extends DefaultDockableHolder implemen
 
     public FileManager getFileManager() {
         if (fFileManager == null) {
-            this.fFileManager = new FileManagerImpl();
+            this.fFileManager = new FileManager();
         }
 
         return fFileManager;
