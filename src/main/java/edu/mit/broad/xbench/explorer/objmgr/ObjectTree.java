@@ -54,7 +54,7 @@ public class ObjectTree extends JTree implements DndSource, FilesSelectable {
         // Fix for show drop insertion point
         //fInstance.updateUI();
         // from http://groups.google.com/groups?q=tooltip+in+jtree+group:comp.lang.java.vdbgui&hl=en&lr=&ie=UTF-8&safe=off&selm=7rrnk0%24enc%241%40f40-3.zfn.uni-bremen.de&rnum=7
-        this.setToolTipText("Anything but null");    // wierd. Needed before tooltips show up
+        this.setToolTipText("");    // wierd. Needed before tooltips show up
         this.setModel(ParserFactory.getCache().createTreeModel());
         this.setCellRenderer(new ObjectTreeRenderer());
 

@@ -8,6 +8,7 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -152,9 +153,7 @@ public class AppDataLoaderWidget extends GseaSimpleInternalFrame implements Widg
                 "\n" +
                 "</html>");
 
-        label.setBorder(BorderFactory.createTitledBorder("Supported file formats"));
-
-        JButton bFormatHelp = new JButton(new BrowserAction("More on file formats ...",
+        JButton bFormatHelp = new JButton(new BrowserAction("File Format Help ...",
                 "Online documentation on supported data formats", GuiHelper.ICON_HELP16,
                 GseaWebResources.getGseaDataFormatsHelpURL()));
 
@@ -182,10 +181,28 @@ public class AppDataLoaderWidget extends GseaSimpleInternalFrame implements Widg
         panel.add(pan);
         panel.add(createDndPanel());
 
-        JPanel sub = new JPanel(new BorderLayout());
-        sub.add(label, BorderLayout.NORTH);
-        sub.add(bFormatHelp, BorderLayout.SOUTH);
-        panel.add(sub);
+        JPanel sub = new JPanel(new GridBagLayout());
+        sub.setBorder(BorderFactory.createTitledBorder("Supported file formats"));
+        GridBagConstraints gbc3 = new GridBagConstraints();
+        gbc3.gridx = 0;
+        gbc3.gridy = 0;
+        gbc3.fill = GridBagConstraints.BOTH;
+        gbc3.ipady = 5;
+        gbc3.weightx = 0.5;
+        gbc3.weighty = 0.5;
+        sub.add(label, gbc3);
+        GridBagConstraints gbc4 = new GridBagConstraints();
+        gbc4.gridx = 0;
+        gbc4.gridy = 1;
+        gbc4.fill = GridBagConstraints.NONE;
+        gbc4.ipady = 5;
+        gbc4.insets = new Insets(10, 0, 5, 0);
+        gbc4.weightx = 0.5;
+        gbc4.weighty = 0.5;
+        sub.add(bFormatHelp, gbc4);
+        JPanel subsub = new JPanel(new BorderLayout());
+        subsub.add(sub, BorderLayout.NORTH);
+        panel.add(subsub);
         return panel;
     }
 
