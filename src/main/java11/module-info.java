@@ -27,7 +27,6 @@ module org.gsea_msigdb.gsea {
     exports edu.mit.broad.genome.swing.dnd;
     exports edu.mit.broad.genome.swing.fields;
     exports edu.mit.broad.genome.swing.image;
-    exports edu.mit.broad.genome.swing.choosers;
     exports edu.mit.broad.genome.swing.windows;
     exports edu.mit.broad.genome.utils;
     exports edu.mit.broad.genome.viewers;
