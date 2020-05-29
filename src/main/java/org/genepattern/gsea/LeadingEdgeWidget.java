@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2020 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package org.genepattern.gsea;
 
@@ -71,9 +71,6 @@ public class LeadingEdgeWidget implements Widget {
      */
     private boolean runningInGenePattern;
 
-    /**
-     * Used in GenePattern to use output directory for HTML report
-     */
     private JFileChooser htmlReportDirChooser;
 
     /**
@@ -191,6 +188,7 @@ public class LeadingEdgeWidget implements Widget {
                 htmlReportDirChooser = new JFileChooser();
                 htmlReportDirChooser.setDialogTitle("Choose output directory");
                 htmlReportDirChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+                htmlReportDirChooser.setMultiSelectionEnabled(false);
             }
             if (htmlReportDirChooser.showOpenDialog(tabbedPane
                     .getTopLevelAncestor()) != JFileChooser.APPROVE_OPTION) {

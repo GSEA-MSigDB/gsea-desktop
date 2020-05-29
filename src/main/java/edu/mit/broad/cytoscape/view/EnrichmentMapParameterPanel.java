@@ -1,11 +1,12 @@
 /*
- * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2020 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.cytoscape.view;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.FileDialog;
 import java.awt.FlowLayout;
 import java.awt.Insets;
 import java.beans.PropertyChangeEvent;
@@ -26,14 +27,12 @@ import javax.swing.ButtonGroup;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
-import javax.swing.JFileChooser;
 import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JTextArea;
-import javax.swing.filechooser.FileNameExtensionFilter;
 
 import org.apache.log4j.Logger;
 
@@ -46,6 +45,7 @@ import edu.mit.broad.cytoscape.EnrichmentMapParameters;
 import edu.mit.broad.genome.JarResources;
 import edu.mit.broad.xbench.core.api.Application;
 import xapps.api.vtools.ParamSetFormForAFew;
+import xapps.gsea.GseaFileFilter;
 import xtools.munge.CollapseDataset;
 
 //Panel used to access Enrichment map.  Can either access it through the Results table(bottom left of GSEA frame)
@@ -55,6 +55,8 @@ public class EnrichmentMapParameterPanel extends JPanel {
     public static final String LAUNCH_MSG = "Please launch Cytoscape 3.3+ with the Enrichment Map plug-in before continuing.";
 
     private static final Logger klog = Logger.getLogger(EnrichmentMapParameterPanel.class);
+    
+    private static final GseaFileFilter expressionFileFilter = new GseaFileFilter(new String[] {"gct","rnk", "txt"}, "Expression File");
 
     private DecimalFormat decFormat; // used in the formatted text fields
 
@@ -237,7 +239,6 @@ public class EnrichmentMapParameterPanel extends JPanel {
             }
         });
 
-        JLabel coeffecientCutOffLabel = new JLabel("Cutoff");
         coeffecientTextField = new JFormattedTextField(decFormat);
         coeffecientTextField.setColumns(3);
         coeffecientTextField.addPropertyChangeListener("value", new EnrichmentMapParameterPanel.FormattedTextFieldAction());
@@ -279,7 +280,7 @@ public class EnrichmentMapParameterPanel extends JPanel {
 
         // ---- label5 ----
         // only make combined constant visible if combined is selected
-        similarityPanel.add(combinedCutoff, CC_sp.xy(7, 5, CC_sp.CENTER, CC_sp.DEFAULT));
+        similarityPanel.add(combinedCutoff, CC_sp.xy(7, 5, CellConstraints.CENTER, CellConstraints.DEFAULT));
         similarityPanel.add(combinedConstantTextField, CC_sp.xy(9, 5));
         combinedConstantTextField.setEnabled(false);
         similarityPanel.add(new JLabel("", similarityLogo, JLabel.CENTER), CC_sp.xywh(2, 7, 9, 1));
@@ -363,48 +364,6 @@ public class EnrichmentMapParameterPanel extends JPanel {
 
     }
 
-    private JPanel createExpression1FilePanel() {
-
-        JPanel panel = new JPanel();
-        panel.setPreferredSize(new Dimension(1000, 60));
-        panel.setLayout(new BorderLayout());
-
-        // add GCT file
-        JLabel GCTLabel = new JLabel("*Expression (Dataset 1):");
-        GCTLabel.setToolTipText("File with gene expression values.\n" + "Format: gene <tab> description <tab> expression value <tab> ...");
-
-        JButton selectGCTFileButton = new JButton();
-        GCTFileName1TextField = new JFormattedTextField();
-        GCTFileName1TextField.setColumns(15);
-        GCTFileName1TextField.setText(params.getExpressionFilePath());
-
-        selectGCTFileButton.setText("...");
-        selectGCTFileButton.setMargin(new Insets(0, 0, 0, 0));
-        selectGCTFileButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                selectGCTFileButtonActionPerformed(evt);
-            }
-        });
-
-        JPanel GCTPanel = new JPanel();
-        GCTPanel.setLayout(new BorderLayout());
-
-        GCTPanel.add(GCTLabel, BorderLayout.WEST);
-        GCTPanel.add(GCTFileName1TextField, BorderLayout.CENTER);
-        GCTPanel.add(selectGCTFileButton, BorderLayout.EAST);
-
-        panel.add(GCTPanel, BorderLayout.NORTH);
-
-        /* if(this.popOutWindow) */
-        panel.add(createInstruction(), BorderLayout.CENTER);
-
-        // add the build button
-        add(createBottomPanel(), BorderLayout.SOUTH);
-
-        return panel;
-
-    }
-
     private JTextArea createInstruction() {
         // Create a label explaining when you would want to change the expression file setting
         String text = "*If you are using GSEAPreranked and you would like to see the expression values in the heat map instead of the ranks change this default setting.";
@@ -462,49 +421,39 @@ public class EnrichmentMapParameterPanel extends JPanel {
         similarityPanel.revalidate();
     }
 
-    /**
-     * gct/expression 1 file selector action listener
-     *
-     * @param evt
-     */
+    // gct/expression 1 file selector action listener
     private void selectGCTFileButtonActionPerformed(java.awt.event.ActionEvent evt) {
-
-        // Get the file name
-        JFileChooser chooser = new JFileChooser(params.getEdbdir());
-        FileNameExtensionFilter filter = new FileNameExtensionFilter("Expression File", "gct", "rnk", "txt");
-        File file = null;
-        int returnVal = chooser.showOpenDialog(this);
-        if (returnVal == JFileChooser.APPROVE_OPTION) {
-            file = chooser.getSelectedFile();
-        }
-        if (file != null) {
+        FileDialog fileDialog = new FileDialog(Application.getWindowManager().getRootFrame(), "Open", FileDialog.LOAD);
+        fileDialog.setDirectory(params.getEdbdir());
+        fileDialog.setMultipleMode(false);
+        fileDialog.setModal(true);
+        fileDialog.setFile("*.gct;*.rnk;*.txt");
+        fileDialog.setFilenameFilter(expressionFileFilter);
+        fileDialog.setVisible(true);
+        File[] files = fileDialog.getFiles();
+        if (files != null && files.length > 0) {
+            File file = files[0];
             params.setExpressionFilePath(file.getAbsolutePath());
             GCTFileName1TextField.setText(file.getAbsolutePath());
             GCTFileName1TextField.setToolTipText(file.getAbsolutePath());
-
         }
     }
 
-    /**
-     * gct/expression 2 file selector action listener
-     *
-     * @param evt
-     */
+    // gct/expression 2 file selector action listener
     private void selectGCTFile2ButtonActionPerformed(java.awt.event.ActionEvent evt) {
-
-        // Get the file name
-        JFileChooser chooser = new JFileChooser(params.getEdbdir());
-        FileNameExtensionFilter filter = new FileNameExtensionFilter("Expression File", "gct", "rnk", "txt");
-        File file = null;
-        int returnVal = chooser.showOpenDialog(this);
-        if (returnVal == JFileChooser.APPROVE_OPTION) {
-            file = chooser.getSelectedFile();
-        }
-        if (file != null) {
+        FileDialog fileDialog = new FileDialog(Application.getWindowManager().getRootFrame(), "Open", FileDialog.LOAD);
+        fileDialog.setDirectory(params.getEdbdir());
+        fileDialog.setMultipleMode(false);
+        fileDialog.setModal(true);
+        fileDialog.setFile("*.gct;*.rnk;*.txt");
+        fileDialog.setFilenameFilter(expressionFileFilter);
+        fileDialog.setVisible(true);
+        File[] files = fileDialog.getFiles();
+        if (files != null && files.length > 0) {
+            File file = files[0];
             params.setExpression2FilePath(file.getAbsolutePath());
             GCTFileName2TextField.setText(file.getAbsolutePath());
             GCTFileName2TextField.setToolTipText(file.getAbsolutePath());
-
         }
     }
 
@@ -851,5 +800,4 @@ public class EnrichmentMapParameterPanel extends JPanel {
         }
         return rowStr;
     }
-
 }

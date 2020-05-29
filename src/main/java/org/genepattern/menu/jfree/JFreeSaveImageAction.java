@@ -1,26 +1,26 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2020 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package org.genepattern.menu.jfree;
 
+import java.awt.FileDialog;
 import java.awt.Frame;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 
 import javax.swing.AbstractAction;
-import javax.swing.JFileChooser;
 import javax.swing.JMenuItem;
 import javax.swing.SwingWorker;
 import javax.swing.filechooser.FileFilter;
 
 import org.genepattern.io.ImageUtil;
 import org.genepattern.menu.PlotAction;
-import org.genepattern.uiutil.FileChooser;
 import org.genepattern.uiutil.UIUtil;
 import org.jfree.chart.ChartPanel;
 
 import edu.mit.broad.genome.StandardException;
+import xapps.gsea.GseaFileFilter;
 
 /**
  * @author Joshua Gould
@@ -40,37 +40,60 @@ public class JFreeSaveImageAction extends PlotAction {
     }
 
     public void actionPerformed(ActionEvent e) {
-        try {
-            if (!FileChooser.RUNNING_ON_MAC) {
-                saveImage();
-            }
-        } catch (Exception x) {
-            showError(x, "An error occurred while saving the plot.");
-        }
+//        try {
+//            if (!SystemUtils.IS_OS_MAC_OSX) {
+//                File outputFile = null;
+//                String outputFileFormat = null;
+//                JFileChooser fc = new JFileChooser();
+//                fc.setAcceptAllFileFilterUsed(false);
+//                fc.addChoosableFileFilter(new JFreeSaveImageAction.SaveImageFileFilter(new String[]{"jpeg",
+//                        "jpg"}, "JPEG image", "JPEG"));
+//                fc.addChoosableFileFilter(new JFreeSaveImageAction.SaveImageFileFilter(new String[]{"png"},
+//                        "PNG image", "PNG"));
+//                fc.addChoosableFileFilter(new JFreeSaveImageAction.SaveImageFileFilter(new String[]{"svg"},
+//                        "SVG image", "SVG"));
+//                if (fc.showSaveDialog(getPlot().getTopLevelAncestor()) == JFileChooser.APPROVE_OPTION) {
+//                    outputFile = fc.getSelectedFile();
+//                    outputFileFormat = ((JFreeSaveImageAction.SaveImageFileFilter) fc.getFileFilter())
+//                            .getFileFormat();
+//        
+//                    if (!FileChooser.overwriteFile(getPlot().getTopLevelAncestor(),
+//                            outputFile)) {
+//                        return;
+//                    }
+//        
+//                }
+//                if (outputFile != null) {
+//                    save(outputFile, outputFileFormat);
+//                }
+//            }
+//        } catch (Exception x) {
+//            showError(x, "An error occurred while saving the plot.");
+//        }
     }
 
-    // Pretty sure this is unused. Need to test on Windows but I'm pretty sure.
     public JMenuItem[] getSubMenuItems() {
-        if (!FileChooser.RUNNING_ON_MAC) {
-            return null;
-        }
+        // TODO: possible bug if this method is actually used.  Do we really disallow on non-Mac?
+        // Or, is it that we use this on Mac and the one above on non-Mac?
+//        if (!SystemUtils.IS_OS_MAC_OSX) {
+//            return null;
+//        }
         final JMenuItem jpegItem = new JMenuItem("jpeg...");
         final JMenuItem pngItem = new JMenuItem("png...");
         final JMenuItem svgItem = new JMenuItem("svg...");
         ActionListener l = new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                String fileFormat = null;
                 if (e.getSource() == jpegItem) {
-                    fileFormat = "jpeg";
+                    save("jpeg", "jpg");
                 } else if (e.getSource() == pngItem) {
-                    fileFormat = "png";
+                    save("png");
                 } else if (e.getSource() == svgItem) {
-                    fileFormat = "svg";
+                    save("svg");
                 }
-                File outputFile = FileChooser.showSaveDialog(parent);
-                if (outputFile != null) {
-                    save(outputFile, fileFormat);
-                }
+//                File outputFile = FileChooser.showSaveDialog(parent);
+//                if (outputFile != null) {
+//                    save(outputFile, fileFormat);
+//                }
             }
         };
         jpegItem.addActionListener(l);
@@ -79,58 +102,37 @@ public class JFreeSaveImageAction extends PlotAction {
         return new JMenuItem[]{jpegItem, pngItem, svgItem};
     }
 
-    private void saveImage() throws Exception {
-        if ((Double.parseDouble(System
-                .getProperty("java.specification.version"))) < 1.4) {
-            UIUtil.showMessageDialog(getPlot().getTopLevelAncestor(),
-                    "Java 1.4 is required to save an image.");
-            return;
+    private void save(final String... formats) {
+        final String outputFileFormat = formats[0];
+        FileDialog fileDialog = new FileDialog(parent, "Save as " + outputFileFormat, FileDialog.SAVE);
+        fileDialog.setMultipleMode(false);
+        fileDialog.setModal(true);
+        
+        StringBuilder sb = new StringBuilder("*.").append(outputFileFormat);
+        for (int i = 1; i < formats.length; i++) {
+            sb.append(";*.").append(formats[0]);
         }
-
-        File outputFile = null;
-        String outputFileFormat = null;
-        if (!FileChooser.RUNNING_ON_MAC) {
-            JFileChooser fc = new JFileChooser();
-            fc.setAcceptAllFileFilterUsed(false);
-            fc.addChoosableFileFilter(new JFreeSaveImageAction.SaveImageFileFilter(new String[]{"jpeg",
-                    "jpg"}, "JPEG image", "JPEG"));
-            fc.addChoosableFileFilter(new JFreeSaveImageAction.SaveImageFileFilter(new String[]{"png"},
-                    "PNG image", "PNG"));
-            fc.addChoosableFileFilter(new JFreeSaveImageAction.SaveImageFileFilter(new String[]{"svg"},
-                    "SVG image", "SVG"));
-            if (fc.showSaveDialog(getPlot().getTopLevelAncestor()) == JFileChooser.APPROVE_OPTION) {
-                outputFile = fc.getSelectedFile();
-                outputFileFormat = ((JFreeSaveImageAction.SaveImageFileFilter) fc.getFileFilter())
-                        .getFileFormat();
-    
-                if (!FileChooser.overwriteFile(getPlot().getTopLevelAncestor(),
-                        outputFile)) {
-                    return;
+        fileDialog.setFile("*." + formats);
+        fileDialog.setFilenameFilter(new GseaFileFilter(formats, outputFileFormat + " image files"));
+        fileDialog.setVisible(true);
+        File[] files = fileDialog.getFiles();
+        if (files != null && files.length > 0) {
+            final File outputFile = files[0];
+            final ChartPanel plot = (ChartPanel) getPlot();
+            SwingWorker<Object, Void> worker = new SwingWorker<Object, Void>() {
+                @Override
+                protected Object doInBackground() throws Exception {
+                    try {
+                        ImageUtil.savePlotImage(plot, outputFile, outputFileFormat);
+                    }
+                    catch (StandardException se) {
+                        UIUtil.showErrorDialog(getPlot().getTopLevelAncestor(), se.getMessage());
+                    }
+                    return null;
                 }
-    
-            }
+            };
+            worker.execute();
         }
-        if (outputFile != null) {
-            save(outputFile, outputFileFormat);
-        }
-    }
-
-    private void save(File outputFileIn, final String outputFileFormat) {
-        final File outputFile = outputFileIn;
-        final ChartPanel plot = (ChartPanel) getPlot();
-        SwingWorker<Object, Void> worker = new SwingWorker<Object, Void>() {
-            @Override
-            protected Object doInBackground() throws Exception {
-                try {
-                    ImageUtil.savePlotImage(plot, outputFile, outputFileFormat);
-                }
-                catch (StandardException se) {
-                    UIUtil.showErrorDialog(getPlot().getTopLevelAncestor(), se.getMessage());
-                }
-                return null;
-            }
-        };
-        worker.execute();
     }
 
     private void showError(Exception e, String msg) {

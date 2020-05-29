@@ -5,23 +5,20 @@ package edu.mit.broad.xbench.core.api;
 
 import edu.mit.broad.genome.parsers.ObjectCache;
 import edu.mit.broad.genome.parsers.ParserFactory;
-import edu.mit.broad.xbench.RendererFactory2;
-import edu.mit.broad.xbench.explorer.filemgr.*;
 
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.SystemUtils;
 import org.apache.log4j.Logger;
 
-import javax.swing.JList;
-import javax.swing.filechooser.FileFilter;
+import javax.swing.JFileChooser;
 
-import java.awt.Component;
+import java.awt.FileDialog;
 import java.awt.HeadlessException;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 /**
  * File / dir choosers are extensions of the swing widgets.
@@ -37,12 +34,7 @@ public class FileManager {
 
     private static final Logger klog = Logger.getLogger(FileManager.class);
 
-    // Lots of things made lazilly in an effort to speedup loading process
-    // Also some dependencies to Application helped by lazy loading
-
     // @note dependency on vdb
-
-    private XStore fRecentFilesStore_as_dirs;
 
     private XStore fRecentFilesStore_as_files;
 
@@ -50,29 +42,42 @@ public class FileManager {
 
     private XStore fRecentDirsStore;
 
-    public XDirChooser fDirChooser;
+    private FileDialog fMacDirFileDialog;
+    
+    private JFileChooser fDirFileChooser;
 
-    private XFileChooserImpl fFileChooser;
+    private FileDialog fFileDialog;
 
-    /**
-     * Class constructor
-     */
     public FileManager() {
-    }
-
-    private void initFC() {
-        if (fFileChooser == null) {
-            // TODO: evaluate whether RecentDirsModel can just be a ComboBoxModel
-            // Looks like it just wraps one and delegates to it, so can we use it directly?
-            RecentDirsModel model = new RecentDirsModel(getRecentFilesStore_as_dirs(), new String[]{});
-            JList jlRecent = new JList(model);
-            jlRecent.setCellRenderer(new ListCellRenderer());
-
-            fFileChooser = new XFileChooserImpl(jlRecent);
-
-            // Listen to the parser for files opened
-            ParserFactory.getCache().addPathAdditionsListener(new MyPropertyChangeListener());
+        if (SystemUtils.IS_OS_MAC_OSX) {
+            // For macOS, use the native AWT dialogs to better support notarization.
+            synchronized(this) {
+                // Set a property to tell macOS to create a chooser for Directories instead of Files.
+                // We are doing this in a brief synchronized block to avoid the risk of affecting unrelated FileDialogs.
+                // This should not be necessary unless someone is somehow embedding our code.
+                System.setProperty("apple.awt.fileDialogForDirectories", "true");
+                fMacDirFileDialog = new FileDialog(Application.getWindowManager().getRootFrame(), "Open", FileDialog.LOAD);
+                fMacDirFileDialog.setModal(true);
+                fMacDirFileDialog.setMultipleMode(false);
+                System.setProperty("apple.awt.fileDialogForDirectories", "false");
+            }
+            fMacDirFileDialog.setMultipleMode(false);
+        } else {
+            // For non-Mac we use the Swing dialog
+            fDirFileChooser = new JFileChooser();
+            fDirFileChooser.setApproveButtonText("Select");
+            fDirFileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+            fDirFileChooser.setMultiSelectionEnabled(false);
+            fDirFileChooser.setFileHidingEnabled(true);
         }
+        
+        fFileDialog = new FileDialog(Application.getWindowManager().getRootFrame(), "Open", FileDialog.LOAD);
+        
+        // TODO: clean up RecentDirsModel, XFileChooserImpl, XFileChooser, GseaAppConf, FileChooser and related
+        // HeatMapComponent
+
+        // Listen to the parser for files opened
+        ParserFactory.getCache().addPathAdditionsListener(new MyPropertyChangeListener());
     }
 
     // we need these in addition to the automatic file chooser based mechanism because
@@ -80,7 +85,7 @@ public class FileManager {
     public void registerRecentlyOpenedDir(final File dir) {
         if (dir != null && dir.isDirectory() && dir.exists()) {
             XStore xstore = getRecentDirsStore();
-            if (xstore.contains(dir.getPath()) == false) {
+            if (!xstore.contains(dir.getPath())) {
                 xstore.addAndSave(dir.getPath());
             }
         }
@@ -94,39 +99,8 @@ public class FileManager {
         getRecentUrlsStore().addAndSave(url);
     }
 
-    public File[] getRecentDirs() {
-
-        getRecentFilesStore();
-        getRecentDirsStore();
-
-        Set<File> dirs = new HashSet<File>();
-        List<String> lines = new ArrayList<String>();
-        lines.addAll(getRecentDirsStore().getLines());
-        lines.addAll(getRecentFilesStore().getLines());
-
-        for (int i = 0; i < lines.size(); i++) {
-            String str = lines.get(i);
-            if (str != null) {
-                File file = new File(str);
-                if (file.exists()) {
-                    if (file.isFile()) {
-                        dirs.add(file.getParentFile());
-                    } else {
-                        dirs.add(file);
-                    }
-                }
-            }
-        }
-
-        return dirs.toArray(new File[dirs.size()]);
-    }
-
-    /**
-     * Might return null if na
-     *
-     * @return
-     */
-    public File getLastDirAccesessed() {
+    // Might return null if na
+    private File getLastDirAccesessed() {
         XStore xs = getRecentDirsStore();
 
         if (xs.getSize() == 0) {
@@ -142,42 +116,46 @@ public class FileManager {
         }
     }
 
-    public XFileChooser getFileChooser() throws HeadlessException {
-        initFC();
-        return fFileChooser;
+    // TODO: maybe just move this to the call site
+    // There's just one caller.  The idea of having it here is to pre-initialize the FD, but we
+    // don't do that with any other FDs and it's not clear it's needed on modern computers.  OTOH,
+    // maybe we move all those FDs here as well.
+    public FileDialog getFileChooser() throws HeadlessException {
+        return fFileDialog;
     }
-
-    public XFileChooser getFileChooser(final FileFilter[] filts) throws HeadlessException {
-        initFC();
-        return fFileChooser;
-    }
-
-    public XDirChooser getDirChooser(final String approveButtonTxt) {
-        if (fDirChooser == null) {
-            fDirChooser = new XDirChooserJideImpl();
-            File lastDir = getLastDirAccesessed();
-            if (lastDir != null && lastDir.exists()) {
-                fDirChooser.setCurrentLocation(lastDir.getPath());
+    
+    public File chooseDirByDialog(String selectedDir) {
+        // Use the most recent Dir if none is selected
+        if (StringUtils.isBlank(selectedDir)) {
+            selectedDir = getLastDirAccesessed().getAbsolutePath();
+        }
+        
+        if (SystemUtils.IS_OS_MAC_OSX) {
+            // For macOS, use the native AWT dialogs to better support notarization.
+            // Set a property to tell macOS to create a chooser for Directories instead of Files.
+            // NOTE: may need to set/unset this property before/after instantiation of FileDialog
+            System.setProperty("apple.awt.fileDialogForDirectories", "true");
+            fMacDirFileDialog.setDirectory(selectedDir);
+            File[] selection = fMacDirFileDialog.getFiles();
+            if (selection.length > 0) {
+                // Always only one since multipleMode is false
+                registerRecentlyOpenedDir(selection[0]);
+                return selection[0];
+            }
+            System.setProperty("apple.awt.fileDialogForDirectories", "true");
+        } else {
+            // For non-Mac we use the Swing JFileChooser as the AWT FileDialog does not allow
+            // directory choosing on the other platforms.
+            fDirFileChooser.setCurrentDirectory(new File(selectedDir));
+            if (fDirFileChooser.showOpenDialog(Application.getWindowManager().getRootFrame()) == JFileChooser.APPROVE_OPTION) {
+                File selectedFile = fDirFileChooser.getSelectedFile();
+                registerRecentlyOpenedDir(selectedFile);
+                return selectedFile;
             }
         }
-
-        fDirChooser.resetState(); // @note
-        fDirChooser.setApproveButtonText(approveButtonTxt);
-
-        return fDirChooser;
-    }
-
-    private XStore getRecentFilesStore_as_dirs() {
-        // NO saving etc via this
-        if (fRecentFilesStore_as_dirs == null) {
-            getRecentFilesStore(); // just init
-
-            // files file but still list only the dirs (in the chooser)
-            this.fRecentFilesStore_as_dirs = new XStores.DirPathStore(new File(Application.getVdbManager().getRuntimeHomeDir(),
-                    "recent_files.txt"));
-        }
-
-        return fRecentFilesStore_as_dirs;
+        
+        // Otherwise return null to indicate no selection
+        return null;
     }
 
     public XStore getRecentFilesStore() {
@@ -208,7 +186,7 @@ public class FileManager {
         return fRecentFilesStore_as_files;
     }
 
-    public XStore getRecentDirsStore() {
+    private XStore getRecentDirsStore() {
         if (fRecentDirsStore == null) {
             this.fRecentDirsStore = new XStores.DirPathStore(new File(Application.getVdbManager().getRuntimeHomeDir(),
                     "recent_dirs.txt"));
@@ -242,28 +220,6 @@ public class FileManager {
                     Application.getFileManager().registerRecentlyOpenedFile(f);
                 }
             }
-        }
-    }
-
-    /**
-     * Class ListCellRenderer
-     *
-     * @author Aravind Subramanian
-     */
-    // TODO: evaluate direct use of the superclass
-    private static class ListCellRenderer extends RendererFactory2.CommonLookListRenderer {
-        public ListCellRenderer() {
-        }
-
-        public Component getListCellRendererComponent(JList list,
-                                                      Object value,
-                                                      int index,
-                                                      boolean isSelected,
-                                                      boolean cellHasFocus) {
-
-            // doesnt work properly unless called ??
-            super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-            return this;
         }
     }
 }

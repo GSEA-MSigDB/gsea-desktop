@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2020 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package org.genepattern.heatmap;
 
@@ -8,6 +8,9 @@ import com.jgoodies.forms.layout.CellConstraints.Alignment;
 import com.jgoodies.forms.layout.FormLayout;
 import com.jgoodies.forms.layout.RowSpec;
 import com.jidesoft.plaf.xerto.VerticalLabelUI;
+
+import edu.mit.broad.xbench.core.api.Application;
+import xapps.gsea.GseaFileFilter;
 
 import org.genepattern.annotation.*;
 import org.genepattern.data.expr.ExpressionConstants;
@@ -175,7 +178,7 @@ public class HeatMapComponent extends JComponent {
             gridSizeSlider.setMinorTickSpacing(1);
             gridSizeSlider.setPaintTicks(true);
             gridSizeSlider.setPaintLabels(true);
-            Hashtable labels = new Hashtable();
+            Hashtable<Integer, JLabel> labels = new Hashtable<Integer, JLabel>();
 
             labels.put(new Integer(2), new JLabel("" + 2, JLabel.CENTER));
             labels.put(new Integer(10), new JLabel("" + 10, JLabel.CENTER));
@@ -381,10 +384,10 @@ public class HeatMapComponent extends JComponent {
         }
     }
 
-    public static Map getFeatureName2ColorsMap(SparseClassVector featureCV,
+    public static Map<String, List<Color>> getFeatureName2ColorsMap(SparseClassVector featureCV,
                                                IExpressionData data, boolean byRow) {
 
-        Map featureName2Colors = new HashMap();
+        Map<String, List<Color>> featureName2Colors = new HashMap<String, List<Color>>();
 
         for (int i = 0, end = byRow ? data.getRowCount() : data
                 .getColumnCount(); i < end; i++) {
@@ -392,7 +395,7 @@ public class HeatMapComponent extends JComponent {
             if (numbers != null && numbers.size() > 0) {
                 String name = byRow ? data.getRowName(i) : data
                         .getColumnName(i);
-                List colors = new ArrayList();
+                List<Color> colors = new ArrayList<Color>();
                 featureName2Colors.put(name, colors);
                 for (int k = 0; k < numbers.size(); k++) {
                     Integer n = (Integer) numbers.get(k);
@@ -711,7 +714,7 @@ public class HeatMapComponent extends JComponent {
                     d.pack();
                     d.setVisible(true);
                 } else if (e.getSource() == saveJpeg) {
-                    showSaveImageDialog("jpeg");
+                    showSaveImageDialog("jpeg", "jpg");
                 } else if (e.getSource() == savePng) {
                     showSaveImageDialog("png");
                 } else if (e.getSource() == saveSvg) {
@@ -1016,12 +1019,24 @@ public class HeatMapComponent extends JComponent {
         worker.execute();
     }
 
-    public void showSaveImageDialog(final String format) {
-        final File f = FileChooser.showSaveDialog(parent);
-        if (f != null) {
+    private void showSaveImageDialog(final String... formats) {
+        FileDialog fileDialog = new FileDialog(Application.getWindowManager().getRootFrame(), "Save as " + formats[0], FileDialog.SAVE);
+        fileDialog.setMultipleMode(false);
+        fileDialog.setModal(true);
+        
+        StringBuilder sb = new StringBuilder("*.").append(formats[0]);
+        for (int i = 1; i < formats.length; i++) {
+            sb.append(";*.").append(formats[0]);
+        }
+        fileDialog.setFile("*." + formats);
+        fileDialog.setFilenameFilter(new GseaFileFilter(formats, formats[0] + " image files"));
+        fileDialog.setVisible(true);
+        File[] files = fileDialog.getFiles();
+        if (files != null && files.length > 0) {
+            File f = files[0];
             SwingWorker<Object, Void> worker = new SwingWorker<Object, Void>() {
                 protected Object doInBackground() throws Exception {
-                    saveImageToFile(f, format);
+                    saveImageToFile(f, formats[0]);
                     return null;
                 }
             };

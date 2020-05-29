@@ -1,86 +1,49 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2020 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package org.genepattern.uiutil;
 
-import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 
+import javax.swing.JOptionPane;
+
+import xapps.gsea.GseaFileFilter;
+
 public class FileChooser {
-    static JFileChooser fileChooser;
-
-    public static boolean RUNNING_ON_MAC = System.getProperty("mrj.version") != null
-            && javax.swing.UIManager.getSystemLookAndFeelClassName()
-            .equals(
-                    javax.swing.UIManager.getLookAndFeel().getClass()
-                            .getName());
-
     private FileChooser() {
     }
 
-    private static File showFileDialog(Frame parent, int mode,
-                                       File selectedFile, String title) {
+    // TODO: Evaluate if this is unused.
+    // Only caller is SetAnnotator, which seems to be dead code.
+    public static File showOpenDialog(Frame parent, String title) {
         if (title == null) {
-            title = "GenePattern";
-        } else {
-            title = "GenePattern - " + title;
+            title = "GSEA";
         }
-        FileDialog fc = new FileDialog(parent, title, mode);
-        if (selectedFile != null) {
-            fc.setDirectory(selectedFile.getPath());
-            fc.setFile(selectedFile.getName());
-        }
+        FileDialog fc = new FileDialog(parent, title, FileDialog.LOAD);
         fc.setModal(true);
+        fc.setMultipleMode(false);
         fc.setVisible(true);
-        String f = fc.getFile();
-        String directory = fc.getDirectory();
-        if (f != null) {
-            File file = new File(directory, f);
-            return file; // mac os x file chooser asks chooser whether to
-            // replace file
+        File[] files = fc.getFiles();
+        if (files != null && files.length > 0) {
+            return files[0];
         }
         return null;
     }
 
-    public static File showOpenDialog(Frame parent, String title) {
-        if (RUNNING_ON_MAC) {
-            return showFileDialog(parent, FileDialog.LOAD, null, title);
-        } else {
-            if (fileChooser == null) {
-                fileChooser = new JFileChooser();
-            }
-            fileChooser.setDialogTitle(title);
-            if (fileChooser.showOpenDialog(parent) == JFileChooser.APPROVE_OPTION) {
-                return fileChooser.getSelectedFile();
-            }
-            return null;
-        }
-    }
-
+    // TODO: probably should inline this.
     public static File showSaveDialog(Frame parent) {
-        return showSaveDialog(parent, null);
-    }
-
-    public static File showSaveDialog(Frame parent, File selectedFile) {
-        if (RUNNING_ON_MAC) {
-            return showFileDialog(parent, FileDialog.SAVE, selectedFile,
-                    "GenePattern");
-        } else {
-            if (fileChooser == null) {
-                fileChooser = new JFileChooser();
-            }
-            fileChooser.setSelectedFile(selectedFile);
-            if (fileChooser.showSaveDialog(parent) == JFileChooser.APPROVE_OPTION) {
-                final File outputFile = fileChooser.getSelectedFile();
-                if (!overwriteFile(parent, outputFile)) {
-                    return null;
-                } else {
-                    return outputFile;
-                }
-            }
-            return null;
+        FileDialog fc = new FileDialog(parent, "GSEA", FileDialog.SAVE);
+        fc.setFile("*.gct;*.res;*.txt");
+        fc.setFilenameFilter(new GseaFileFilter(new String[] {"gct", "res", "txt"}, "Expression Files"));
+        fc.setModal(true);
+        fc.setMultipleMode(false);
+        fc.setVisible(true);
+        File[] files = fc.getFiles();
+        if (files != null && files.length > 0) {
+            return files[0];
         }
+        return null;
     }
 
     public static boolean overwriteFile(Component parent, File f) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2020 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package xapps.gsea;
 
@@ -64,7 +64,6 @@ import edu.mit.broad.xbench.actions.XAction;
 import edu.mit.broad.xbench.actions.ext.BrowserAction;
 import edu.mit.broad.xbench.core.WrappedComponent;
 import edu.mit.broad.xbench.core.api.Application;
-import edu.mit.broad.xbench.core.api.FileManager;
 import edu.mit.broad.xbench.core.api.FileManager;
 import edu.mit.broad.xbench.core.api.ToolManager;
 import edu.mit.broad.xbench.core.api.ToolManagerImpl;
@@ -217,18 +216,9 @@ public class GseaFijiTabsApplicationFrame extends DefaultDockableHolder implemen
 
     // contains routines that make future displays faster
     public void init_bg_while_splashing() {
-
-        try {
-            Application.getFileManager().getFileChooser();
-            Application.getFileManager().getDirChooser("test");
-        } catch (Throwable t) {
-            System.out.println("Error background initing: " + t);
-        }
-
+        Application.getFileManager();
         fAppDataLoaderAction.getWidget(); // init it
-
         this.fGseaTool_launcher.getWidget();
-
         System.out.println("Done initing things while splashing");
     }
 

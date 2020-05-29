@@ -127,6 +127,10 @@ public class XStore extends AbstractListModel<String> implements ComboBoxModel<S
             fLinesByLoadOrder.add(ret);
             fLinesByFileExt.add(ret);
             this.fireIntervalAdded(this, fLinesByFileExt.size() - 1, fLinesByFileExt.size() - 1);
+        } else if (fLinesByLoadOrder.contains(text)) {
+            // Item already present, so we should "refresh" it in terms of LRU order
+            fLinesByLoadOrder.remove(text);
+            fLinesByLoadOrder.add(text);
         }
     }
 

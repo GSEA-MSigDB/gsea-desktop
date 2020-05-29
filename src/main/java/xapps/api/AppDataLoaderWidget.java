@@ -1,11 +1,12 @@
-/*******************************************************************************
- * Copyright (c) 2003-2018 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2020 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package xapps.api;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.FileDialog;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -15,6 +16,7 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 
@@ -45,7 +47,6 @@ import edu.mit.broad.xbench.actions.ext.BrowserAction;
 import edu.mit.broad.xbench.core.Widget;
 import edu.mit.broad.xbench.core.api.Application;
 import edu.mit.broad.xbench.explorer.filemgr.JRecentFilesList;
-import edu.mit.broad.xbench.explorer.filemgr.XFileChooser;
 import edu.mit.broad.xbench.explorer.objmgr.ObjectTree;
 import edu.mit.broad.xbench.tui.ReportStub;
 import edu.mit.broad.xbench.tui.TaskManager;
@@ -73,24 +74,10 @@ public class AppDataLoaderWidget extends GseaSimpleInternalFrame implements Widg
 
     private AppDataLoaderWidget fInstance = this;
 
-    /**
-     * Class Constructor.
-     */
     public AppDataLoaderWidget() {
         super(null, "<html><body><b>Load data</b>: Import data into the application</body></html>");
 
-        init();
-    }
-
-    private void init() {
-
-        jbInit();
-
-    }
-
-    // does the GUI building
-    private void jbInit() {
-
+        // do the GUI building
         JPanel loadPanel = createLoadPanel();
 
         this.previousFilesPanel = JRecentFilesList.createComponent("<html><body><b>Recently used files</b> <br> " +
@@ -241,13 +228,13 @@ public class AppDataLoaderWidget extends GseaSimpleInternalFrame implements Widg
     }
 
     static class MyTextArea extends JTextArea implements DndTarget {
-        private java.util.List fFiles;
+        private List<File> fFiles;
 
         MyTextArea() {
             super();
             super.setEditable(false);
             new DropTargetDecorator(this);
-            this.fFiles = new ArrayList();
+            this.fFiles = new ArrayList<File>();
         }
 
         public Component getDroppableIntoComponent() {
@@ -255,15 +242,8 @@ public class AppDataLoaderWidget extends GseaSimpleInternalFrame implements Widg
         }
 
         public File[] getFiles() {
-            Set files = new HashSet();
-            for (int i = 0; i < fFiles.size(); i++) {
-                Object it = fFiles.get(i);
-                if (it instanceof File) {
-                    files.add(it);
-                }
-            }
-
-            return (File[]) files.toArray(new File[files.size()]);
+            Set<File> files = new HashSet<File>(fFiles);
+            return files.toArray(new File[files.size()]);
         }
 
         void clear() {
@@ -277,19 +257,14 @@ public class AppDataLoaderWidget extends GseaSimpleInternalFrame implements Widg
                 return;
             }
 
-            final java.util.List list = (java.util.List) obj;
-
-            for (int i = 0; i < list.size(); i++) {
-                if (list.get(i) instanceof File) {
-                    fFiles.add(list.get(i));
-                }
-            }
-
-            StringBuffer buf = new StringBuffer();
-            for (int i = 0; i < fFiles.size(); i++) {
-                Object it = fFiles.get(i);
-                if (it instanceof File) {
-                    buf.append(((File) it).getName()).append('\n');
+            // TODO: investigate further to see if we can guarantee the type parameter of the List
+            // The javaFileListFlavor below might be enough...
+            final List list = (List) obj;
+            StringBuilder buf = new StringBuilder();
+            for (Object listObj : list) {
+                if (obj instanceof File) {
+                    fFiles.add((File)listObj);
+                    buf.append(((File)listObj).getName()).append('\n');
                 }
             }
 
@@ -319,17 +294,8 @@ public class AppDataLoaderWidget extends GseaSimpleInternalFrame implements Widg
         return Widget.EMPTY_MENU_BAR;
     }
 
-    /**
-     * Inner class for opening a file chooser and loading data from files
-     */
-
+    // Inner class for opening a file chooser and loading data from files
     class FileOpenAction extends XAction {
-
-        /**
-         * Class constructor
-         *
-         * @param name
-         */
         FileOpenAction() {
             super("FileOpenAction", "Browse for files ...", 
                     "Open a File and Load its Data into the Application", 
@@ -337,11 +303,14 @@ public class AppDataLoaderWidget extends GseaSimpleInternalFrame implements Widg
         }
 
         public void actionPerformed(final ActionEvent evt) {
-
-            final XFileChooser fcd = Application.getFileManager().getFileChooser(GseaAppConf.createAllFileFilters());
-            final boolean proceed = fcd.showOpenDialog();
-            if (proceed) {
-                final File[] files = fcd.getSelectedFiles();
+            final FileDialog fcd = Application.getFileManager().getFileChooser();
+            fcd.setFile("*.res;*.gct;*.pcl;*.txt;*.grp;*.gmx;*.gmt;*.cls;*.rnk;*.chip;*.xml");
+            fcd.setFilenameFilter(GseaAppConf.createGseaFileFilter());
+            fcd.setMultipleMode(true);
+            fcd.setModal(true);
+            fcd.setVisible(true);
+            final File[] files = fcd.getFiles();
+            if (files != null && files.length > 0) {
                 new ParserWorker(files).execute();
 
                 // TODO: is this needed??
@@ -352,15 +321,9 @@ public class AppDataLoaderWidget extends GseaSimpleInternalFrame implements Widg
                 }
             }
         }
-    }    // End FileOpenAction
+    }
 
     class LoadLastAnalysisFilesAction extends XAction {
-
-        /**
-         * Class constructor
-         *
-         * @param name
-         */
         LoadLastAnalysisFilesAction() {
             super("LoadLastAction", "Load last dataset used", 
                     "Load datasets used the last time GSEA was run", 

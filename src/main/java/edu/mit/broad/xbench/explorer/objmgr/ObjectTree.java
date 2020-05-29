@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2020 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.xbench.explorer.objmgr;
 
 import edu.mit.broad.genome.io.FileTransferable;
@@ -36,7 +36,6 @@ import java.util.List;
  * Shift-click root expand the whole tree
  *
  * @author Aravind Subramanian
- * @version %I%, %G%
  */
 public class ObjectTree extends JTree implements DndSource, FilesSelectable {
 
@@ -121,7 +120,7 @@ public class ObjectTree extends JTree implements DndSource, FilesSelectable {
             return null;
         }
 
-        List pobs = new ArrayList();
+        List<PersistentObject> pobs = new ArrayList<PersistentObject>();
         for (int i = 0; i < paths.length; i++) {
             Object obj = paths[i].getLastPathComponent();
 
@@ -133,14 +132,13 @@ public class ObjectTree extends JTree implements DndSource, FilesSelectable {
                     Object userobj = dmtr.getUserObject();
                     //log.debug("UserObject is: " + userobj + " class: " + userobj.getClass());
                     if (userobj instanceof PersistentObject) {
-                        pobs.add(userobj);
+                        pobs.add((PersistentObject)userobj);
                     }
                 }
             }
         }
 
-        return (PersistentObject[]) pobs.toArray(new PersistentObject[pobs.size()]);
-
+        return pobs.toArray(new PersistentObject[pobs.size()]);
     }
 
     /**
@@ -153,8 +151,7 @@ public class ObjectTree extends JTree implements DndSource, FilesSelectable {
     }
 
     private File[] getTheSelectedFiles() {
-
-        List files = new ArrayList();
+        List<File> files = new ArrayList<File>();
         PersistentObject pobs[] = getSelectedPobs();
 
         for (int i = 0; i < pobs.length; i++) {
@@ -164,11 +161,6 @@ public class ObjectTree extends JTree implements DndSource, FilesSelectable {
             }
         }
 
-        return (File[]) files.toArray(new File[files.size()]);
-
+        return files.toArray(new File[files.size()]);
     }
-
-
-}        // End ObjectCacheTree
-
-/*--- Formatted in Sun Java Convention Style on Fri, Sep 27, '02 ---*/
+}

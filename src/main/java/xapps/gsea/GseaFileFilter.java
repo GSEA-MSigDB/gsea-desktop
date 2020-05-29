@@ -1,35 +1,32 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2020 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package xapps.gsea;
 
-import edu.mit.broad.genome.NamingConventions;
-import gnu.trove.THashSet;
-
 import java.io.File;
+import java.io.FilenameFilter;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+
+import javax.swing.filechooser.FileFilter;
+
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * @author Aravind Subramanian
  */
-public class GseaFileFilter extends javax.swing.filechooser.FileFilter {
+// Note: converting from JFileChoosers to FileDialogs, so this implements what we need for both
+// as a bridge during the switch.  We'll keep just the latter when we're finished.
+public class GseaFileFilter extends FileFilter implements FilenameFilter {
 
 
-    private THashSet fCustomExts;
+    private Set<String> fCustomExts;
     private String fDesc;
 
-    /**
-     * Class constructor
-     *
-     * @param customExts
-     */
     public GseaFileFilter(String[] customExts, String desc) {
-        this.fCustomExts = new THashSet();
-        for (int i = 0; i < customExts.length; i++) {
-            this.fCustomExts.add(customExts[i]);
-            this.fCustomExts.add(customExts[i].toLowerCase());
-            this.fCustomExts.add(customExts[i].toUpperCase());
-        }
-
+        this.fCustomExts = new HashSet<String>(Arrays.asList(customExts));
         this.fDesc = desc;
     }
 
@@ -38,12 +35,15 @@ public class GseaFileFilter extends javax.swing.filechooser.FileFilter {
             return true;
         }
 
-        String ext = NamingConventions.getExtension(f);
-        return fCustomExts.contains(ext);
+        return fCustomExts.contains(StringUtils.lowerCase(FilenameUtils.getExtension(f.getName())));
     }
-
+    
+    @Override
+    public boolean accept(File dir, String name) {
+        return dir != null && fCustomExts.contains(StringUtils.lowerCase(FilenameUtils.getExtension(name)));
+    }
+    
     public String getDescription() {
         return fDesc;
     }
-
-}    // End class GseaFileFilter
+}
