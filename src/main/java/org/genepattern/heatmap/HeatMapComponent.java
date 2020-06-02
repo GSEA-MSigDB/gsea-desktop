@@ -12,6 +12,7 @@ import com.jidesoft.plaf.xerto.VerticalLabelUI;
 import edu.mit.broad.xbench.core.api.Application;
 import xapps.gsea.GseaFileFilter;
 
+import org.apache.commons.lang3.SystemUtils;
 import org.genepattern.annotation.*;
 import org.genepattern.data.expr.ExpressionConstants;
 import org.genepattern.data.expr.ExpressionData;
@@ -1021,14 +1022,16 @@ public class HeatMapComponent extends JComponent {
 
     private void showSaveImageDialog(final String... formats) {
         FileDialog fileDialog = new FileDialog(Application.getWindowManager().getRootFrame(), "Save as " + formats[0], FileDialog.SAVE);
-        fileDialog.setMultipleMode(false);
-        fileDialog.setModal(true);
-        
-        StringBuilder sb = new StringBuilder("*.").append(formats[0]);
-        for (int i = 1; i < formats.length; i++) {
-            sb.append(";*.").append(formats[0]);
+        // Filtering doesn't work on Windows.
+        if (SystemUtils.IS_OS_WINDOWS) {
+        	StringBuilder sb = new StringBuilder("*.").append(formats[0]);
+        	for (int i = 1; i < formats.length; i++) {
+        		sb.append(";*.").append(formats[1]);
+        	}
+        	fileDialog.setFile(sb.toString());
+        } else {
+        	fileDialog.setFile("image." + formats[0]);
         }
-        fileDialog.setFile("*." + formats);
         fileDialog.setFilenameFilter(new GseaFileFilter(formats, formats[0] + " image files"));
         fileDialog.setVisible(true);
         File[] files = fileDialog.getFiles();

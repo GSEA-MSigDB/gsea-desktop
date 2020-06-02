@@ -20,8 +20,6 @@ import org.apache.commons.lang3.StringUtils;
 // Note: converting from JFileChoosers to FileDialogs, so this implements what we need for both
 // as a bridge during the switch.  We'll keep just the latter when we're finished.
 public class GseaFileFilter extends FileFilter implements FilenameFilter {
-
-
     private Set<String> fCustomExts;
     private String fDesc;
 

@@ -51,17 +51,7 @@ public class FileManager {
     public FileManager() {
         if (SystemUtils.IS_OS_MAC_OSX) {
             // For macOS, use the native AWT dialogs to better support notarization.
-            synchronized(this) {
-                // Set a property to tell macOS to create a chooser for Directories instead of Files.
-                // We are doing this in a brief synchronized block to avoid the risk of affecting unrelated FileDialogs.
-                // This should not be necessary unless someone is somehow embedding our code.
-                System.setProperty("apple.awt.fileDialogForDirectories", "true");
-                fMacDirFileDialog = new FileDialog(Application.getWindowManager().getRootFrame(), "Open", FileDialog.LOAD);
-                fMacDirFileDialog.setModal(true);
-                fMacDirFileDialog.setMultipleMode(false);
-                System.setProperty("apple.awt.fileDialogForDirectories", "false");
-            }
-            fMacDirFileDialog.setMultipleMode(false);
+        	fMacDirFileDialog = new FileDialog(Application.getWindowManager().getRootFrame(), "Open", FileDialog.LOAD);
         } else {
             // For non-Mac we use the Swing dialog
             fDirFileChooser = new JFileChooser();
@@ -131,13 +121,14 @@ public class FileManager {
         }
         
         if (SystemUtils.IS_OS_MAC_OSX) {
-            // For macOS, use the native AWT dialogs to better support notarization.
             // Set a property to tell macOS to create a chooser for Directories instead of Files.
-            // NOTE: may need to set/unset this property before/after instantiation of FileDialog
             System.setProperty("apple.awt.fileDialogForDirectories", "true");
             fMacDirFileDialog.setDirectory(selectedDir);
+            fMacDirFileDialog.setVisible(true);
+            // We reset the property directly after returning so it doesn't affect other FileDialogs
+            System.setProperty("apple.awt.fileDialogForDirectories", "false");
             File[] selection = fMacDirFileDialog.getFiles();
-            if (selection.length > 0) {
+            if (selection != null && selection.length > 0) {
                 // Always only one since multipleMode is false
                 registerRecentlyOpenedDir(selection[0]);
                 return selection[0];

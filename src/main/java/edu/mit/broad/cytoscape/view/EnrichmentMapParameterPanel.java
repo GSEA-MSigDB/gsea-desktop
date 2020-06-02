@@ -56,7 +56,7 @@ public class EnrichmentMapParameterPanel extends JPanel {
 
     private static final Logger klog = Logger.getLogger(EnrichmentMapParameterPanel.class);
     
-    private static final GseaFileFilter expressionFileFilter = new GseaFileFilter(new String[] {"gct","rnk", "txt"}, "Expression File");
+    private static final GseaFileFilter expressionFileFilter = new GseaFileFilter(new String[] {"gct", "res", "rnk", "txt"}, "Expression File");
 
     private DecimalFormat decFormat; // used in the formatted text fields
 
@@ -427,8 +427,8 @@ public class EnrichmentMapParameterPanel extends JPanel {
         fileDialog.setDirectory(params.getEdbdir());
         fileDialog.setMultipleMode(false);
         fileDialog.setModal(true);
-        fileDialog.setFile("*.gct;*.rnk;*.txt");
-        fileDialog.setFilenameFilter(expressionFileFilter);
+//        fileDialog.setFile("*.gct;*,res;*.rnk;*.txt");
+//        fileDialog.setFilenameFilter(expressionFileFilter);
         fileDialog.setVisible(true);
         File[] files = fileDialog.getFiles();
         if (files != null && files.length > 0) {
@@ -445,8 +445,8 @@ public class EnrichmentMapParameterPanel extends JPanel {
         fileDialog.setDirectory(params.getEdbdir());
         fileDialog.setMultipleMode(false);
         fileDialog.setModal(true);
-        fileDialog.setFile("*.gct;*.rnk;*.txt");
-        fileDialog.setFilenameFilter(expressionFileFilter);
+//        fileDialog.setFile("*.gct;*.rnk;*.txt");
+//        fileDialog.setFilenameFilter(expressionFileFilter);
         fileDialog.setVisible(true);
         File[] files = fileDialog.getFiles();
         if (files != null && files.length > 0) {

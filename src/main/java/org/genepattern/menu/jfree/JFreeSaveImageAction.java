@@ -14,8 +14,10 @@ import javax.swing.JMenuItem;
 import javax.swing.SwingWorker;
 import javax.swing.filechooser.FileFilter;
 
+import org.apache.commons.lang3.SystemUtils;
 import org.genepattern.io.ImageUtil;
 import org.genepattern.menu.PlotAction;
+import org.genepattern.uiutil.FileChooser;
 import org.genepattern.uiutil.UIUtil;
 import org.jfree.chart.ChartPanel;
 
@@ -73,11 +75,6 @@ public class JFreeSaveImageAction extends PlotAction {
     }
 
     public JMenuItem[] getSubMenuItems() {
-        // TODO: possible bug if this method is actually used.  Do we really disallow on non-Mac?
-        // Or, is it that we use this on Mac and the one above on non-Mac?
-//        if (!SystemUtils.IS_OS_MAC_OSX) {
-//            return null;
-//        }
         final JMenuItem jpegItem = new JMenuItem("jpeg...");
         final JMenuItem pngItem = new JMenuItem("png...");
         final JMenuItem svgItem = new JMenuItem("svg...");
@@ -90,10 +87,6 @@ public class JFreeSaveImageAction extends PlotAction {
                 } else if (e.getSource() == svgItem) {
                     save("svg");
                 }
-//                File outputFile = FileChooser.showSaveDialog(parent);
-//                if (outputFile != null) {
-//                    save(outputFile, fileFormat);
-//                }
             }
         };
         jpegItem.addActionListener(l);
@@ -107,12 +100,16 @@ public class JFreeSaveImageAction extends PlotAction {
         FileDialog fileDialog = new FileDialog(parent, "Save as " + outputFileFormat, FileDialog.SAVE);
         fileDialog.setMultipleMode(false);
         fileDialog.setModal(true);
-        
-        StringBuilder sb = new StringBuilder("*.").append(outputFileFormat);
-        for (int i = 1; i < formats.length; i++) {
-            sb.append(";*.").append(formats[0]);
+        // Filtering doesn't work on Windows.
+        if (SystemUtils.IS_OS_WINDOWS) {
+	        StringBuilder sb = new StringBuilder("*.").append(outputFileFormat);
+	        for (int i = 1; i < formats.length; i++) {
+	            sb.append(";*.").append(formats[i]);
+	        }
+	        fileDialog.setFile(sb.toString());
+        } else {
+        	fileDialog.setFile("image." + formats[0]);
         }
-        fileDialog.setFile("*." + formats);
         fileDialog.setFilenameFilter(new GseaFileFilter(formats, outputFileFormat + " image files"));
         fileDialog.setVisible(true);
         File[] files = fileDialog.getFiles();
