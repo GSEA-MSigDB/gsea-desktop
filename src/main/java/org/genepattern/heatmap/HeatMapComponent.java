@@ -345,11 +345,6 @@ public class HeatMapComponent extends JComponent {
                             pathname += ".res";
                         }
 
-                        if (!FileChooser.overwriteFile(parent, new File(
-                                pathname))) {
-                            return;
-                        }
-
                         int[] columns = sampleTable.getSelectedColumns();
                         if (columns.length == 0) {
                             columns = null;
@@ -392,6 +387,8 @@ public class HeatMapComponent extends JComponent {
 
         for (int i = 0, end = byRow ? data.getRowCount() : data
                 .getColumnCount(); i < end; i++) {
+            // TODO: fix type safety.  Requires modification to SparseClassVector class.
+            // Skipping that now to avoid going to deep with the current work
             List numbers = featureCV.getClassNumbers(i);
             if (numbers != null && numbers.size() > 0) {
                 String name = byRow ? data.getRowName(i) : data
@@ -536,6 +533,7 @@ public class HeatMapComponent extends JComponent {
 
         sampleTableModel = new AbstractTableModel() {
 
+            // TODO: fix type safety
             public Class getColumnClass(int c) {
                 return String.class;
             }
@@ -748,6 +746,7 @@ public class HeatMapComponent extends JComponent {
     private AbstractTableModel createRowTableModel() {
         AbstractTableModel rowTableModel = new AbstractTableModel() {
 
+            // TODO: fix type safety
             public Class getColumnClass(int col) {
                 return String.class;
             }
@@ -788,6 +787,7 @@ public class HeatMapComponent extends JComponent {
                     return data.getRowMetadata(row, ExpressionConstants.DESC);
                 }
 
+                // TODO: confirm this can be removed.  Seems to be unused.
                 int offset = 0;
                 if (showRowNames) {
                     offset++;
@@ -1048,11 +1048,11 @@ public class HeatMapComponent extends JComponent {
     }
 
     private HeatMap buildHeatMap() {
-        final Map featureName2Colors = getFeatureName2ColorsMap(
+        final Map<String, List<Color>> featureName2Colors = getFeatureName2ColorsMap(
                 setFeatureAnnotator.getClassVector(), 
                 data, true);
 
-        final Map sampleName2Colors = getFeatureName2ColorsMap(
+        final Map<String, List<Color>> sampleName2Colors = getFeatureName2ColorsMap(
                 setSampleAnnotator.getClassVector(), 
                 data, false);
         DisplaySettings ds = new DisplaySettings();
@@ -1066,19 +1066,18 @@ public class HeatMapComponent extends JComponent {
         ds.upperTriangular = heatMapPanel.isUpperTriangular();
         final int columns = 0;
 
-        final List columnDataList = new ArrayList();
+        // TODO: confirm this can be removed.  Seems to never be populated anywhere.
+        final List<String[]> columnDataList = new ArrayList<String[]>();
 
         FeatureAnnotator fa = new FeatureAnnotator() {
 
             public String getAnnotation(String feature, int j) {
-                String[] columnData = (String[]) columnDataList
-                        .get(j);
+                String[] columnData = columnDataList.get(j);
                 return columnData[data.getRowIndex(feature)];
             }
 
-            public List getColors(String featureName) {
-                return (List) featureName2Colors
-                        .get(featureName);
+            public List<Color> getColors(String featureName) {
+                return featureName2Colors.get(featureName);
             }
 
             public int getColumnCount() {
@@ -1089,8 +1088,8 @@ public class HeatMapComponent extends JComponent {
 
         SampleAnnotator sa = new SampleAnnotator() {
 
-            public List getColors(String sampleName) {
-                return (List) sampleName2Colors.get(sampleName);
+            public List<Color> getColors(String sampleName) {
+                return sampleName2Colors.get(sampleName);
             }
 
             public String getLabel(int i) {

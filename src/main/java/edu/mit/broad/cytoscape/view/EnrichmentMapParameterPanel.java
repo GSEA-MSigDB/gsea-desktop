@@ -51,6 +51,7 @@ import xtools.munge.CollapseDataset;
 //Panel used to access Enrichment map.  Can either access it through the Results table(bottom left of GSEA frame)
 // or from the main protocol at the top left of GSEA frame(similar to the leading edge analysis)
 
+// TODO: clean-up misc type safety issues on Swing components; refactor getExpressionFile() and fix file handling issues
 public class EnrichmentMapParameterPanel extends JPanel {
     public static final String LAUNCH_MSG = "Please launch Cytoscape 3.3+ with the Enrichment Map plug-in before continuing.";
 
@@ -427,8 +428,8 @@ public class EnrichmentMapParameterPanel extends JPanel {
         fileDialog.setDirectory(params.getEdbdir());
         fileDialog.setMultipleMode(false);
         fileDialog.setModal(true);
-//        fileDialog.setFile("*.gct;*,res;*.rnk;*.txt");
-//        fileDialog.setFilenameFilter(expressionFileFilter);
+        fileDialog.setFile("*.gct;*,res;*.rnk;*.txt");
+        fileDialog.setFilenameFilter(expressionFileFilter);
         fileDialog.setVisible(true);
         File[] files = fileDialog.getFiles();
         if (files != null && files.length > 0) {
@@ -445,8 +446,8 @@ public class EnrichmentMapParameterPanel extends JPanel {
         fileDialog.setDirectory(params.getEdbdir());
         fileDialog.setMultipleMode(false);
         fileDialog.setModal(true);
-//        fileDialog.setFile("*.gct;*.rnk;*.txt");
-//        fileDialog.setFilenameFilter(expressionFileFilter);
+        fileDialog.setFile("*.gct;*.res;*.rnk;*.txt");
+        fileDialog.setFilenameFilter(expressionFileFilter);
         fileDialog.setVisible(true);
         File[] files = fileDialog.getFiles();
         if (files != null && files.length > 0) {

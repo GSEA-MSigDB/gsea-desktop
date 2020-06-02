@@ -6,12 +6,13 @@ package org.genepattern.uiutil;
 import java.awt.*;
 import java.io.File;
 
-import javax.swing.JOptionPane;
-
 import org.apache.commons.lang3.SystemUtils;
 
 import xapps.gsea.GseaFileFilter;
 
+// TODO: this class is superfluous, should just inline these uses.
+// Either that, or centralize ALL uses here.  However, we already have
+// the FileManager class that tries to serve that role.
 public class FileChooser {
     private FileChooser() {
     }
@@ -47,19 +48,5 @@ public class FileChooser {
         	return files[0];
         }
         return null;
-    }
-
-    // TODO: check if needed for Windows
-    // Both Linux and Mac already have a widget that prompts
-    public static boolean overwriteFile(Component parent, File f) {
-        if (!f.exists()) {
-            return true;
-        }
-        String message = "An item named "
-                + f.getName()
-                + " already exists in this location.\nDo you want to replace it with the one that you are saving?";
-        return (JOptionPane.showOptionDialog(parent, message, null,
-                JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, null,
-                new Object[]{"Replace", "Cancel"}, "Cancel") == JOptionPane.YES_OPTION);
     }
 }
