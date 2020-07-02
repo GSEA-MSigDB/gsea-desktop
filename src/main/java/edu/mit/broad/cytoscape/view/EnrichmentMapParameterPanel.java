@@ -753,7 +753,7 @@ public class EnrichmentMapParameterPanel extends JPanel {
                                         String tempFile = res_file.getName();
                                         String simplename = "";
 
-                                        String extendedName = ("Remap_only".equals(mode)) ? "_remapped_to_symbols" : "_collapsed_to_symbols";
+                                        String extendedName = ("Remap_only".equals(mode)) ? "_remapped_to_symbols.gct" : "_collapsed_to_symbols.gct";
                                         simplename = tempFile.replace(".gct", extendedName);
 
                                         expressionFile = report_dir + System.getProperty("file.separator") + simplename;
