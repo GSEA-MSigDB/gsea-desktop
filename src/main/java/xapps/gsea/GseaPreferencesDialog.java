@@ -58,15 +58,8 @@ public class GseaPreferencesDialog extends MultiplePageDialog {
                 setDialogResult(RESULT_AFFIRMED);
                 savePreferences();
                 setVisible(false);
-                dispose();
-            }
-        };
-
-        AbstractAction applyAction = new AbstractAction("Apply") {
-            public void actionPerformed(ActionEvent e) {
-                setDialogResult(RESULT_AFFIRMED);
-                savePreferences();
                 Application.getWindowManager().showMessage("Saved preferences (many preferences need a restart of GSEA)");
+                dispose();
             }
         };
 
@@ -78,8 +71,11 @@ public class GseaPreferencesDialog extends MultiplePageDialog {
             }
         };
 
+        // HACK: the Apply button is standard on this dialog but we don't want it.  Rather than create a custom panel, etc
+        // we'll just leave it there and hide it.
+        buttonPanel.getButtonByName(ButtonNames.APPLY).setVisible(false);
+
         ((JButton) buttonPanel.getButtonByName(ButtonNames.OK)).setAction(okAction);
-        ((JButton) buttonPanel.getButtonByName(ButtonNames.APPLY)).setAction(applyAction);
         ((JButton) buttonPanel.getButtonByName(ButtonNames.CANCEL)).setAction(cancelAction);
 
         //but.setText("Close");
