@@ -17,7 +17,6 @@ import javax.swing.filechooser.FileFilter;
 import org.apache.commons.lang3.SystemUtils;
 import org.genepattern.io.ImageUtil;
 import org.genepattern.menu.PlotAction;
-import org.genepattern.uiutil.FileChooser;
 import org.genepattern.uiutil.UIUtil;
 import org.jfree.chart.ChartPanel;
 
@@ -42,36 +41,6 @@ public class JFreeSaveImageAction extends PlotAction {
     }
 
     public void actionPerformed(ActionEvent e) {
-//        try {
-//            if (!SystemUtils.IS_OS_MAC_OSX) {
-//                File outputFile = null;
-//                String outputFileFormat = null;
-//                JFileChooser fc = new JFileChooser();
-//                fc.setAcceptAllFileFilterUsed(false);
-//                fc.addChoosableFileFilter(new JFreeSaveImageAction.SaveImageFileFilter(new String[]{"jpeg",
-//                        "jpg"}, "JPEG image", "JPEG"));
-//                fc.addChoosableFileFilter(new JFreeSaveImageAction.SaveImageFileFilter(new String[]{"png"},
-//                        "PNG image", "PNG"));
-//                fc.addChoosableFileFilter(new JFreeSaveImageAction.SaveImageFileFilter(new String[]{"svg"},
-//                        "SVG image", "SVG"));
-//                if (fc.showSaveDialog(getPlot().getTopLevelAncestor()) == JFileChooser.APPROVE_OPTION) {
-//                    outputFile = fc.getSelectedFile();
-//                    outputFileFormat = ((JFreeSaveImageAction.SaveImageFileFilter) fc.getFileFilter())
-//                            .getFileFormat();
-//        
-//                    if (!FileChooser.overwriteFile(getPlot().getTopLevelAncestor(),
-//                            outputFile)) {
-//                        return;
-//                    }
-//        
-//                }
-//                if (outputFile != null) {
-//                    save(outputFile, outputFileFormat);
-//                }
-//            }
-//        } catch (Exception x) {
-//            showError(x, "An error occurred while saving the plot.");
-//        }
     }
 
     public JMenuItem[] getSubMenuItems() {
@@ -100,17 +69,19 @@ public class JFreeSaveImageAction extends PlotAction {
         FileDialog fileDialog = new FileDialog(parent, "Save as " + outputFileFormat, FileDialog.SAVE);
         fileDialog.setMultipleMode(false);
         fileDialog.setModal(true);
-        // Filtering doesn't work on Windows.
+        // Filtering doesn't work on Windows and is problematic on Mac.
         if (SystemUtils.IS_OS_WINDOWS) {
 	        StringBuilder sb = new StringBuilder("*.").append(outputFileFormat);
 	        for (int i = 1; i < formats.length; i++) {
 	            sb.append(";*.").append(formats[i]);
 	        }
 	        fileDialog.setFile(sb.toString());
-        } else {
+        } else if (! SystemUtils.IS_OS_MAC_OSX) {
         	fileDialog.setFile("image." + formats[0]);
         }
-        fileDialog.setFilenameFilter(new GseaFileFilter(formats, outputFileFormat + " image files"));
+        if (! SystemUtils.IS_OS_MAC_OSX) {
+            fileDialog.setFilenameFilter(new GseaFileFilter(formats, outputFileFormat + " image files"));
+        }
         fileDialog.setVisible(true);
         File[] files = fileDialog.getFiles();
         if (files != null && files.length > 0) {

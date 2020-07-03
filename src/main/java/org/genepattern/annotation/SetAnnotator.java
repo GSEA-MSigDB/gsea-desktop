@@ -1,16 +1,16 @@
 /*
- * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2020 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package org.genepattern.annotation;
 
 import edu.mit.broad.genome.objects.GeneSet;
 import edu.mit.broad.genome.objects.GeneSetMatrix;
 import edu.mit.broad.genome.parsers.ParserFactory;
+import edu.mit.broad.xbench.core.api.Application;
 
 import org.apache.commons.io.FilenameUtils;
 import org.genepattern.data.matrix.ClassVector;
 import org.genepattern.module.VisualizerUtil;
-import org.genepattern.uiutil.FileChooser;
 import org.genepattern.uiutil.UIUtil;
 
 import javax.swing.*;
@@ -27,6 +27,7 @@ import java.util.List;
  *
  * @author jgould
  */
+// TODO: evaluate whether this code is still reachable
 public class SetAnnotator {
     private SparseClassVector classVector = new SparseClassVector();
 
@@ -49,8 +50,6 @@ public class SetAnnotator {
     private JMenuItem viewFeatureListsMenuItem;
 
     private JTable table;
-
-    private int widthPerClass = 6;
 
     public SparseClassVector getClassVector() {
         return classVector;
@@ -88,7 +87,7 @@ public class SetAnnotator {
             public void actionPerformed(ActionEvent e) {
 
                 String title = annotateRow ? "Select Feature List(s)" : "Select Cls File";
-                File f = FileChooser.showOpenDialog(parent, title);
+                File f = showOpenDialog(parent, title);
                 if (f == null) return;
                 
                 String extension = FilenameUtils.getExtension(f.getName());
@@ -113,7 +112,7 @@ public class SetAnnotator {
                 if (extension != null) {
                     extension = extension.toLowerCase();
                     if (extension.equals("gmt") || extension.equals("gmx")) {
-                        GeneSetMatrix gmt = ParserFactory .readGeneSetMatrix(f, false);
+                        GeneSetMatrix gmt = ParserFactory.readGeneSetMatrix(f, false);
         
                         int sets = gmt.getNumGeneSets();
                         for (int i = 0; i < sets; i++) {
@@ -172,6 +171,20 @@ public class SetAnnotator {
             openFeaturesMenuItem.setAccelerator(KeyStroke.getKeyStroke('O',
                     Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
         }
+    }
+
+    private File showOpenDialog(Frame parent, String title) {
+        if (title == null) {
+            title = "GSEA";
+        }
+        FileDialog fOpenDialog = Application.getFileManager().getSetAnnotatorFileDialog();
+        fOpenDialog.setTitle(title);
+        fOpenDialog.setVisible(true);
+        File[] files = fOpenDialog.getFiles();
+        if (files != null && files.length > 0) {
+            return files[0];
+        }
+        return null;
     }
 
     private boolean addToFeatureList(List<String> featureList, String className) {

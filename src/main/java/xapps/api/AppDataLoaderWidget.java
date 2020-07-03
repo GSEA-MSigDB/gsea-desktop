@@ -51,7 +51,6 @@ import edu.mit.broad.xbench.explorer.objmgr.ObjectTree;
 import edu.mit.broad.xbench.tui.ReportStub;
 import edu.mit.broad.xbench.tui.TaskManager;
 import edu.mit.broad.xbench.tui.ToolRunnerControl;
-import xapps.gsea.GseaAppConf;
 import xapps.gsea.GseaWebResources;
 import xtools.api.Tool;
 import xtools.gsea.Gsea;
@@ -303,11 +302,7 @@ public class AppDataLoaderWidget extends GseaSimpleInternalFrame implements Widg
         }
 
         public void actionPerformed(final ActionEvent evt) {
-            final FileDialog fcd = Application.getFileManager().getFileChooser();
-            fcd.setFile("*.res;*.gct;*.pcl;*.txt;*.grp;*.gmx;*.gmt;*.cls;*.rnk;*.chip;*.xml");
-            fcd.setFilenameFilter(GseaAppConf.createGseaFileFilter());
-            fcd.setMultipleMode(true);
-            fcd.setModal(true);
+            final FileDialog fcd = Application.getFileManager().getLoadDataBrowseForFilesDialog();
             fcd.setVisible(true);
             final File[] files = fcd.getFiles();
             if (files != null && files.length > 0) {

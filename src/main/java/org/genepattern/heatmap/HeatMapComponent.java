@@ -10,9 +10,7 @@ import com.jgoodies.forms.layout.RowSpec;
 import com.jidesoft.plaf.xerto.VerticalLabelUI;
 
 import edu.mit.broad.xbench.core.api.Application;
-import xapps.gsea.GseaFileFilter;
 
-import org.apache.commons.lang3.SystemUtils;
 import org.genepattern.annotation.*;
 import org.genepattern.data.expr.ExpressionConstants;
 import org.genepattern.data.expr.ExpressionData;
@@ -31,7 +29,6 @@ import org.genepattern.module.VisualizerUtil;
 import org.genepattern.plot.ProfilePlot;
 import org.genepattern.table.GPTable;
 import org.genepattern.uiutil.CenteredDialog;
-import org.genepattern.uiutil.FileChooser;
 import org.genepattern.uiutil.UIUtil;
 
 import javax.swing.*;
@@ -299,7 +296,7 @@ public class HeatMapComponent extends JComponent {
             JButton btn = new JButton("Browse...");
             btn.addActionListener(new ActionListener() {
                 public void actionPerformed(ActionEvent e) {
-                    File f = FileChooser.showSaveDialog(parent);
+                    File f = showSaveDatasetDialog();
                     if (f != null) {
                         try {
                             input.setText(f.getCanonicalPath());
@@ -380,6 +377,16 @@ public class HeatMapComponent extends JComponent {
         }
     }
 
+    private File showSaveDatasetDialog() {
+        FileDialog fileDialog = Application.getFileManager().getHeatMapSaveDatasetFileDialog();
+        fileDialog.setVisible(true);
+        File[] files = fileDialog.getFiles();
+        if (files != null && files.length > 0) {
+            return files[0];
+        }
+        return null;
+    }
+
     public static Map<String, List<Color>> getFeatureName2ColorsMap(SparseClassVector featureCV,
                                                IExpressionData data, boolean byRow) {
 
@@ -430,7 +437,7 @@ public class HeatMapComponent extends JComponent {
     private HeatMapPanel heatMapPanel;
 
     protected OptionsDialog optionsDialog;
-
+    
     private Frame parent;
 
     private ProfilePlot plot;
@@ -468,7 +475,7 @@ public class HeatMapComponent extends JComponent {
     private JPanel topPanel;
 
     private HeatMap heatMap = null;
-    
+
     /**
      * @param _data
      * @param accessoryComponent panel to be shown above sample names or <code>null</code>
@@ -495,7 +502,7 @@ public class HeatMapComponent extends JComponent {
         for (int i = 0, rows = data.getRowCount(); i < rows; i++) {
             rowNames[i] = data.getRowName(i);
         }
-
+        
         setFeatureAnnotator = new SetAnnotator(parent, new SetAnnotatorModel() {
 
             public int getFeatureCount() {
@@ -713,11 +720,11 @@ public class HeatMapComponent extends JComponent {
                     d.pack();
                     d.setVisible(true);
                 } else if (e.getSource() == saveJpeg) {
-                    showSaveImageDialog("jpeg", "jpg");
+                    showSaveImageDialog(Application.getFileManager().getHeatMapSaveJpgFileDialog(), "jpeg");
                 } else if (e.getSource() == savePng) {
-                    showSaveImageDialog("png");
+                    showSaveImageDialog(Application.getFileManager().getHeatMapSavePngFileDialog(), "png");
                 } else if (e.getSource() == saveSvg) {
-                    showSaveImageDialog("svg");
+                    showSaveImageDialog(Application.getFileManager().getHeatMapSaveSvgFileDialog(), "svg");
                 } else {
                     showOptionsDialog();
                 }
@@ -1020,26 +1027,14 @@ public class HeatMapComponent extends JComponent {
         worker.execute();
     }
 
-    private void showSaveImageDialog(final String... formats) {
-        FileDialog fileDialog = new FileDialog(Application.getWindowManager().getRootFrame(), "Save as " + formats[0], FileDialog.SAVE);
-        // Filtering doesn't work on Windows.
-        if (SystemUtils.IS_OS_WINDOWS) {
-        	StringBuilder sb = new StringBuilder("*.").append(formats[0]);
-        	for (int i = 1; i < formats.length; i++) {
-        		sb.append(";*.").append(formats[1]);
-        	}
-        	fileDialog.setFile(sb.toString());
-        } else {
-        	fileDialog.setFile("image." + formats[0]);
-        }
-        fileDialog.setFilenameFilter(new GseaFileFilter(formats, formats[0] + " image files"));
+    private void showSaveImageDialog(FileDialog fileDialog, String format) {
         fileDialog.setVisible(true);
         File[] files = fileDialog.getFiles();
         if (files != null && files.length > 0) {
             File f = files[0];
             SwingWorker<Object, Void> worker = new SwingWorker<Object, Void>() {
                 protected Object doInBackground() throws Exception {
-                    saveImageToFile(f, formats[0]);
+                    saveImageToFile(f, format);
                     return null;
                 }
             };

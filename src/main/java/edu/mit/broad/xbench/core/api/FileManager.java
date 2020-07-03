@@ -5,6 +5,8 @@ package edu.mit.broad.xbench.core.api;
 
 import edu.mit.broad.genome.parsers.ObjectCache;
 import edu.mit.broad.genome.parsers.ParserFactory;
+import xapps.gsea.GseaAppConf;
+import xapps.gsea.GseaFileFilter;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
@@ -33,6 +35,8 @@ import java.util.List;
 public class FileManager {
 
     private static final Logger klog = Logger.getLogger(FileManager.class);
+    
+    private static final GseaFileFilter expressionFileFilter = new GseaFileFilter(new String[] {"gct", "res", "rnk", "txt"}, "Expression File");
 
     // @note dependency on vdb
 
@@ -46,9 +50,24 @@ public class FileManager {
     
     private JFileChooser fDirFileChooser;
 
-    private FileDialog fFileDialog;
+    private FileDialog fLoadDataBrowseForFilesDialog;
+    
+    private FileDialog fEnrichmentMapFileDialog;
+    
+    private FileDialog fHeatMapSaveDatasetFileDialog;
+
+    private FileDialog fHeatMapSaveJpgFileDialog;
+
+    private FileDialog fHeatMapSavePngFileDialog;
+
+    private FileDialog fHeatMapSaveSvgFileDialog;
+    
+    private FileDialog fSetAnnotatorFileDialog;
 
     public FileManager() {
+        // Create all FileDialogs used in the system.  Doing this on startup to avoid
+        // initialization-related delays when we go to use them.
+        // NOTE: could do these in separate threads if this turns out to be too slow.
         if (SystemUtils.IS_OS_MAC_OSX) {
             // For macOS, use the native AWT dialogs to better support notarization.
         	fMacDirFileDialog = new FileDialog(Application.getWindowManager().getRootFrame(), "Open", FileDialog.LOAD);
@@ -61,7 +80,41 @@ public class FileManager {
             fDirFileChooser.setFileHidingEnabled(true);
         }
         
-        fFileDialog = new FileDialog(Application.getWindowManager().getRootFrame(), "Open", FileDialog.LOAD);
+        // Filtering doesn't work on Windows and is problematic on Mac.
+        fLoadDataBrowseForFilesDialog = new FileDialog(Application.getWindowManager().getRootFrame(), "Open", FileDialog.LOAD);
+        if (SystemUtils.IS_OS_WINDOWS) {
+            fLoadDataBrowseForFilesDialog.setFile("*.res;*.gct;*.pcl;*.txt;*.grp;*.gmx;*.gmt;*.cls;*.rnk;*.chip;*.xml");
+        }
+        // Suppress for Mac?
+        fLoadDataBrowseForFilesDialog.setFilenameFilter(GseaAppConf.createGseaFileFilter());
+        fLoadDataBrowseForFilesDialog.setMultipleMode(true);
+        fLoadDataBrowseForFilesDialog.setModal(true);
+
+        fEnrichmentMapFileDialog = new FileDialog(Application.getWindowManager().getRootFrame(), "Open", FileDialog.LOAD);
+        if (SystemUtils.IS_OS_WINDOWS) {
+            fEnrichmentMapFileDialog.setFile("*.gct;*.res;*.rnk;*.txt");
+        }
+        fEnrichmentMapFileDialog.setMultipleMode(false);
+        fEnrichmentMapFileDialog.setModal(true);
+        // Suppress for Mac?
+        fEnrichmentMapFileDialog.setFilenameFilter(expressionFileFilter);
+
+        fHeatMapSaveDatasetFileDialog = new FileDialog(Application.getWindowManager().getRootFrame(), "Save as expression file", FileDialog.SAVE);
+        if (SystemUtils.IS_OS_WINDOWS) {
+            fHeatMapSaveDatasetFileDialog.setFile("*.gct;*.res;*.txt");
+        } else { //if (! SystemUtils.IS_OS_MAC_OSX) {
+            fHeatMapSaveDatasetFileDialog.setFile("dataset.gct");
+        }
+        fHeatMapSaveDatasetFileDialog.setFilenameFilter(new GseaFileFilter(new String[] {"gct", "res", "txt"}, "Expression Files"));
+//        if (! SystemUtils.IS_OS_MAC_OSX) {
+//            fHeatMapSaveDatasetFileDialog.setFilenameFilter(new GseaFileFilter(new String[] {"gct", "res", "txt"}, "Expression Files"));
+//        }
+
+        fHeatMapSaveJpgFileDialog = buildHeatMapSaveImageFileDialog("jpeg", "jpg");
+        fHeatMapSavePngFileDialog = buildHeatMapSaveImageFileDialog("png");
+        fHeatMapSaveSvgFileDialog = buildHeatMapSaveImageFileDialog("svg");
+        
+        fSetAnnotatorFileDialog = new FileDialog(Application.getWindowManager().getRootFrame(), "Set Annotator", FileDialog.LOAD);
         
         // TODO: clean up RecentDirsModel, XFileChooserImpl, XFileChooser, GseaAppConf, FileChooser and related
         // HeatMapComponent
@@ -70,6 +123,25 @@ public class FileManager {
         ParserFactory.getCache().addPathAdditionsListener(new MyPropertyChangeListener());
     }
 
+    public FileDialog buildHeatMapSaveImageFileDialog(String... formats) {
+        // Filtering doesn't work on Windows and is problematic on Mac.
+        FileDialog fileDialog = new FileDialog(Application.getWindowManager().getRootFrame(), "Save as " + formats[0], FileDialog.SAVE);
+        if (SystemUtils.IS_OS_WINDOWS) {
+            StringBuilder sb = new StringBuilder("*.").append(formats[0]);
+            for (int i = 1; i < formats.length; i++) {
+                sb.append(";*.").append(formats[1]);
+            }
+            fileDialog.setFile(sb.toString());
+        } else {//if (! SystemUtils.IS_OS_MAC_OSX) {
+            fileDialog.setFile("image." + formats[0]);
+        }
+        fileDialog.setFilenameFilter(new GseaFileFilter(formats, formats[0] + " image files"));
+//        if (! SystemUtils.IS_OS_MAC_OSX) {
+//            fileDialog.setFilenameFilter(new GseaFileFilter(formats, formats[0] + " image files"));
+//        }
+        return fileDialog;
+    }
+    
     // we need these in addition to the automatic file chooser based mechanism because
     // files can be loaded in in other ways - for example double click of a jlist
     public void registerRecentlyOpenedDir(final File dir) {
@@ -106,12 +178,32 @@ public class FileManager {
         }
     }
 
-    // TODO: maybe just move this to the call site
-    // There's just one caller.  The idea of having it here is to pre-initialize the FD, but we
-    // don't do that with any other FDs and it's not clear it's needed on modern computers.  OTOH,
-    // maybe we move all those FDs here as well.
-    public FileDialog getFileChooser() throws HeadlessException {
-        return fFileDialog;
+    public FileDialog getLoadDataBrowseForFilesDialog() throws HeadlessException {
+        return fLoadDataBrowseForFilesDialog;
+    }
+    
+    public FileDialog getEnrichmentMapFileDialog() {
+        return fEnrichmentMapFileDialog;
+    }
+    
+    public FileDialog getHeatMapSaveDatasetFileDialog() {
+        return fHeatMapSaveDatasetFileDialog;
+    }
+
+    public FileDialog getHeatMapSaveJpgFileDialog() {
+        return fHeatMapSaveJpgFileDialog;
+    }
+
+    public FileDialog getHeatMapSavePngFileDialog() {
+        return fHeatMapSavePngFileDialog;
+    }
+
+    public FileDialog getHeatMapSaveSvgFileDialog() {
+        return fHeatMapSaveSvgFileDialog;
+    }
+    
+    public FileDialog getSetAnnotatorFileDialog() {
+        return fSetAnnotatorFileDialog;
     }
     
     public File chooseDirByDialog(String selectedDir) {

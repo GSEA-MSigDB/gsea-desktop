@@ -315,10 +315,8 @@ public class LeadingEdgeWidget implements Widget {
             this.scoreColumnIndex = scoreColumnIndex;
         }
 
-        public Component getTableCellRendererComponent(JTable table,
-                                                       Object value, boolean isSelected, boolean hasFocus, int row,
-                                                       int col) {
-
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, 
+                boolean hasFocus, int row, int col) {
             row = viewAndSearchComponent.getTable().getActualRowAt(row);
 
             super.getTableCellRendererComponent(table, value, isSelected,
@@ -332,7 +330,7 @@ public class LeadingEdgeWidget implements Widget {
                 } else {
                     this.setForeground(Color.BLUE);
                 }
-                this.setText(value.toString());
+                if (value != null) this.setText(value.toString());
             } else {
                 this.setForeground(Color.BLACK);
             }

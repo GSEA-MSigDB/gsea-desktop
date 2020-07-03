@@ -45,7 +45,6 @@ import edu.mit.broad.cytoscape.EnrichmentMapParameters;
 import edu.mit.broad.genome.JarResources;
 import edu.mit.broad.xbench.core.api.Application;
 import xapps.api.vtools.ParamSetFormForAFew;
-import xapps.gsea.GseaFileFilter;
 import xtools.munge.CollapseDataset;
 
 //Panel used to access Enrichment map.  Can either access it through the Results table(bottom left of GSEA frame)
@@ -56,8 +55,6 @@ public class EnrichmentMapParameterPanel extends JPanel {
     public static final String LAUNCH_MSG = "Please launch Cytoscape 3.3+ with the Enrichment Map plug-in before continuing.";
 
     private static final Logger klog = Logger.getLogger(EnrichmentMapParameterPanel.class);
-    
-    private static final GseaFileFilter expressionFileFilter = new GseaFileFilter(new String[] {"gct", "res", "rnk", "txt"}, "Expression File");
 
     private DecimalFormat decFormat; // used in the formatted text fields
 
@@ -424,12 +421,8 @@ public class EnrichmentMapParameterPanel extends JPanel {
 
     // gct/expression 1 file selector action listener
     private void selectGCTFileButtonActionPerformed(java.awt.event.ActionEvent evt) {
-        FileDialog fileDialog = new FileDialog(Application.getWindowManager().getRootFrame(), "Open", FileDialog.LOAD);
+        FileDialog fileDialog = Application.getFileManager().getEnrichmentMapFileDialog();
         fileDialog.setDirectory(params.getEdbdir());
-        fileDialog.setMultipleMode(false);
-        fileDialog.setModal(true);
-        fileDialog.setFile("*.gct;*,res;*.rnk;*.txt");
-        fileDialog.setFilenameFilter(expressionFileFilter);
         fileDialog.setVisible(true);
         File[] files = fileDialog.getFiles();
         if (files != null && files.length > 0) {
@@ -442,12 +435,8 @@ public class EnrichmentMapParameterPanel extends JPanel {
 
     // gct/expression 2 file selector action listener
     private void selectGCTFile2ButtonActionPerformed(java.awt.event.ActionEvent evt) {
-        FileDialog fileDialog = new FileDialog(Application.getWindowManager().getRootFrame(), "Open", FileDialog.LOAD);
+        FileDialog fileDialog = Application.getFileManager().getEnrichmentMapFileDialog();
         fileDialog.setDirectory(params.getEdbdir());
-        fileDialog.setMultipleMode(false);
-        fileDialog.setModal(true);
-        fileDialog.setFile("*.gct;*.res;*.rnk;*.txt");
-        fileDialog.setFilenameFilter(expressionFileFilter);
         fileDialog.setVisible(true);
         File[] files = fileDialog.getFiles();
         if (files != null && files.length > 0) {
