@@ -227,13 +227,13 @@ public class AppDataLoaderWidget extends GseaSimpleInternalFrame implements Widg
     }
 
     static class MyTextArea extends JTextArea implements DndTarget {
-        private List<File> fFiles;
+        private java.util.List fFiles;
 
         MyTextArea() {
             super();
             super.setEditable(false);
             new DropTargetDecorator(this);
-            this.fFiles = new ArrayList<File>();
+            this.fFiles = new ArrayList();
         }
 
         public Component getDroppableIntoComponent() {
@@ -241,8 +241,15 @@ public class AppDataLoaderWidget extends GseaSimpleInternalFrame implements Widg
         }
 
         public File[] getFiles() {
-            Set<File> files = new HashSet<File>(fFiles);
-            return files.toArray(new File[files.size()]);
+            Set files = new HashSet();
+            for (int i = 0; i < fFiles.size(); i++) {
+                Object it = fFiles.get(i);
+                if (it instanceof File) {
+                    files.add(it);
+                }
+            }
+
+            return (File[]) files.toArray(new File[files.size()]);
         }
 
         void clear() {
@@ -256,14 +263,19 @@ public class AppDataLoaderWidget extends GseaSimpleInternalFrame implements Widg
                 return;
             }
 
-            // TODO: investigate further to see if we can guarantee the type parameter of the List
-            // The javaFileListFlavor below might be enough...
-            final List list = (List) obj;
-            StringBuilder buf = new StringBuilder();
-            for (Object listObj : list) {
-                if (obj instanceof File) {
-                    fFiles.add((File)listObj);
-                    buf.append(((File)listObj).getName()).append('\n');
+            final java.util.List list = (java.util.List) obj;
+
+            for (int i = 0; i < list.size(); i++) {
+                if (list.get(i) instanceof File) {
+                    fFiles.add(list.get(i));
+                }
+            }
+
+            StringBuffer buf = new StringBuffer();
+            for (int i = 0; i < fFiles.size(); i++) {
+                Object it = fFiles.get(i);
+                if (it instanceof File) {
+                    buf.append(((File) it).getName()).append('\n');
                 }
             }
 
