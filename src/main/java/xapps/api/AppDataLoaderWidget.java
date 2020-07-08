@@ -227,13 +227,13 @@ public class AppDataLoaderWidget extends GseaSimpleInternalFrame implements Widg
     }
 
     static class MyTextArea extends JTextArea implements DndTarget {
-        private java.util.List fFiles;
+        private List<File> fFiles;
 
         MyTextArea() {
             super();
             super.setEditable(false);
             new DropTargetDecorator(this);
-            this.fFiles = new ArrayList();
+            this.fFiles = new ArrayList<File>();
         }
 
         public Component getDroppableIntoComponent() {
@@ -241,16 +241,9 @@ public class AppDataLoaderWidget extends GseaSimpleInternalFrame implements Widg
         }
 
         public File[] getFiles() {
-            Set files = new HashSet();
-            for (int i = 0; i < fFiles.size(); i++) {
-                Object it = fFiles.get(i);
-                if (it instanceof File) {
-                    files.add(it);
+            Set<File> files = new HashSet<File>(fFiles);
+            return files.toArray(new File[files.size()]);
                 }
-            }
-
-            return (File[]) files.toArray(new File[files.size()]);
-        }
 
         void clear() {
             this.fFiles.clear();
@@ -263,19 +256,14 @@ public class AppDataLoaderWidget extends GseaSimpleInternalFrame implements Widg
                 return;
             }
 
-            final java.util.List list = (java.util.List) obj;
-
-            for (int i = 0; i < list.size(); i++) {
-                if (list.get(i) instanceof File) {
-                    fFiles.add(list.get(i));
-                }
-            }
-
-            StringBuffer buf = new StringBuffer();
-            for (int i = 0; i < fFiles.size(); i++) {
-                Object it = fFiles.get(i);
-                if (it instanceof File) {
-                    buf.append(((File) it).getName()).append('\n');
+            // TODO: investigate further to see if we can guarantee the type parameter of the List
+            // The javaFileListFlavor below might be enough...
+            final List list = (List) obj;
+            StringBuilder buf = new StringBuilder();
+            for (Object listObj : list) {
+                if (listObj instanceof File) {
+                    fFiles.add((File)listObj);
+                    buf.append(((File)listObj).getName()).append('\n');
                 }
             }
 
