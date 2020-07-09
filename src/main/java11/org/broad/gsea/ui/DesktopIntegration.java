@@ -47,10 +47,10 @@ public class DesktopIntegration {
     
     public static void setQuitHandler(GseaFijiTabsApplicationFrame applicationFrame) {
         Desktop.getDesktop().setQuitHandler((e, response) -> {
-            try {
-                applicationFrame.exitApplication();
-            } finally {
-                response.performQuit();
+            if (applicationFrame.exitApplication()) {
+            	response.performQuit();
+            } else {
+            	response.cancelQuit();
             }
         });
     }

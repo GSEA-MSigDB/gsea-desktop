@@ -512,12 +512,12 @@ public class GseaFijiTabsApplicationFrame extends DefaultDockableHolder implemen
         return menu;
     }
     
-    public void exitApplication() {
+    public boolean exitApplication() {
         boolean ask = XPreferencesFactory.kAskBeforeAppShutdown.getBoolean();
         if (ask) {
             final boolean res = getWindowManager().showConfirm("Exit the application?");
             if (!res) {
-                return;
+                return false;
             }
         }
 
@@ -533,6 +533,7 @@ public class GseaFijiTabsApplicationFrame extends DefaultDockableHolder implemen
         if (Conf.isDebugMode() == false) {
             Conf.exitSystem(false);
         }
+        return true;
     }
 
     /**
