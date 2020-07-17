@@ -30,15 +30,5 @@
 	<string>public.app-category.developer-tools</string>
 	<key>NSHighResolutionCapable</key>
     <string>true</string>
-	<key>NSDesktopFolderUsageDescription</key>
-    <string>GSEA needs permission to access this location to read and write files</string>
-	<key>NSDocumentsFolderUsageDescription</key>
-    <string>GSEA needs permission to access this location to read and write files</string>
-	<key>NSDownloadsFolderUsageDescription</key>
-    <string>GSEA needs permission to access this location to read and write files</string>
-	<key>NSNetworkVolumesFolderUsageDescription</key>
-    <string>GSEA needs permission to access this location to read and write files</string>
-	<key>NSRemovableVolumesFolderUsageDescription</key>
-    <string>GSEA needs permission to access this location to read and write files</string>
 </dict>
 </plist>
