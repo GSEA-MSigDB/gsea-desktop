@@ -62,7 +62,6 @@ import xtools.gsea.Gsea;
  * 3) opens up in last folder disp if possible
  *
  * @author Aravind Subramanian
- * @version %I%, %G%
  */
 public class AppDataLoaderWidget extends GseaSimpleInternalFrame implements Widget {
 
@@ -259,14 +258,17 @@ public class AppDataLoaderWidget extends GseaSimpleInternalFrame implements Widg
             // TODO: investigate further to see if we can guarantee the type parameter of the List
             // The javaFileListFlavor below might be enough...
             final List list = (List) obj;
-            StringBuilder buf = new StringBuilder();
             for (Object listObj : list) {
                 if (listObj instanceof File) {
                     fFiles.add((File)listObj);
-                    buf.append(((File)listObj).getName()).append('\n');
                 }
             }
 
+            StringBuilder buf = new StringBuilder();
+            for (File file : fFiles) {
+                buf.append(file.getName()).append('\n');
+            }
+            
             this.setText(buf.toString());
         }
 
