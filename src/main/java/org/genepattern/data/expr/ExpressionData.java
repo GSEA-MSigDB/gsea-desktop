@@ -86,7 +86,6 @@ public class ExpressionData implements IExpressionData {
      *                      to null.
      * @return the new ExpressionData
      * @throws IllegalArgumentException if an index occcurs more than once.
-     * @see #slice(String[],String[])
      */
     public ExpressionData slice(int[] rowIndices, int[] columnIndices) {
         if (rowIndices == null) {

@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2020 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package org.genepattern.data.matrix;
 
 import java.util.Arrays;
@@ -83,7 +83,6 @@ public class DoubleMatrix2D {
      *                      to null.
      * @return the new matrix
      * @throws IllegalArgumentException if an index occcurs more than once.
-     * @see #slice(String[],String[])
      */
     public DoubleMatrix2D slice(int[] rowIndices, int[] columnIndices) {
         if (rowIndices == null) {
@@ -105,7 +104,7 @@ public class DoubleMatrix2D {
         long[] r = MathUtil.toLongArray(rowIndices);
         long[] c = MathUtil.toLongArray(columnIndices);
         
-        DenseDoubleMatrix2D slice = (DenseDoubleMatrix2D)matrix.selectedCoordinates(r, c);
+        DenseDoubleMatrix2D slice = (DenseDoubleMatrix2D)matrix.select(DenseDoubleMatrix2D.NEW, r, c);
         return new DoubleMatrix2D(slice);
     }
 
