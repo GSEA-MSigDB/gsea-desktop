@@ -11,6 +11,7 @@ import com.jidesoft.plaf.xerto.VerticalLabelUI;
 
 import edu.mit.broad.xbench.core.api.Application;
 
+import org.apache.commons.lang3.SystemUtils;
 import org.genepattern.annotation.*;
 import org.genepattern.data.expr.ExpressionConstants;
 import org.genepattern.data.expr.ExpressionData;
@@ -379,6 +380,11 @@ public class HeatMapComponent extends JComponent {
 
     private File showSaveDatasetDialog() {
         FileDialog fileDialog = Application.getFileManager().getHeatMapSaveDatasetFileDialog();
+        if (SystemUtils.IS_OS_WINDOWS) {
+        	fileDialog.setFile("*.gct;*.res;*.txt");
+        } else {
+        	fileDialog.setFile("dataset.gct");
+        }
         fileDialog.setVisible(true);
         File[] files = fileDialog.getFiles();
         if (files != null && files.length > 0) {
@@ -1027,14 +1033,23 @@ public class HeatMapComponent extends JComponent {
         worker.execute();
     }
 
-    private void showSaveImageDialog(FileDialog fileDialog, String format) {
+    private void showSaveImageDialog(FileDialog fileDialog, String... formats) {
+        if (SystemUtils.IS_OS_WINDOWS) {
+            StringBuilder sb = new StringBuilder("*.").append(formats[0]);
+            for (int i = 1; i < formats.length; i++) {
+                sb.append(";*.").append(formats[1]);
+            }
+            fileDialog.setFile(sb.toString());
+        } else {
+            fileDialog.setFile("image." + formats[0]);
+        }
         fileDialog.setVisible(true);
         File[] files = fileDialog.getFiles();
         if (files != null && files.length > 0) {
             File f = files[0];
             SwingWorker<Object, Void> worker = new SwingWorker<Object, Void>() {
                 protected Object doInBackground() throws Exception {
-                    saveImageToFile(f, format);
+                    saveImageToFile(f, formats[0]);
                     return null;
                 }
             };

@@ -100,15 +100,7 @@ public class FileManager {
         fEnrichmentMapFileDialog.setFilenameFilter(expressionFileFilter);
 
         fHeatMapSaveDatasetFileDialog = new FileDialog(Application.getWindowManager().getRootFrame(), "Save as expression file", FileDialog.SAVE);
-        if (SystemUtils.IS_OS_WINDOWS) {
-            fHeatMapSaveDatasetFileDialog.setFile("*.gct;*.res;*.txt");
-        } else { //if (! SystemUtils.IS_OS_MAC_OSX) {
-            fHeatMapSaveDatasetFileDialog.setFile("dataset.gct");
-        }
         fHeatMapSaveDatasetFileDialog.setFilenameFilter(new GseaFileFilter(new String[] {"gct", "res", "txt"}, "Expression Files"));
-//        if (! SystemUtils.IS_OS_MAC_OSX) {
-//            fHeatMapSaveDatasetFileDialog.setFilenameFilter(new GseaFileFilter(new String[] {"gct", "res", "txt"}, "Expression Files"));
-//        }
 
         fHeatMapSaveJpgFileDialog = buildHeatMapSaveImageFileDialog("jpeg", "jpg");
         fHeatMapSavePngFileDialog = buildHeatMapSaveImageFileDialog("png");
@@ -126,19 +118,7 @@ public class FileManager {
     public FileDialog buildHeatMapSaveImageFileDialog(String... formats) {
         // Filtering doesn't work on Windows and is problematic on Mac.
         FileDialog fileDialog = new FileDialog(Application.getWindowManager().getRootFrame(), "Save as " + formats[0], FileDialog.SAVE);
-        if (SystemUtils.IS_OS_WINDOWS) {
-            StringBuilder sb = new StringBuilder("*.").append(formats[0]);
-            for (int i = 1; i < formats.length; i++) {
-                sb.append(";*.").append(formats[1]);
-            }
-            fileDialog.setFile(sb.toString());
-        } else {//if (! SystemUtils.IS_OS_MAC_OSX) {
-            fileDialog.setFile("image." + formats[0]);
-        }
         fileDialog.setFilenameFilter(new GseaFileFilter(formats, formats[0] + " image files"));
-//        if (! SystemUtils.IS_OS_MAC_OSX) {
-//            fileDialog.setFilenameFilter(new GseaFileFilter(formats, formats[0] + " image files"));
-//        }
         return fileDialog;
     }
     
