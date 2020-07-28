@@ -50,7 +50,12 @@ public class GseaPreranked extends AbstractGseaTool {
 
     public GseaPreranked(final Properties properties) {
         super("Remap_Only");
-        super.init(properties);
+        super.init(properties, "");
+    }
+
+    public GseaPreranked(final Properties properties, String paramFilePath) {
+        super("Remap_Only");
+        super.init(properties, paramFilePath);
     }
 
     public GseaPreranked(final String[] args) {

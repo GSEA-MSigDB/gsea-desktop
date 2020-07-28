@@ -732,7 +732,7 @@ public class EnrichmentMapParameterPanel extends JPanel {
                                 // only try and collapse the dataset if we have all the required parameters from the rpt file.
                                 if (!rpt_label.equalsIgnoreCase("") && !mode.equalsIgnoreCase("") && !chip.equalsIgnoreCase("")
                                         && !include.equalsIgnoreCase("") && !out.equalsIgnoreCase("")) {
-                                    CollapseDataset tool = new CollapseDataset(props);
+                                    CollapseDataset tool = new CollapseDataset(props, "");
                                     try {
                                         tool.execute();
                                         // the expression file is created and put into a new directory with a new timestamp

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ *  Copyright (c) 2003-2020 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package org.genepattern.modules;
 
@@ -36,6 +36,7 @@ public class LeadingEdgeToolWrapper extends AbstractModule {
         options.addOption(OptionBuilder.withArgName("createZip").hasArg().create("zip_report"));
         options.addOption(OptionBuilder.withArgName("outFile").hasArg().create("out"));
         options.addOption(OptionBuilder.withArgName("resultsDir").hasArg().create("dir"));
+        options.addOption(OptionBuilder.withArgName("parameterFile").hasArg().create("param_file"));
         options.addOption(OptionBuilder.withArgName("devMode").hasArg().create("dev_mode"));
         options.addOption(OptionBuilder.withArgName("gpModuleMode").hasArg().create("run_as_genepattern"));
         return options;
@@ -66,6 +67,9 @@ public class LeadingEdgeToolWrapper extends AbstractModule {
             // and runtime behavior.
             boolean gpMode = StringUtils.equalsIgnoreCase(cl.getOptionValue("run_as_genepattern"), "true");
             
+            String paramFileOption = cl.getOptionValue("param_file");
+            boolean hasParamFile = StringUtils.isNotBlank(paramFileOption);
+            
             if (gpMode) {
                 // Turn off debugging in the GSEA code and tell it not to create directories
                 // TODO: confirm the "mkdir" property works as expected
@@ -78,6 +82,11 @@ public class LeadingEdgeToolWrapper extends AbstractModule {
                 String outOption = cl.getOptionValue("out");
                 if (StringUtils.isNotBlank(outOption)) {
                     klog.warn("-out parameter ignored; only valid wih -run_as_genepattern false.");
+                }
+                
+                if (hasParamFile) {
+                    klog.warn("-param_file parameter ignored; only valid wih -run_as_genepattern false.");
+                    hasParamFile = false;
                 }
     
                 // Define a working directory, to be cleaned up on exit. The name starts with a '.' so it's hidden from GP & file system.
@@ -118,7 +127,10 @@ public class LeadingEdgeToolWrapper extends AbstractModule {
                     enrichmentResultZip = copyFileWithoutBadChars(enrichmentResultZip, tmp_working);
                     paramProcessingError |= (enrichmentResultZip == null);
                 }
-            } else {
+            } else if (!hasParamFile) {
+                // Note that we don't check this here if a param_file is specified; we will let the tool
+                // check it as it may exist in the file (in fact that's likely).  This same pattern will
+                // follow for other parameters below.
                 String paramName = (gpMode) ? "enrichment.result.zip.file" : "-enrichment_zip";
                 klog.error("Required parameter '" + paramName + "' not found");
                 paramProcessingError = true;
@@ -158,7 +170,7 @@ public class LeadingEdgeToolWrapper extends AbstractModule {
 
             String altDelim = cl.getOptionValue("altDelim", "");
             if (StringUtils.isNotBlank(altDelim)) {
-                if (altDelim.length() > 1) {
+                if (altDelim.length() > 1 && !hasParamFile) {
                     String paramName = (gpMode) ? "alt.delim" : "--altDelim";
                     klog.error("Invalid " + paramName + " '" + altDelim
                             + "' specified. This must be only a single character and no whitespace.");
@@ -175,7 +187,8 @@ public class LeadingEdgeToolWrapper extends AbstractModule {
 
             setParam("gui", "false", paramProps, klog);
 
-            tool = new LeadingEdgeTool(paramProps);
+            if (!hasParamFile) paramFileOption = "";
+            tool = new LeadingEdgeTool(paramProps, paramFileOption);
             try {
                 success = AbstractTool.module_main(tool);
             } finally {

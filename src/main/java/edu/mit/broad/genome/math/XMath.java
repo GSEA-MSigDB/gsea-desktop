@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2020 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.genome.math;
 
@@ -16,15 +16,11 @@ import java.util.function.BiFunction;
  *
  * @author Michael Angelo (CMath in GeneCluster)
  * @author Aravind Subramanian
- * @version %I%, %G%
  */
 public class XMath {
 
     private static final Logger klog = Logger.getLogger(XMath.class);
 
-    /**
-     * Privatized class constructor.
-     */
     private XMath() {
     }
 
@@ -79,8 +75,6 @@ public class XMath {
     }
 
     /**
-     * @param d
-     * @return
      * @see http://www.cs.utsa.edu/~wagner/laws/ALogs.html
      *      Java supplies a function to calculate natural logs,
      *      base e = 2.718281828459045. To calculate logs to other bases,
@@ -212,18 +206,19 @@ public class XMath {
             throw new IllegalArgumentException("Cannot pick more numbers (no replacement) numRndNeeded: " + numRndNeeded + " than max possible number maxRndNumExclusive: " + maxRndNumExclusive);
         }
 
-        List seen = new ArrayList(numRndNeeded);
+        // TODO: evaluate performance of using a Set
+        List<Integer> seen = new ArrayList<Integer>(numRndNeeded);
         int[] inds = new int[numRndNeeded];
         int cnt = 0;
 
         for (int i = 0; i < numRndNeeded;) {
             int r = rnd.nextInt(maxRndNumExclusive);
 
-            if (seen.contains(new Integer(r))) {
+            if (seen.contains(r)) {
                 continue;
             }
 
-            seen.add(new Integer(r));
+            seen.add(r);
 
             inds[cnt++] = r;
 
@@ -551,9 +546,7 @@ public class XMath {
         return sum;
     }
 
-    /**
-     * No parameters
-     *
+    /*
      * @see http://www.ruf.rice.edu/~lane/hyperstat/A51911.html
      *      <p/>
      *      will ret Nan if only 1 element in each vector
@@ -885,7 +878,11 @@ public class XMath {
     }
 
 	public static boolean isNearlyZero(double d) {
-	    return (d == +0.0d || d == -0.0d || Math.ulp(d) <= Double.MIN_VALUE);
+	    // See https://randomascii.wordpress.com/2012/02/25/comparing-floating-point-numbers-2012-edition/
+	    // Since we are only concerned with testing values very close to zero here, we don't deal with ULPs 
+	    // as discussed in the above article.  It's enough to use a small epsilon instead.
+	    // Since our computations are done in Doubles, we use the equivalent of the C++ DBL_EPSILON
+	    // instead of FLT_EPSILON (see http://www.cplusplus.com/reference/cfloat/)
+	    return (Math.abs(d) <= 1e-9d);
 	}
-
-}    // End XMath
+}

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2020 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.genome.parsers;
 
@@ -27,7 +27,6 @@ import java.util.*;
  *
  * @author Michael Angelo
  * @author Aravind Subramanian
- * @version 1.0
  */
 public class ParseUtils {
 
@@ -302,23 +301,6 @@ public class ParseUtils {
         return lines;
     }
 
-    /*
-     * The filepath was formerly treated as a path OR a URL, but this lead to errors on Windows where
-     * our URL detection fails to identify 'C:/' as a path.  We might revamp this later (see GSEA-1170)
-     * but for now these will be restricted to being handled as *local files only*.  Loading param_files
-     * from URL seems like an unlikely use-case anyway.
-     */
-    public static Properties readKeyVal(final String filepath,
-                                        final boolean containsHeaderLine,
-                                        final boolean enforceValueMustExist,
-                                        final boolean enforceNonRepeatedKeys) throws IOException {
-        // Inlining code from working code path formerly in FileUtils.toBufferedReader().
-        URI uri = new File(filepath).toURI();
-        URL url = uri.toURL();
-        BufferedReader buf = new BufferedReader(new InputStreamReader(url.openStream()));
-        return readKeyVal(buf, containsHeaderLine, enforceValueMustExist, enforceNonRepeatedKeys);
-    }
-
     /**
      * Convenience method to read in a file with key=value pairs
      * into a hashtable
@@ -330,70 +312,61 @@ public class ParseUtils {
      * key1\tval1
      * key2\tval2
      */
-    public static Properties readKeyVal(final BufferedReader buf,
-                                        final boolean containsHeaderLine,
-                                        final boolean enforceValueMustExist,
-                                        final boolean enforceNonRepeatedKeys) throws IOException {
-
-        String line;
-        final Properties prp = new Properties();
-
-        line = nextLine(buf);
-
-        if (containsHeaderLine) {
+    /*
+     * The filepath was formerly treated as a path OR a URL, but this lead to errors on Windows where
+     * our URL detection fails to identify 'C:/' as a path.  We might revamp this later (see GSEA-1170)
+     * but for now these will be restricted to being handled as *local files only*.  Loading param_files
+     * from URL seems like an unlikely use-case anyway.
+     */
+    public static Properties readKeyVal(final String filepath) throws IOException {
+        // Inlining code from working code path formerly in FileUtils.toBufferedReader().
+        URI uri = new File(filepath).toURI();
+        URL url = uri.toURL();
+        BufferedReader buf = new BufferedReader(new InputStreamReader(url.openStream()));
+        try {
+            String line;
+            final Properties prp = new Properties();
+    
             line = nextLine(buf);
-        }
-
-        int lineNum = 0;
-        List<String> duplLines = new ArrayList<String>();
-        while (line != null) {
-            StringTokenizer tok = new StringTokenizer(line, "\t");
-            String key;
-            String val = null;
-            if (tok.countTokens() == 2) {
-                key = tok.nextToken().trim();
-                val = tok.nextToken().trim();
-            } else if (tok.countTokens() == 1) {
-                key = tok.nextToken().trim();
-
-            } else {
-                throw new IOException("Bad line format: " + line + " # tokens: " + tok.countTokens() + " line: " + lineNum);
-            }
-
-            if (enforceValueMustExist) {
+    
+            int lineNum = 0;
+            while (line != null) {
+                StringTokenizer tok = new StringTokenizer(line, "\t");
+                String key;
+                String val = null;
+                if (tok.countTokens() == 2) {
+                    key = tok.nextToken().trim();
+                    val = tok.nextToken().trim();
+                } else if (tok.countTokens() == 1) {
+                    key = tok.nextToken().trim();
+    
+                } else {
+                    throw new IOException("Bad line format: " + line + " # tokens: " + tok.countTokens() + " line: " + lineNum);
+                }
+    
                 if (val == null || val.length() == 0) {
                     throw new RuntimeException("Value must exist. Missing on line: " + lineNum + " val: " + val);
                 }
+    
+                if (key.length() == 0) {
+                    throw new RuntimeException("Empty key on line: " + lineNum);
+                }
+    
+                prp.setProperty(key, val);
+                line = nextLine(buf);
+                lineNum++;
             }
-
-            if (key.length() == 0) {
-                throw new RuntimeException("Empty key on line: " + lineNum);
+    
+    
+            if (lineNum == 0) {
+                throw new IllegalArgumentException("Empty input stream!! ");
             }
-
-            if (prp.containsKey(key) && enforceNonRepeatedKeys) {
-                duplLines.add(line);
-            }
-
-            prp.setProperty(key, val);
-            line = nextLine(buf);
-            lineNum++;
+    
+            return prp;
+        } finally {
+            buf.close();
         }
-
-        buf.close();
-
-        if (!duplLines.isEmpty() && enforceNonRepeatedKeys) {
-            StringBuffer sbuf = new StringBuffer();
-            for (int i = 0; i < duplLines.size(); i++) {
-                sbuf.append(duplLines.get(i)).append('\n');
-            }
-            throw new RuntimeException("There are repeated keys:" + duplLines.size() + "\n" + duplLines);
-        }
-
-        if (lineNum == 0) {
-            throw new IllegalArgumentException("Empty input stream!! ");
-        }
-
-        return prp;
+        
     }
 
     public static int countLines(File file, boolean ignoreblanklines) throws IOException {
@@ -460,6 +433,4 @@ public class ParseUtils {
 
         return new BufferedReader(new FileReader(file));
     }
-
-
-}    // End ParseUtils
+}

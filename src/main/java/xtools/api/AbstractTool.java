@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2020 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package xtools.api;
 
@@ -17,6 +17,7 @@ import edu.mit.broad.genome.utils.SystemUtils;
 import edu.mit.broad.vdb.chip.Chip;
 import edu.mit.broad.xbench.core.api.Application;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.ecs.html.Div;
 import org.apache.ecs.html.H4;
 import org.apache.log4j.Logger;
@@ -34,7 +35,6 @@ import java.util.*;
  * <p/>
  *
  * @author Aravind Subramanian
- * @version %I%, %G%
  */
 public abstract class AbstractTool implements Tool {
 
@@ -49,9 +49,6 @@ public abstract class AbstractTool implements Tool {
 
     private PrintStream fOut;
 
-    /**
-     * For logging support
-     */
     protected transient Logger log;
 
     protected static final transient Logger klog = Logger.getLogger(AbstractTool.class);
@@ -129,12 +126,11 @@ public abstract class AbstractTool implements Tool {
         fParamSet.addParam(fReportDirParam);
         fParamSet.addParam(fRptLabelParam);
     }
-
+    
     /**
      * subclasses must call in their class constructor after a call to super()
      */
-    protected void init(final Properties prp) {
-
+    protected void init(final Properties prp, String paramFilePath) {
         fParamSet.addParam(fHelpParam);
 
         declareParams();
@@ -143,14 +139,6 @@ public abstract class AbstractTool implements Tool {
             // by default, if help spec do usage
             if (prp.containsKey("help") || prp.containsKey("HELP")) {
                 this.fHelpMode = true;
-                /*
-                String val = prp.getProperty("help");
-                if (val != null && val.equalsIgnoreCase("false")) {
-                    this.fHelpMode = false;
-                } else {
-                    this.fHelpMode = true;
-                }
-                */
             }
         }
 
@@ -161,45 +149,40 @@ public abstract class AbstractTool implements Tool {
             fParamSet.printfUsage();
             Conf.exitSystem(false);
         } else {
-            fParamSet.fill(prp);
-            //ParamSet.printf();
-            fParamSet.check();
-            ensureAllDeclaredWereAdded();
-            checkHeadlessState();
-        }
+            try {
+                if (StringUtils.isNotBlank(paramFilePath)) {
+                    enhanceParams(paramFilePath, prp);
+                }
 
+                fParamSet.fill(prp);
+                //ParamSet.printf();
+                fParamSet.check();
+                ensureAllDeclaredWereAdded();
+                checkHeadlessState();
+
+            } catch (Throwable t) {
+                t.printStackTrace();
+                // if the rpt dir was made try to rename it so that easily identifiable
+                if (fReport != null) {
+                    fReport.setErroredOut();
+                } else {
+                    log.info("No report dir was made yet (analysis errored out)");
+                }
+            }
+        }
     }
 
     protected void init(final String[] args) {
+        Properties prp = CmdLineArgs.parse(args);
 
-        try {
-
-            Properties prp = CmdLineArgs.parse(args);
-
-            String argline = CmdLineArgs.toString(args);
-            int index = argline.indexOf("help");
-            if (index != -1) {
-                prp.setProperty("help", Boolean.TRUE.toString());
-            }
-
-            String param_file_path = prp.getProperty(ParamSet.PARAM_FILE);
-            if (param_file_path != null && param_file_path.length() > 0) {
-                enhanceParams(param_file_path, prp);
-            }
-            
-            init(prp);
-
-        } catch (Throwable t) {
-            t.printStackTrace();
-            // if the rpt dir was made try to rename it so that easily identifiable
-            if (fReport != null) {
-                fReport.setErroredOut();
-            } else {
-                log.info("No report dir was made yet (analysis errored out)");
-            }
-
-            Conf.exitSystem(true);
+        String argline = CmdLineArgs.toString(args);
+        int index = argline.indexOf("help");
+        if (index != -1) {
+            prp.setProperty("help", Boolean.TRUE.toString());
         }
+
+        String param_file_path = prp.getProperty(ParamSet.PARAM_FILE);
+        init(prp, param_file_path);
     }
 
     /*
@@ -209,9 +192,8 @@ public abstract class AbstractTool implements Tool {
      * from URL seems like an unlikely use-case anyway.
      */
     private void enhanceParams(final String filepath, final Properties prp) throws Exception {
-        Properties addPrp = ParseUtils.readKeyVal(filepath, false, true, false);
-        for (Iterator it = addPrp.keySet().iterator(); it.hasNext();) {
-            String param_name = it.next().toString();
+        Properties addPrp = ParseUtils.readKeyVal(filepath);
+        for (String param_name : addPrp.stringPropertyNames()) {
             String param_val = addPrp.getProperty(param_name);
             if (prp.containsKey(param_name)) {
                 String extant_param_val = prp.getProperty(param_name);
@@ -305,6 +287,7 @@ public abstract class AbstractTool implements Tool {
         */
     }
 
+    // TODO: parameterize the Class with the correct generic type
     private int countParamFields(Class cl) {
         //log.debug("Counting for class name: " + cl.getName());
         Field[] fields = cl.getDeclaredFields();
@@ -496,14 +479,14 @@ public abstract class AbstractTool implements Tool {
         private static GeneSet[] removeAllZeroMemberSets(final GeneSet[] gsets) {
 
             // Finally remove all 0 size gene sets (if min is 0 these will still be in there)
-            List list = new ArrayList();
+            List<GeneSet> list = new ArrayList<GeneSet>();
             for (int i = 0; i < gsets.length; i++) {
                 if (gsets[i].getNumMembers() > 0) {
                     list.add(gsets[i]);
                 }
             }
 
-            return (GeneSet[]) list.toArray(new GeneSet[list.size()]);
+            return list.toArray(new GeneSet[list.size()]);
         }
     }
 
@@ -518,5 +501,4 @@ public abstract class AbstractTool implements Tool {
             ds.getAnnot().setChip(chip);
         }
     }
-
-}    // End AbstractTool
+}

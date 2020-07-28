@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2020 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package xtools.gsea;
 
@@ -27,7 +27,6 @@ import org.apache.commons.lang3.StringUtils;
  * Its NOT representative of xtool code!!
  *
  * @author Aravind Subramanian
- * @version %I%, %G%
  */
 public class Gsea extends AbstractGsea2Tool {
 
@@ -41,14 +40,14 @@ public class Gsea extends AbstractGsea2Tool {
             "Optional alternate delimiter character for gene set names instead of comma", null, false, new char[] { ';' }, Param.ADVANCED);
     private final BooleanParam fCreateGctsParam = new BooleanParam("create_gcts", "Create GCT files", "Create GCT files for the data backing the Gene Set Enrichment Heatmaps", false, false, Param.ADVANCED);
 
-    /**
-     * Class constructor
-     *
-     * @param properties
-     */
     public Gsea(final Properties properties) {
         super("Collapse");
-        super.init(properties);
+        super.init(properties, "");
+    }
+
+    public Gsea(final Properties properties, String paramFilePath) {
+        super("Collapse");
+        super.init(properties, paramFilePath);
     }
 
     public Gsea(final String[] args) {
@@ -207,5 +206,4 @@ public class Gsea extends AbstractGsea2Tool {
 
         return null;
     }
-
-}    // End Gsea
+}

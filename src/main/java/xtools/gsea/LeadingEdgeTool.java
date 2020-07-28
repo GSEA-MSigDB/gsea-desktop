@@ -60,13 +60,12 @@ public class LeadingEdgeTool extends AbstractTool {
 
     private final BooleanParam fMakeZippedReportParam = AbstractTool.createZipReportParam(false);
 
-    /**
-     * Class constructor
-     *
-     * @param properties
-     */
     public LeadingEdgeTool(final Properties properties) {
-        super.init(properties);
+        super.init(properties, "");
+    }
+
+    public LeadingEdgeTool(final Properties properties, String paramFilePath) {
+        super.init(properties, paramFilePath);
     }
 
     public LeadingEdgeTool(final String[] args) {

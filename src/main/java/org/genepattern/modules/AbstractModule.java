@@ -51,6 +51,8 @@ public class AbstractModule {
     }
 
     protected static void setParam(String name, String value, Properties paramProps, Logger log) {
+        // If the value is missing, don't set the property
+        if (StringUtils.isBlank(value)) return;
         log.info(name + "\t" + value);
         paramProps.setProperty(name, value);
     }
@@ -214,7 +216,7 @@ public class AbstractModule {
     }
 
     protected static final String determineSelectorFromParams(String geneSetDBParam, String geneSetDBListParam,
-            String selectedGeneSetsParam, String altDelim, boolean gpMode, File tmpDir, Logger klog) throws IOException {
+            String selectedGeneSetsParam, String altDelim, boolean gpMode, File tmpDir, Logger klog, boolean hasParamFile) throws IOException {
         boolean paramProcessingError = false;
 
         // Find the Gene Sets Database files; may be *either* -gmx or -gmx-list (not both)
@@ -231,7 +233,9 @@ public class AbstractModule {
             if (!haveGmxList) {
                 klog.error("One or more gene set files must be specified using the 'gene.sets.database' parameter.");
             }
-        } else if (haveGmx && haveGmxList || (!haveGmx && !haveGmxList)) {
+        } else if (haveGmx && haveGmxList || (!haveGmx && !haveGmxList && !hasParamFile)) {
+            // Note: having both options specified is always an error.  Having neither might be an error, 
+            // though if there is a paramFile then we'll let the tool do that check.
             klog.error("One or more gene sets must be specified using either the '-gmx' or '-gmx_list'"
                     + " parameters.  Please use one or the other but not both.");
             klog.error("For '-gmx_list', provide a single text file listing each gene set file, one per line.");

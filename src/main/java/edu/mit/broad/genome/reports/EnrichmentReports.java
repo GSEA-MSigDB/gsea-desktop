@@ -216,7 +216,7 @@ public class EnrichmentReports {
                 String nn = AuxUtils.getAuxNameOnlyNoHash(template_opt);
                 return new String[] { nn + "_pos", nn + "_neg"};
             } else {
-                return new String[] { template_opt.getClassName(0) + "_pos", template_opt.getClassName(1) + "_neg"};
+                return new String[] { template_opt.getClassName(0), template_opt.getClassName(1) };
             }
         } else {
             return new String[] { Constants.NA + "_pos", Constants.NA + "_neg"};

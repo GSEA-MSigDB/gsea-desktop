@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2020 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package xtools.chip2chip;
 
@@ -29,7 +29,6 @@ import org.apache.commons.lang3.StringUtils;
 
 /**
  * @author Aravind Subramanian
- * @version %I%, %G%
  */
 public class Chip2Chip extends AbstractTool {
 
@@ -121,13 +120,12 @@ public class Chip2Chip extends AbstractTool {
     
     }
 
-    /**
-     * Class constructor
-     *
-     * @param properties
-     */
     public Chip2Chip(Properties properties) {
-        super.init(properties);
+        super.init(properties, "");
+    }
+
+    public Chip2Chip(Properties properties, String paramFilePath) {
+        super.init(properties, paramFilePath);
     }
 
     public Chip2Chip(String[] args) {
@@ -194,5 +192,4 @@ public class Chip2Chip extends AbstractTool {
         Chip2Chip tool = new Chip2Chip(args);
         tool_main(tool);
     }
-
-}    // End Symbol2Probe
+}

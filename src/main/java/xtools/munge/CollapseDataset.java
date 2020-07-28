@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2020 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package xtools.munge;
 
@@ -20,7 +20,6 @@ import java.util.Properties;
  * affy probe name, gene name, desc
  *
  * @author Aravind Subramanian
- * @version %I%, %G%
  */
 public class CollapseDataset extends AbstractTool {
 
@@ -30,13 +29,12 @@ public class CollapseDataset extends AbstractTool {
     private final ModeReqdParam fModeParm = new ModeReqdParam("mode", "Collapsing mode for probe sets => 1 gene", "Collapsing mode for probe sets => 1 gene", "Max_probe", new String[]{"Max_probe", "Median_of_probes", "Mean_of_probes", "Sum_of_probes", "Remap_only"});
     private final BooleanParam fIncludeOnlySymbols = new BooleanParam("include_only_symbols", "Omit features with no symbol match", "If there is no known gene symbol match for a probe set omit if from the collapsed dataset", true, false);
 
-    /**
-     * Class constructor
-     *
-     * @param properties
-     */
     public CollapseDataset(Properties properties) {
-        super.init(properties);
+        super.init(properties, "");
+    }
+
+    public CollapseDataset(Properties properties, String paramFilePath) {
+        super.init(properties, paramFilePath);
     }
 
     public CollapseDataset(String[] args) {
@@ -94,5 +92,4 @@ public class CollapseDataset extends AbstractTool {
         CollapseDataset tool = new CollapseDataset(args);
         tool_main(tool);
     }
-
-}    // End CollapseDataset
+}
