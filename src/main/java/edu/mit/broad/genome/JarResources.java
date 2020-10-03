@@ -183,7 +183,7 @@ public class JarResources {
                 try {
                     Desktop.getDesktop().browse((new URL(url)).toURI());
                 } catch (Throwable t) {
-                    Application.getWindowManager().showError(t);
+                    Application.getWindowManager().showError("Unable to launch web browser for " + url, t);
                 }
             }
         };
