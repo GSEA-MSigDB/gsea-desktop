@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2020 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2021 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package org.genepattern.gsea;
 
@@ -11,10 +11,11 @@ import edu.mit.broad.genome.objects.GeneSet;
 import edu.mit.broad.genome.objects.esmatrix.db.EnrichmentDb;
 import edu.mit.broad.genome.objects.esmatrix.db.EnrichmentResult;
 import edu.mit.broad.genome.objects.esmatrix.db.EnrichmentScore;
-import edu.mit.broad.genome.parsers.EdbFolderParser;
+import edu.mit.broad.genome.parsers.ParserFactory;
 import edu.mit.broad.genome.reports.EnrichmentReports;
 import edu.mit.broad.genome.utils.ZipUtility;
 import edu.mit.broad.xbench.core.Widget;
+import edu.mit.broad.xbench.core.api.Application;
 import edu.mit.broad.xbench.tui.TaskManager;
 
 import org.apache.commons.io.FileUtils;
@@ -23,6 +24,7 @@ import org.apache.commons.lang3.SystemUtils;
 import org.genepattern.menu.PlotAction;
 import org.genepattern.uiutil.UIUtil;
 
+import xtools.api.XToolsApplication;
 import xtools.api.param.ToolParamSet;
 import xtools.gsea.LeadingEdgeTool;
 
@@ -461,14 +463,11 @@ public class LeadingEdgeWidget implements Widget {
         }
 
         String title = "Leading Edge Viewer - " + new File(zipFile).getName();
+        Application.registerHandler(new XToolsApplication());
 
         EnrichmentDb edb = null;
         try {
-            EdbFolderParser folderParser = new EdbFolderParser();
-            folderParser.setSilentMode(true);
-            edb = (EnrichmentDb) folderParser.parse(dir.getCanonicalPath(),
-                    (InputStream) null).get(0);
-
+            edb = ParserFactory.readEdb(dir, true, true);
         } catch (Exception e1) {
             e1.printStackTrace();
             UIUtil.showMessageDialog(null,

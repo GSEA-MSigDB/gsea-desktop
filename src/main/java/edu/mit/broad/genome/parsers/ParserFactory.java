@@ -563,12 +563,11 @@ public class ParserFactory implements Constants {
         return rl;
     }
 
-    /**
-     * @param gseaResultDir
-     * @return
-     * @throws Exception
-     */
     public static EnrichmentDb readEdb(final File gseaResultDir, final boolean useCache) throws Exception {
+        return readEdb(gseaResultDir, useCache, false);
+    }
+    
+    public static EnrichmentDb readEdb(final File gseaResultDir, final boolean useCache, boolean silentMode) throws Exception {
         if (gseaResultDir == null) {
             throw new IllegalArgumentException("Param gseaResultDir cannot be null");
         }
@@ -578,7 +577,7 @@ public class ParserFactory implements Constants {
         }
 
         EdbFolderParser folderParser = new EdbFolderParser();
-        folderParser.setSilentMode(false);
+        folderParser.setSilentMode(silentMode);
 
         final EnrichmentDb edb = new EdbFolderParser().parseEdb(gseaResultDir);
         _getCache().add(gseaResultDir, edb, EnrichmentDb.class);
