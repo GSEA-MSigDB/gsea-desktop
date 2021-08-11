@@ -86,7 +86,7 @@ public class DatasetGenerators {
      * @return
      */
     public CollapsedDataset collapse(final Dataset origDs, final Chip chip, final boolean includeOnlySymbols,
-                                     final int collapse_gex_mode) {
+                                     final int collapse_gex_mode, final String resultFileName) {
         if (origDs == null) {
             throw new IllegalArgumentException("Param ds cannot be null");
         }
@@ -139,7 +139,8 @@ public class DatasetGenerators {
             row++;
         }
 
-        String name = origDs.getName() + getExtendedName(collapse_gex_mode) + "_to_symbols";
+        String name = StringUtils.isNotBlank(resultFileName) ? resultFileName : 
+                origDs.getName() + getExtendedName(collapse_gex_mode) + "_to_symbols";
         log.info("Creating collapsed dataset " + name + ", chosen mode " + collapse_gex_mode);
         Annot annot = new Annot(new FeatureAnnot(name, rowNames, rowDescs,
                 chip), origDs.getAnnot().getSampleAnnot_global());

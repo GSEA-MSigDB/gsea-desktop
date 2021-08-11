@@ -30,7 +30,8 @@ public class CollapseDatasetWrapper extends AbstractModule {
         options.addOption(OptionBuilder.withArgName("chipPlatform").hasArg().create("chip"));
         options.addOption(OptionBuilder.withArgName("collapseMode").hasArg().create("mode"));
         options.addOption(OptionBuilder.withArgName("omitFeaturesWithNoSymbolMatch").hasArg().create("include_only_symbols"));
-        options.addOption(OptionBuilder.withArgName("outFile").hasArg().create("out"));
+        options.addOption(OptionBuilder.withArgName("outDir").hasArg().create("out"));
+        options.addOption(OptionBuilder.withArgName("outFile").hasArg().create("out_file"));
         options.addOption(OptionBuilder.withArgName("reportLabel").hasArg().create("rpt_label"));
         options.addOption(OptionBuilder.withArgName("parameterFile").hasArg().create("param_file"));
         options.addOption(OptionBuilder.withArgName("devMode").hasArg().create("dev_mode"));
@@ -157,9 +158,10 @@ public class CollapseDatasetWrapper extends AbstractModule {
                 setOptionValueAsParam("out", cl, paramProps, klog);
             }
 
-            // Finally, load up the remaining simple parameters. We'll let GSEA validate these.
+            // Finally, load up the remaining simple parameters. We'll let the tool validate these.
             setOptionValueAsParam("include_only_symbols", cl, paramProps, klog);
             setOptionValueAsParam("mode", cl, paramProps, klog);
+            setOptionValueAsParam("out_file", cl, paramProps, klog);
 
             if (!hasParamFile) paramFileOption = "";
             tool = new CollapseDataset(paramProps, paramFileOption);
