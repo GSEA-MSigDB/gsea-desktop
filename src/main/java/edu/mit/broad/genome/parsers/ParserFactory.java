@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2021 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.genome.parsers;
 
@@ -835,7 +835,7 @@ public class ParserFactory implements Constants {
             save((GeneSetMatrix) pob, file);
         } else if (pob instanceof Report) {
             file = ensureCorrectExt(file, RPT);
-            save((Report) pob, file);
+            save((Report) pob, file, true);
         } else if (pob instanceof EnrichmentDb) {
             file = ensureCorrectExt(file, EDB);
             save((EnrichmentDb) pob, file);
@@ -961,10 +961,6 @@ public class ParserFactory implements Constants {
         if (true) {
             _getCache().add(toFile, gmx, GeneSetMatrix.class);
         }
-    }
-
-    public static void save(Report rpt, File toFile) throws Exception {
-        save(rpt, toFile, true);
     }
 
     public static void save(Report rpt, File toFile, boolean add2cache) throws Exception {

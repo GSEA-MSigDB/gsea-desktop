@@ -10,12 +10,21 @@
 <Configuration>
   <Appenders>
     <Console name="stdout" target="SYSTEM_OUT">
-      <PatternLayout pattern="%-8r [%-6p] - %m%n"/>
+      <PatternLayout pattern="%-8r [%-6p] [thr-%t] - %m%n"/>
     </Console>
+    <RollingFile name="FileLog" fileName="${sys:user.home}/gsea_home/gsea.log"
+                 filePattern="${sys:user.home}/gsea_home/gsea-backup-%1.log">
+      <PatternLayout pattern="%-8r [%-6p] [thr-%t] - %m%n"/>
+      <Policies>
+        <SizeBasedTriggeringPolicy size="2 MB"/>
+      </Policies>
+      <DefaultRolloverStrategy min="1" max="1"/>
+    </RollingFile>
   </Appenders>
   <Loggers>
     <Root level="info" additivity="false">
       <AppenderRef ref="stdout"/>
+      <AppenderRef ref="FileLog"/>
     </Root>
   </Loggers>
 </Configuration>

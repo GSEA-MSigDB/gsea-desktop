@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2021 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.genome.reports.api;
 
@@ -697,10 +697,10 @@ public class ToolReport implements Report {
             }
         }
 
-        if (fTool_opt != null && add2ParserFactory && fReportParamsFile != null && !fReportParamsFile.exists()) {
+        if (fTool_opt != null && fReportParamsFile != null && !fReportParamsFile.exists()) {
             try {
                 // save the parameters always to file
-                ParserFactory.save(this, fReportParamsFile);
+                ParserFactory.save(this, fReportParamsFile, add2ParserFactory);
 
             } catch (Throwable t) {
                 klog.error("Error closing report -- suppressing", t);
