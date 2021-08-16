@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2021 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.genome.reports;
 
@@ -1039,19 +1039,14 @@ public class EnrichmentReports {
         final Vector nessX = edb.getNESS();
 
         Vector fdrs = edb.getFDRs();
-        for (int i = 0; i < fdrs.getSize(); i++) {
-            fdrs.setElement(i, fdrs.getElement(i) * 100);
-        }
 
         final Vector[] yss = new Vector[1];
         yss[0] = fdrs;
 
-        final JFreeChart chart = XChartUtils.scatterOneXManyY("NES vs. Significance",
-                new String[]{"FDR q-value"},
+        final JFreeChart chart = XChartUtils.scatterOneXManyY("NES vs. Significance", new String[]{"FDR q-value"},
                 "NES", // x-axis title
                 "FDR q-value", // y-axis title
-                nessX,
-                yss);
+                nessX, yss);
         chart.setBackgroundPaint(CHART_FRAME_COLOR);
 
         XYPlot plot = (XYPlot) chart.getPlot();
@@ -1073,7 +1068,7 @@ public class EnrichmentReports {
         plot.mapDatasetToRangeAxis(1, 1);
 
         plot = (XYPlot) chart.getPlot();
-        IntervalMarker target = new IntervalMarker(0, 25);
+        IntervalMarker target = new IntervalMarker(0, 0.25);
         target.setLabelAnchor(RectangleAnchor.LEFT);
         target.setPaint(GuiHelper.COLOR_LIGHT_YELLOW);
         plot.addRangeMarker(target, Layer.BACKGROUND);
@@ -1836,5 +1831,4 @@ public class EnrichmentReports {
     
         return chart;
     }
-
 }
