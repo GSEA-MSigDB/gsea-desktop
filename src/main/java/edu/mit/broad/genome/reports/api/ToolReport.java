@@ -934,7 +934,6 @@ public class ToolReport implements Report {
      * report_label.tool_name.timestamp/
      * <p/>
      * Now make a report sub-folder ALWAYS
-     * but name this WITHOUT a timestamp so that callers can figure out easily
      *
      * @param report
      * @param tool

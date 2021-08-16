@@ -266,31 +266,24 @@ public abstract class AbstractTool implements Tool {
             div.addElement(h4);
             P citingGsea = new P();
             StringElement citingGseaText = new StringElement("To cite your use of the GSEA software please reference the following:");
-            LI citingGsea2005 = new LI(HtmlFormat.Links.hyper("Subramanian, A., Tamayo, P., "
-                    + "Mootha, V. K., Mukherjee, S., Ebert, B. L., Gillette, M. A., Paulovich, A., "
-                    + "Pomeroy, S. L., Golub, T. R., Lander, E. S. & Mesirov, J. P. (2005)  "
-                    + "Gene set enrichment analysis: A knowledge-based approach for interpreting genome-wide expression profiles. "
-                    + "Proc. Natl. Acad. Sci. USA 102, 15545-15550.", 
-                    "http://www.pnas.org/cgi/content/abstract/102/43/15545", null));
-            LI citingGsea2003 = new LI(HtmlFormat.Links.hyper("Mootha, V. K., Lindgren, C. M., "
-                    + "Eriksson, K. F., Subramanian, A., Sihag, S., Lehar, J., Puigserver, P., Carlsson, "
-                    + "E., Ridderstrale, M., Laurila, E., et al. (2003). PGC-1alpha-responsive genes involved in oxidative "
-                    + "phosphorylation are coordinately downregulated in human diabetes. Nat Genet 34, 267-273.", 
+            LI citingGsea2005 = new LI(HtmlFormat.Links.hyper("Subramanian, A., Tamayo, P., et al. (2005, PNAS). "
+                    + "Gene set enrichment analysis: A knowledge-based approach for interpreting genome-wide expression profiles. ", 
+                    "https://www.pnas.org/content/102/43/15545", null));
+            LI citingGsea2003 = new LI(HtmlFormat.Links.hyper("Mootha, V. K., Lindgren, C. M., et al. (2003, Nature Genetics). "
+                    + "PGC-1alpha-responsive genes involved in oxidative "
+                    + "phosphorylation are coordinately downregulated in human diabetes.", 
                     "http://www.nature.com/ng/journal/v34/n3/abs/ng1180.html", null));
             citingGsea.addElement(citingGseaText).addElement(new UL().addElement(citingGsea2005).addElement(citingGsea2003));
             div.addElement(citingGsea);
             P citingMSigDB = new P();
-            StringElement citingMSigDBText = new StringElement("To cite your use of the Molecular Signatures Database (MSigDB) "
-                    + "please reference one or more of the following as appropriate, "
+            StringElement citingMSigDBText = new StringElement("For use of the Molecular Signatures Database (MSigDB), "
+                    + "to cite please reference one or more of the following as appropriate, "
                     + "along with the source for the gene set as listed on the gene set page: ");
-            LI citingMSigDB2011 = new LI(HtmlFormat.Links.hyper("Liberzon A, Subramanian A, Pinchback R, "
-                    + "Thorvaldsdóttir H, Tamayo P, Mesirov JP. Molecular signatures database (MSigDB) 3.0. "
-                    + "Bioinformatics. 2011 Jun 15;27(12):1739-40. doi: 10.1093/bioinformatics/btr260."
-                    + "Epub 2011 May 5. PMID: 21546393; PMCID: PMC3106198.", 
+            LI citingMSigDB2011 = new LI(HtmlFormat.Links.hyper("Liberzon A, et al. (Bioinformatics, 2011). "
+                    + "Molecular signatures database (MSigDB) 3.0.", 
                     "https://doi.org/10.1093/bioinformatics/btr260", null));
-            LI citingMSigDB2015 = new LI(HtmlFormat.Links.hyper("Liberzon A, Birger C, Thorvaldsdóttir H, "
-                    + "Ghandi M, Mesirov JP, Tamayo P. The Molecular Signatures Database (MSigDB) hallmark "
-                    + "gene set collection. Cell Syst. 2015 Dec 23;1(6):417-425.", 
+            LI citingMSigDB2015 = new LI(HtmlFormat.Links.hyper("Liberzon A, et al. (Cell Systems 2015). "
+                    + "The Molecular Signatures Database (MSigDB) hallmark gene set collection.", 
                     "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4707969/", null));
             citingMSigDB.addElement(citingMSigDBText).addElement(new UL().addElement(citingMSigDB2011).addElement(citingMSigDB2015));
             div.addElement(citingMSigDB);
