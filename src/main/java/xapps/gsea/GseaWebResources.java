@@ -65,7 +65,7 @@ public class GseaWebResources {
     }
 
     public static String getArrayAnnotationsURL() {
-        return getBroadFTPBase() + "/annotations";
+        return "https://data.broadinstitute.org/gsea-msigdb/msigdb/annotations_versioned/";
     }
 
     public static String getGseaExamplesURL() {
