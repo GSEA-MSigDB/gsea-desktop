@@ -1,10 +1,11 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2021 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.swing;
 
 import edu.mit.broad.genome.Constants;
 import edu.mit.broad.genome.JarResources;
+import edu.mit.broad.xbench.core.api.Application;
 import gnu.trove.TIntArrayList;
 
 import org.apache.log4j.Logger;
@@ -30,14 +31,11 @@ import java.awt.event.*;
  * - central repository of UI related default constants and empty arrays etc.
  *
  * @author Aravind Subramanian
- * @version %I%, %G%
  * @see Ideoms#Helper
  */
 public class GuiHelper implements Constants {
 
-    /**
-     * STANDARD SET OF ICONS USED
-     */
+    // STANDARD SET OF ICONS USED
     public static final Icon ICON_ERROR16 = JarResources.getIcon("Error.gif");
     public static final Icon ICON_START16 = JarResources.getIcon("Run16.png");
     public static final Icon ICON_PAUSE16 = JarResources.getIcon("Pause16.gif");
@@ -46,15 +44,12 @@ public class GuiHelper implements Constants {
 
     public static final Icon ICON_ELLIPSIS = JarResources.getIcon("Ellipsis.png");
 
-    public static final Icon ICON_OPTIONPANE_INFO16 =
-            JarResources.getIcon("Inform16.gif");
+    public static final Icon ICON_OPTIONPANE_INFO16 = JarResources.getIcon("Inform16.gif");
 
     // commonly used wondow size
     public static final Dimension DIMENSION_STANDARD_WINDOW = new Dimension(500, 500);
-    public static final Font FONT_DEFAULT_BOLD = new Font("Helvetica",
-            Font.BOLD, 12);
-    public static final Font FONT_DEFAULT = new Font("Helvetica",
-            Font.PLAIN, 12);
+    public static final Font FONT_DEFAULT_BOLD = new Font("Helvetica", Font.BOLD, 12);
+    public static final Font FONT_DEFAULT = new Font("Helvetica", Font.PLAIN, 12);
 
     public static final Color COLOR_LIGHT_ORANGE = new Color(255, 172, 89);
     public static final Color COLOR_LIGHT_YELLOW = Color.decode("#FFFF99");
@@ -65,18 +60,12 @@ public class GuiHelper implements Constants {
     public static final Color COLOR_VERY_LIGHT_GRAY = new Color(239, 239, 239);
     public static final Color COLOR_DARK_BLUE = new Color(63, 64, 124);
 
-    // -- private statics --
     private static final Logger klog = Logger.getLogger(GuiHelper.class);
     private static final Dimension kPlaceholderSize = new Dimension(200, 50);
 
-    /**
-     * Privatized class constructor.
-     */
-    private GuiHelper() {
-    }
+    private GuiHelper() { }
 
     public static TitledBorder createTitledBorderForComponent(String title) {
-
         Border b = BorderFactory.createLineBorder(Color.BLACK);
         return BorderFactory.createTitledBorder(b, title, TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.CENTER,
                 FONT_DEFAULT, Color.GRAY);
@@ -84,20 +73,17 @@ public class GuiHelper implements Constants {
 
     /**
      * call after setting frames size
-     *
-     * @param comp
      */
     public static void centerComponent(Component comp) {
-
-        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+        Dimension rootSize = Application.getWindowManager().getRootFrame().getSize();
+        Point rootLocation = Application.getWindowManager().getRootFrame().getLocation();
         Dimension size = comp.getSize();
 
-        comp.setLocation((screenSize.width - size.width) / 2,
-                (screenSize.height - size.height) / 2);
+        comp.setLocation(rootLocation.x + (rootSize.width - size.width) / 2,
+                rootLocation.y + (rootSize.height - size.height) / 2);
     }
 
     public static void fill(final JComponent filledcomp, final JComponent filler) {
-
         filledcomp.removeAll();
 
         if (filledcomp instanceof JScrollPane) {
@@ -122,31 +108,22 @@ public class GuiHelper implements Constants {
         return createPlaceholderPanel(kPlaceholderSize, TextIconPair.WAITING_FOR_TASK);
     }
 
-    private static JPanel _createPanel(final Dimension prefsize, final String text,
-                                       final Icon icon) {
-
+    private static JPanel _createPanel(final Dimension prefsize, final String text, final Icon icon) {
         JPanel panel = new JPanel();
-
         panel.setPreferredSize(prefsize);
 
         JLabel label = new JLabel(text);
-
         label.setSize(prefsize);
         label.setIcon(icon);
 
         panel.setLayout(new FlowLayout(FlowLayout.CENTER));
         panel.add(label);
-
         panel.setBackground(Color.white);
-
         return panel;
     }
 
     public static void safeSelect(final JComboBox cb) {
-
-        if (cb.getSelectedIndex() != -1) {
-            return;
-        }
+        if (cb.getSelectedIndex() != -1) { return; }
 
         if (cb.getModel().getSize() > 0) {
             cb.setSelectedIndex(0);
@@ -184,12 +161,8 @@ public class GuiHelper implements Constants {
      * JButton related helper methods
      */
     public static class Button {
-
         /**
          * Button with standard "start" icon and specified text label
-         *
-         * @param text
-         * @return
          */
         public static JButton createStartButton(final String text) {
 
@@ -235,13 +208,12 @@ public class GuiHelper implements Constants {
             });
         }
 
-    }    // End GuiHelper.Button
+    }
 
     /**
      * Table related helper methods
      */
     public static class Table {
-
         public static void setColumnSize(int size, int col, JTable table, boolean alsoMax) {
             // the order of set calls is apparently important
             TableColumn column = table.getColumnModel().getColumn(col);
@@ -253,14 +225,10 @@ public class GuiHelper implements Constants {
             }
             column.setPreferredWidth(size);
         }
-    }    // End GuiHelper.Table
-
+    }
 
     public static class List2 {
-
         public static void setSelected(final Object[] selected_vals, final JList jlist, final DefaultListModel listModel) {
-
-            //Print.outl(listModel);
             if (selected_vals == null) {
                 klog.error("Null arg for selected selected_vals");
                 return;
@@ -278,19 +246,12 @@ public class GuiHelper implements Constants {
 
             jlist.setSelectedIndices(indices.toNativeArray());
         }
-
-
-    } // End class List
+    }
 
     /**
      * JTree related helper methods
      */
     public static class Tree {
-
-        //----------------------------------------------------------------------
-        // Tree expand/collapse all
-        //----------------------------------------------------------------------
-        // {{{ expandAll
         
         /**
          * Expand a tree node and all its child nodes.
@@ -323,5 +284,5 @@ public class GuiHelper implements Constants {
             
             expandAllInternalNodes(tree, model, pathsToDescend);
         }
-    }    // End GuiHelper.Tree
-}        // End GuiHelper
+    }
+}

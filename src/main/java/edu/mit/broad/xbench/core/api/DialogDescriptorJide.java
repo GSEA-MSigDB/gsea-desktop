@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2021 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.xbench.core.api;
 
 import com.jidesoft.dialog.ButtonPanel;
@@ -24,71 +24,21 @@ import java.awt.event.MouseEvent;
  * has some magic to make jlists double clickable
  *
  * @author Aravind Subramanian
- * @version %I%, %G%
  */
 public class DialogDescriptorJide implements DialogDescriptor {
-
     private static final Logger klog = Logger.getLogger(DialogDescriptorJide.class);
 
     private JPanel fMainPanel;
-
     private int fChoosenOption = -1;
-
     private boolean fModal = true;
-
     private JDialog fDialog;
-
     private String fTitle;
-    
     private boolean showLicenseButton = false;
-
     private Action fHelpAction_opt;
-
     private JButton bCancel;
-
     private JButton[] fCustomButtons;
-
     private boolean fAddCancelButton = true;
 
-    /**
-     * Dont provide this form of the constructor
-     * Having no parent component (or the JOptionPane.getRootFrame() one) causes
-     * a modal error wherein a GUI with the model window showing if minimized
-     * appears to hang (the CTRL-DELETE-OPTION / GeneCluster bug that Keith noticed)
-     * Class Constructor.
-     * <p/>
-     * Class Constructor.
-     *
-     * @param inputComp
-     * @param title     Class Constructor.
-     *                  <p/>
-     *                  <p/>
-     *                  Class Constructor.
-     * @param inputComp
-     * @param title     Class Constructor.
-     * @param inputComp
-     * @param title     Class Constructor.
-     * @param inputComp
-     * @param title     Class Constructor.
-     * @param inputComp
-     * @param title     Class Constructor.
-     * @param inputComp
-     * @param title     Class Constructor.
-     * @param inputComp
-     * @param title
-     */
-    /*
-    public DialogDescriptorJide(Component inputComp, String title) {
-        this(inputComp, JOptionPane.getRootFrame(), title);
-    }
-    */
-
-    /**
-     * Class Constructor.
-     *
-     * @param inputComp
-     * @param title
-     */
     public DialogDescriptorJide(final String title, final Component inputComp, final Action help_action_opt) {
         init(help_action_opt);
         jbInit(title, inputComp);
@@ -98,11 +48,9 @@ public class DialogDescriptorJide implements DialogDescriptor {
         this.showLicenseButton = showLicenseButton;
         init(help_action_opt);
         jbInit(title, inputComp);
-      }
-
-    protected DialogDescriptorJide() {
-
     }
+
+    protected DialogDescriptorJide() { }
 
     private void init(final Action help_action_opt) {
         this.fHelpAction_opt = help_action_opt;
@@ -111,28 +59,20 @@ public class DialogDescriptorJide implements DialogDescriptor {
     // must call if the paramless form of the constructor is used
     protected void jbInit(final String title, final Component inputComp) {
         this.fTitle = title;
-
         this.fMainPanel = new JPanel(new BorderLayout(10, 10));
         fMainPanel.add(inputComp, BorderLayout.CENTER);
-
         this.bCancel = new JButton("Cancel");
     }
 
     JPanel botPanel;
-
     protected void _jbInit_jit_buttons() {
         if (botPanel == null) {
             botPanel = new JPanel(new BorderLayout(3, 3));
             botPanel.add(createButtonPanel(), BorderLayout.CENTER);
             botPanel.add(Box.createVerticalStrut(10), BorderLayout.SOUTH); // just for a border
-
             fMainPanel.add(botPanel, BorderLayout.AFTER_LAST_LINE);
-
-            // some buffer in height seems to help
-            //this.setPreferredSize(fPane.getPreferredSize().width, fPane.getPreferredSize().height + 40);
             fMainPanel.setPreferredSize(DD_SIZE);
         }
-
     }
 
     /**
@@ -149,11 +89,8 @@ public class DialogDescriptorJide implements DialogDescriptor {
      * @return One of OK or CANCEL
      */
     public int show() {
-
         _jbInit_jit_buttons();
-
         this.fChoosenOption = DialogDescriptor.CANCEL_OPTION; // default
-
         fDialog = new JDialog(Application.getWindowManager().getRootFrame(), fTitle, fModal);
         fDialog.setModal(fModal);
         //fDialog.setLayout(new BorderLayout(15, 15));
@@ -164,8 +101,6 @@ public class DialogDescriptorJide implements DialogDescriptor {
         GuiHelper.centerComponent(fDialog);
         fDialog.setVisible(true);
         fDialog.requestFocus();
-
-        //klog.debug("Choosen option: " + fChoosenOption);
         return fChoosenOption;
     }
 
@@ -175,15 +110,11 @@ public class DialogDescriptorJide implements DialogDescriptor {
      * Double click / enter on the jlist == a OK button click
      * Simpley closes the dialog and returns void when double clicked (the OK is implied)
      */
-
     public void enableDoubleClickableJList(final JList jl) {
 
         jl.addMouseListener(new MouseAdapter() {
-
             public void mouseClicked(MouseEvent me) {
-
                 Object objs[] = jl.getSelectedValues();
-
                 if (objs == null) {
                     return;
                 }
@@ -191,7 +122,6 @@ public class DialogDescriptorJide implements DialogDescriptor {
                 if (me.getClickCount() == 2) {
                     me.consume();
                     fChoosenOption = OK_OPTION;
-                    // fPane.setValue(new Integer(JOptionPane.OK_OPTION));
                     if (fDialog != null) {
                         fDialog.dispose();    // this somehow auto calls the show method in joptionpane
                     }
@@ -199,8 +129,6 @@ public class DialogDescriptorJide implements DialogDescriptor {
             }
         });
     }
-
-    // -------------------------------------------------------------------------------------------- //
 
     public void setButtons(final JButton[] boptions) {
         this.fCustomButtons = boptions;
@@ -216,11 +144,8 @@ public class DialogDescriptorJide implements DialogDescriptor {
     private ButtonPanel buttonPanel;
 
     private ButtonPanel createButtonPanel() {
-
         this.buttonPanel = new ButtonPanel();
-
         if (fCustomButtons != null) {
-
             for (int i = 0; i < fCustomButtons.length; i++) {
                 buttonPanel.addButton(fCustomButtons[i]);
             }
@@ -235,10 +160,7 @@ public class DialogDescriptorJide implements DialogDescriptor {
                 });
                 buttonPanel.addButton(bCancel, ButtonPanel.CANCEL_BUTTON);
             }
-
         } else { // generic options
-
-            //buttonPanel.setSizeContraint(ButtonPanel.NO_LESS_THAN);
             bOk = new JButton("OK");
             buttonPanel.addButton(bOk, ButtonPanel.AFFIRMATIVE_BUTTON);
             buttonPanel.addButton(bCancel, ButtonPanel.CANCEL_BUTTON);
@@ -285,47 +207,4 @@ public class DialogDescriptorJide implements DialogDescriptor {
 
         return buttonPanel;
     }
-
-    // -------------------------------------------------------------------------------------------- //
-
-}    // End DialogDescriptorJide
-
-/*
-AbstractAction okAction = new AbstractAction(UIManager.getString("OptionPane.okButtonText")) {
-    public void actionPerformed(ActionEvent e) {
-
-        setDialogResult(RESULT_AFFIRMED);
-        setVisible(false);
-        dispose();
-    }
-};
-AbstractAction cancelAction = new AbstractAction(UIManager.getString("OptionPane.cancelButtonText")) {
-    public void actionPerformed(ActionEvent e) {
-        setDialogResult(RESULT_CANCELLED);
-        setVisible(false);
-        dispose();
-    }
-};
-((JButton) buttonPanel.getButtonByName(ButtonNames.OK)).setAction(okAction);
-((JButton) buttonPanel.getButtonByName(ButtonNames.CANCEL)).setAction(cancelAction);
-setDefaultCancelAction(cancelAction);
-setDefaultAction(okAction);
-
-*/
-
-//setDefaultCancelAction(cancelAction);
-//setDefaultAction(okAction);
-
-/*
-public void setPreferredSize(Dimension d) {
-    this.fPrefSize = d;
 }
-
-public Dimension getSize() {
-    return fButtonPanel.getSize();
-}
-
-public void setPreferredSize(int w, int h) {
-    this.fButtonPanel.setPreferredSize(new Dimension(w, h));
-}
-*/
