@@ -220,6 +220,9 @@ public class GseaWrapper extends AbstractModule {
             String geneSetDBListParam = cl.getOptionValue("gmx_list");
             String selectedGeneSetsParam = cl.getOptionValue("selected_gene_sets");
 
+            // Default to 'timestamp' for a blank rnd_seed at the CLI
+            String rndSeed = cl.getOptionValue("rnd_seed", "timestamp");
+
             String altDelim = cl.getOptionValue("altDelim", "");
             if (StringUtils.isNotBlank(altDelim) && altDelim.length() > 1  && !hasParamFile) {
                 String paramName = (gpMode) ? "alt.delim" : "--altDelim";
@@ -240,6 +243,7 @@ public class GseaWrapper extends AbstractModule {
             setParam("gmx", geneSetsSelector, paramProps, klog);
             setParam("res", expressionDataFileName, paramProps, klog);
             setParam("cls", classFileName, paramProps, klog);
+            setParam("rnd_seed", rndSeed, paramProps, klog);
             setParam("rpt_label", rptLabel, paramProps, klog);
             setParam("collapse", collapseParam, paramProps, klog);
             setParam("zip_report", Boolean.toString(createZip), paramProps, klog);

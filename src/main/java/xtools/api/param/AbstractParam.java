@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2021 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package xtools.api.param;
 
 import edu.mit.broad.genome.Constants;
@@ -328,8 +328,6 @@ public abstract class AbstractParam implements Param {
             fHtmlLabel_v3.append("</body></Html>");
         }
 
-        //System.out.println("####\n" + fHtmlLabel.toString() + "/n");
-
         return fHtmlLabel_v3.toString();
     }
 
@@ -350,7 +348,6 @@ public abstract class AbstractParam implements Param {
     }
 
     public String formatForCmdLine() {
-
         StringBuffer buf = new StringBuffer();
 
         String ct = Constants.NA;
@@ -430,7 +427,6 @@ public abstract class AbstractParam implements Param {
      * @return
      */
     public boolean equals(Object obj) {
-
         if (obj instanceof AbstractParam) {
             if (fName.equals(((AbstractParam) obj).fName)) {
                 return true;
@@ -456,12 +452,18 @@ public abstract class AbstractParam implements Param {
      * else return the default (which can be null too)
      */
     public Object getValue() {
-
         if (fValue != null) {
             return fValue;
         } else {
             return fDefault;
         }
+    }
+    
+    /**
+     * Returns the raw internal value, not replaced by the default.
+     */
+    protected Object getValueRaw() {
+        return fValue;
     }
 
     /**
@@ -492,11 +494,7 @@ public abstract class AbstractParam implements Param {
         return fDefault;
     }
 
-    /**
-     * @return
-     */
     public boolean isSpecified() {
-
         boolean defaultAvailable;
         final Object def = getDefault();
 
@@ -510,8 +508,6 @@ public abstract class AbstractParam implements Param {
             defaultAvailable = false;
         }
 
-        //System.out.println(">>> " + getName() + " DEF>" + def + "< defAvailable: " + defaultAvailable + " value: " + fValue);
-
         if (this.fValue == null && !defaultAvailable) { // @todo check impact
             return false;
         } else if (this.fValue != null && this.fValue instanceof Object[] && ((Object[]) fValue).length != 0) {
@@ -524,7 +520,6 @@ public abstract class AbstractParam implements Param {
     }
 
     protected static Integer[] toInts(int[] ints) {
-
         Integer[] fl = new Integer[ints.length];
 
         for (int i = 0; i < ints.length; i++) {
@@ -533,5 +528,4 @@ public abstract class AbstractParam implements Param {
 
         return fl;
     }
-
-}    // End class AbstractParam
+}

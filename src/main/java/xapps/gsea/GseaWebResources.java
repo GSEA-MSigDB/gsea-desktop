@@ -1,12 +1,12 @@
 /*
- * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2021 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package xapps.gsea;
 
 import edu.mit.broad.genome.parsers.AuxUtils;
 
 /**
- * @author Aravind Subramanian
+ * @author Aravind Subramanian, David Eby
  */
 public class GseaWebResources {
 
@@ -76,6 +76,4 @@ public class GseaWebResources {
         gsetName = AuxUtils.getAuxNameOnlyNoHash(gsetName);
         return getGseaBaseURL() + "/msigdb/cards/" + gsetName + ".html";
     }
-
-} // End classes AppWebResources
-
+}

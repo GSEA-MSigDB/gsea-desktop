@@ -1,64 +1,70 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2021 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.math;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
+
+import xtools.api.Tool;
 
 import java.util.Random;
 
 /**
- * @author Aravind Subramanian
+ * @author Aravind Subramanian, David Eby
  */
 public class RandomSeedGenerators {
 
     private static final Logger klog = Logger.getLogger(RandomSeedGenerators.class);
 
-
-    // @maint
-    //@note IMP we dont want the timestamp based param created at startup of the tool
-    // but instead created each time getSeed is called
-    public static RandomSeedGenerator lookup(Object obj) {
-
-        if (obj == null) {
-            throw new NullPointerException("Cannot lookup for null object");
+    public static RandomSeedGenerator lookup(String seedString, Tool tool) {
+        if (StringUtils.isBlank(seedString)) { 
+            throw new IllegalArgumentException("Random seed should not be blank; must be a long integer value or the string 'timestamp'");
         }
-
-        //klog.debug("Doing lookup for obj: " + obj + " class: " + obj.getClass());
-
-        if (obj instanceof RandomSeedGenerators.Timestamp) {
-            klog.debug("Creating a new timestamp based rnd seed");
-            return new RandomSeedGenerators.Timestamp(); // #note need to clone this as it was set at the start
+        if (StringUtils.equalsIgnoreCase(seedString, "timestamp")) {
+            if (tool == null) { return new RandomSeedGenerators.Timestamp(); }
+            return new RandomSeedGenerators.Timestamp(tool.getReport().getTimestamp());
+        } else {
+            try {
+                long seed = Long.parseLong(seedString);
+                return new RandomSeedGenerators.Custom(seed);
+            } catch (NumberFormatException nfe) {
+                // Fall-through to throw exception below...
+            }
         }
-
-        if (obj instanceof RandomSeedGenerator) {
-            return (RandomSeedGenerator) obj;
+        throw new IllegalArgumentException("Invalid random seed: must be a long integer value or the string 'timestamp'");
+    }
+    
+    public static RandomSeedGenerator create(Object obj, Tool tool) {
+        if (obj == null || tool == null) {
+            throw new IllegalArgumentException("Cannot create generator for empty/blank/null tool or seed object");
         }
-
+        
         Long seed;
-
         if (obj instanceof Long) {
             seed = (Long) obj;
         } else {
-
             String s = obj.toString();
+            if (StringUtils.isBlank(s)) {
+                throw new IllegalArgumentException("Random seed should not be blank; must be a long integer value or the string 'timestamp'");
+            }
+            
             if (s.equalsIgnoreCase(RandomSeedGenerator.TIMESTAMP)) {
-                return new RandomSeedGenerators.Timestamp();
+                return new RandomSeedGenerators.Timestamp(tool.getReport().getTimestamp());
             }
 
-            seed = new Long(Long.parseLong(s));
-
+            try {
+                seed = Long.parseLong(s);
+            } catch (NumberFormatException nfe) {
+                throw new IllegalArgumentException("Invalid random seed: must be a long integer value or the string 'timestamp'");
+            }
         }
 
-        klog.debug("Creating a new seed with long: " + seed.longValue());
+        if (klog.isDebugEnabled()) { klog.debug("Creating a new seed with long: " + obj.toString()); }
         return new RandomSeedGenerators.Custom(seed.longValue());
     }
 
-    /**
-     * Standard seed
-     */
     public static class Standard implements RandomSeedGenerator {
-
         private long fSeed;
         private Random fRandom;
 
@@ -78,31 +84,25 @@ public class RandomSeedGenerators {
         public Random getRandom() {
             return fRandom;
         }
-
     }
 
-    /**
-     * Custom specifiable long seed
-     */
     public static class Custom extends Standard {
-
         public Custom(long seed) {
             super(seed);
         }
-
     }
 
-    /**
-     * Standard seed
-     */
     public static class Timestamp implements RandomSeedGenerator {
-
         private Random fRandom;
         private final long timestamp;
 
         public Timestamp() {
             // uses systems current time stamp to init
-            timestamp = System.currentTimeMillis();
+            this(System.currentTimeMillis());
+        }
+
+        public Timestamp(long timestamp) {
+            this.timestamp = timestamp;
             this.fRandom = new Random(timestamp);
         }
 
@@ -118,5 +118,4 @@ public class RandomSeedGenerators {
             return timestamp;
         }
     }
-
 }

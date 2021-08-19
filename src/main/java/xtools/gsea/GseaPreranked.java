@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2020 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2021 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package xtools.gsea;
 
@@ -31,7 +31,7 @@ import org.apache.commons.lang3.StringUtils;
  * This program has several checks to provide nice error messages.
  * Its NOT representative of xtool code!!
  *
- * @author Aravind Subramanian
+ * @author Aravind Subramanian, David Eby
  */
 public class GseaPreranked extends AbstractGseaTool {
 
@@ -78,7 +78,6 @@ public class GseaPreranked extends AbstractGseaTool {
     }
 
     public void execute() throws Exception {
-
         // to preserve memory & for custom indexing
         final ReportIndexState state = new ReportIndexState(true, false, false, createHeader(fRankedListParam));
         startExec(state);
@@ -118,10 +117,9 @@ public class GseaPreranked extends AbstractGseaTool {
 
     private void execute_one(final CollapsedDetails.Ranked fullRL, final GeneSet[] gsets,
                              final HtmlReportIndexPage reportIndexPage) throws Exception {
-
         final int nperms = fNumPermParam.getIValue();
         final int topXSets = fShowDetailsForTopXSetsParam.getIValue();
-        final RandomSeedGenerator rst = fRndSeedTypeParam.createSeed();
+        final RandomSeedGenerator rst = RandomSeedGenerators.lookup((String)fRndSeedTypeParam.getValue(), this);
         final GeneSetCohort.Generator gcohgen = fGcohGenReqdParam.createGeneSetCohortGenerator();
         final int minSize = fGeneSetMinSizeParam.getIValue();
         final int maxSize = fGeneSetMaxSizeParam.getIValue();
@@ -207,19 +205,9 @@ public class GseaPreranked extends AbstractGseaTool {
     }
 
     private void checkIfCollapsedIsEmpty(final CollapsedDetails cd) {
-
-        if (!cd.wasCollapsed) {
-            return;
-        }
-
-        if (cd.getNumRow_orig() == 0) { // huh
-            return;
-        }
-
-        if (cd.getNumRow_collapsed() != 0) {
-            return;
-        }
-
+        if (!cd.wasCollapsed) { return; }
+        if (cd.getNumRow_orig() == 0) { return; } // huh
+        if (cd.getNumRow_collapsed() != 0) { return; }
         throw new BadParamException("The collapsed dataset was empty when used with chip:" + cd.getChipName(), 1005);
     }
 
@@ -232,7 +220,7 @@ public class GseaPreranked extends AbstractGseaTool {
         try {
             if (dsr.isSpecified()) {
                 RankedList rl = dsr.getRankedList();
-                StringBuffer buf = new StringBuffer();
+                StringBuilder buf = new StringBuilder();
                 buf.append("<div id=\"footer\" style=\"width: 905; height: 35\">\n").append(
                         "<h3 style=\"text-align: left\"><font color=\"#808080\">GSEA Report for ").append(
                         "Dataset ").append(rl.getName()).append("</font></h3>\n").append("</div>");

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2020 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2021 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package xtools.gsea;
 
@@ -33,8 +33,7 @@ import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
 
 /**
- * @author Aravind Subramanian
- * @version %I%, %G%
+ * @author Aravind Subramanian, David Eby
  */
 public abstract class AbstractGsea2Tool extends AbstractGseaTool {
 
@@ -57,11 +56,6 @@ public abstract class AbstractGsea2Tool extends AbstractGseaTool {
             new TemplateRandomizerType[]{TemplateRandomizerType.NO_BALANCE,
                     TemplateRandomizerType.EQUALIZE_AND_BALANCE}, true);
 
-    /**
-     * Class constructor
-     *
-     * @param properties
-     */
     protected AbstractGsea2Tool(String defCollapseMode) {
         super(defCollapseMode);
     }
@@ -85,7 +79,7 @@ public abstract class AbstractGsea2Tool extends AbstractGseaTool {
         final RandomSeedGenerator rst = fRndSeedTypeParam.createSeed();
         final DatasetTemplate dt = new DatasetGenerators().extract(fullCd.getDataset(), template);
 
-        log.debug(">>>>> Using samples: " + dt.getDataset().getColumnNames());
+        if (log.isDebugEnabled()) { log.debug(">>>>> Using samples: " + dt.getDataset().getColumnNames()); }
 
         final KSTests tests = new KSTests(getOutputStream());
         

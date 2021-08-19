@@ -182,6 +182,9 @@ public class GseaPrerankedWrapper extends AbstractModule {
             String geneSetDBParam = cl.getOptionValue("gmx");
             String geneSetDBListParam = cl.getOptionValue("gmx_list");
             String selectedGeneSetsParam = cl.getOptionValue("selected_gene_sets");
+            
+            // Default to 'timestamp' for a blank rnd_seed at the CLI
+            String rndSeed = cl.getOptionValue("rnd_seed", "timestamp");
 
             String altDelim = cl.getOptionValue("altDelim", "");
             if (StringUtils.isNotBlank(altDelim) && altDelim.length() > 1 && !hasParamFile) {
@@ -203,6 +206,7 @@ public class GseaPrerankedWrapper extends AbstractModule {
             klog.info("Parameters passing to GSEAPreranked.main:");
             setParam("rnk", rankedListFileName, paramProps, klog);
             setParam("gmx", geneSetsSelector, paramProps, klog);
+            setParam("rnd_seed", rndSeed, paramProps, klog);
             setParam("rpt_label", rptLabel, paramProps, klog);
             setParam("collapse", collapseParam, paramProps, klog);
             setParam("zip_report", Boolean.toString(createZip), paramProps, klog);

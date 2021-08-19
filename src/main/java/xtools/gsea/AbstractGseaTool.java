@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2021 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package xtools.gsea;
 
@@ -18,10 +18,8 @@ import java.util.Set;
 
 /**
  * @author Aravind Subramanian
- * @version %I%, %G%
  */
 public abstract class AbstractGseaTool extends AbstractTool {
-
     // barfs if size is zero or content is zero for all sets
     public static void checkAndBarfIfZeroSets(final GeneSet[] qual_gsets) {
     
@@ -54,7 +52,7 @@ public abstract class AbstractGseaTool extends AbstractTool {
     protected final IntegerParam fGeneSetMaxSizeParam = new IntegerParam("set_max", "Max size: exclude larger sets", "Gene sets larger than this number are EXLCUDED from the analysis", 500, false);
 
     protected final IntegerParam fNumPermParam = new IntegerParam("nperm", "Number of permutations", "The number of permutations", 1000, new int[]{0, 1, 10, 100, 1000}, true);
-    protected final RandomSeedTypeParam fRndSeedTypeParam = new RandomSeedTypeParam(false);
+    protected final RandomSeedTypeParam fRndSeedTypeParam = new RandomSeedTypeParam(this);
 
     protected final ModeReqdParam fCollapseModeParam = new ModeReqdParam("mode", "Collapsing mode for probe sets => 1 gene", "Collapsing mode for probe sets => 1 gene", "Max_probe", new String[]{"Max_probe", "Median_of_probes", "Mean_of_probes", "Sum_of_probes"});
     protected final FeatureSpaceReqdParam fFeatureSpaceParam;
@@ -64,11 +62,6 @@ public abstract class AbstractGseaTool extends AbstractTool {
     protected final NormModeReqdParam fNormModeParam = new NormModeReqdParam();
     protected final GeneSetScoringTableReqdParam fGcohGenReqdParam = new GeneSetScoringTableReqdParam();
 
-    /**
-     * Class constructor
-     *
-     * @param properties
-     */
     protected AbstractGseaTool(String defFeatureSpace) {
         fFeatureSpaceParam = new FeatureSpaceReqdParam(defFeatureSpace);
     }
@@ -95,16 +88,13 @@ public abstract class AbstractGseaTool extends AbstractTool {
 
     protected abstract Param[] getAdditionalParams();
 
-    protected void doAdditionalParams() {
-    }
+    protected void doAdditionalParams() { }
 
     public void declareParams() {
-
         fParamSet.addParamPseudoReqd(fChipParam);
         this.fGeneSetMatrixParam = new GeneSetMatrixMultiChooserParam(true);
 
         // reqd
-
         fParamSet.addParam(fGeneSetMatrixParam);
         fParamSet.addParam(fNumPermParam);
 
@@ -129,12 +119,11 @@ public abstract class AbstractGseaTool extends AbstractTool {
     }
 
     protected Dataset uniquize(final Dataset ds) {
-
         final GeneSet gset = ds.getRowNamesGeneSet();
         if (gset.getNumMembers() == ds.getNumRow()) {
             return ds;
         } else {
-            StringBuffer buf = new StringBuffer();
+            StringBuilder buf = new StringBuilder();
             buf.append("There were duplicate row identifiers in the specified dataset. One id was arbitarilly choosen. Details are below");
             buf.append("\nGenerally, this is OK, but if you want to avoid this automagic, edit your dataset so that all row ids are unique\n");
             buf.append('\n');
@@ -142,7 +131,7 @@ public abstract class AbstractGseaTool extends AbstractTool {
             buf.append("# of row UNIQUE ids in original dataset: ").append(gset.getNumMembers()).append('\n');
             buf.append("# The duplicates were\n");
 
-            Set all = new HashSet();
+            Set<String> all = new HashSet<>();
             for (int i = 0; i < ds.getNumRow(); i++) {
                 String member = ds.getRowName(i);
                 if (all.contains(member)) {
@@ -155,17 +144,14 @@ public abstract class AbstractGseaTool extends AbstractTool {
             fReport.addComment(buf.toString());
             return new DatasetGenerators().extractRows(ds, gset);
         }
-
     }
 
-
     protected RankedList uniquize(final RankedList rl) {
-
         final GeneSet gset = new GeneSet(rl.getName(), rl.getName(), rl.getRankedNames(), true);
         if (gset.getNumMembers() == rl.getSize()) {
             return rl;
         } else {
-            StringBuffer buf = new StringBuffer();
+            StringBuilder buf = new StringBuilder();
             buf.append("There were duplicate row identifiers in the specified ranked list. One id was arbitarilly choosen. Details are below. ");
             buf.append("\nGenerally, this is OK, but if you want to avoid this automagic, edit your ranked list so that all row ids are unique\n");
             buf.append('\n');
@@ -173,7 +159,7 @@ public abstract class AbstractGseaTool extends AbstractTool {
             buf.append("# of row UNIQUE ids in original dataset: ").append(gset.getNumMembers()).append('\n');
             buf.append("# The duplicates were\n<br><pre>");
 
-            Set all = new HashSet();
+            Set<String> all = new HashSet<>();
             for (int i = 0; i < rl.getSize(); i++) {
                 String member = rl.getRankName(i);
                 if (all.contains(member)) {
@@ -188,5 +174,4 @@ public abstract class AbstractGseaTool extends AbstractTool {
             return rl.extractRanked(gset);
         }
     }
-
-}    // End AbstractGseaTool
+}
