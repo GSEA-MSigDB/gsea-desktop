@@ -38,7 +38,7 @@ import java.util.*;
 /**
  * Interface for a runnable Tool.
  *
- * @author Aravind Subramanian
+ * @author Aravind Subramanian, David Eby
  */
 public abstract class AbstractTool implements Tool {
 
@@ -65,9 +65,7 @@ public abstract class AbstractTool implements Tool {
 
     protected static final Object[] EMPTY_OBJECTS = new Object[]{};
     
-    /**
-     * ----------- PARAMETERS COMMON TO ALL TOOLS -------------
-     */
+    // ----------- PARAMETERS COMMON TO ALL TOOLS -------------
     protected final BooleanParam fHelpParam = new BooleanParam("help",
             "Usage information on the tool", false);
 
@@ -76,14 +74,9 @@ public abstract class AbstractTool implements Tool {
     private ReportLabelParam fRptLabelParam;
     protected ToolReport fReport;
 
-    /**
-     * @maint If the standard params above are updated, this var needs attention
-     */
+    // @maint If the standard params above are updated, this var needs attention
     private static int SHARED_PARAM_CNT = 4;
 
-    /**
-     * Class constructor
-     */
     protected AbstractTool() {
         this("dummy");
     }
@@ -266,24 +259,19 @@ public abstract class AbstractTool implements Tool {
             div.addElement(h4);
             P citingGsea = new P();
             StringElement citingGseaText = new StringElement("To cite your use of the GSEA software please reference the following:");
-            LI citingGsea2005 = new LI(HtmlFormat.Links.hyper("Subramanian, A., Tamayo, P., et al. (2005, PNAS). "
-                    + "Gene set enrichment analysis: A knowledge-based approach for interpreting genome-wide expression profiles. ", 
+            LI citingGsea2005 = new LI(HtmlFormat.Links.hyper("Subramanian, A., Tamayo, P., et al. (2005, PNAS). ", 
                     "https://www.pnas.org/content/102/43/15545", null));
-            LI citingGsea2003 = new LI(HtmlFormat.Links.hyper("Mootha, V. K., Lindgren, C. M., et al. (2003, Nature Genetics). "
-                    + "PGC-1alpha-responsive genes involved in oxidative "
-                    + "phosphorylation are coordinately downregulated in human diabetes.", 
+            LI citingGsea2003 = new LI(HtmlFormat.Links.hyper("Mootha, V. K., Lindgren, C. M., et al. (2003, Nature Genetics). ", 
                     "http://www.nature.com/ng/journal/v34/n3/abs/ng1180.html", null));
             citingGsea.addElement(citingGseaText).addElement(new UL().addElement(citingGsea2005).addElement(citingGsea2003));
             div.addElement(citingGsea);
             P citingMSigDB = new P();
             StringElement citingMSigDBText = new StringElement("For use of the Molecular Signatures Database (MSigDB), "
-                    + "to cite please reference one or more of the following as appropriate, "
+                    + "to cite please reference <br/ >one or more of the following as appropriate, "
                     + "along with the source for the gene set as listed on the gene set page: ");
-            LI citingMSigDB2011 = new LI(HtmlFormat.Links.hyper("Liberzon A, et al. (Bioinformatics, 2011). "
-                    + "Molecular signatures database (MSigDB) 3.0.", 
+            LI citingMSigDB2011 = new LI(HtmlFormat.Links.hyper("Liberzon A, et al. (Bioinformatics, 2011). ", 
                     "https://doi.org/10.1093/bioinformatics/btr260", null));
-            LI citingMSigDB2015 = new LI(HtmlFormat.Links.hyper("Liberzon A, et al. (Cell Systems 2015). "
-                    + "The Molecular Signatures Database (MSigDB) hallmark gene set collection.", 
+            LI citingMSigDB2015 = new LI(HtmlFormat.Links.hyper("Liberzon A, et al. (Cell Systems 2015). ", 
                     "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4707969/", null));
             citingMSigDB.addElement(citingMSigDBText).addElement(new UL().addElement(citingMSigDB2011).addElement(citingMSigDB2015));
             div.addElement(citingMSigDB);
@@ -324,20 +312,14 @@ public abstract class AbstractTool implements Tool {
 
     // TODO: parameterize the Class with the correct generic type
     private int countParamFields(Class cl) {
-        //log.debug("Counting for class name: " + cl.getName());
         Field[] fields = cl.getDeclaredFields();
         int paramcnt = 0;
 
         for (int i = 0; i < fields.length; i++) {
-
-            //log.debug(("name = " + fields[i].getName() + " " + fields[i].getDeclaringClass() + " class: " + fields[i].getType()));
             Class fc = fields[i].getType();
             boolean isParam = Param.class.isAssignableFrom(fc);
 
-            if (isParam) {
-                paramcnt++;
-                //log.debug("Param: " + fields[i].getName());
-            }
+            if (isParam) { paramcnt++; }
         }
 
         return paramcnt;
@@ -354,7 +336,6 @@ public abstract class AbstractTool implements Tool {
      * Only supports 1 additional subclass!!
      */
     protected void ensureAllDeclaredWereAdded() {
-
         int paramCnt = SHARED_PARAM_CNT;
 
         paramCnt += countParamFields(this.getClass());
@@ -375,12 +356,9 @@ public abstract class AbstractTool implements Tool {
 
             throw new IllegalStateException(buf.toString());
         }
-
     }
 
-    public boolean isHelpMode() {
-        return fHelpMode;
-    }
+    public boolean isHelpMode() { return fHelpMode; }
 
     public ParamSet getParamSet() {
         fParamSet.sort();
@@ -410,16 +388,13 @@ public abstract class AbstractTool implements Tool {
     }
 
     protected static void tool_main(final AbstractTool tool) {
-
         if (tool == null) {
             throw new IllegalArgumentException("Param tool cannot be null");
         }
 
         boolean was_error = false;
         try {
-
             tool.execute();
-
         } catch (Throwable t) {
             // if the rpt dir was made try to rename it so that easily identifiable
             was_error = true;
@@ -473,11 +448,8 @@ public abstract class AbstractTool implements Tool {
         // If they dont match (i.e all gsets are 0) using the chip to map the gsets
         // in two ways:
         // 1) from their source format to gene symbols
-        public static GeneSet[] getGeneSets(final Object ds_or_rl,
-                                            GeneSet[] gsets,
-                                            final IntegerParam geneSetMinSizeParam,
+        public static GeneSet[] getGeneSets(final Object ds_or_rl, GeneSet[] gsets, final IntegerParam geneSetMinSizeParam,
                                             final IntegerParam geneSetMaxSizeParam) throws Exception {
-
             if (geneSetMaxSizeParam.getIValue() < geneSetMinSizeParam.getIValue()) {
                 throw new IllegalArgumentException("Max size cannot be less than min size");
             }
@@ -512,7 +484,6 @@ public abstract class AbstractTool implements Tool {
         }
 
         private static GeneSet[] removeAllZeroMemberSets(final GeneSet[] gsets) {
-
             // Finally remove all 0 size gene sets (if min is 0 these will still be in there)
             List<GeneSet> list = new ArrayList<GeneSet>();
             for (int i = 0; i < gsets.length; i++) {
