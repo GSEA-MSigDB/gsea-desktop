@@ -1,10 +1,11 @@
 /*
- * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2021 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.genome.parsers;
 
 import edu.mit.broad.genome.Constants;
 import edu.mit.broad.genome.NotImplementedException;
+import edu.mit.broad.genome.math.Matrix;
 import edu.mit.broad.genome.objects.PersistentObject;
 import edu.mit.broad.genome.utils.ClassUtils;
 import org.apache.log4j.Logger;
@@ -16,16 +17,16 @@ import java.util.*;
  * Base class for Parser implementations.
  *
  * @author Aravind Subramanian
- * @version %I%, %G%
+ * @author David Eby
  */
 public abstract class AbstractParser implements Parser {
-
+    //TODO: let's just have ONE Logger, and use the actual subclass
     protected final Logger log;
-
     protected static final Logger klog = Logger.getLogger(AbstractParser.class);
 
     protected final Comment fComment;
 
+    // TODO: we ought to represent this instead as a Generic type parameter on AbstractParser instead.
     private Class fRepClass;
 
     private String fRepClassName;
@@ -39,9 +40,6 @@ public abstract class AbstractParser implements Parser {
 
     private boolean fSilentMode;
 
-    /**
-     * Class Constructor.
-     */
     protected AbstractParser(Class repClass) {
         if (repClass == null) {
             throw new IllegalArgumentException("Parameter repClass cannot be null");
@@ -171,12 +169,6 @@ public abstract class AbstractParser implements Parser {
                 fComment.add(currLine);
             }
             currLine = bin.readLine();
-
-            /*
-            if (currLine != null) {
-                currLine = currLine.trim();
-            }
-            */
         }
 
         return currLine;
@@ -247,25 +239,7 @@ public abstract class AbstractParser implements Parser {
             _exportPw.flush();
             _exportPw.close();
         }
-
-        //log.info("Done exporting " + fRepClassName);
     }
-
-    //protected void startImport() {
-    // dont check as iffy
-    /*
-    if (_file == null) {
-        throw new IllegalStateException("Parameter _file cannot be null");
-    }
-
-    if (_objname == null) {
-        throw new IllegalStateException("Parameter _objname cannot be null");
-    }
-    */
-
-    //  log.info("Importing: " + _importObjName + " from: " + _importFile);
-
-    //}
 
     protected void startImport(String sourcepath) {
         if (!fSilentMode) {
@@ -274,17 +248,59 @@ public abstract class AbstractParser implements Parser {
         }
     }
 
-
     protected void doneImport() {
         //log.info("Done importing: " + fRepClassName);
     }
 
+    protected float parseStringToFloat(String s, boolean correctDoubleQuotes) {
+        s = s.trim();
+        if (s.length() == 0) {
+            return Float.NaN;
+        }
+        try {
+            return Float.parseFloat(s);
+        } catch (NumberFormatException nfe) {
+            if (s.equalsIgnoreCase(Constants.NA)) { return Float.NaN; }
+            // Before failing, check for a double-quoted value (if indicated)
+            if (correctDoubleQuotes && s.startsWith("\"") && s.endsWith("\"")  && s.length() > 1) {
+                return parseStringToFloat(s.substring(1, s.length()-1), false);
+            }
+            
+            throw nfe;
+        }
+    }
+    
+    protected String parseRowname(String rowname, int i, String currLine) throws ParserException {
+        if (rowname.length() == 0) {
+            throw new ParserException("Bad rowname - cant be empty at: " + i + " >" + currLine);
+        } else {
+            // Strip double-quotes if present (but only if present on *both* ends and not the only character!)
+            if (rowname.startsWith("\"") && rowname.endsWith("\"") && rowname.length() > 1) {
+                rowname = rowname.substring(1, rowname.length()-1).trim();
+                if (rowname.length() == 0) {
+                    throw new ParserException("Bad rowname - cant be empty at: " + i + " >" + currLine);
+                }
+            }
+        }
+        return rowname;
+    }
 
+    protected void parseFieldsIntoFloatMatrix(List<String> fields, int row, int startingField, Matrix matrix) {
+        for (int f = startingField, coln = 0; f < fields.size(); f++) {
+            String s = fields.get(f);
+            try {
+                matrix.setElement(row, coln++, parseStringToFloat(s, true));
+            } catch (NumberFormatException nfe) {
+                log.error("Could not parse '" + s + "' as a floating point number.");
+                throw nfe;
+            }
+        }
+    }
+    
     protected class Comment {
+        private List<String> fLines;
 
-        private List fLines;
-
-        private Map fKeyValues;
+        private Map<String, String> fKeyValues;
 
         protected void add(String s) {
             if (s == null || s.length() == 0) {
@@ -299,7 +315,7 @@ public abstract class AbstractParser implements Parser {
 
             if (s.indexOf('=') != -1) {
                 if (fKeyValues == null) {
-                    fKeyValues = new HashMap();
+                    fKeyValues = new HashMap<>();
                 }
                 String[] fields = ParseUtils.string2strings(s, "= ");
 
@@ -312,7 +328,7 @@ public abstract class AbstractParser implements Parser {
                 }
             } else {
                 if (fLines == null) {
-                    fLines = new ArrayList();
+                    fLines = new ArrayList<>();
                 }
                 fLines.add(s);
             }
@@ -323,21 +339,20 @@ public abstract class AbstractParser implements Parser {
                 return "";
             }
 
-            StringBuffer buf = new StringBuffer();
+            StringBuilder buf = new StringBuilder();
 
             if (fLines != null && !fLines.isEmpty()) {
                 for (int i = 0; i < fLines.size(); i++) {
-                    buf.append(fLines.get(i).toString()).append('\n');
+                    buf.append(fLines.get(i)).append('\n');
                 }
             }
 
             if (fKeyValues != null && !fKeyValues.isEmpty()) {
-                buf.append(fKeyValues.toString());
+                buf.append(fKeyValues);
             }
 
             return buf.toString();
         }
-
     }
 
     protected static List<String> string2stringsV2(String s, int expectedLen) throws IllegalArgumentException {
@@ -404,7 +419,6 @@ public abstract class AbstractParser implements Parser {
         }
     }
 
-
     protected static int indexOf(final String s, final List list, final boolean barfIfMising) throws ParserException {
         int index = list.indexOf(s);
         if (index == -1 && barfIfMising) {
@@ -412,5 +426,4 @@ public abstract class AbstractParser implements Parser {
         }
         return index;
     }
-
-}    // End AbstractParser
+}
