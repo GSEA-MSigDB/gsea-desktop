@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2020 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2021 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.genome.math;
 
@@ -9,23 +9,21 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
-import java.util.function.BiFunction;
 
 /**
  * Functionally extends java.lang.Math with additional math related methods.
  *
  * @author Michael Angelo (CMath in GeneCluster)
  * @author Aravind Subramanian
+ * @author David Eby
  */
 public class XMath {
 
     private static final Logger klog = Logger.getLogger(XMath.class);
 
-    private XMath() {
-    }
+    private XMath() { }
 
     public static boolean isAscending(int[] ints) {
-
         for (int i = 0; i < ints.length - 1; i++) {
             int thisValue = ints[i];
             int nextValue = ints[i + 1];
@@ -46,7 +44,6 @@ public class XMath {
     }
 
     public static float getFWER(final float realScore, final Matrix rndScores, final boolean pos) {
-
         Vector best_of_each_perm;
         if (pos) {
             best_of_each_perm = rndScores.getColumnMaxes();
@@ -65,7 +62,6 @@ public class XMath {
     }
 
     public static float getFWERLessThan(final float realScore, final Matrix rndScores) {
-
         Vector lowest_of_each_perm = new Vector(rndScores.getNumCol());
         for (int c = 0; c < rndScores.getNumCol(); c++) {
             lowest_of_each_perm.setElement(c, rndScores.getColumnV(c).min());
@@ -87,29 +83,15 @@ public class XMath {
     public static boolean isSameSign(final float a, final float b) {
         if (a < 0 && b < 0) {
             return true;
-        } else if (a == 0 && b == 0) {
-            return true;
         } else if (a > 0 && b > 0) {
             return true;
+        } else if (a == 0 && b == 0) {
+            return true;
         }
-
         return false;
     }
 
-    public static boolean isEven(final int x) {
-
-        if ((float) (x / 2) == x / (float) 2.0) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
     public static boolean isPositive(final float x) {
-        return x >= 0;
-    }
-
-    public static boolean isPositive(final double x) {
         return x >= 0;
     }
 
@@ -117,37 +99,21 @@ public class XMath {
         return x <= 0;
     }
 
-    public static int[] toIndices(final int maxIndex, final boolean inclusive) {
+    private static int[] toIndices(final int maxIndex) {
         if (maxIndex <= 0) {
             throw new IllegalArgumentException("Specified max for indices must be more than 0, got: " + maxIndex);
         }
 
-        int till;
-        if (inclusive) {
-            till = maxIndex + 1;
-        } else {
-            till = maxIndex;
-        }
-
-        int[] inds = new int[till];
-        for (int i = 0; i < till; i++) {
+        int[] inds = new int[maxIndex];
+        for (int i = 0; i < maxIndex; i++) {
             inds[i] = i;
         }
-
         return inds;
     }
 
     /**
      * uses the common xmath random seed
      *
-     * @param num
-     * @return
-     */
-    public static int[] randomizeWithoutReplacement(final int num, final RandomSeedGenerator rsgen) {
-        return randomizeWithoutReplacement(num, rsgen.getRandom());
-    }
-
-    /**
      * IMP num elements are returned AND the random numbers fall b/w 0 and num-1
      *
      * @see sampleWithoutReplacement for a diff way
@@ -161,7 +127,9 @@ public class XMath {
      *      jvm invoc to jvm invoc. See link below for more.
      * @see http://mindprod.com/gotchas.html#RANDOM
      */
-    public static int[] randomizeWithoutReplacement(final int num, final Random rnd) {
+    public static int[] randomizeWithoutReplacement(final int num, final RandomSeedGenerator rsgen) {
+        final Random rnd = rsgen.getRandom();
+
         // TODO: evaluate performance of using a Set
         List<Integer> seen = new ArrayList<Integer>(num);
         int[] inds = new int[num];
@@ -186,24 +154,19 @@ public class XMath {
         return inds;
     }
 
-    public static int[] randomlySampleWithoutReplacement(final int numRndNeeded, final int highestrandomnumExclusive, final RandomSeedGenerator rsgen) {
-        return randomlySampleWithoutReplacement(numRndNeeded, highestrandomnumExclusive, rsgen.getRandom());
-    }
-
     /**
      * @param numRndNeeded       number of random picks nmeeded
      * @param maxRndNumExclusive range -> picked from 0 to highestrandomnum-1
-     * @param rnd
-     * @return
      */
-    public static int[] randomlySampleWithoutReplacement(final int numRndNeeded, final int maxRndNumExclusive, final Random rnd) {
-
-        if (maxRndNumExclusive == numRndNeeded) { // no random picking needed, we have exactly as many as asked for
-            return XMath.toIndices(maxRndNumExclusive, false);
+    // TODO: refactor with the above code
+    public static int[] randomlySampleWithoutReplacement(final int numRndNeeded, final int highestrandomnumExclusive, final RandomSeedGenerator rsgen) {
+        final Random rnd = rsgen.getRandom();
+        if (highestrandomnumExclusive == numRndNeeded) { // no random picking needed, we have exactly as many as asked for
+            return XMath.toIndices(highestrandomnumExclusive);
         }
 
-        if (numRndNeeded > maxRndNumExclusive) {
-            throw new IllegalArgumentException("Cannot pick more numbers (no replacement) numRndNeeded: " + numRndNeeded + " than max possible number maxRndNumExclusive: " + maxRndNumExclusive);
+        if (numRndNeeded > highestrandomnumExclusive) {
+            throw new IllegalArgumentException("Cannot pick more numbers (no replacement) numRndNeeded: " + numRndNeeded + " than max possible number maxRndNumExclusive: " + highestrandomnumExclusive);
         }
 
         // TODO: evaluate performance of using a Set
@@ -212,7 +175,7 @@ public class XMath {
         int cnt = 0;
 
         for (int i = 0; i < numRndNeeded;) {
-            int r = rnd.nextInt(maxRndNumExclusive);
+            int r = rnd.nextInt(highestrandomnumExclusive);
 
             if (seen.contains(r)) {
                 continue;
@@ -230,124 +193,58 @@ public class XMath {
         return inds;
     }
 
-    public static double getPValue(final float score, final float[] values) {
-
+    public static double getPValue(final float score, final Vector values) {
+        final float[] values1 = values.elementData;
         int cntmore = 0;
-
-        for (int i = 0; i < values.length; i++) {
-            if (values[i] > score) {
+        for (int i = 0; i < values1.length; i++) {
+            if (values1[i] > score) {
                 cntmore++;
             }
         }
-
-        //log.debug("Number more than score=" + score + " is=" + cntmore);
-
-        return ((double) cntmore) / (double) values.length;
-    }
-
-    public static double getPValueLessThan(final float score, final float[] values) {
-
-        int cntless = 0;
-
-        for (int i = 0; i < values.length; i++) {
-            if (values[i] < score) {
-                cntless++;
-            }
-        }
-
-        return ((double) cntless) / (double) values.length;
-    }
-
-    public static double getPValue(final float score, final Vector values) {
-        return getPValue(score, values.elementData);
+        return ((double) cntmore) / (double) values1.length;
     }
 
     public static double getPValueLessThan(final float score, final Vector values) {
-        return getPValueLessThan(score, values.elementData);
+        final float[] values1 = values.elementData;
+        int cntless = 0;
+        for (int i = 0; i < values1.length; i++) {
+            if (values1[i] < score) {
+                cntless++;
+            }
+        }
+        return ((double) cntless) / (double) values1.length;
     }
 
     /**
      * If the score is negative look to the left (i.e count how many less)
      * If the score is positive look to the right (i.e count how many are less)
      *
-     * @param score
-     * @param values
-     * @return
+     * @param realEs
      */
-    public static double getPValueTwoTailed(final float score, final float[] values) {
-
+    public static float getPValueTwoTailed_pos_neg_seperate(float realEs, Vector rndEs) {
+        Vector ex = rndEs.extract(realEs, ScoreMode.POS_AND_NEG_SEPERATELY);
+        final float score = realEs;
+        final Vector values = ex;
+        final float[] values1 = values.elementData;
         int cnt = 0;
-
+        
         if (score >= 0) {
-            for (int i = 0; i < values.length; i++) {
-                if (values[i] > score) {
+            for (int i = 0; i < values1.length; i++) {
+                if (values1[i] > score) {
                     cnt++;
                 }
             }
         } else {
-            for (int i = 0; i < values.length; i++) {
-                if (values[i] < score) {
+            for (int i = 0; i < values1.length; i++) {
+                if (values1[i] < score) {
                     cnt++;
                 }
             }
-        }
-
-        //log.debug("Number less/more than score=" + score + " is=" + cnt);
-
-        return ((double) cnt) / (double) values.length;
-    }
-
-    public static double getPValueTwoTailed(final float score, final Vector values) {
-        return getPValueTwoTailed(score, values.elementData);
-    }
-
-    public static float getPValueTwoTailed_pos_neg_seperate(float realEs, Vector rndEs) {
-        Vector ex = rndEs.extract(realEs, ScoreMode.POS_AND_NEG_SEPERATELY); // @note isnt this redundant
-        return (float) XMath.getPValueTwoTailed(realEs, ex);
-    }
-
-
-    public static float max(final float[] values) {
-        if (values.length == 0) {
-            klog.warn("FIX ME Zero length array");
-
-            //return -999f;
-
-            throw new IllegalArgumentException("Zero length array not allowed");
-        }
-
-        float max = values[0];
-        for (int i = 0; i < values.length; i++) {
-            if (max < values[i]) {
-                max = values[i];
-            }
-        }
-
-        return max;
-    }
-
-    public static int min(final int a, final int b) {
-        return min(new int[]{a, b});
-    }
-
-    public static int min(final int[] values) {
-
-        if (values.length == 0) {
-            throw new IllegalArgumentException("Zero length array not allowed");
-        }
-
-        int min = values[0];
-        for (int i = 0; i < values.length; i++) {
-            if (min > values[i]) {
-                min = values[i];
-            }
-        }
-
-        return min;
+        } // @note isnt this redundant
+        return (float) (((double) cnt) / (double) values1.length);
     }
 
     private static void enforceEqualSize(final Vector x, final Vector y) {
-
         if (x.getSize() != y.getSize()) {
             throw new IllegalArgumentException("Vector lengths not equal x=" + x.getSize()
                     + " and y=" + y.getSize());
@@ -360,7 +257,6 @@ public class XMath {
         }
 
         int size = vss[0].getSize();
-
         for (int i = 0; i < vss.length; i++) {
             if (vss[i].getSize() != size) {
                 throw new IllegalArgumentException("Vector lengths not equal first=" + size
@@ -370,7 +266,6 @@ public class XMath {
     }
 
     private static void enforceEqualSize(final float[] x, final float[] y) {
-
         if (x.length != y.length) {
             throw new IllegalArgumentException("Vector lengths not equal x=" + x.length
                     + " and y=" + y.length);
@@ -382,47 +277,41 @@ public class XMath {
      * No parameters.
      */
     public static double euclidean(final Vector x, final Vector y) {
-
         enforceEqualSize(x, y);
 
-        float sum = 0;
-
-        for (int i = 0; i < x.getSize(); i++) {
-            float diff = x.getElement(i) - y.getElement(i);
-
-            sum += diff * diff;
+        final int size = x.getSize();
+        int nonMissingSize = size;
+        float sum = 0f;
+        for (int i = 0; i < size; i++) {
+            float xVal = x.getElement(i);
+            float yVal = y.getElement(i);
+            if (Float.isNaN(xVal) || Float.isNaN(yVal)) { nonMissingSize--; }
+            else {
+                float diff = xVal - yVal;
+                sum += diff * diff;
+            }
         }
-
-        return Math.sqrt(sum);
+        return (nonMissingSize == 0) ? Double.NaN : Math.sqrt(sum);
     }
 
     /**
      * dist <- sum(abs(x-y))
      * No parameters.
      */
-    public static double manhatten(final Vector x, final Vector y) {
-
+    public static double manhattan(final Vector x, final Vector y) {
         enforceEqualSize(x, y);
 
+        final int size = x.getSize();
+        int nonMissingSize = size;
         double sum = 0.0;
-
-        for (int i = 0; i < x.getSize(); i++) {
-            sum += Math.abs(x.getElement(i) - y.getElement(i));
+        for (int i = 0; i < size; i++) {
+            float xVal = x.getElement(i);
+            float yVal = y.getElement(i);
+            if (Float.isNaN(xVal) || Float.isNaN(yVal)) { nonMissingSize--;}
+            else { sum += Math.abs(xVal - yVal); }
         }
 
-        return sum;
-    }
-
-    public static double meansdiff(final Vector x, final Vector y) {
-        return x.mean() - y.mean();
-    }
-
-    public static double meansratio(final Vector x, final Vector y) {
-        return x.mean() / y.mean();
-    }
-
-    public static double mediansratio(final Vector x, final Vector y) {
-        return x.median() / y.median();
+        return (nonMissingSize == 0) ? Double.NaN : sum;
     }
 
     public static double meanOrMedianRatio(final Vector x, final Vector y, final boolean useMean) {
@@ -433,24 +322,18 @@ public class XMath {
         return x.meanOrMedian(useMean) - y.meanOrMedian(useMean);
     }
 
-    public static double mediansdiff(final Vector x, final Vector y) {
-        return x.median() - y.median();
-    }
-
     public static Vector medianVector(final Vector[] vss) {
         enforceEqualSize(vss);
         int size = vss[0].getSize();
         float[] medians = new float[size];
 
         for (int i = 0; i < size; i++) {
-            Vector v = new Vector(vss.length);
+            float[] v1 = new float[vss.length];
             for (int c = 0; c < vss.length; c++) {
-                v.setElement(c, vss[c].getElement(i));
+                v1[i] = vss[c].getElement(i);
             }
-
-            medians[i] = (float) v.median();
+            medians[i] = median(v1);
         }
-
         return new Vector(medians);
     }
 
@@ -460,14 +343,15 @@ public class XMath {
         float[] means = new float[size];
 
         for (int i = 0; i < size; i++) {
-            Vector v = new Vector(vss.length);
+            int nonMissingSize = size;
+            float runningSum = 0.0f;
             for (int c = 0; c < vss.length; c++) {
-                v.setElement(c, vss[c].getElement(i));
+                float value = vss[c].getElement(i);
+                if (!Float.isNaN(value)) { runningSum += value; }
+                else { nonMissingSize--; }
             }
-
-            means[i] = (float) v.mean();
+            means[i] = (nonMissingSize == 0) ? Float.NaN : runningSum / nonMissingSize;
         }
-
         return new Vector(means);
     }
 
@@ -477,14 +361,15 @@ public class XMath {
         float[] maxs = new float[size];
 
         for (int i = 0; i < size; i++) {
-            Vector v = new Vector(vss.length);
+            int nonMissingSize = size;
+            float max = Float.NEGATIVE_INFINITY;
             for (int c = 0; c < vss.length; c++) {
-                v.setElement(c, vss[c].getElement(i));
+                float value = vss[c].getElement(i);
+                if (Float.isNaN(value)) { nonMissingSize--; }
+                else if (max < value) { max = value; }
             }
-
-            maxs[i] = v.max();
+            maxs[i] = (nonMissingSize == 0) ? Float.NaN : max;
         }
-
         return new Vector(maxs);
     }
 
@@ -494,56 +379,102 @@ public class XMath {
         float[] sums = new float[size];
 
         for (int i = 0; i < size; i++) {
-            Vector v = new Vector(vss.length);
+            int nonMissingSize = size;
+            float runningSum = 0.0f;
             for (int c = 0; c < vss.length; c++) {
-                v.setElement(c, vss[c].getElement(i));
+                float value = vss[c].getElement(i);
+                if (!Float.isNaN(value)) { runningSum += value; }
+                else { nonMissingSize--; }
             }
-
-            sums[i] = (float) v.sum();
+            sums[i] = (nonMissingSize == 0) ? Float.NaN : runningSum;
         }
-
         return new Vector(sums);
     }
 
-    public static float median(final float[] x) {
+    public static float max(final float[] values) {
+        if (values.length == 0) {
+            klog.warn("FIX ME Zero length array");
+            throw new IllegalArgumentException("Zero length array not allowed");
+        }
+    
+        int nonMissingSize = values.length;
+        float max = Float.NEGATIVE_INFINITY;
+        for (int i = 0; i < values.length; i++) {
+            if (Float.isNaN(values[i])) { nonMissingSize--; }
+            else if (max < values[i]) { max = values[i]; }
+        }
+        return (nonMissingSize == 0) ? Float.NaN : max;
+    }
 
+    public static float median(final float[] x) {
         if (x.length == 0) {
             return Float.NaN;
         }
 
-        // mangelos
-        int aLen = x.length;
-        float[] v1 = new float[aLen];
+        final int size = x.length;
+        float[] v1 = new float[size];
 
-        System.arraycopy(x, 0, v1, 0, aLen);
-        Arrays.sort(v1);
+        // Replace NaN values with POSITIVE_INTEGER so they sort to the end
+        int nonMissingCount = size;
+        for (int i = 0; i < size; i++) {
+            if (!Float.isNaN(x[i])) { v1[i] = x[i]; } 
+            else {
+                v1[i] = Float.POSITIVE_INFINITY;
+                nonMissingCount--;
+            } 
+        }
+        
+        if (nonMissingCount == 0) { return Float.NaN; }
+        
+        // Call out some common cases to skip extra operations when they can be avoided.  This is
+        // just using a reasonable guess for a limit that covers the majority of cases (based on 
+        // its use in Collapse, not its use for Dataset Metrics).
+        // Here, v1 will hold non-missing values in the index range 0 to nonMissingCount-1, so we
+        // determine the median over that range only.  The index range above that will hold missing 
+        // values - since they've been replaced by POSITIVE_INFINITY - after sorting.
+        Arrays.parallelSort(v1);
+        switch (nonMissingCount) {
+        case 1: return v1[0];
+        case 2: return (v1[0] + v1[1]) / 2;
+        case 3: return v1[1];
+        case 4: return (v1[1] + v1[2]) / 2;
+        case 5: return v1[2];
 
-        int ind = (aLen - 1) / 2;
-
-        if (XMath.isEven(aLen)) {
-            return (v1[ind] + v1[aLen / 2]) / 2;
-        } else {
-            return v1[ind];
+        default:
+            // Only do the extra divisions and odd vs. even check for the general case.
+            final int in1 = (nonMissingCount - 1) / 2;
+            final int in2 = nonMissingCount / 2;
+            // This test indicates whether the size is odd or even
+            return (in1 == in2) ? v1[in1] : (v1[in1] + v1[in2]) / 2;
         }
     }
 
     public static float mean(final float[] x) {
-
         if (x.length == 0) {
             return Float.NaN;
         }
 
-        return sum(x) / x.length;
+        int nonMissingSize = x.length;
+        float runningSum = 0.0f;
+        for (int i = 0; i < x.length; i++) {
+            if (!Float.isNaN(x[i])) { runningSum += x[i]; }
+            else { nonMissingSize--; }
+        }
+        return (nonMissingSize == 0) ? Float.NaN : runningSum / nonMissingSize;
     }
 
     public static float sum(final float[] x) {
-
-        float sum = 0f;
-        for (float f : x) {
-            sum += f;
+        if (x.length == 0) {
+            return Float.NaN;
         }
-        
-        return sum;
+
+        int nonMissingSize = x.length;
+        float runningSum = 0.0f;
+        for (int i = 0; i < x.length; i++) {
+            if (!Float.isNaN(x[i])) { runningSum += x[i]; }
+            else { nonMissingSize--; }
+        }
+        return (nonMissingSize == 0) ? Float.NaN : runningSum;
     }
 
     /*
@@ -552,81 +483,20 @@ public class XMath {
      *      will ret Nan if only 1 element in each vector
      */
     public static double pearson(final Vector x, final Vector y) {
-
         enforceEqualSize(x, y);
 
+        if (x.getSize() <= 1) { return Double.NaN; }
         double N = (double) x.getSize();
 
-        if (N == 0 || N == 1) {
-            return Float.NaN;
-        }
-
-        //double numr = (sumprod(x, y) - x.sum()*y.sum()) / N;
-        double numr = x.sumprod(y) - ((x.sum() * y.sum()) / N);
-        double denr = ((x.squaresum() - ((x.sum() * x.sum()) / N)))
-                * ((y.squaresum() - ((y.sum() * y.sum()) / N)));
+        final double xSum = x.sumNaNsafe();
+        final double ySum = y.sumNaNsafe();
+        double numr = x.sumprod(y) - ((xSum * ySum) / N);
+        double denr = ((x.squaresumNaNsafe() - ((xSum * xSum) / N)))
+                * ((y.squaresumNaNsafe() - ((ySum * ySum) / N)));
 
         denr = Math.sqrt(denr);
 
-        //double denr = ((x.squaresum() - (x.sum()*x.sum())) / N) * ((y.squaresum() - (y.sum()*y.sum())) / N);
-        //denr = Math.sqrt(denr);
-
-        /*
-        log.debug("numr=" + numr + " denr=" + denr);
-        log.debug("x>>" + x.squaresum());
-        log.debug("x>>" + (x.sum()*x.sum()));
-        log.debug("x>>" + ((x.squaresum() - ((x.sum()*x.sum()) / N) )));
-        log.debug("y>>" + y.squaresum());
-        log.debug("y>>" + (y.sum()*y.sum()));
-        log.debug("y>>" + ((y.squaresum() - ((y.sum()*y.sum()) / N) )));
-        */
-
         return numr / denr;
-    }
-
-    /**
-     * see kens doc for details
-     *
-     * @param x
-     * @param yTemplate
-     * @param z
-     * @param usebiased
-     * @param usemedian
-     * @param fixlow
-     * @return
-     */
-    public static double regressionSlope(final Vector x,
-                                         final Vector yTemplate,
-                                         final Vector[] splits,
-                                         final boolean biased,
-                                         final boolean fixlow) {
-
-        enforceEqualSize(x, yTemplate);
-
-        double xsum = x.sum(); // cache to avoid recalc
-
-        double N = (double) x.getSize();
-        double numrA = N * x.sumprod(yTemplate);
-        double numrB = xsum * yTemplate.sum();
-
-        double denrA = N * x.squaresum();
-        double denrB = xsum * xsum;
-
-        double C = (numrA - numrB) / (denrA - denrB);
-
-        double var = 0;
-        for (int i = 0; i < splits.length; i++) {
-            var += splits[i].stddev(biased, fixlow);
-        }
-
-        //System.out.println("C\t" + C + "\tvarsum\t" + var);
-
-        if (var == 0) {
-            return Float.NaN;
-        } else {
-            return C / var;
-        }
-
     }
 
     /**
@@ -639,39 +509,30 @@ public class XMath {
      * No parameters
      */
     public static double cosine(final Vector x, final Vector y) {
-        return cosine(x.elementData, y.elementData);
-    }
-
-    public static double cosine(final float[] x, final float[] y) {
-
-        enforceEqualSize(x, y);
-
+        final float[] x1 = x.elementData;
+        final float[] y1 = y.elementData;
+        enforceEqualSize(x1, y1);
+        
         double mag_x = 0.0;
         double mag_y = 0.0;
         double sump = 0.0;
-
-        for (int i = 0; i < x.length; i++) {
-            mag_x += x[i] * x[i];
-            mag_y += y[i] * y[i];
-            sump += x[i] * y[i];
+        
+        int nonMissingSize = x1.length;
+        for (int i = 0; i < x1.length; i++) {
+            if (Double.isNaN(x1[i]) || Double.isNaN(x1[i])) { nonMissingSize--;}
+            else {
+                mag_x += x1[i] * x1[i];
+                mag_y += y1[i] * y1[i];
+                sump += x1[i] * y1[i];
+            }
         }
-
-        return 1.0d - (sump / Math.sqrt(mag_x * mag_y));
-        //return (sump / Math.sqrt(mag_x * mag_y));
+        
+        return (nonMissingSize == 0) ? Double.NaN : 1.0d - (sump / Math.sqrt(mag_x * mag_y));
     }
 
-    /**
-     * s2n = mean1-mean2/root(var1+var2)
-     * no root!!!
-     */
-    public static double s2n(final Vector x,
-                             final Vector y,
-                             final boolean usebiased,
-                             final boolean usemedian,
-                             final boolean fixlow) {
-
+    public static double s2n(final Vector x, final Vector y,
+            final boolean usebiased, final boolean usemedian, final boolean fixlow) {
         double s2n;
-
         if (usemedian) {
             s2n = (x.median() - y.median())
                     / (x.stddev(usebiased, fixlow) + y.stddev(usebiased, fixlow));
@@ -683,81 +544,12 @@ public class XMath {
         return s2n;
     }
     
-    public static final BiFunction<Vector, Vector, Double> getS2n(final boolean usebiased,
-            final boolean usemedian,
-            final boolean fixlow) {
-        if (usemedian) {
-            if (usebiased) {
-                if (fixlow) return (x, y) -> s2nMedianBiasedFixLow(x, y);
-                else return (x, y) -> s2nMedianBiasedNotFixLow(x, y);
-            } else {
-                if (fixlow) return (x, y) -> s2nMedianUnBiasedFixLow(x, y);
-                else return (x, y) -> s2nMedianUnBiasedNotFixLow(x, y);
-            }
-        } else {
-            if (usebiased) {
-                if (fixlow) return (x, y) -> s2nMeanBiasedFixLow(x, y);
-                else return (x, y) -> s2nMeanBiasedNotFixLow(x, y);
-            } else {
-                if (fixlow) return (x, y) -> s2nMeanUnBiasedFixLow(x, y);
-                else return (x, y) -> s2nMeanUnBiasedNotFixLow(x, y);
-            }
-        }
-    }
-    
-    // Specialized versions
-    public static double s2nMeanBiasedFixLow(final Vector x, final Vector y) {
-
-        return (x.mean() - y.mean()) / (x.stddevBiasedFixLow() + y.stddevBiasedFixLow());
-    }
-
-    public static double s2nMeanUnBiasedFixLow(final Vector x, final Vector y) {
-
-        return (x.mean() - y.mean()) / (x.stddevUnBiasedFixLow() + y.stddevUnBiasedFixLow());
-    }
-
-    public static double s2nMeanBiasedNotFixLow(final Vector x, final Vector y) {
-
-        return (x.mean() - y.mean()) / (x.stddevBiasedNotFixLow() + y.stddevBiasedNotFixLow());
-    }
-
-    public static double s2nMeanUnBiasedNotFixLow(final Vector x, final Vector y) {
-
-        return (x.mean() - y.mean()) / (x.stddevUnBiasedNotFixLow() + y.stddevUnBiasedNotFixLow());
-    }
-
-    public static double s2nMedianBiasedFixLow(final Vector x, final Vector y) {
-
-        return (x.median() - y.median()) / (x.stddevBiasedFixLow() + y.stddevBiasedFixLow());
-    }
-
-    public static double s2nMedianUnBiasedFixLow(final Vector x, final Vector y) {
-
-        return (x.median() - y.median()) / (x.stddevUnBiasedFixLow() + y.stddevUnBiasedFixLow());
-    }
-
-    public static double s2nMedianBiasedNotFixLow(final Vector x, final Vector y) {
-
-        return (x.median() - y.median()) / (x.stddevBiasedNotFixLow() + y.stddevBiasedNotFixLow());
-    }
-
-    public static double s2nMedianUnBiasedNotFixLow(final Vector x, final Vector y) {
-
-        return (x.median() - y.median()) / (x.stddevUnBiasedNotFixLow() + y.stddevUnBiasedNotFixLow());
-    }
-
-    
     /**
      * @see http://trochim.human.cornell.edu/kb/stat_t.htm
      */
-    public static double tTest(final Vector x,
-                               final Vector y,
-                               final boolean usebiased,
-                               final boolean usemedian,
-                               final boolean fixlow) {
-
+    public static double tTest(final Vector x, final Vector y, 
+            final boolean usebiased, final boolean usemedian, final boolean fixlow) {
         double numr;
-
         if (usemedian) {
             numr = x.median() - y.median();
         } else {
@@ -765,7 +557,6 @@ public class XMath {
         }
 
         double denr;
-
         if (usebiased) {
             denr = Math.sqrt((x.var(usebiased, fixlow) / (x.getSize() - 1))
                     + (y.var(usebiased, fixlow) / (y.getSize() - 1)));
@@ -775,50 +566,6 @@ public class XMath {
         }
 
         return (numr / denr);
-    }
-
-    /**
-     * @todo confirm formula with pt
-     * @see http://trochim.human.cornell.edu/kb/stat_t.htm
-     */
-    public static double bhat(final Vector v1, final Vector v2, final boolean usebiased,
-                              final boolean fixlow) {
-
-        double firstterm = (v2.mean() - v1.mean())
-                * (0.5 / (v1.var(usebiased, fixlow) + v2.var(usebiased, fixlow)))
-                * (v2.mean() - v1.mean());
-        double secterm = 0.5
-                * Math.log(((v1.var(usebiased, fixlow) + v2.var(usebiased, fixlow)) / 2)
-                / Math.sqrt(v1.var(usebiased, fixlow)
-                * v2.var(usebiased, fixlow)));
-
-        return (firstterm + secterm);
-    }
-
-    /**
-     * Pearson will only work if the the 2 classes are of equal size. Because of the Exy term in the formula.
-     */
-    public static double pearsonD(final Vector minusplusvec, final Vector y) {
-
-        // lengths still have to be equal
-        enforceEqualSize(minusplusvec, y);
-
-        // now x is the minusplus vector -- paranoid check
-        for (int i = 0; i < minusplusvec.getSize(); i++) {
-            if ((minusplusvec.getElement(i) != -1) || (minusplusvec.getElement(i) != +1)) {
-                throw new IllegalArgumentException("MinusPlus vector has invalid element: "
-                        + minusplusvec.getElement(i)
-                        + " only -1 and +1 allowed");
-            }
-        }
-
-        // normalize the vector
-        Vector v = new Vector(y);
-
-        v.pnormalize();
-
-        // @note the 1-x: this is to abide by the Metric contract
-        return 1 - pearson(minusplusvec, v);
     }
 
     public static double mannWhitney(final int[] hitIndices, final int totSize) {
@@ -850,7 +597,6 @@ public class XMath {
     }
 
     public static int getMoreThanCount(final float value, final Vector sorted_pos_to_neg) {
-
         int cnt = 0;
         for (int i = 0; i < sorted_pos_to_neg.getSize(); i++) {
             if (value > sorted_pos_to_neg.getElement(i)) {
@@ -864,7 +610,6 @@ public class XMath {
     }
 
     public static int getLessThanCount(final float value, final Vector sorted_low_to_high) {
-
         int cnt = 0;
         for (int i = 0; i < sorted_low_to_high.getSize(); i++) {
             if (value < sorted_low_to_high.getElement(i)) {
