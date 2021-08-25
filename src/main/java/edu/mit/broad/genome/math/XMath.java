@@ -330,7 +330,7 @@ public class XMath {
         for (int i = 0; i < size; i++) {
             float[] v1 = new float[vss.length];
             for (int c = 0; c < vss.length; c++) {
-                v1[i] = vss[c].getElement(i);
+                v1[c] = vss[c].getElement(i);
             }
             medians[i] = median(v1);
         }
@@ -343,7 +343,7 @@ public class XMath {
         float[] means = new float[size];
 
         for (int i = 0; i < size; i++) {
-            int nonMissingSize = size;
+            int nonMissingSize = vss.length;
             float runningSum = 0.0f;
             for (int c = 0; c < vss.length; c++) {
                 float value = vss[c].getElement(i);
@@ -361,7 +361,7 @@ public class XMath {
         float[] maxs = new float[size];
 
         for (int i = 0; i < size; i++) {
-            int nonMissingSize = size;
+            int nonMissingSize = vss.length;
             float max = Float.NEGATIVE_INFINITY;
             for (int c = 0; c < vss.length; c++) {
                 float value = vss[c].getElement(i);
@@ -379,7 +379,7 @@ public class XMath {
         float[] sums = new float[size];
 
         for (int i = 0; i < size; i++) {
-            int nonMissingSize = size;
+            int nonMissingSize = vss.length;
             float runningSum = 0.0f;
             for (int c = 0; c < vss.length; c++) {
                 float value = vss[c].getElement(i);

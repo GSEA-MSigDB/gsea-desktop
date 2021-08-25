@@ -225,7 +225,8 @@ public class Vector {
     }
 
     /**
-     * Does a "NaN-safe" sum calculation, where any Nan values are ignored for the purpose of the computation.
+     * Does a "NaN-safe" sum calculation, where any NaN values are ignored for the purpose of the computation.
+     * Summing an empty Vector, however, still returns an NaN result.
      */
     public double sumNaNsafe() {
         return XMath.sum(elementData);
@@ -269,7 +270,7 @@ public class Vector {
     }
     
     /**
-     * Does a "NaN-safe" mean calculation, where any Nan values are ignored for the purpose of the computation.
+     * Does a "NaN-safe" mean calculation, where any NaN values are ignored for the purpose of the computation.
      * Calling on an empty Vector, however, still returns an NaN result.
      */
     public double meanNaNsafe() {
