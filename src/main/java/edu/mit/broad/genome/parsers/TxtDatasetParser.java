@@ -35,11 +35,13 @@ public class TxtDatasetParser extends AbstractParser {
             Dataset ds = (Dataset) pob;
             FeatureAnnot ann = ds.getAnnot().getFeatureAnnot();
     
-            pw.print(Constants.NAME + "\t" + Constants.DESCRIPTION + "\t");
+            pw.print(Constants.NAME);
+            pw.print('\t');
+            pw.print(Constants.DESCRIPTION);
     
             for (int i = 0; i < ds.getNumCol(); i++) {
-                pw.print(ds.getColumnName(i));
                 pw.print('\t');
+                pw.print(ds.getColumnName(i));
             }
             pw.println();
     

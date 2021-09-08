@@ -56,13 +56,13 @@ public class GctParser extends AbstractParser {
     
             pw.println("#1.2"); // not sure what the # means, but give the people what they want
             pw.println(ds.getNumRow() + "\t" + ds.getNumCol());
-            pw.print(Constants.NAME + "\t" + Constants.DESCRIPTION + "\t");
+            pw.print(Constants.NAME);
+            pw.print("\t");
+            pw.print(Constants.DESCRIPTION);
     
-            String sep = "";
             for (int i = 0; i < ds.getNumCol(); i++) {
+                pw.print("\t");
                 pw.print(ds.getColumnName(i));
-                pw.print(sep);
-                sep = "\t";
             }
             pw.println();
     
