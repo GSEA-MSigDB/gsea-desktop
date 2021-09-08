@@ -15,7 +15,6 @@ import edu.mit.broad.genome.alg.markers.PermutationTest;
 import edu.mit.broad.genome.charts.*;
 import edu.mit.broad.genome.math.*;
 import edu.mit.broad.genome.models.XYDatasetMultiTmp;
-import edu.mit.broad.genome.models.XYDatasetVERT;
 import edu.mit.broad.genome.objects.*;
 import edu.mit.broad.genome.objects.esmatrix.db.*;
 import edu.mit.broad.genome.objects.strucs.CollapsedDetails;
@@ -57,7 +56,6 @@ import org.jfree.chart.ui.TextAnchor;
 import org.jfree.data.DomainOrder;
 import org.jfree.data.general.DatasetChangeListener;
 import org.jfree.data.general.DatasetGroup;
-import org.jfree.data.statistics.HistogramType;
 import org.jfree.data.xy.XYDataset;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
@@ -105,103 +103,30 @@ public class EnrichmentReports {
     private static IntervalMarker[] _markers(final RankedList rl) {
         // @note an optimization
         // some heuristics
-        int numRanges;
-        if (rl.getSize() < 100) {
-            numRanges = rl.getSize();
-        } else {
-            numRanges = 100;
-        }
+        int numRanges = (rl.getSize() < 100) ? rl.getSize() : 100;
+
         // for the bg shading of the hit plot -- just needs to be made once for all sets on this rl
         return RankedListCharts.createIntervalMarkers(numRanges, rl);
     }
 
 
-    private static File _createSubDir(final EnrichmentDb edb,
-                                      final ToolReport report,
-                                      final boolean makeSubDir) {
-
-        File saveInDir;
-        String classA_name;
-        String classB_name;
-
-        if (makeSubDir) {
-            Template templatex = edb.getTemplate();
-            if (templatex != null) {
-                if (templatex.isContinuous()) {
-                    String nn = AuxUtils.getAuxNameOnlyNoHash(templatex);
-                    if (templatex.isContinuous()) {
-                        classA_name = nn;
-                        classB_name = nn;
-                    } else {
-                        classA_name = nn + "_pos";
-                        classB_name = nn + "_neg";
-                    }
-                } else {
-                    classA_name = templatex.getClassName(0);
-                    classB_name = templatex.getClassName(1);
-                }
-            } else {
-                classA_name = "classA";
-                classB_name = "classB";
-            }
-
-            saveInDir = report.createSubDir(classA_name + "_vs_" + classB_name);
-        } else {
-            saveInDir = report.getReportDir();
-        }
-
-        return saveInDir;
-    }
-
-    public static Ret createGseaLikeReport(
-            final EnrichmentDb edb_original,
-            final PrintStream out,
-            final CollapsedDetails cd,
-            final HtmlPage reportIndexPage,
-            final boolean makeSubDir,
-            final ToolReport report,
-            final int topXSets,
-            final int minSize,
-            final int maxSize,
-            final boolean makeGeneSetsReport,
-            final boolean makeZippedFile,
-            final boolean createSvgs,
-            final boolean createGcts,
-            final GeneSet[] origGeneSets_opt,
-            final String metricName,
-            final String normModeName) {
-
+    public static Ret createGseaLikeReport(final EnrichmentDb edb_original, final PrintStream out, final CollapsedDetails cd, final HtmlPage reportIndexPage, final ToolReport report, 
+    		final int topXSets, final int minSize, final int maxSize, final boolean makeGeneSetsReport, final boolean makeZippedFile, final boolean createSvgs, final boolean createGcts,
+            final GeneSet[] origGeneSets_opt, final String metricName, final String normModeName) {
         FeatureAnnot fann = null;
         if (edb_original.getDataset() != null && edb_original.getDataset().getAnnot() != null) {
             fann = edb_original.getDataset().getAnnot().getFeatureAnnot();
         }
 
-        return createGseaLikeReport(edb_original, out, cd, reportIndexPage, _createSubDir(edb_original, report, makeSubDir), report,
-                topXSets, minSize, maxSize,
+        return createGseaLikeReport(edb_original, out, cd, reportIndexPage, report.getReportDir(), report, topXSets, minSize, maxSize,
                 makeGeneSetsReport, makeZippedFile, createSvgs, createGcts, origGeneSets_opt, metricName, normModeName, fann);
     }
 
-    public static Ret createGseaLikeReport(
-            final EnrichmentDb edb_original,
-            final PrintStream out,
-            final CollapsedDetails cd,
-            final HtmlPage reportIndexPage,
-            final boolean makeSubDir,
-            final ToolReport report,
-            final int topXSets,
-            final int minSize,
-            final int maxSize,
-            final boolean makeGeneSetsReport,
-            final boolean makeZippedFile,
-            final boolean createSvgs,
-            final GeneSet[] origGeneSets_opt,
-            final String metricName,
-            final String normModeName,
-            final FeatureAnnot fann_opt) {
-
+    public static Ret createGseaLikeReport(final EnrichmentDb edb_original, final PrintStream out, final CollapsedDetails cd, final HtmlPage reportIndexPage, final ToolReport report, 
+    		final int topXSets, final int minSize, final int maxSize, final boolean makeGeneSetsReport, final boolean makeZippedFile, final boolean createSvgs, 
+    		final GeneSet[] origGeneSets_opt, final String metricName, final String normModeName, final FeatureAnnot fann_opt) {
         // Note we never create GCTs for this call; this corresponds to Preranked, which has no heatmaps in the report.
-        return createGseaLikeReport(edb_original, out, cd, reportIndexPage, _createSubDir(edb_original, report, makeSubDir), report,
-                topXSets, minSize, maxSize,
+        return createGseaLikeReport(edb_original, out, cd, reportIndexPage, report.getReportDir(), report, topXSets, minSize, maxSize,
                 makeGeneSetsReport, makeZippedFile, createSvgs, false, origGeneSets_opt, metricName, normModeName, fann_opt);
     }
 
@@ -224,24 +149,9 @@ public class EnrichmentReports {
     }
 
     // @note this is the CORE CORE CORE CORE report making method
-    public static Ret createGseaLikeReport(
-            final EnrichmentDb edb_original,
-            final PrintStream out,
-            final CollapsedDetails cd,
-            final HtmlPage reportIndexPage,
-            final File saveInThisDir,
-            final ToolReport report,
-            final int topXSets,
-            final int minSize,
-            final int maxSize,
-            final boolean makeGeneSetsReport,
-            final boolean makeZippedFile,
-            final boolean createSvgs,
-            final boolean createGcts,
-            final GeneSet[] origGeneSets_opt,
-            final String metricName,
-            final String normModeName,
-            final FeatureAnnot fann_opt) {
+    public static Ret createGseaLikeReport(final EnrichmentDb edb_original, final PrintStream out, final CollapsedDetails cd, final HtmlPage reportIndexPage, final File saveInThisDir, 
+    		final ToolReport report, final int topXSets, final int minSize, final int maxSize, final boolean makeGeneSetsReport, final boolean makeZippedFile, final boolean createSvgs, 
+    		final boolean createGcts, final GeneSet[] origGeneSets_opt, final String metricName, final String normModeName, final FeatureAnnot fann_opt) {
         if (normModeName == null) {
             throw new IllegalArgumentException("Param normModeName cannot be null");
         }
@@ -304,7 +214,7 @@ public class EnrichmentReports {
         File real_gene_list_heat_map_corr_plot_html_file = null;
         if (my_gex_ds_for_heat_map != null && template != null) {
             HtmlPage real_gene_list_heat_map_corr_plot_html = MiscReports.createDatasetHeatMapAndCorrelationPlots(my_gex_ds_for_heat_map,
-                    template, rlReal, 50, saveInThisDir, createSvgs, createGcts);
+                    template, rlReal, saveInThisDir, createSvgs, createGcts);
             real_gene_list_heat_map_corr_plot_html_file = report.savePage(real_gene_list_heat_map_corr_plot_html, saveInThisDir);
         }
 
@@ -326,23 +236,14 @@ public class EnrichmentReports {
 
         // Then the FDR reports
         klog.info("Creating FDR reports ...");
-        final EnrichmentResult[] results_pos = edb.getResults(new ComparatorFactory.EnrichmentResultByNESComparator(Order.DESCENDING), true);
-        final BasicReportStruc pos_basic = createReport(results_pos, name, phenotypeName, classA_name_opt, classB_name_opt,
-                rlReal, template, fann_opt,
-                "Gene sets enriched in phenotype <b>" + classA_name_long + "<b>",
-                topXSets, makeGeneSetsReport, createSvgs, createGcts, saveInThisDir);
-        final RichDataframe pos_basic_rdf = pos_basic.rdf;
-
+        final EnrichmentResult[] results_pos = edb.getResults(true);
+        final BasicReportStruc pos_basic = createReport(results_pos, name, phenotypeName, classA_name_opt, classB_name_opt, rlReal, template, fann_opt,
+                "Gene sets enriched in phenotype <b>" + classA_name_long + "<b>", topXSets, makeGeneSetsReport, createSvgs, createGcts, saveInThisDir);
         klog.info("Done FDR reports for positive phenotype");
 
-        final EnrichmentResult[] results_neg = edb.getResults(new ComparatorFactory.EnrichmentResultByNESComparator(Order.ASCENDING), false);
-        final BasicReportStruc neg_basic = createReport(results_neg, name,
-                phenotypeName, classA_name_opt, classB_name_opt,
-                rlReal, template, fann_opt,
-                "Gene sets enriched in phenotype <b>" + classB_name_long + "<b>",
-                topXSets, makeGeneSetsReport, createSvgs, createGcts, saveInThisDir);
-        final RichDataframe neg_basic_rdf = neg_basic.rdf;
-
+        final EnrichmentResult[] results_neg = edb.getResults(false);
+        final BasicReportStruc neg_basic = createReport(results_neg, name, phenotypeName, classA_name_opt, classB_name_opt, rlReal, template, fann_opt,
+                "Gene sets enriched in phenotype <b>" + classB_name_long + "<b>", topXSets, makeGeneSetsReport, createSvgs, createGcts, saveInThisDir);
         klog.info("Done FDR reports for negative phenotype");
 
         // Ok done calcs; begin formatting and outputting reports
@@ -352,16 +253,16 @@ public class EnrichmentReports {
         final String neg_title = "Report for " + classB_name_opt + " " + report.getTimestamp() + " [GSEA]";
 
         // Basic statistics
-        final File pos_basic_tsv = report.savePageTsv(pos_basic_rdf, pos_name, saveInThisDir);
-        final File neg_basic_tsv = report.savePageTsv(neg_basic_rdf, neg_name, saveInThisDir);
+        final File pos_basic_tsv = report.savePageTsv(pos_basic.rdf, pos_name, saveInThisDir);
+        final File neg_basic_tsv = report.savePageTsv(neg_basic.rdf, neg_name, saveInThisDir);
 
         HtmlPage htmlPage = new HtmlPage(pos_name, pos_title);
-        htmlPage.addTable(pos_basic_rdf, pos_basic_tsv.getName(), false, true); // dont show row names (ditto to gs name)
+        htmlPage.addTable(pos_basic.rdf, pos_basic_tsv.getName(), false); // dont show row names (ditto to gs name)
         final File pos_basic_html = report.savePage(htmlPage, saveInThisDir);
         final File pos_snapshot_html = report.savePage(createSnapshotPage(true, pos_basic.reports), saveInThisDir);
 
         htmlPage = new HtmlPage(neg_name, neg_title);
-        htmlPage.addTable(neg_basic_rdf, neg_basic_tsv.getName(), false, true); // dont show row names (ditto to gs name)
+        htmlPage.addTable(neg_basic.rdf, neg_basic_tsv.getName(), false); // dont show row names (ditto to gs name)
         final File neg_basic_html = report.savePage(htmlPage, saveInThisDir);
         final File neg_snapshot_html = report.savePage(createSnapshotPage(false, neg_basic.reports), saveInThisDir);
 
@@ -389,10 +290,11 @@ public class EnrichmentReports {
         div.addElement(h4);
         UL ul = new UL();
 
-        StringElement line7 = HtmlFormat.Links.hyper("Guide to", "http://www.gsea-msigdb.org/gsea/doc/GSEAUserGuideFrame.html?_Interpreting_GSEA_Results", "interpret results");
+        StringElement line7 = HtmlFormat.Links.hyper("Guide to", "https://www.gsea-msigdb.org/gsea/doc/GSEAUserGuideFrame.html?_Interpreting_GSEA_Results", "interpret results");
 
-        if (edb.getNumScores(true) > 0) {
-            StringElement line1 = new StringElement(edb.getNumScores(true) + " / " + gsets.length + " gene sets are upregulated in phenotype <b>" + classA_name_opt + "</b>");
+        final int numPosScores = edb.getNumScores(true);
+		if (numPosScores > 0) {
+            StringElement line1 = new StringElement(numPosScores + " / " + gsets.length + " gene sets are upregulated in phenotype <b>" + classA_name_opt + "</b>");
             StringElement line2a = new StringElement(edb.getNumNominallySig(0.01f, true) + " gene sets are significantly enriched at nominal pvalue < 1%");
             StringElement line2b = new StringElement(edb.getNumNominallySig(0.05f, true) + " gene sets are significantly enriched at nominal pvalue < 5%");
             StringElement line3 = new StringElement(edb.getNumFDRSig(0.25f, true) + " gene sets are significant at FDR < 25%");
@@ -422,8 +324,9 @@ public class EnrichmentReports {
         h4 = new H4("Enrichment in phenotype: <b>" + classB_name_long + "</b>");
         div.addElement(h4);
         ul = new UL();
-        if (edb.getNumScores(false) > 0) {
-            StringElement line1 = new StringElement(edb.getNumScores(false) + " / " + gsets.length + " gene sets are upregulated in phenotype <b>" + classB_name_opt + "</b>");
+        final int numNegScores = edb.getNumScores(false);
+		if (numNegScores > 0) {
+            StringElement line1 = new StringElement(numNegScores + " / " + gsets.length + " gene sets are upregulated in phenotype <b>" + classB_name_opt + "</b>");
             StringElement line2a = new StringElement(edb.getNumNominallySig(0.01f, false) + " gene sets are significantly enriched at nominal pvalue < 1%");
             StringElement line2b = new StringElement(edb.getNumNominallySig(0.05f, false) + " gene sets are significantly enriched at nominal pvalue < 5%");
             StringElement line3 = new StringElement(edb.getNumFDRSig(0.25f, false) + " gene sets are significantly enriched at FDR < 25%");
@@ -473,7 +376,7 @@ public class EnrichmentReports {
             h4 = new H4("Gene set details");
             div.addElement(h4);
             final int xs = origGeneSets_opt.length - gsets.length;
-            final StringBuffer buf = new StringBuffer("Gene set size filters (min=").append(minSize).append(", max=").append(maxSize).append(")");
+            final StringBuilder buf = new StringBuilder("Gene set size filters (min=").append(minSize).append(", max=").append(maxSize).append(")");
             buf.append(" resulted in filtering out ").append(xs).append(" / ").append(origGeneSets_opt.length).append(" gene sets");
             ul.addElement(new LI(buf.toString()));
             geneSets_sizes_file = _getGeneSetSizesFile(gsets, origGeneSets_opt, geneSets_sizes_file, report);
@@ -489,7 +392,6 @@ public class EnrichmentReports {
         div = new Div();
         if (template != null && template.isContinuous()) {
             h4 = new H4("Gene markers for the neighbors of " + classA_name_opt);
-
         } else {
             h4 = new H4("Gene markers for the <b>" + classA_name_opt + "</b><i> versus </i><b>" + classB_name_opt + "</b> comparison");
         }
@@ -610,15 +512,11 @@ public class EnrichmentReports {
             if (makeDetailsPage && r < showDetailsForTopXSets) {
                 final EnrichmentResult dtg = results[r];
                 htmlPage = new HtmlPage(gsetNames[r], "Details for gene set " + gsetNames[r] + "[GSEA]");
-                final MyEnrichmentReportImpl mer = createReport(dsName,
-                        phenotypeName, phenoClassAName_opt, phenoClassBName_opt,
-                        rl, template_opt,
-                        dtg.getGeneSet(), dtg.getScore().getHitIndices(),
-                        dtg.getScore().getESProfile(),
-                        dtg.getScore().getESProfile_point_by_point_opt(),
-                        result.getScore().getES(), result.getScore().getNES(), result.getScore().getNP(),
-                        result.getScore().getFDR(), result.getScore().getFWER(), dtg.getRndESS(),
-                        htmlPage, fannx, true, createSvgs, createGcts, markers, true, saveDetailFilesInDir);
+                final MyEnrichmentReportImpl mer = createReport(dsName, phenotypeName, phenoClassAName_opt, phenoClassBName_opt, rl, 
+                		template_opt, dtg.getGeneSet(), dtg.getScore().getHitIndices(), dtg.getScore().getESProfile(), 
+                		dtg.getScore().getESProfile_point_by_point_opt(), result.getScore().getES(), result.getScore().getNES(), 
+                		result.getScore().getNP(), result.getScore().getFDR(), result.getScore().getFWER(), dtg.getRndESS(), htmlPage, 
+                		fannx, createSvgs, createGcts, markers, saveDetailFilesInDir);
 
                 // dont do this as it saves the pages in memory
                 //report.savePage(pages[0]);
@@ -718,33 +616,12 @@ public class EnrichmentReports {
 
     // does the real page creation
     // one html page and one TSV page
-    public static MyEnrichmentReportImpl createReport(final String dsName,
-                                                      final String phenotypeName,
-                                                      final String classAName_opt,
-                                                      final String classBName_opt,
-                                                      final RankedList rl,
-                                                      final Template template_opt,
-                                                      final GeneSet gset,
-                                                      final int[] hitIndices,
-                                                      final Vector esProfile,
-                                                      final Vector esProfile_full_opt,
-                                                      float es,
-                                                      float nes,
-                                                      float np,
-                                                      final float fdr,
-                                                      final float fwer,
-                                                      final Vector rndEss,
-                                                      final HtmlPage htmlPage,
-                                                      final FeatureAnnot fann_opt,
-                                                      final boolean doBpog,
-                                                      boolean createSvgs,
-                                                      boolean createGcts,
-                                                      final IntervalMarker[] markers, final boolean horizontal, File saveDetailFilesInDir) {
+    public static MyEnrichmentReportImpl createReport(final String dsName, final String phenotypeName, final String classAName_opt, final String classBName_opt, 
+    		final RankedList rl, final Template template_opt, final GeneSet gset, final int[] hitIndices, final Vector esProfile, final Vector esProfile_full_opt, 
+    		float es, float nes, float np, final float fdr, final float fwer, final Vector rndEss, final HtmlPage htmlPage, final FeatureAnnot fann_opt, 
+    		boolean createSvgs, boolean createGcts, final IntervalMarker[] markers, File saveDetailFilesInDir) {
         TsvPage tsvPage = null;
-        EnrichmentCharts combo = null;
-
         try {
-
             String gsetName = gset.getName(true);
 
             if (hitIndices.length != gset.getNumMembers(rl)) {
@@ -772,23 +649,19 @@ public class EnrichmentReports {
                 upInClass = classBName_opt;
             }
 
-            final KeyValTable table = createSummaryTable(dsName, phenotypeName, upInClass, gset.getName(),
-                    es, nes, np,
-                    fdr, fwer);
-
+            final KeyValTable table = createSummaryTable(dsName, phenotypeName, upInClass, gset.getName(), es, nes, np, fdr, fwer);
             htmlPage.addTable("GSEA Results Summary", table);
 
             // add main es plot image (on top -- roels request, makes sense)
-            combo = _createComboChart(gsetName, esProfile, esProfile_full_opt,
-                    _hitIndices2Vector(rl.getSize(), hitIndices), rl, classAName_opt,
-                    classBName_opt, markers, horizontal);
+            EnrichmentCharts combo = _createComboChart(gsetName, esProfile, esProfile_full_opt, 
+            		_hitIndices2Vector(rl.getSize(), hitIndices), rl, classAName_opt, classBName_opt, markers);
             htmlPage.addChart(combo.comboChart, 500, 500, saveDetailFilesInDir, createSvgs);
 
             // add detailed report table
-            htmlPage.addTable(rdf, tsvPage.getName() + "." + tsvPage.getExt(), false, true);
+            htmlPage.addTable(rdf, tsvPage.getName() + "." + tsvPage.getExt(), false);
 
             // add rest of the images
-            if (rl instanceof ScoredDataset && doBpog) {
+            if (rl instanceof ScoredDataset && true) {
                 // Build extracted dataset based on gene set, maintaining the order in the ScoredDataset (i.e gset order ignored)
                 Dataset extractedDSForGSet = new DatasetGenerators().extractRowsSorted((ScoredDataset) rl, gset);
                 htmlPage.addHeatMap(gsetName, "Blue-Pink O' Gram in the Space of the Analyzed GeneSet",
@@ -943,30 +816,14 @@ public class EnrichmentReports {
     // for hits we want a vector of length same as ds but 1's were there
     // are hits and 0's where there are no hits
     // Length of hitProfile vector must be the same as the ranked list
-    public static XChart createHitProfileChart(final Vector hitProfile,
-                                               final RankedList rl,
-                                               final boolean drawTicks,
-                                               final boolean shadeBg,
-                                               final boolean horizontal) {
-
-        IntervalMarker[] markers = null;
-
-        if (shadeBg) {
-            markers = _markers(rl);
-        }
-
-        return _createHitProfileChart(hitProfile, drawTicks, markers, horizontal);
+    public static XChart createHitProfileChart(final Vector hitProfile, final RankedList rl) {
+    	return _createHitProfileChart(hitProfile, true, null);
     }
 
     // for hits we want a vector of length same as ds but 1's were there
     // are hits and 0's where there are no hits
     // Length of hitProfile vector must be the same as the ranked list
-    private static XChart _createHitProfileChart(final Vector hitProfile,
-                                                 final boolean drawTicks,
-                                                 final IntervalMarker[] markers,
-                                                 final boolean horizontal) {
-
-
+    private static XChart _createHitProfileChart(final Vector hitProfile, final boolean drawTicks, final IntervalMarker[] markers) {
         String seriesName;
         if (drawTicks) {
             seriesName = "Hits";
@@ -976,29 +833,8 @@ public class EnrichmentReports {
 
         String label = "Position in ranked list";
 
-        XYPlot plot;
-
-        if (horizontal) {
-            plot = XChartUtils.lineYHits("HIT_LOCATION", "Position in ranked list", seriesName, hitProfile);
-            plot.getDomainAxis().setLabel(label);
-        } else {
-            XYDataset data = new XYDatasetVERT(hitProfile, seriesName);
-            NumberAxis xAxis = new NumberAxis("none");
-            xAxis.setAutoRangeIncludesZero(false); // huh
-            NumberAxis yAxis = new NumberAxis("Position in ranked list");
-
-            yAxis.setTickMarksVisible(false);
-            yAxis.setTickLabelsVisible(true);
-            //yAxis.setVisible(false);
-
-            //StandardXYItemRenderer rend = new StandardXYItemRenderer(StandardXYItemRenderer.DISCONTINUOUS_LINES); // makes things dissapear
-            StandardXYItemRenderer rend = new StandardXYItemRenderer(StandardXYItemRenderer.LINES);
-            // this gives nice shapes
-            //StandardXYItemRenderer rend = new StandardXYItemRenderer(StandardXYItemRenderer.SHAPES);
-            plot = new XYPlot(data, xAxis, yAxis, rend);
-            plot.getRangeAxis().setLabel(label);
-        }
-
+        XYPlot plot = XChartUtils.lineYHits("HIT_LOCATION", "Position in ranked list", seriesName, hitProfile);
+        plot.getDomainAxis().setLabel(label);
         plot.getRangeAxis().setTickLabelsVisible(false);
         plot.getRangeAxis().setTickMarksVisible(false);
         plot.setRangeGridlinesVisible(false);
@@ -1018,17 +854,12 @@ public class EnrichmentReports {
         plot.getRenderer().setSeriesPaint(0, Color.BLACK);
 
         if (markers != null && markers.length > 0) {
-            //klog.debug("# SHADING BG of interval markers: " + markers.length);
             for (int i = 0; i < markers.length; i++) {
                 markers[i].setAlpha(1.0f);
                 // Hide the IntervalMarker line
                 markers[i].setOutlineStroke(new BasicStroke(0.0f));
                 markers[i].setOutlinePaint(new Color(0, 0, 0, 0));
-                if (horizontal) {
-                    plot.addDomainMarker(0, markers[i], Layer.BACKGROUND); // @note add as background
-                } else {
-                    plot.addRangeMarker(0, markers[i], Layer.BACKGROUND); // @note add as background
-                }
+                plot.addDomainMarker(0, markers[i], Layer.BACKGROUND); // @note add as background
             }
         }
 
@@ -1100,50 +931,22 @@ public class EnrichmentReports {
         return new XChartImpl("pvalues_vs_nes_plot", "p-values vs. NES for " + edb.getName(), chart);
     }
 
-    /**
-     * @param phenotypeName
-     * @param realEss
-     * @return
-     */
-    public static XChart createGlobalESHistogram(final String phenotypeName,
-                                                 final LabelledVector realEss) {
-        int numBins = 20;
-        if (realEss.getSize() < 20) {
-            numBins = realEss.getSize();
-        }
+    public static XChart createGlobalESHistogram(final String phenotypeName, final LabelledVector realEss) {
+        int numBins = (realEss.getSize() < 20) ? realEss.getSize() : 20;
 
-        JFreeChart chart = XChartUtils.createHistogram(phenotypeName,
-                false,
-                "Enrichment score (ES)",
-                "# of gene sets",
-                realEss.getScoresV(false),
-                true,
-                numBins,
-                HistogramType.FREQUENCY);
+        JFreeChart chart = XChartUtils.createHistogram(phenotypeName, "Enrichment score (ES)", "# of gene sets", realEss.getScoresV(false), 
+        		numBins);
 
         chart.getXYPlot().getRenderer().setSeriesStroke(0, new BasicStroke(2.0f)); // make it thicker
 
         return new XChartImpl("global_es_histogram", "Global histogram of ES for <b>" + phenotypeName + "</b>", chart);
     }
 
-    public static XChart createESNullDistribHistogram(final String gsetName,
-                                                      final String classAName_opt,
-                                                      final String classBName_opt,
-                                                      final float realEs,
-                                                      final Vector rndEss) {
-        int numBins = 20;
-        if (rndEss.getSize() < 20) {
-            numBins = rndEss.getSize();
-        }
+    public static XChart createESNullDistribHistogram(final String gsetName, final String classAName_opt, final String classBName_opt, final float realEs, 
+    		final Vector rndEss) {
+        int numBins = (rndEss.getSize() < 20) ? rndEss.getSize() : 20;
 
-        JFreeChart chart = XChartUtils.createHistogram(gsetName + ": Random ES distribution",
-                false,
-                "ES",
-                "P(ES)",
-                rndEss,
-                true,
-                numBins,
-                HistogramType.FREQUENCY);
+        JFreeChart chart = XChartUtils.createHistogram(gsetName + ": Random ES distribution", "ES", "P(ES)", rndEss, numBins);
         chart.setBackgroundPaint(CHART_FRAME_COLOR);
 
         chart.getXYPlot().getRenderer().setSeriesPaint(0, Color.MAGENTA);
@@ -1203,16 +1006,8 @@ public class EnrichmentReports {
     }
 
     // @note an optimization: markers made once as its persistent across gene sets for the same ranked list
-    public static EnrichmentCharts _createComboChart(final String gsetName,
-                                                     final Vector enrichmentScoreProfile,
-                                                     final Vector esProfile_full_opt,
-                                                     final Vector hitIndices,
-                                                     final RankedList rl,
-                                                     final String classAName_opt,
-                                                     final String classBName_opt,
-                                                     final IntervalMarker[] markers,
-                                                     final boolean horizontal) {
-
+    private static EnrichmentCharts _createComboChart(final String gsetName, final Vector enrichmentScoreProfile, final Vector esProfile_full_opt,
+    		final Vector hitIndices, final RankedList rl, final String classAName_opt, final String classBName_opt, final IntervalMarker[] markers) {
         if (enrichmentScoreProfile == null) {
             throw new IllegalArgumentException("Param scoreProfile cannot be null");
         }
@@ -1225,11 +1020,10 @@ public class EnrichmentReports {
             throw new IllegalArgumentException("Param rl cannot be null");
         }
 
-        XChart chart0 = createESProfileChart(enrichmentScoreProfile, esProfile_full_opt, hitIndices, horizontal);
-        XChart chart1 = createHitProfileChart(hitIndices, rl, true, false, horizontal);
-        XChart chart2 = _createHitProfileChart(hitIndices, false, markers, horizontal);
-        XChart chart3 = RankedListCharts.createRankedListChart(rl,
-                classAName_opt, classBName_opt, enrichmentScoreProfile.maxDevFrom0Index(), horizontal);
+        XChart chart0 = createESProfileChart(enrichmentScoreProfile, esProfile_full_opt, hitIndices);
+        XChart chart1 = createHitProfileChart(hitIndices, rl);
+        XChart chart2 = _createHitProfileChart(hitIndices, false, markers);
+        XChart chart3 = RankedListCharts.createRankedListChart(rl, classAName_opt, classBName_opt, enrichmentScoreProfile.maxDevFrom0Index());
 
         // Lots of tweaks to the plots to more closely match our legacy settings; these changed with JFreeChart 1.5.0
         XYPlot plot = chart0.getFreeChart().getXYPlot();
@@ -1260,55 +1054,27 @@ public class EnrichmentReports {
         plot.getRangeAxis().setAxisLinePaint(Color.GRAY);
         plot.getRangeAxis().setAxisLineStroke(new BasicStroke(1.0f,BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER));
 
-        // @IMP dont chnage the prefix
-        XComboChart combo;
-
-        if (horizontal) {
-            XComboDomainChart cd = new XComboDomainChart(ENPLOT_ + gsetName, "Enrichment plot: " + gsetName,
-                    "Profile of the Running ES Score & Positions of GeneSet Members on the Rank Ordered List",
-                    "Rank in Ordered Dataset", new XChart[]{chart0, chart1, chart2, chart3}, new int[]{12, 4, 1, 8});
-            cd.getCombinedXYPlot().setGap(0.0f);
-            cd.getCombinedXYPlot().getDomainAxis().setTickLabelsVisible(true);
-            cd.getCombinedXYPlot().getDomainAxis().setTickMarksVisible(true);
-            cd.getCombinedXYPlot().getDomainAxis().setTickMarkStroke(new BasicStroke(1.0f));
-            cd.getCombinedXYPlot().getDomainAxis().setTickMarkPaint(Color.GRAY);
-            combo = cd;
-        } else {
-            XComboRangeChart cr = new XComboRangeChart(ENPLOT_ + gsetName, "Enrichment plot: " + gsetName,
-                    "Profile of the Running ES Score & Positions of GeneSet Members on the Rank Ordered List",
-                    "Rank in Ordered Dataset", new XChart[]{chart0, chart1, chart2, chart3}, new int[]{12, 4, 1, 8});
-            cr.getCombinedXYPlot().setGap(0.0f);
-            cr.getCombinedXYPlot().getRangeAxis().setTickLabelsVisible(true);
-            cr.getCombinedXYPlot().getRangeAxis().setTickMarksVisible(true);
-            cr.getCombinedXYPlot().getRangeAxis().setTickMarkStroke(new BasicStroke(1.0f));
-            cr.getCombinedXYPlot().getRangeAxis().setTickMarkPaint(Color.GRAY);
-            combo = cr;
-        }
-
+        // @IMP dont change the prefix
+        XComboDomainChart combo = new XComboDomainChart(ENPLOT_ + gsetName, "Enrichment plot: " + gsetName,
+        		"Profile of the Running ES Score & Positions of GeneSet Members on the Rank Ordered List", 
+        		"Rank in Ordered Dataset", new XChart[]{chart0, chart1, chart2, chart3}, new int[]{12, 4, 1, 8});
+        combo.getCombinedXYPlot().setGap(0.0f);
+        combo.getCombinedXYPlot().getDomainAxis().setTickLabelsVisible(true);
+        combo.getCombinedXYPlot().getDomainAxis().setTickMarksVisible(true);
+        combo.getCombinedXYPlot().getDomainAxis().setTickMarkStroke(new BasicStroke(1.0f));
+        combo.getCombinedXYPlot().getDomainAxis().setTickMarkPaint(Color.GRAY);
         return new EnrichmentCharts(chart0, chart1, chart2, chart3, combo);
     }
 
-    /**
-     * @param hitProfile
-     * @param esProfile
-     * @return
-     */
-    public static XChart createESProfileChart(final Vector esProfile,
-                                              final Vector esProfile_full_opt,
-                                              final Vector hitIndices,
-                                              final boolean horizontal) {
-
+    public static XChart createESProfileChart(final Vector esProfile, final Vector esProfile_full_opt, final Vector hitIndices) {
         JFreeChart chart;
-
-        //klog.debug(">>>>> esProfile: " + esProfile + " esProfile_full_opt: " + esProfile_full_opt);
-
         if (esProfile_full_opt == null) {
-            XYDataset data = new EsProfileDataset("Enrichment profile", esProfile, hitIndices, horizontal);
+            XYDataset data = new EsProfileDataset("Enrichment profile", esProfile, hitIndices);
             chart = ChartFactory.createXYLineChart("Enrichment profile", "Enrichment profile",
                     "Running enrichment score (RES)", data,
                     PlotOrientation.VERTICAL, true, false, false);
         } else {
-            XYDataset data = new EsProfileDataset2("Enrichment profile", esProfile_full_opt, horizontal);
+            XYDataset data = new EsProfileDataset2("Enrichment profile", esProfile_full_opt);
             chart = ChartFactory.createXYLineChart("Enrichment profile", "Enrichment profile",
                     "Running enrichment score (RES)", data,
                     PlotOrientation.VERTICAL, true, false, false);
@@ -1329,26 +1095,16 @@ public class EnrichmentReports {
         plot.setRangeGridlinesVisible(true);
         plot.setRangeGridlinePaint(Color.LIGHT_GRAY);
 
-        if (horizontal) {
-            plot.getRangeAxis().setLabel("Enrichment score (ES)");
-            plot.getDomainAxis().setLabel("Position in ranked list");
-            plot.getDomainAxis().setVisible(true);
-        } else {
-            plot.getDomainAxis().setLabel("Enrichment score (ES)");
-            plot.getRangeAxis().setLabel("Position in ranked list");
-            plot.getRangeAxis().setVisible(true);
-        }
+        plot.getRangeAxis().setLabel("Enrichment score (ES)");
+        plot.getDomainAxis().setLabel("Position in ranked list");
+        plot.getDomainAxis().setVisible(true);
 
         plot.getRenderer().setSeriesStroke(0, new BasicStroke(2.0f));
         plot.getRenderer().setSeriesPaint(0, Color.GREEN);
 
         Marker midLine = new ValueMarker(0); // at y = 0
         midLine.setPaint(Color.DARK_GRAY);
-        if (horizontal) {
-            plot.addRangeMarker(midLine);
-        } else {
-            plot.addDomainMarker(midLine);
-        }
+        plot.addRangeMarker(midLine);
 
         return new XChartImpl("Enrichment profile", "Enrichment profile", chart);
     }
@@ -1426,38 +1182,17 @@ public class EnrichmentReports {
     } // End class EnrichmentResultReportImpl
 
     static class EsProfileDataset implements XYDataset {
-
         private DatasetGroup fGroup;
-
         private String[] fSeriesNames;
-
         private TIntFloatHashMap fYValues;
-
         private TIntFloatHashMap fJustHitIndices;
 
-        private boolean fHorizontal;
+        protected EsProfileDataset() { }
 
-        protected EsProfileDataset() {
-        }
-
-        /**
-         * Class constructor
-         *
-         * @param seriesName
-         * @param x
-         * @param y
-         */
-
-        public EsProfileDataset(final String seriesName,
-                                final Vector esProfile,
-                                final Vector hitIndices_all, // actually ALL indices 0 to n-1
-                                final boolean horizontal
-        ) {
-
+        public EsProfileDataset(final String seriesName, final Vector esProfile, final Vector hitIndices_all // actually ALL indices 0 to n-1
+        		) {
             this.fGroup = new DatasetGroup();
             this.fSeriesNames = new String[]{seriesName};
-            this.fHorizontal = horizontal;
-
             this.fYValues = new TIntFloatHashMap();
             this.fJustHitIndices = new TIntFloatHashMap();
 
@@ -1493,19 +1228,11 @@ public class EnrichmentReports {
         }
 
         public double getYValue(int series, int item) {
-            if (fHorizontal) {
-                return fYValues.get(item);
-            } else {
-                return fJustHitIndices.get(item);
-            }
+            return fYValues.get(item);
         }
 
         public double getXValue(int series, int item) {
-            if (fHorizontal) {
-                return fJustHitIndices.get(item);
-            } else {
-                return fYValues.get(item);
-            }
+            return fJustHitIndices.get(item);
         }
 
         public int getItemCount(int series) {
@@ -1557,9 +1284,7 @@ public class EnrichmentReports {
 
             return fSeriesNames[series];
         }
-
-    } // End class EsProfileDataset
-
+    }
 
     static class EsProfileDataset2 implements XYDataset {
 
@@ -1567,46 +1292,21 @@ public class EnrichmentReports {
 
         private String[] fSeriesNames;
 
-        private boolean fHorizontal;
-
         private Vector fEsProfile;
 
-        /**
-         * Class constructor
-         *
-         * @param seriesName
-         * @param x
-         * @param y
-         */
         // unlike the above, we have a profile for every point
-        public EsProfileDataset2(final String seriesName,
-                                 final Vector esProfile,
-                                 final boolean horizontal
-        ) {
-
-            //klog.debug(">>>>> DOING FULL PLOT: esProfile: " + esProfile.getSize());
-
+        public EsProfileDataset2(final String seriesName, final Vector esProfile) {
             this.fGroup = new DatasetGroup();
             this.fSeriesNames = new String[]{seriesName};
-            this.fHorizontal = horizontal;
             this.fEsProfile = esProfile;
         }
 
         public double getYValue(int series, int item) {
-            if (fHorizontal) {
-                return fEsProfile.getElement(item);
-            } else {
-                return item;
-            }
+            return fEsProfile.getElement(item);
         }
 
         public double getXValue(int series, int item) {
-
-            if (fHorizontal) {
-                return item;
-            } else {
-                return fEsProfile.getElement(item);
-            }
+            return item;
         }
 
         public int getItemCount(int series) {

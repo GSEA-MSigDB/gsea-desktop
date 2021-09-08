@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2021 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.genome.reports.pages;
 
@@ -255,33 +255,23 @@ public class HtmlPage implements Page {
         this.addBlock(div);
     }
 
-    //-----------------------------------------------------------------//
     // rich rich text
     // row name is NOT the same as row numbering
-    public void addTable(final RichDataframe rdf,
-                         final String plainTxtFileName,
-                         final boolean showRowNameCol,
-                         final boolean numberRows) {
-
+    public void addTable(final RichDataframe rdf, final String plainTxtFileName, final boolean showRowNameCol) {
         Table table = new Table();
         table.setBorder(1);
 
         int ncols = rdf.getNumCol();
         final RichDataframe.MetaData metaData = rdf.getMetaData();
 
-        if (numberRows) {
-            ncols++; // an additional one for the row names if requested
-        }
+        ncols++; // an additional one for the row nums
 
-        if (showRowNameCol) {
-            ncols++;
-        }
+        // Likewise for names
+        if (showRowNameCol) { ncols++; }
 
         table.setCols(ncols);
 
-        if (numberRows) {
-            table.addElement(HtmlFormat.THs.richTable(""));
-        }
+        table.addElement(HtmlFormat.THs.richTable(""));
 
         if (showRowNameCol) {
             table.addElement(HtmlFormat.THs.richTable(Constants.NAME));
@@ -294,10 +284,7 @@ public class HtmlPage implements Page {
 
         for (int r = 0; r < rdf.getNumRow(); r++) {
             TR tr = new TR(); // start a new row
-
-            if (numberRows) {
-                tr.addElement(HtmlFormat.TDs.lessen(r + 1 + "")); // @note hardcoded
-            }
+            tr.addElement(HtmlFormat.TDs.lessen(Integer.toString(r + 1)));
 
             if (showRowNameCol) {
                 tr.addElement(HtmlFormat._td(rdf.getRowName(r)));
@@ -367,4 +354,4 @@ public class HtmlPage implements Page {
         fDoc.output(os);
         os.close();
     }
-} // End HtmlPage
+}

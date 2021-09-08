@@ -161,10 +161,9 @@ public class Gsea extends AbstractGsea2Tool {
         checkAndBarfIfZeroSets(gsets);
 
         final HtmlReportIndexPage htmlReportIndexPage = fReport.getIndexPage();
-        final boolean makeSubDir = false;
 
         execute_one_with_reporting(cd, template, gsets,
-                htmlReportIndexPage, makeSubDir, origGeneSets, fShowDetailsForTopXSetsParam.getIValue(), fMakeZippedReportParam.isTrue(), fMakeGeneSetReportsParam.isTrue(), 
+                htmlReportIndexPage, origGeneSets, fShowDetailsForTopXSetsParam.getIValue(), fMakeZippedReportParam.isTrue(), fMakeGeneSetReportsParam.isTrue(), 
                 (fCreateSvgsParam.isSpecified() && fCreateSvgsParam.isTrue()),
                 (fCreateGctsParam.isSpecified() && fCreateGctsParam.isTrue()));
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2020 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2021 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.genome.objects.esmatrix.db;
 
@@ -11,6 +11,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
+import edu.mit.broad.genome.alg.ComparatorFactory;
 import edu.mit.broad.genome.alg.Metric;
 import edu.mit.broad.genome.alg.gsea.EdbAlgs;
 import edu.mit.broad.genome.alg.markers.PermutationTest;
@@ -27,10 +28,9 @@ import edu.mit.broad.genome.objects.Template;
 import edu.mit.broad.genome.objects.strucs.FdrStruc;
 
 /**
- * @author Aravind Subramanian
+ * @author Aravind Subramanian, David Eby
  */
 public class EnrichmentDb extends AbstractObject {
-
 	private Metric fMetric;
 	private Map<String, Boolean> fMetricParams;
 	private SortMode fSortMode;
@@ -104,20 +104,20 @@ public class EnrichmentDb extends AbstractObject {
 
 	public int getNumNominallySig(final float npCutoffInclusive, final boolean pos) {
 		int cnt = 0;
-		for (int i = 0; i < fResults.length; i++) {
-			EnrichmentResult res = fResults[i];
-			if (res.getScore().getES() > 0 && pos) {
-				if (res.getScore().getNP() <= npCutoffInclusive) {
-					cnt++;
+		if (pos) {
+			for (int i = 0; i < fResults.length; i++) {
+				EnrichmentResult res = fResults[i];
+				if (res.getScore().getES() > 0) {
+					if (res.getScore().getNP() <= npCutoffInclusive) { cnt++; }
 				}
 			}
-
-			if (res.getScore().getES() < 0 && !pos) {
-				if (res.getScore().getNP() <= npCutoffInclusive) {
-					cnt++;
+		} else {
+			for (int i = 0; i < fResults.length; i++) {
+				EnrichmentResult res = fResults[i];
+				if (res.getScore().getES() < 0) {
+					if (res.getScore().getNP() <= npCutoffInclusive) { cnt++; }
 				}
 			}
-
 		}
 
 		return cnt;
@@ -143,17 +143,20 @@ public class EnrichmentDb extends AbstractObject {
 		return list.toArray(new EnrichmentResult[list.size()]);
 	}
 
-	public EnrichmentResult[] getResults(final Comparator<EnrichmentResult> comp, final boolean pos) {
+	public EnrichmentResult[] getResults(final boolean pos) {
+		final Comparator<EnrichmentResult> comp = (pos) ?
+				new ComparatorFactory.EnrichmentResultByNESComparator(Order.DESCENDING) : new ComparatorFactory.EnrichmentResultByNESComparator(Order.ASCENDING);
 		final EnrichmentResult[] all = getResults(comp);
 		final List<EnrichmentResult> sub = new ArrayList<EnrichmentResult>();
-		for (int i = 0; i < all.length; i++) {
-			float es = all[i].getScore().getES();
-			if (pos && XMath.isPositive(es)) {
-				sub.add(all[i]);
+		if (pos) {
+			for (int i = 0; i < all.length; i++) {
+				float es = all[i].getScore().getES();
+				if (XMath.isPositive(es)) { sub.add(all[i]); }
 			}
-
-			if (!pos && XMath.isNegative(es)) {
-				sub.add(all[i]);
+		} else {
+			for (int i = 0; i < all.length; i++) {
+				float es = all[i].getScore().getES();
+				if (XMath.isNegative(es)) { sub.add(all[i]); }
 			}
 		}
 
@@ -166,15 +169,13 @@ public class EnrichmentDb extends AbstractObject {
 
 	public int getNumScores(final boolean pos) {
 		int cnt = 0;
-		for (int i = 0; i < fResults.length; i++) {
-			if (pos) {
-				if (XMath.isPositive(fResults[i].getScore().getES())) {
-					cnt++;
-				}
-			} else {
-				if (XMath.isNegative(fResults[i].getScore().getES())) {
-					cnt++;
-				}
+		if (pos) {
+			for (int i = 0; i < fResults.length; i++) {
+				if (XMath.isPositive(fResults[i].getScore().getES())) { cnt++; }
+			}
+		} else {
+			for (int i = 0; i < fResults.length; i++) {
+				if (XMath.isNegative(fResults[i].getScore().getES())) { cnt++; }
 			}
 		}
 		return cnt;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2021 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.genome.reports;
 
@@ -24,28 +24,17 @@ import org.genepattern.heatmap.image.HeatMap;
  * Canned Reports
  */
 public class MiscReports {
+    private MiscReports() { }
 
-    /**
-     * Privatized constructor
-     */
-    private MiscReports() {
-    }
-
-    public static HtmlPage createDatasetHeatMapAndCorrelationPlots(final Dataset fullDs_opt,
-                                                                   final Template template,
-                                                                   final RankedList rl,
-                                                                   final int topBotXGenes,
-                                                                   final File saveInDir,
-                                                                   final boolean createSvgs,
-                                                                   final boolean createGcts) {
-
+    public static HtmlPage createDatasetHeatMapAndCorrelationPlots(final Dataset fullDs_opt, final Template template, final RankedList rl, 
+    		final File saveInDir, final boolean createSvgs, final boolean createGcts) {
         HtmlPage htmlPage = new HtmlPage("heat_map_corr_plot", "Heat map and correlation plot for " + rl.getName());
-
         htmlPage.addBreak();
         htmlPage.addHtml("&nbsp&nbsp");
         
         if (fullDs_opt != null) {
             try {
+            	final int topBotXGenes = 50;
                 List<String> useNames = rl.getNamesOfUpOrDnXRanks(topBotXGenes, true);
                 useNames.addAll(rl.getNamesOfUpOrDnXRanks(topBotXGenes, false));
                 Dataset ds = new DatasetGenerators().extractRows(fullDs_opt, useNames);
@@ -83,7 +72,7 @@ public class MiscReports {
             classBName = template.getClassName(1);
         }
 
-        XChart xc = RankedListCharts.createRankedListChart(rl, classAName, classBName, true);
+        XChart xc = RankedListCharts.createRankedListChart(rl, classAName, classBName);
         xc.getFreeChart().setBackgroundPaint(EnrichmentReports.CHART_FRAME_COLOR);
         htmlPage.addChart(xc, 500, 400, saveInDir, createSvgs);
 

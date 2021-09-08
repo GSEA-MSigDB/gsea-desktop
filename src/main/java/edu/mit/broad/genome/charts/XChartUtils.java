@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2018 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2021 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.charts;
 
 import java.awt.Color;
@@ -42,41 +42,19 @@ import edu.mit.broad.genome.models.XYDatasetProxy2;
  * 1) 1 plot, 2 vertical y axis: http://serveurwind.cci-brest.fr/index.jsp
  * http://www.object-refinery.com/phorum-3.3.2a/read.php?f=2&i=7430&t=7430
  *
- * @author Aravind Subramanian
- * @version %I%, %G%
+ * @author Aravind Subramanian, David Eby
  */
 public class XChartUtils {
 
-    /**
-     * Privatized Class Constructor.
-     */
-    private XChartUtils() {
-    }
+    private XChartUtils() { }
 
-    public static JFreeChart scatterOneXManyY(final String comboTitle,
-                                              final String[] ytitles,
-                                              final String xaxisTitle,
-                                              final String yaxisTitle,
-                                              final Vector xcommon,
-                                              final Vector[] yss) {
-
+    public static JFreeChart scatterOneXManyY(final String comboTitle, final String[] ytitles, final String xaxisTitle, final String yaxisTitle, 
+    		final Vector xcommon, final Vector[] yss) {
         XYDataset data = new XYDatasetMultiTmp(ytitles, xcommon, yss);
-        return ChartFactory.createScatterPlot(comboTitle, xaxisTitle,
-                yaxisTitle, data, PlotOrientation.VERTICAL, false, false, false);
+        return ChartFactory.createScatterPlot(comboTitle, xaxisTitle, yaxisTitle, data, PlotOrientation.VERTICAL, false, false, false);
     }
 
-    /**
-     * @param title
-     * @param xaxistitle
-     * @param yaxistitle
-     * @param y
-     * @return
-     */
-    public static XYPlot lineYHits(final String xaxistitle,
-                                   final String yaxistitle,
-                                   final String seriesName,
-                                   final Vector y) {
-
+    public static XYPlot lineYHits(final String xaxistitle, final String yaxistitle, final String seriesName, final Vector y) {
         XYDataset data = new XYDatasetProxy2(y, seriesName);
 
         NumberAxis xAxis = new NumberAxis(xaxistitle);
@@ -85,83 +63,39 @@ public class XChartUtils {
 
         yAxis.setTickMarksVisible(false);
         yAxis.setTickLabelsVisible(true);
-        //yAxis.setVisible(false);
         StandardXYItemRenderer rend = new StandardXYItemRenderer(StandardXYItemRenderer.DISCONTINUOUS_LINES);
 
-        //StandardXYItemRenderer rend = new MyRend();
         return new XYPlot(data, xAxis, yAxis, rend);
     }
 
-    public static JFreeChart createHistogram(final String title,
-                                             final boolean showlegend,
-                                             final String categoryAxisLabel,
-                                             final String valueAxisLabel,
-                                             final Vector v,
-                                             final boolean onlyLines,
-                                             final int numBins,
-                                             final HistogramType htype) {
-
-        return createHistogram(title, showlegend, categoryAxisLabel, valueAxisLabel, new String[]{valueAxisLabel}, new Vector[]{v}, onlyLines, numBins, htype);
-    }
-
-    public static JFreeChart createHistogram(final String title,
-                                             final boolean showlegend,
-                                             final String categoryAxisLabel,
-                                             final String valueAxisLabel,
-                                             final String[] vnames,
-                                             final Vector[] vss,
-                                             final boolean onlyLines,
-                                             final int numBins,
-                                             final HistogramType htype) {
-
-        float min = Float.NaN, max = Float.NaN;
-        final HistogramDataset hds = new HistogramDataset();
-        boolean tooltips = true;
-        boolean urls = true;
-
-        for (int r = 0; r < vnames.length; r++) {
-            if (Float.isNaN(min)) {
-                hds.addSeries(vnames[r], vss[r].toArrayDouble(), numBins);
-            } else {
-                hds.addSeries(vnames[r], vss[r].toArrayDouble(), numBins, min, max);
-            }
-        }
-
-
-        hds.setType(htype);
-        JFreeChart chart;
-
-        if (onlyLines) {
-            chart = ChartFactory.createXYLineChart(title, categoryAxisLabel,
-                    valueAxisLabel, hds,
-                    PlotOrientation.VERTICAL, showlegend, tooltips, urls);
-
-        } else {
-            chart = ChartFactory.createHistogram(title,
-                    "fooX",
-                    "fooY",
-                    hds,
-                    PlotOrientation.VERTICAL,
-                    true,
-                    false,
-                    false);
-        }
-
-        XYPlot plot = chart.getXYPlot();
-        plot.setForegroundAlpha(0.75f);
-
-        // Adjust plot to match our legacy settings
-        plot.setAxisOffset(new RectangleInsets(0,0,0,0));
-        plot.setBackgroundPaint(Color.WHITE);
-        plot.setDomainGridlinesVisible(true);
-        plot.setDomainGridlinePaint(Color.LIGHT_GRAY);
-        plot.setRangeGridlinesVisible(true);
-        plot.setRangeGridlinePaint(Color.LIGHT_GRAY);
-        
-        return chart;
+    public static JFreeChart createHistogram(final String title, final String categoryAxisLabel, final String valueAxisLabel, final Vector v, 
+    		final int numBins) {
+        final String[] vnames = new String[]{valueAxisLabel};
+		final Vector[] vss = new Vector[]{v};
+		final HistogramDataset hds = new HistogramDataset();
+		for (int r = 0; r < vnames.length; r++) {
+	        hds.addSeries(vnames[r], vss[r].toArrayDouble(), numBins);
+		}
+		
+		hds.setType(HistogramType.FREQUENCY);
+		JFreeChart chart = ChartFactory.createXYLineChart(title, categoryAxisLabel, valueAxisLabel, hds, PlotOrientation.VERTICAL, false, 
+				true, true);
+		
+		XYPlot plot = chart.getXYPlot();
+		plot.setForegroundAlpha(0.75f);
+		
+		// Adjust plot to match our legacy settings
+		plot.setAxisOffset(new RectangleInsets(0,0,0,0));
+		plot.setBackgroundPaint(Color.WHITE);
+		plot.setDomainGridlinesVisible(true);
+		plot.setDomainGridlinePaint(Color.LIGHT_GRAY);
+		plot.setRangeGridlinesVisible(true);
+		plot.setRangeGridlinePaint(Color.LIGHT_GRAY);
+		
+		return chart;
     }
 
     public static final void saveAsSVG(XChart xChart, File toFile, int width, int height, boolean gZip) throws IOException {
         ImageUtil.saveAsSVG(xChart.getFreeChart(), toFile, width, height, gZip);
     }
-} // End class XChartFactory
+}
