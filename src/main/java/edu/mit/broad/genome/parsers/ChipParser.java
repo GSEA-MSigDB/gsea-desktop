@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2020 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2021 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.genome.parsers;
 
@@ -27,92 +27,53 @@ public class ChipParser extends AbstractParser {
     private static final String GENE_TITLE = "Gene Title";
     private static final String GENE_SYMBOL = "Gene Symbol";
     
-    /**
-     * Class Constructor.
-     */
-    public ChipParser() {
-        super(Chip.class);
-    }
-
-    public void export(final PersistentObject pob, final File file) throws Exception {
-        export((Chip) pob, file, true);
-    }
+    public ChipParser() { super(Chip.class); }
 
     /**
      * Export a chip
      * Only works for export to .chip format
-     *
-     * @see "Above for format"
      */
-    public void export(final Chip chip, final File file, final boolean withTitles) throws Exception {
+    public void export(final PersistentObject pob, final File file) throws Exception {
+        final Chip chip = (Chip) pob;
+        String[] colNames = new String[]{PROBE_SET_ID, GENE_SYMBOL, GENE_TITLE};
 
-        String[] colNames;
-
-        if (withTitles) {
-            colNames = new String[]{PROBE_SET_ID, GENE_SYMBOL, GENE_TITLE};
-        } else {
-            colNames = new String[]{PROBE_SET_ID, GENE_SYMBOL};
-        }
-
-        final PrintWriter pw = new PrintWriter(new FileOutputStream(file));
-
-        for (int i = 0; i < colNames.length; i++) {
-            pw.print(colNames[i]);
-            if (i != colNames.length) {
-                pw.print('\t');
-            }
-        }
-
-        pw.println();
-
-        for (int r = 0; r < chip.getNumProbes(); r++) {
-            Probe probe = chip.getProbe(r);
-            pw.print(probe.getName());
-            pw.print('\t');
-
-            Gene gene = probe.getGene();
-            String symbol = null;
-            String title = null;
-            if (gene != null) {
-                symbol = gene.getSymbol();
-                title = gene.getTitle();
-            }
-
-            if (symbol == null) {
-                symbol = Constants.NULL;
-            }
-
-            if (title == null) {
-                title = Constants.NULL;
-            }
-
-            pw.print(symbol);
-
-            if (withTitles) {
-                pw.print('\t');
-                pw.print(title);
+        final PrintWriter pw = startExport(chip, file);
+        try {
+            for (int i = 0; i < colNames.length; i++) {
+                pw.print(colNames[i]);
+                if (i != colNames.length) {
+                    pw.print('\t');
+                }
             }
 
             pw.println();
-        }
 
-        pw.close();
+            for (int r = 0; r < chip.getNumProbes(); r++) {
+                Probe probe = chip.getProbe(r);
+                pw.print(probe.getName());
+                pw.print('\t');
 
-        doneExport();
+                Gene gene = probe.getGene();
+                String symbol = null;
+                String title = null;
+                if (gene != null) {
+                    symbol = gene.getSymbol();
+                    title = gene.getTitle();
+                }
 
-    }    // End export
+                if (symbol == null) { symbol = Constants.NULL; }
+                if (title == null) { title = Constants.NULL; }
 
-    public List parse(String sourcepath, InputStream is) throws Exception {
-
-        if (sourcepath.endsWith(Constants.CHIP)) {
-            return _parse_from_dot_chip(sourcepath, is);
-        } else {
-            throw new IllegalArgumentException("Unknown chip file type for parsing: " + sourcepath);
+                pw.print(symbol);
+                pw.print('\t');
+                pw.println(title);
+            }
+        } finally {
+            doneExport();  // Handles pw.close()
         }
     }
 
-    private List _parse_from_dot_chip(String sourcepath, InputStream is) throws Exception {
-
+    public List parse(String sourcepath, InputStream is) throws Exception {
         startImport(sourcepath);
 
         BufferedReader bin = new BufferedReader(new InputStreamReader(is));
@@ -132,13 +93,13 @@ public class ChipParser extends AbstractParser {
 
             while (currLine != null) {
                 final String[] fields = ParseUtils.string2strings(currLine, "\t");
-                String probeName = StringUtils.trimToNull(fields[ps_index]);
+                String probeName = (fields.length <= ps_index) ? null : StringUtils.trimToNull(fields[ps_index]);
     
                 // Skip empty or duplicate probeNames
                 if (probeName != null && !names.contains(probeName)) {
-                    String symbol = StringUtils.trimToEmpty(fields[symbol_index]);
+                    String symbol = (fields.length <= symbol_index) ? "" : StringUtils.trimToEmpty(fields[symbol_index]);
                     if ("---".equals(symbol)) symbol = "";
-                    String title = (title_index < 0) ? "" : StringUtils.trimToEmpty(fields[title_index]);
+                    String title = (title_index < 0 || fields.length <= title_index) ? "" : StringUtils.trimToEmpty(fields[title_index]);
                     Probe probe = new Probe(probeName, symbol, title);
                     probesList.add(probe);
                     names.add(probeName);
@@ -157,11 +118,11 @@ public class ChipParser extends AbstractParser {
             if (!duplicates.isEmpty()) {
                 log.debug("There were duplicate probes: " + duplicates.size() + "\n" + duplicates + "\n" + chipName);
             }
-            doneImport();
 
             return unmodlist(chip);
         }
         finally {
+            doneImport();
             bin.close();
         }
     }
