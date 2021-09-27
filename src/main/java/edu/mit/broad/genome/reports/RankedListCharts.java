@@ -1,7 +1,24 @@
-/*******************************************************************************
- * Copyright (c) 2003-2018 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2021 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.reports;
+
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Font;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+import org.jfree.chart.axis.NumberAxis;
+import org.jfree.chart.plot.IntervalMarker;
+import org.jfree.chart.plot.Marker;
+import org.jfree.chart.plot.ValueMarker;
+import org.jfree.chart.plot.XYPlot;
+import org.jfree.chart.renderer.xy.StandardXYItemRenderer;
+import org.jfree.chart.ui.RectangleAnchor;
+import org.jfree.chart.ui.TextAnchor;
+import org.jfree.data.xy.XYDataset;
 
 import edu.mit.broad.genome.Printf;
 import edu.mit.broad.genome.alg.DatasetGenerators;
@@ -14,42 +31,20 @@ import edu.mit.broad.genome.math.Range;
 import edu.mit.broad.genome.math.ScoreMode;
 import edu.mit.broad.genome.math.Vector;
 import edu.mit.broad.genome.models.XYDatasetProxy2;
-import edu.mit.broad.genome.models.XYDatasetVERT;
 import edu.mit.broad.genome.objects.ColorDataset;
 import edu.mit.broad.genome.objects.MetricWeightStruc;
 import edu.mit.broad.genome.objects.RankedList;
 
-import org.jfree.chart.axis.NumberAxis;
-import org.jfree.chart.plot.IntervalMarker;
-import org.jfree.chart.plot.Marker;
-import org.jfree.chart.plot.ValueMarker;
-import org.jfree.chart.plot.XYPlot;
-import org.jfree.chart.renderer.xy.StandardXYItemRenderer;
-import org.jfree.chart.ui.RectangleAnchor;
-import org.jfree.chart.ui.TextAnchor;
-import org.jfree.data.xy.XYDataset;
-
-import java.awt.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-
 /**
- * @author Aravind Subramanian
+ * @author Aravind Subramanian, David Eby
  */
 public class RankedListCharts {
-    /**
-     * @param title
-     * @param rl
-     * @return
-     */
-    public static XChart createRankedListChart(final RankedList rl,
-                                               final String classAName_opt,
-                                               final String classBName_opt,
-                                               final boolean horizontal
-    ) {
+    private static ColorScheme RED = new ColorSchemes.BroadCancerRed();
+    private static ColorScheme BLUE = new ColorSchemes.BroadCancerBlue();
 
+    public static XChart createRankedListChart(final RankedList rl, final String classAName_opt, final String classBName_opt) {
         String title = "Ranked Gene List Correlation Profile";
-        XYPlot plot = _createRankedListChart(rl, classAName_opt, classBName_opt, horizontal);
+        XYPlot plot = _createRankedListChart(rl, classAName_opt, classBName_opt);
         MetricWeightStruc mws = rl.getMetricWeightStruc();
 
         if (mws != null) {
@@ -67,17 +62,13 @@ public class RankedListCharts {
             plot.addDomainMarker(midLine);
         }
 
-        return new XChartImpl("ranked_list_corr", title, "Ranked list correlations for " + rl.getName(), plot, false);
+        return new XChartImpl("ranked_list_corr", title, "Ranked list correlations for " + rl.getName(), plot);
     }
 
-    public static XChart createRankedListChart(final RankedList rl,
-                                               final String classAName_opt,
-                                               final String classBName_opt,
-                                               final int peakAt,
-                                               final boolean horizontal) {
-
+    public static XChart createRankedListChart(final RankedList rl, final String classAName_opt, final String classBName_opt, 
+    		final int peakAt) {
         String title = "Ranked Gene List Correlation Profile";
-        XYPlot plot = _createRankedListChart(rl, classAName_opt, classBName_opt, horizontal);
+        XYPlot plot = _createRankedListChart(rl, classAName_opt, classBName_opt);
         MetricWeightStruc mws = rl.getMetricWeightStruc();
 
         if (mws != null) {
@@ -92,16 +83,10 @@ public class RankedListCharts {
             plot.addDomainMarker(midLine);
         }
 
-        return new XChartImpl("ranked_list_corr", title, "Ranked list correlations for " + rl.getName(), plot, false);
+        return new XChartImpl("ranked_list_corr", title, "Ranked list correlations for " + rl.getName(), plot);
     }
 
-    private static XYPlot _createRankedListChart(final RankedList rl,
-                                                 final String classAName_opt,
-                                                 final String classBName_opt,
-                                                 final boolean horizontal
-
-    ) {
-
+    private static XYPlot _createRankedListChart(final RankedList rl, final String classAName_opt, final String classBName_opt) {
         XYDataset data;
         StandardXYItemRenderer rend;
 
@@ -118,17 +103,10 @@ public class RankedListCharts {
         yAxis.setTickMarksVisible(false);
         yAxis.setTickLabelsVisible(true);
 
-        XYPlot plot;
 
-        if (horizontal) {
-            data = new XYDatasetProxy2(rl.getScoresV(false), "Ranking metric scores"); // dont show legend
-            rend = new StandardXYItemRenderer(StandardXYItemRenderer.DISCONTINUOUS_LINES);
-            plot = new XYPlot(data, xAxis, yAxis, rend);
-        } else {
-            data = new XYDatasetVERT(rl.getScoresV(false), "Ranking metric scores"); // dont show legend
-            rend = new StandardXYItemRenderer(StandardXYItemRenderer.LINES);
-            plot = new XYPlot(data, yAxis, xAxis, rend);
-        }
+        data = new XYDatasetProxy2(rl.getScoresV(false), "Ranking metric scores"); // dont show legend
+        rend = new StandardXYItemRenderer(StandardXYItemRenderer.DISCONTINUOUS_LINES);
+        XYPlot plot = new XYPlot(data, xAxis, yAxis, rend);
 
         // @note otherwise defaults to red
         plot.getRenderer().setSeriesPaint(0, Color.LIGHT_GRAY);
@@ -150,11 +128,7 @@ public class RankedListCharts {
                 // Hide the IntervalMarker line
                 target.setOutlineStroke(new BasicStroke(0.0f));
                 target.setOutlinePaint(new Color(0, 0, 0, 0));
-                if (horizontal) {
-                    plot.addRangeMarker(target);
-                } else {
-                    plot.addDomainMarker(target);
-                }
+                plot.addRangeMarker(target);
             }
 
             if (classBName_opt != null && classBName_opt.length() > 0) {
@@ -168,21 +142,15 @@ public class RankedListCharts {
                 target.setLabelBackgroundColor(Color.WHITE);
                 target.setOutlineStroke(new BasicStroke(0.0f));
                 target.setOutlinePaint(new Color(0, 0, 0, 0));
-                if (horizontal) {
-                    plot.addRangeMarker(target);
-                } else {
-                    plot.addDomainMarker(target);
-                }
+                plot.addRangeMarker(target);
             }
         }
 
         return plot;
     }
 
-    public static IntervalMarker[] createIntervalMarkers(final int numRanges,
-                                                         final RankedList rl) {
-
-        java.util.List list = new ArrayList();
+    public static IntervalMarker[] createIntervalMarkers(final int numRanges, final RankedList rl) {
+        List<IntervalMarker> list = new ArrayList<>();
         RankedList rl_pos = rl.extractRanked(ScoreMode.POS_ONLY);
         Range[] ranges_on_full_list = RangeFactory.createRanges(numRanges, 0, rl_pos.getSize());
         IntervalMarker[] markers = _createIntervalMarkers(numRanges, rl_pos, ranges_on_full_list, 0, RankedListCharts.RED);
@@ -194,42 +162,22 @@ public class RankedListCharts {
         markers = _createIntervalMarkers(numRanges, rl_neg, ranges_on_full_list, rl_pos.getSize() + 1, RankedListCharts.BLUE);
         list.addAll(Arrays.asList(markers));
 
-        return (IntervalMarker[]) list.toArray(new IntervalMarker[list.size()]);
+        return list.toArray(new IntervalMarker[list.size()]);
     }
 
-    private static IntervalMarker[] _createIntervalMarkers(final int numRanges,
-                                                           final RankedList rl,
-                                                           final Range[] rangesForMarkers,
-                                                           final int startX,
-                                                           final ColorScheme cs) {
-
+    private static IntervalMarker[] _createIntervalMarkers(final int numRanges, final RankedList rl, final Range[] rangesForMarkers, 
+    		final int startX, final ColorScheme cs) {
         final ColorDataset cds = new DatasetGenerators().createColorDataset(numRanges, rl, cs);
         final IntervalMarker[] markers = new IntervalMarker[numRanges];
 
         // add a markers
         double prev_start = startX;
         for (int c = 0; c < rangesForMarkers.length; c++) {
-            //System.out.println("max: " + ranges[c].getMin() + " min: " + ranges[c].getMax());
-            /*
-            double start = ranges[c].getMin();
-            start = start - 100; // this gets rid of the whitespace between markers
-            if (start < 0) {
-                start = 0;
-            }
-            */
-
             markers[c] = new IntervalMarker(prev_start, rangesForMarkers[c].getMax());
             prev_start = rangesForMarkers[c].getMin();
 
-            //markers[c].setLabel(cds.getElement(0, c) + "");
-            //System.out.println(">> " + cds.getColor(0, c));
             markers[c].setPaint(cds.getColor(0, c));
-
         }
-
         return markers;
     }
-
-    static ColorScheme RED = new ColorSchemes.BroadCancerRed();
-    static ColorScheme BLUE = new ColorSchemes.BroadCancerBlue();
 }

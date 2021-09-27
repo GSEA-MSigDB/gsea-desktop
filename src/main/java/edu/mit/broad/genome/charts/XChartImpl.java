@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2018 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2021 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.charts;
 
 import edu.mit.broad.genome.Constants;
@@ -23,53 +23,26 @@ import java.io.IOException;
  * possible to extend later to use some other chartind library in addition to jfreechart_test
  * might later add things like custome sizes and display properties that can have state / user prefs
  *
- * @author Aravind Subramanian
- * @version %I%, %G%
+ * @author Aravind Subramanian, David Eby
  */
-
-
 public class XChartImpl implements XChart {
-
     private JFreeChart fFreeChart;
-
     private String fName;
-
     private String fCaption;
 
-    /**
-     * Class constructor
-     *
-     * @param name
-     * @param caption
-     * @param chart
-     */
     public XChartImpl(final String name, final String caption, final JFreeChart chart) {
         init(name, caption, chart);
     }
 
-    /**
-     * Class constructor
-     *
-     * @param name
-     * @param plotTitle
-     * @param caption
-     * @param plot
-     * @param createLegend
-     */
-    public XChartImpl(final String name,
-                      final String plotTitle,
-                      final String caption,
-                      final Plot plot, final boolean createLegend) {
-
+    public XChartImpl(final String name, final String plotTitle, final String caption, final Plot plot) {
         if (plot == null) {
             throw new IllegalArgumentException("Param chart cannot be null");
         }
 
-        init(name, caption, new JFreeChart(plotTitle, JFreeChart.DEFAULT_TITLE_FONT, plot, createLegend));
+        init(name, caption, new JFreeChart(plotTitle, JFreeChart.DEFAULT_TITLE_FONT, plot, false));
     }
 
     private void init(final String name, final String caption, final JFreeChart jfc) {
-
         if (jfc == null) {
             throw new IllegalArgumentException("Param jfc cannot be null");
         }
@@ -119,6 +92,4 @@ public class XChartImpl implements XChart {
         // so we always want the smallest possible images.
         XChartUtils.saveAsSVG(this, toFile, width, height, true);
     }
-} // End Chart
-
-
+}

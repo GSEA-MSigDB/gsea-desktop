@@ -97,10 +97,9 @@ public abstract class AbstractGsea2Tool extends AbstractGseaTool {
 
     }
 
-    protected void execute_one_with_reporting(final CollapsedDetails.Data fullCd, final Template template, 
-    		final GeneSet[] gsets, final HtmlReportIndexPage reportIndexPage, final boolean makeSubDir,
-    		final GeneSet[] origGeneSets, final int showDetailsForTopXSets, final boolean makeZippedReport, 
-    		final boolean makeGeneSetReports, final boolean createSvgs, final boolean createGcts) throws Exception {
+    protected void execute_one_with_reporting(final CollapsedDetails.Data fullCd, final Template template, final GeneSet[] gsets, final HtmlReportIndexPage reportIndexPage, 
+    		final GeneSet[] origGeneSets, final int showDetailsForTopXSets, final boolean makeZippedReport, final boolean makeGeneSetReports, final boolean createSvgs, 
+    		final boolean createGcts) throws Exception {
         List<RankedList> store_rnd_ranked_lists_here_opt = fSaveRndRankedListsParam.isTrue() ? new ArrayList<RankedList>() : null;
 
         final EnrichmentDb edb = execute_one(fullCd, template, gsets, store_rnd_ranked_lists_here_opt);
@@ -115,9 +114,8 @@ public abstract class AbstractGsea2Tool extends AbstractGseaTool {
         final DatasetTemplate dt = new DatasetGenerators().extract(fullCd.getDataset(), template);
 
         // Make the report
-        EnrichmentReports.Ret ret = EnrichmentReports.createGseaLikeReport(edb, getOutputStream(), fullCd,
-        		reportIndexPage, makeSubDir, fReport, showDetailsForTopXSets, minSize, maxSize, makeGeneSetReports,
-                makeZippedReport, createSvgs, createGcts, origGeneSets, metric.getName(), fNormModeParam.getNormModeName());
+        EnrichmentReports.Ret ret = EnrichmentReports.createGseaLikeReport(edb, getOutputStream(), fullCd, reportIndexPage, fReport, showDetailsForTopXSets, minSize, maxSize, 
+        		makeGeneSetReports, makeZippedReport, createSvgs, createGcts, origGeneSets, metric.getName(), fNormModeParam.getNormModeName());
 
         // Save the rnd ranked lists
         // Note: carrying this list through until after the algorithm completes has negative memory usage implications.

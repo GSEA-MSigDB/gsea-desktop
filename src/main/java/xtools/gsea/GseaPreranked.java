@@ -151,11 +151,8 @@ public class GseaPreranked extends AbstractGseaTool {
         EnrichmentDb edb = tests.executeGsea(rl, gsets, nperms, rst, chip, gcohgen);
 
         // Make the report
-        EnrichmentReports.Ret ret = EnrichmentReports.createGseaLikeReport(edb, getOutputStream(),
-                fullRL, reportIndexPage, false,
-                fReport, topXSets, minSize, maxSize,
-                fMakeGeneSetReportsParam.isTrue(), fMakeZippedReportParam.isTrue(),
-                createSvgs, fOrigGeneSets, "PreRanked", fNormModeParam.getNormModeName(), fann);
+        EnrichmentReports.Ret ret = EnrichmentReports.createGseaLikeReport(edb, getOutputStream(), fullRL, reportIndexPage, fReport, topXSets, minSize, maxSize,
+                fMakeGeneSetReportsParam.isTrue(), fMakeZippedReportParam.isTrue(), createSvgs, fOrigGeneSets, "PreRanked", fNormModeParam.getNormModeName(), fann);
 
         // Make an edb folder thing
         new EdbFolderParser().export(ret.edb, ret.savedInDir);
