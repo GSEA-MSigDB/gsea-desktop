@@ -4,8 +4,6 @@
 package xtools.gsea;
 
 import edu.mit.broad.genome.alg.DatasetGenerators;
-import edu.mit.broad.genome.alg.Metric;
-import edu.mit.broad.genome.alg.Metrics;
 import edu.mit.broad.genome.objects.Dataset;
 import edu.mit.broad.genome.objects.GeneSet;
 import edu.mit.broad.genome.objects.RankedList;
@@ -22,7 +20,6 @@ import java.util.Set;
 public abstract class AbstractGseaTool extends AbstractTool {
     // barfs if size is zero or content is zero for all sets
     public static void checkAndBarfIfZeroSets(final GeneSet[] qual_gsets) {
-    
         boolean wasError = false;
         if (qual_gsets.length == 0) {
             wasError = true;
@@ -68,22 +65,6 @@ public abstract class AbstractGseaTool extends AbstractTool {
 
     public ToolCategory getCategory() {
         return ToolCategory.GSEA;
-    }
-
-    // @maint add a metric and this array might need updating
-    public static Metric[] createMetricsForGsea() {
-        return new Metric[]{
-                new Metrics.Signal2Noise(),
-                new Metrics.tTest(),
-                new Metrics.Cosine(),
-                new Metrics.Euclidean(),
-                new Metrics.Manhatten(),
-                new Metrics.Pearson(),
-                // new Metrics.None(),
-                new Metrics.ClassRatio(),
-                new Metrics.ClassDiff(),
-                new Metrics.ClassLog2Ratio()
-        };
     }
 
     protected abstract Param[] getAdditionalParams();

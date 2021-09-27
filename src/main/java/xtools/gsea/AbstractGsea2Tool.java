@@ -6,6 +6,7 @@ package xtools.gsea;
 import edu.mit.broad.genome.Headers;
 import edu.mit.broad.genome.alg.DatasetGenerators;
 import edu.mit.broad.genome.alg.Metric;
+import edu.mit.broad.genome.alg.Metrics;
 import edu.mit.broad.genome.alg.gsea.KSTests;
 import edu.mit.broad.genome.math.*;
 import edu.mit.broad.genome.objects.GeneSet;
@@ -36,13 +37,12 @@ import org.apache.commons.lang3.StringUtils;
  * @author Aravind Subramanian, David Eby
  */
 public abstract class AbstractGsea2Tool extends AbstractGseaTool {
-
     protected final DatasetReqdParam fDatasetParam = new DatasetReqdParam();
 
     protected final TemplateSingleChooserParam fTemplateParam =
             new TemplateSingleChooserParam(Param.CLS, "Phenotype labels", TemplateMode.CATEGORICAL_2_CLASS_AND_NUMERIC, true);
 
-    protected final MetricParam fMetricParam = new MetricParam(createMetricsForGsea(), false);
+    protected final MetricParam fMetricParam = new MetricParam(Metrics.METRICS_FOR_GSEA, false);
     protected final OrderParam fOrderParam = new OrderParam(false);
     protected final SortParam fSortParam = new SortParam(false);
     protected final PermuteTypeChooserParam fPermuteTypeParamType = PermuteTypeChooserParam.createTemplateOrGeneSet(true);

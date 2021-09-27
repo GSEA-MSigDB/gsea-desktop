@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2021 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.genome.math;
 
@@ -15,6 +15,9 @@ import java.util.*;
  * vector -> encapsulates an array of flaots
  * <p/>
  * Vector is very very mutable!
+ * @maint IMP IMP IMP IMP
+ * When adding methods that alter data in this Vector, make sure
+ * to do a immutability check
  * <p/>
  * why not use GVectpor dfirecly -> uses double while we can do with float.
  * has some inapp methods.
@@ -27,25 +30,13 @@ import java.util.*;
  * - note that the constrictors do a sysarray copy for safety
  *
  * @author Aravind Subramanian
- * @version %I%, %G%
+ * @author David Eby
  */
 public class Vector {
-
     // note: only elementCount data in elementData are valid.
     // elementData.length is the allocated size.
     // invariant: elementData.length >= elementCount.
     // @note (as) making these protected for package friendly use (by Matrix etc)
-
-    /**
-     * @maint IMP IMP IMP IMP
-     * When adding methods that alter datain this Vector, make sure
-     * to do a immutability check
-     * <p/>
-     * The number of elements in this vector
-     * <p/>
-     * <p/>
-     * The number of elements in this vector
-     */
 
     /**
      * The number of elements in this vector
@@ -220,24 +211,29 @@ public class Vector {
     }
 
     /**
-     * @return sum of all elements in the Vector
+     * @return sum of all elements in the Vector.  NOTE: this assumes that a "NaN-safe" computation is not necessary, for example 
+     * because this is being called on a Vector that is the output of toVectorNaNless().  This should be slightly
+     * more performant than sumNaNsafe().  Summing an empty Vector, however, still returns an NaN result.
      */
     public double sum() {
-
+    	if (elementCount == 0) { return Double.NaN; }
         double sum = 0;
-
         for (int i = 0; i < elementCount; i++) {
             sum += elementData[i];
         }
-
         return sum;
     }
 
+    /**
+     * Does a "NaN-safe" sum calculation, where any NaN values are ignored for the purpose of the computation.
+     * Summing an empty Vector, however, still returns an NaN result.
+     */
+    public double sumNaNsafe() {
+        return XMath.sum(elementData);
+    }
 
     public double sum(int startIndexInclusive, int stopIndexEXclusive) {
-
         double sum = 0;
-
         for (int i = startIndexInclusive; i < stopIndexEXclusive; i++) {
             sum += elementData[i];
         }
@@ -245,53 +241,40 @@ public class Vector {
         return sum;
     }
 
-    public double sum(ScoreMode smode) {
-        return _sum(smode)[0];
-    }
-
-    private double[] _sum(ScoreMode smode) {
-
-        double sum = 0;
-        int numUsed = 0;
-
-        for (int i = 0; i < elementCount; i++) {
-            if (smode.isPostiveAndNegTogether()) {
-                return new double[]{sum(), getSize()};
-            } else if (smode.isPostiveOnly() && XMath.isPositive(elementData[i])) {
-                sum += elementData[i];
-                numUsed++;
-            } else if (smode.isNegativeOnly() && XMath.isNegative(elementData[i])) {
-                sum += elementData[i];
-                numUsed++;
-            }
-        }
-
-        return new double[]{sum, numUsed};
-    }
-
     /**
-     * Sum of the squares of every element
-     *
-     * @return
+     * Sum of the squares of every element.  
+     * Does a "NaN-safe" calculation, where any Nan values are ignored for the purpose of the computation.
+     * Calling on an empty Vector, however, still returns an NaN result.
      */
     // IMP that return doubles!!
-    public double squaresum() {
-
+    public double squaresumNaNsafe() {
+        int nonMissingSize = elementCount;
         double squaresum = 0;
-
         for (int i = 0; i < elementCount; i++) {
-            squaresum += elementData[i] * elementData[i];
+            float value = elementData[i];
+            if (!Float.isNaN(value)) { squaresum += value * value; } 
+            else { nonMissingSize--; }
         }
 
-        return squaresum;
+        return (nonMissingSize == 0) ? Double.NaN : squaresum;
     }
 
     /**
-     * @return arithmetic mean
+     * @return arithmetic mean.  NOTE: this assumes that a "NaN-safe" computation is not necessary, for example 
+     * because this is being called on a Vector that is the output of toVectorNaNless().  This should be slightly
+     * more performant than meanNaNsafe().  Calling on an empty Vector, however, still returns an NaN result.
      */
     public double mean() {
         computeset.mean = sum() / elementCount;
         return computeset.mean;
+    }
+    
+    /**
+     * Does a "NaN-safe" mean calculation, where any NaN values are ignored for the purpose of the computation.
+     * Calling on an empty Vector, however, still returns an NaN result.
+     */
+    public double meanNaNsafe() {
+        return XMath.mean(elementData);
     }
 
     public double meanOrMedian(final boolean useMean) {
@@ -307,33 +290,17 @@ public class Vector {
     }
 
     /**
-     * Calculates the median
+     * Calculates the median.  NOTE: this assumes that a "NaN-safe" computation is not necessary, for example 
+     * because this is being called on a Vector that is the output of toVectorNaNless().  This should be slightly
+     * more performant than medianNaNsafe().  Calling on an empty Vector, however, still returns an NaN result.
      */
     public double median() {
-        if (elementCount == 0) {
-            return Float.NaN;
-        }
-
-        // mangelos
-        int aLen = elementCount;
-        float[] v1 = new float[aLen];
-
-        System.arraycopy(elementData, 0, v1, 0, aLen);
-        Arrays.sort(v1);
-
-        int ind = (aLen - 1) / 2;
-
-        if (XMath.isEven(aLen)) {
-            return (v1[ind] + v1[aLen / 2]) / 2;
-        } else {
-            return v1[ind];
-        }
+        return XMath.median(elementData);
     }
-
+    
     private Vector fNaNless;
 
     public Vector toVectorNaNless() {
-
         if (fNaNless == null) {
             int size = getSize();
             float[] nanlessArr = new float[size];
@@ -371,7 +338,6 @@ public class Vector {
      *      MIT generally does NOT use biased -> FALSE
      */
     public double var(boolean biased, boolean fixlow) {
-
         if (fixlow) {
             stddev(biased, fixlow);
             double var = computeset.stddev * computeset.stddev;
@@ -390,61 +356,12 @@ public class Vector {
      * @return
      */
     private double _var(boolean biased) {
-
         double oldvar = 0.0;
         int len = elementCount;
 
         if (!biased) {
             len--;
         }
-
-        // Variance of 1 point is 0 (we are returning the biased variance in this case)
-        if (len <= 0) {
-            return oldvar;
-        }
-
-        double mean = mean();
-
-        computeset.mean = mean;
-
-        for (int i = 0; i < elementCount; i++) {
-            double tmp = elementData[i] - mean;
-            oldvar += tmp * tmp;
-        }
-
-        // DONT set computeset!
-        return oldvar / len;
-    }
-
-    // Specialized versions
-    private double _varBiased() {
-
-        double oldvar = 0.0;
-        int len = elementCount;
-
-        // Variance of 1 point is 0 (we are returning the biased variance in this case)
-        if (len <= 0) {
-            return oldvar;
-        }
-
-        double mean = mean();
-
-        computeset.mean = mean;
-
-        for (int i = 0; i < elementCount; i++) {
-            double tmp = elementData[i] - mean;
-            oldvar += tmp * tmp;
-        }
-
-        // DONT set computeset!
-        return oldvar / len;
-    }
-
-    private double _varUnBiased() {
-
-        double oldvar = 0.0;
-        int len = elementCount;
-        len--;
 
         // Variance of 1 point is 0 (we are returning the biased variance in this case)
         if (len <= 0) {
@@ -490,82 +407,10 @@ public class Vector {
         return computeset.stddev;
     }
 
-    // Specialized versions.
-    public double stddevBiasedFixLow() {
-        double stddev = Math.sqrt(_varBiased()); // @note call to _var and not var
-        double mean = computeset.mean;                    // avoid recalc
-
-        double minallowed = (0.20 * Math.abs(mean));
-
-        // In the case of a zero mean, assume the mean is 1
-        if (minallowed == 0) {
-            minallowed = 0.20;
-        }
-
-        if (minallowed < stddev) {
-            // keep orig
-        } else {
-            stddev = minallowed;
-        }
-
-        computeset.stddev = stddev;
-
-        return computeset.stddev;
-    }
-
-    public double stddevUnBiasedFixLow() {
-        double stddev = Math.sqrt(_varUnBiased()); // @note call to _var and not var
-        double mean = computeset.mean;                    // avoid recalc
-
-        double minallowed = (0.20 * Math.abs(mean));
-
-        // In the case of a zero mean, assume the mean is 1
-        if (minallowed == 0) {
-            minallowed = 0.20;
-        }
-
-        if (minallowed < stddev) {
-            // keep orig
-        } else {
-            stddev = minallowed;
-        }
-
-        computeset.stddev = stddev;
-
-        return computeset.stddev;
-    }
-    public double stddevBiasedNotFixLow() {
-        double stddev = Math.sqrt(_varBiased()); // @note call to _var and not var
-
-        computeset.stddev = stddev;
-
-        return computeset.stddev;
-    }
-
-    public double stddevUnBiasedNotFixLow() {
-        double stddev = Math.sqrt(_varUnBiased()); // @note call to _var and not var
-
-        computeset.stddev = stddev;
-
-        return computeset.stddev;
-    }
-    
-    /**
-     * defined as stddev / mean
-     *
-     * @param biased
-     * @param fixlow
-     */
-    public double vard(boolean biased, boolean fixlow) {
-        return this.stddev(biased, fixlow) / this.mean();
-    }
-
-
     /**
      * @return the highest value element of this Vector
      */
     public float max() {
-
         float max = Float.NEGATIVE_INFINITY;
         int maxat = -1;
 
@@ -586,13 +431,11 @@ public class Vector {
             System.out.println("WARNING: could not find max for: " + toString(','));
             max = Float.NaN;
         }
-        //System.out.println(max + "\t" + maxat);
 
         return max;
     }
 
     public int maxAtIndex() {
-
         float max = Float.NEGATIVE_INFINITY;
         int maxat = -1;
 
@@ -615,7 +458,6 @@ public class Vector {
 
     // not that max can be max +ve or max -ves
     public float maxDevFrom0() {
-
         float maxPositive = max();
         float minNegative = min();
 
@@ -624,11 +466,9 @@ public class Vector {
         } else {
             return maxPositive;
         }
-
     }
 
     public int maxDevFrom0Index() {
-
         float maxPositive = max();
         float minNegative = min();
 
@@ -640,10 +480,9 @@ public class Vector {
     }
 
     /**
-     * @return the highest value element of this Vector
+     * @return the least value element of this Vector
      */
     public float min() {
-
         float min = Float.POSITIVE_INFINITY;
 
         for (int i = 0; i < elementCount; i++) {
@@ -658,10 +497,8 @@ public class Vector {
     }
 
     public int minAtIndex() {
-
         float min = Float.POSITIVE_INFINITY;
         int minat = -1;
-
 
         for (int i = 0; i < elementCount; i++) {
             if (elementData[i] < min) {
@@ -682,21 +519,26 @@ public class Vector {
     /**
      * sum of products of elements of 2 vectors
      * Sum xi * yi
+     * NOTE: NaN values are ignored and do not contribute to the computation; an NaN value in *either*
+     * Vector will cause the value from *both* Vectors to be ignored. 
+     * Calling on an empty Vector returns an NaN result.
      */
     public double sumprod(Vector y) {
-
-        if (this.getSize() != y.getSize()) {
-            throw new RuntimeException("Unequal vector sizes x: " + getSize() + " y: "
-                    + y.getSize());
+        final int xSize = elementCount;
+        if (xSize != y.getSize()) {
+            throw new RuntimeException("Unequal vector sizes x: " + xSize + " y: " + y.getSize());
         }
 
+        int nonMissingSize = xSize;
         double prodsum = 0;
-
-        for (int i = 0; i < this.getSize(); i++) {
-            prodsum += this.getElement(i) * y.getElement(i);
+        for (int i = 0; i < xSize; i++) {
+            float xVal = getElement(i);
+            float yVal = y.getElement(i);
+            if (Float.isNaN(xVal) || Float.isNaN(yVal)) { nonMissingSize--;}
+            else { prodsum += xVal * yVal; }
         }
 
-        return prodsum;
+        return (nonMissingSize == 0) ? Double.NaN : prodsum;
     }
 
     /**
@@ -721,16 +563,15 @@ public class Vector {
      * (the real value of every element is used)
      * Vector elements DO change
      */
-    // Note: same issue as above.
+    // Note: same issue as above.  Same possible optimization, too.
     public void revsort() {
         checkImmutable();
         Arrays.sort(elementData);
-        reverse();
+        reverse(); // maybe use a comparator to sort elements into descending order directly
     }
 
     public void abs() {
         checkImmutable();
-
         for (int i = 0; i < elementData.length; i++) {
             elementData[i] = Math.abs(elementData[i]);
         }
@@ -741,7 +582,6 @@ public class Vector {
      * @param order
      */
     public void sort(SortMode mode, Order order) {
-
         checkImmutable();
 
         if (mode.isAbsolute()) {
@@ -753,7 +593,6 @@ public class Vector {
         } else {
             revsort();
         }
-
     }
 
     /**
@@ -761,7 +600,6 @@ public class Vector {
      * Vector elements DO change.
      */
     public void reverse() {
-
         checkImmutable();
 
         float tmp[] = new float[elementData.length];
@@ -784,11 +622,10 @@ public class Vector {
     }
 
     public int getSize(ScoreMode smode) {
-
         if (smode.isPostiveAndNegTogether()) {
             return getSize();
         } else if (smode.isPostiveAndNegSeperately()) {
-            throw new IllegalArgumentException("Not a valid scoee mode");
+            throw new IllegalArgumentException("Not a valid score mode");
         } else if (smode.isPostiveOnly()) {
             int cnt = 0;
             for (int i = 0; i < getSize(); i++) {
@@ -811,7 +648,6 @@ public class Vector {
         } else {
             throw new IllegalArgumentException("Unknown score mode: " + smode);
         }
-
     }
 
     /**
@@ -822,7 +658,6 @@ public class Vector {
      * @return the value at the indexed element
      */
     public float getElement(int index) {
-
         try {
             return elementData[index];
         } catch (ArrayIndexOutOfBoundsException e) {
@@ -838,7 +673,6 @@ public class Vector {
      * @param value the new vector element value
      */
     public void setElement(int index, float value) {
-
         checkImmutable();
 
         try {
@@ -853,14 +687,12 @@ public class Vector {
         setElement(index, (float) value);
     }
 
-
     public String toString() {
-
         if (getSize() == 0) {
             return "";
         }
 
-        StringBuffer buf = new StringBuffer();
+        StringBuilder buf = new StringBuilder();
 
         buf.append("(");
 
@@ -876,7 +708,6 @@ public class Vector {
     }
 
     public String toString(char delim) {
-
         if (getSize() == 0) {
             return "";
         }
@@ -900,7 +731,6 @@ public class Vector {
     }
 
     public double[] toArrayDouble() {
-
         double[] dest = new double[elementData.length];
         for (int i = 0; i < elementData.length; i++) {
             dest[i] = elementData[i];
@@ -919,7 +749,6 @@ public class Vector {
      * @return the integer hash value
      */
     public int hashCode() {
-
         int hash = 0;
 
         for (int i = 0; i < elementCount; i++) {
@@ -939,7 +768,6 @@ public class Vector {
      * @return true or false
      */
     public boolean equals(Vector vector1) {
-
         if (vector1 == null) {
             return false;
         }
@@ -971,30 +799,7 @@ public class Vector {
     }
 
     /**
-     * PNormalizes this vector in place.
-     * min set to -1 and max set to +1
-     * <p/>
-     * size of vect doeesnt matter:
-     *
-     * @todo what is the correct terminology for this and how does it relate to normalize?
-     */
-    public void pnormalize() {
-
-        checkImmutable();
-
-        float pmin = -1;
-        float min = this.min();
-        float max = this.max();
-
-        for (int i = 0; i < elementCount; i++) {
-            elementData[i] = pmin + ((elementData[i] - min) / (max - min)) * 2;
-        }
-    }
-
-    /**
      * Make this Vector immutable.
-     *
-     * @param immutable
      */
     public void setImmutable() {
         this.fImmuted = true;
@@ -1013,7 +818,6 @@ public class Vector {
             } else {
                 return extract(ScoreMode.NEG_ONLY);
             }
-
         } else {
             return extract(smode);
         }
@@ -1021,7 +825,6 @@ public class Vector {
 
     public Vector extract(ScoreMode smode) {
         TFloatArrayList floats;
-
         if (smode.isPostiveAndNegTogether()) {
             return this; // no change
         } else if (smode.isPostiveOnly()) {
@@ -1053,7 +856,6 @@ public class Vector {
      * see metrics and the nnalg for whys this is a useful concept.
      */
     public class ComputeSet {
-
         public double mean = Float.NaN;
         public final double median = Float.NaN;
         public double stddev = Float.NaN;
@@ -1062,5 +864,5 @@ public class Vector {
         public double var = Float.NaN;
         public int maxindex = -1;
         public int minindex = -1;
-    }    // End ComputeSet
-}        // End Vector
+    }
+}

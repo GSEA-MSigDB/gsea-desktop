@@ -6,7 +6,6 @@ package edu.mit.broad.genome.math;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -57,54 +56,79 @@ public class VectorTest {
     @Test
     void sum_normalCasePos() {
         assertEquals(140.6d, allPosVector.sum(), 0.0002d);
+        assertEquals(140.6d, allPosVector.sumNaNsafe(), 0.0002d);
     }
 
     @Test
     void sum_normalCaseNeg() {
         assertEquals(-248.25d, allNegVector.sum(), 0.0002d);
+        assertEquals(-248.25d, allNegVector.sumNaNsafe(), 0.0002d);
     }
 
     @Test
     void sum_normalCaseMix() {
         assertEquals(-151.6d, mixPosNegVector.sum(), 0.0002d);
+        assertEquals(-151.6d, mixPosNegVector.sumNaNsafe(), 0.0002d);
     }
 
-    @Disabled("Disabled until NaN handling is fixed")
+    /**
+     * Note that Vector.sum() is intended to be called on a "NaN-less" vector and does not check or ignore NaN
+     * values.  If it *is* called on a vector containing NaNs then the result will be NaN.  Thus the following test
+     * expects NaN even though the method should not be used that way.
+     */
     @Test
-    void sum_normalCaseNaN() {
-        assertEquals(-154.5d, mixHasNaNsVector.sum(), 0.0002d);
+    void sum_expectNaN() {
+        assertTrue(Double.isNaN(mixHasNaNsVector.sum()));
     }
 
-    @Disabled("Disabled until NaN handling is fixed")
+    @Test
+    void sumNaNsafe_normalCaseNaN() {
+        assertEquals(-154.5d, mixHasNaNsVector.sumNaNsafe(), 0.0002d);
+    }
+
     @Test
     void sum_normalCaseEmpty() {
         assertTrue(Double.isNaN(emptyVector.sum()));
+        assertTrue(Double.isNaN(emptyVector.sumNaNsafe()));
     }
 
     @Test
     void mean_normalCasePos() {
         assertEquals(28.12d, allPosVector.mean(), 0.0002d);
+        assertEquals(28.12d, allPosVector.meanNaNsafe(), 0.0002d);
     }
 
     @Test
     void mean_normalCaseNeg() {
         assertEquals(-49.65d, allNegVector.mean(), 0.0002d);
+        assertEquals(-49.65d, allNegVector.meanNaNsafe(), 0.0002d);
     }
 
     @Test
     void mean_normalCaseMix() {
         assertEquals(-30.32d, mixPosNegVector.mean(), 0.0002d);
+        assertEquals(-30.32d, mixPosNegVector.meanNaNsafe(), 0.0002d);
     }
 
-    @Disabled("Disabled until NaN handling is fixed")
+    /**
+     * Note that Vector.mean() is intended to be called on a "NaN-less" vector and does not check or ignore NaN
+     * values.  If it *is* called on a vector containing NaNs then the result will be NaN.  Thus the following test
+     * expects NaN even though the method should not be used that way.
+     */
     @Test
-    void mean_normalCaseNaN() {
-        assertEquals(30.9d, mixHasNaNsVector.mean(), 0.0002d);
+    void mean_expectNaN() {
+        assertTrue(Double.isNaN(mixHasNaNsVector.mean()));
+    }
+    
+    @Test
+    void meanNaNsafe_normalCaseNaN() {
+        assertEquals(-51.5d, mixHasNaNsVector.meanNaNsafe(), 0.0002d);
     }
 
     @Test
     void mean_normalCaseEmpty() {
         assertTrue(Double.isNaN(emptyVector.mean()));
+        assertTrue(Double.isNaN(emptyVector.meanNaNsafe()));
     }
 
     @Test
@@ -122,7 +146,6 @@ public class VectorTest {
         assertEquals(3d, mixPosNegVector.median(), 0.0002d);
     }
 
-    @Disabled("Disabled until NaN handling is fixed")
     @Test
     void median_normalCaseNaN() {
         assertEquals(5.1d, mixHasNaNsVector.median(), 0.0002d);

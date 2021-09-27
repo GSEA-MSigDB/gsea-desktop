@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2021 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.genome.alg;
 
@@ -19,8 +19,7 @@ public class DatasetStatsCore {
 
     private Logger log = Logger.getLogger(DatasetStatsCore.class);
 
-    public DatasetStatsCore() {
-    }
+    public DatasetStatsCore() { }
 
     /**
      * Captures the scores associated with a Marker
@@ -30,7 +29,6 @@ public class DatasetStatsCore {
     // Static analysis says that none of these fields or methods are used.  However, review leads back to PermutationTest,
     // where earlier changes caused unexpected errors.  Need to look at those two changes together.
     public static class TwoClassMarkerStats {
-
         private double score;
         private double me0;
         private double stdev0;
@@ -67,11 +65,9 @@ public class DatasetStatsCore {
         public double getStdev_all() {
             return stdev_all;
         }
-
     }
 
     public static void check2ClassCategoricalDS(final Dataset ds, final Template template, final Metric metric) {
-
         if (!metric.isCategorical()) {
             throw new IllegalArgumentException("Not a 2 class categorical metric: " + metric);
         }
@@ -85,6 +81,7 @@ public class DatasetStatsCore {
         // need to watch out for throwing out baby with bathwater: sometimes, esp with cdna data there might not be enough or any values in the split vectors
         // DOC this rather than catching
 
+        // TODO: eval whether we can just do these checks in the Metric code
         if (metric.getName().equalsIgnoreCase(Metrics.Signal2Noise.NAME) || metric.getName().equalsIgnoreCase(Metrics.tTest.NAME)) {
             if (ds.getNumCol() < 6) {
                 throw new BadParamException("Too few samples in the dataset to use this metric", 1006);
@@ -191,7 +188,7 @@ public class DatasetStatsCore {
                 } else {
                     stats.me0 = vs[0].mean();
                     stats.me1 = vs[1].mean();
-                    stats.me_all = full.mean();
+                    stats.me_all = full.meanNaNsafe();
                 }
 
                 stats.stdev0 = (float) vs[0].stddev(usebiased, fixlow);
@@ -208,7 +205,4 @@ public class DatasetStatsCore {
 
         return Collections.unmodifiableMap(all);
     }
-
-    
-    
-}    // End DatasetStats
+}

@@ -8,7 +8,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -52,8 +51,8 @@ public class XMathTest {
     };
     
     final float[] maxLargeResult = new float[] { 15.2f, 51.0f };
-    final float[] sumLargeResult = new float[] { -175.99f, 156.31f };
-    final float[] meanLargeResult = new float[] { 83.999f, 13.025833f };
+    final float[] sumLargeResult = new float[] { -175.99f, 156.3f };
+    final float[] meanLargeResult = new float[] { -12.5707f, 13.025f };
     final float[] medianLargeResult = new float[] { 4.495f, 7.45f };
 
     @Test
@@ -96,13 +95,11 @@ public class XMathTest {
         assertEquals(-151.6f, XMath.sum(mixPosNeg), 0.0002f);
     }
 
-    @Disabled("Disabled until NaN handling is fixed")
     @Test
     void sum_normalCaseNaN() {
         assertEquals(-154.5f, XMath.sum(mixHasNaNs), 0.0002f);
     }
 
-    @Disabled("Disabled until NaN handling is fixed")
     @Test
     void sum_normalCaseEmpty() {
         assertTrue(Float.isNaN(XMath.sum(empty)));
@@ -123,10 +120,9 @@ public class XMathTest {
         assertEquals(-30.32f, XMath.mean(mixPosNeg), 0.0002f);
     }
 
-    @Disabled("Disabled until NaN handling is fixed")
     @Test
     void mean_normalCaseNaN() {
-        assertEquals(30.9f, XMath.mean(mixHasNaNs), 0.0002f);
+        assertEquals(-51.5f, XMath.mean(mixHasNaNs), 0.0002f);
     }
 
     @Test
@@ -149,7 +145,6 @@ public class XMathTest {
         assertEquals(3f, XMath.median(mixPosNeg), 0.0002f);
     }
 
-    @Disabled("Disabled until NaN handling is fixed")
     @Test
     void median_normalCaseNaN() {
         assertEquals(5.1f, XMath.median(mixHasNaNs), 0.0002f);
@@ -180,13 +175,11 @@ public class XMathTest {
         assertArrayEquals(sumSmallResult, XMath.sumVector(smallVectorArray).elementData, 0.0002f);
     }
     
-    @Disabled("Disabled until NaN handling is fixed")
     @Test
     void sum_smallVectorWithNaN() {
         assertArrayEquals(sumSmallWithNaNResult, XMath.sumVector(smallVectorWithNaNArray).elementData, 0.0002f);
     }
     
-    @Disabled("Disabled until NaN handling is fixed")
     @Test
     void sum_largeVector() {
         assertArrayEquals(sumLargeResult, XMath.sumVector(largeVectorArray).elementData, 0.0002f);
@@ -197,13 +190,11 @@ public class XMathTest {
         assertArrayEquals(meanSmallResult, XMath.meanVector(smallVectorArray).elementData, 0.0002f);
     }
     
-    @Disabled("Disabled until NaN handling is fixed")
     @Test
     void mean_smallVectorWithNaN() {
         assertArrayEquals(meanSmallWithNaNResult, XMath.meanVector(smallVectorWithNaNArray).elementData, 0.0002f);
     }
     
-    @Disabled("Disabled until NaN handling is fixed")
     @Test
     void mean_largeVector() {
         assertArrayEquals(meanLargeResult, XMath.meanVector(largeVectorArray).elementData, 0.0002f);
@@ -214,13 +205,11 @@ public class XMathTest {
         assertArrayEquals(medianSmallResult, XMath.medianVector(smallVectorArray).elementData, 0.0002f);
     }
     
-    @Disabled("Disabled until NaN handling is fixed")
     @Test
     void median_smallVectorWithNaN() {
         assertArrayEquals(medianSmallWithNaNResult, XMath.medianVector(smallVectorWithNaNArray).elementData, 0.0002f);
     }
     
-    @Disabled("Disabled until NaN handling is fixed")
     @Test
     void median_largeVector() {
         assertArrayEquals(medianLargeResult, XMath.medianVector(largeVectorArray).elementData, 0.0002f);

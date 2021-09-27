@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2020 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2021 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.genome.alg.gsea;
 
@@ -26,10 +26,10 @@ import java.util.Map;
  * Many things here are specific to gsea;
  *
  * @author Aravind Subramanian
+ * @author David Eby
  * @see KSCore
  */
 public class KSTests {
-
     private final Logger log = Logger.getLogger(KSTests.class);
 
     private final KSCore core;
@@ -74,8 +74,9 @@ public class KSTests {
         log.debug("!!!! Executing for: " + rl_real.getName() + " # features: " + rl_real.getSize());
 
         EnrichmentResult[] results = shuffleGeneSet_precannedRankedList(nperm, rl_real, null, gsets, chip, gcohgen, rst);
+        // The NONE_METRIC is just included for purposes of Export.
         return new EnrichmentDb(rl_real.getName(),
-                rl_real, null, null, results, new Metrics.None(), new HashMap<String, Boolean>(), 
+                rl_real, null, null, results, Metrics.NONE_METRIC, new HashMap<String, Boolean>(), 
                 SortMode.REAL, Order.DESCENDING, nperm, null, null);
     }
 
@@ -170,7 +171,6 @@ public class KSTests {
     private EnrichmentResult[] shuffleGeneSet_precannedRankedList(final int nperm, final RankedList rlReal, 
     		final Template t_opt, final GeneSet[] gsetsReal, final Chip chip_opt, final GeneSetCohort.Generator gcohgen,
     		final RandomSeedGenerator rst) {
-
         final EnrichmentResult[] results = new EnrichmentResult[gsetsReal.length];
         final GeneSetCohort gcohReal = gcohgen.createGeneSetCohort(rlReal, gsetsReal, true);
 
