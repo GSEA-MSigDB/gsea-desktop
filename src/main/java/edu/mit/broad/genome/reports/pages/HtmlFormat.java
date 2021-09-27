@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2021 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.genome.reports.pages;
 
@@ -20,7 +20,6 @@ import java.io.File;
  * @author Aravind Subramanian
  */
 public class HtmlFormat {
-
     private static final Logger klog = Logger.getLogger(HtmlFormat.class);
 
     private static final String CENTER = "center";
@@ -36,15 +35,26 @@ public class HtmlFormat {
     public static final Link CSS_XTOOLS_CANNED_REPORTS = new Link();
     public static final Link ICON_CANNED_REPORTS = new Link();
 
+    public static final Script GP_S3_BUG_WORKAROUND = new Script();
+    
     static {
         CSS_XTOOLS_CANNED_REPORTS.setRel("stylesheet");
         CSS_XTOOLS_CANNED_REPORTS.setHref("xtools.css");
         ICON_CANNED_REPORTS.setRel("shortcut icon");
         ICON_CANNED_REPORTS.setHref(GseaWebResources.getGseaBaseURL() + "/images/icon_16x16.png");
+        
+        // Embedded JavaScript workaround for an issue with reports on GenePattern saving to AWS S3, introduced July 2021.
+        // The bug is that, on S3, GP links to files through a redirect and this breaks any relative URLs in the document. 
+        // The idea here is to set a <base> element on the report page make all URLs absolute.  However, we have to do it
+        // dynamically since we won't know the correct base URL when the reports are generated (not without a lot of extra
+        // config & bother, anyway).
+        // Fix is due to Ted Liefeld
+        GP_S3_BUG_WORKAROUND.setType("text/javascript");
+        StringElement scriptString = new StringElement("document.write(\"<base href='\" + window.location.href.substring(0, window.location.href.lastIndexOf('/')+1) + \"' />\");");
+        GP_S3_BUG_WORKAROUND.addElement(scriptString);
     }
 
     public static void setCommonDocThings(final String title, final Document doc) {
-
         // we want the HEAD to look like:
         // <head>
         // <title>Ensembl Genome Browser</title>
@@ -63,43 +73,17 @@ public class HtmlFormat {
         // the title - shows up in the browser title bar and NOT in the content of the page
         doc.setTitle(new Title(title));
 
-        // set the css
-        // not this way - style tag isnt needed anymore
-        // The STYLE tag is included only to ensure upward compatibility
-        // Newer versions of HTML will include support for style sheets, and this tag can be used to
-        // provide "in-line" style information. The tag should contain only valid style statements,
-        // in the language indicated in the TYPE attribute.
-        //this.fDoc.appendBody(new Style(Style.css).addElement("here!"));
-
-        // instead set the css as a link in the head
-        /*
-        if (remoteCssURLBase != null && remoteCssURLBase.length() > 0) {
-            doc.appendHead(remoteCssURLBase + "/" + CSS_XTOOLS_CANNED_REPORTS);
-        } else {
-            doc.appendHead(CSS_XTOOLS_CANNED_REPORTS);
-        }
-        */
-
+        doc.appendHead(GP_S3_BUG_WORKAROUND);
         doc.appendHead(CSS_XTOOLS_CANNED_REPORTS);
         doc.appendHead(ICON_CANNED_REPORTS);
     }
-
-    
-
-    // -------------------------------------------------------------------------------------------- //
-    // ----------------------------- SPECIFIC CLASSES FOR STUFF ----------------------------------- //
-    // -------------------------------------------------------------------------------------------- //
-
 
     /**
      * Class Links
      */
     public static class Links {
-
-        public static StringElement hyper(final String hyperLinkThisTerm,
-                                          final File file,
-                                          final String postTerm,
-                                          final File baseDir) {
+        public static StringElement hyper(final String hyperLinkThisTerm, final File file,
+                                          final String postTerm, final File baseDir) {
             A link = new A().addElement(hyperLinkThisTerm);
             setHref(link, file, baseDir);
             StringElement sel = new StringElement();
@@ -108,9 +92,7 @@ public class HtmlFormat {
             return sel;
         }
 
-        public static StringElement hyper(final String hyperLinkThisTerm,
-                                          final String url,
-                                          final String postTerm_opt) {
+        public static StringElement hyper(final String hyperLinkThisTerm, final String url, final String postTerm_opt) {
             A link = new A(url).addElement(hyperLinkThisTerm);
             StringElement sel = new StringElement();
             sel.addElement(link);
@@ -120,10 +102,7 @@ public class HtmlFormat {
             return sel;
         }
 
-        public static StringElement hyperDir(final String hyperLinkThisTerm,
-                                             final File dir,
-                                             final String postTerm) {
-
+        public static StringElement hyperDir(final String hyperLinkThisTerm, final File dir, final String postTerm) {
             A link = new A().addElement(hyperLinkThisTerm);
             setHrefToDir(link, dir);
             StringElement sel = new StringElement();
@@ -132,17 +111,12 @@ public class HtmlFormat {
             return sel;
         }
 
-        public static void setHref(final A link,
-                                   final File linkThisFile,
-                                   final File baseDir) {
-
+        public static void setHref(final A link, final File linkThisFile, final File baseDir) {
             if (link == null || linkThisFile == null || baseDir == null) {
                 return;
             }
 
             try {
-                //link.setHref(file.toURL().toString()); // this makes links absolute and hence not transferable b/w file systems
-
                 File fooBaseDir;
                 if (linkThisFile.isDirectory()) {
                     fooBaseDir = linkThisFile;
@@ -155,22 +129,13 @@ public class HtmlFormat {
                 } else { // makes an assumption that only 1 folder down
                     link.setHref(fooBaseDir.getName() + "/" + linkThisFile.getName());
                 }
-
-                //System.out.println("file: " + linkThisFile.getPath());
-                //System.out.println("file: " + linkThisFile.toURL());
-                //System.out.println("file: " + linkThisFile.toURI());
-
             } catch (Throwable t) {
                 t.printStackTrace();
                 link.setHref("there was an error: " + t.getMessage());
             }
-
         }
 
-
-        public static void setHrefToDir(final A link,
-                                        final File linkThisDir) {
-
+        public static void setHrefToDir(final A link, final File linkThisDir) {
             if (link == null || linkThisDir == null) {
                 return;
             }
@@ -180,35 +145,21 @@ public class HtmlFormat {
             }
 
             try {
-
-                //link.setHref(linkThisDir.getName());
                 link.setHref(linkThisDir.toURI().toString());
-
-                //System.out.println("file: " + linkThisDir.getPath());
-                //System.out.println("file: " + linkThisDir.toURL());
-                //System.out.println("file: " + linkThisDir.toURI());
-
             } catch (Throwable t) {
                 t.printStackTrace();
                 link.setHref("there was an error: " + t.getMessage());
             }
-
         }
 
-        public static void setHref(final A link,
-                                   final File linkThisFile,
-                                   final String reltoThisBase) {
-
+        public static void setHref(final A link, final File linkThisFile, final String reltoThisBase) {
             if (linkThisFile != null) {
                 link.setHref(reltoThisBase + "/" + linkThisFile.getName());
             }
         }
 
-        public static StringElement hyper(final String preTerm,
-                                          final String hyperLinkThisTern,
-                                          final File file,
-                                          final String postTerm,
-                                          final File baseDir) {
+        public static StringElement hyper(final String preTerm, final String hyperLinkThisTern,
+                                          final File file, final String postTerm, final File baseDir) {
             A link = new A().addElement(hyperLinkThisTern);
             setHref(link, file, baseDir);
             StringElement sel = new StringElement();
@@ -217,15 +168,12 @@ public class HtmlFormat {
             sel.addElement(" " + postTerm);
             return sel;
         }
-
-
     } // End class Links
 
     /**
      * Class Divs
      */
     public static class Divs {
-
         public static Div image() {
             return new MyDiv(image);
         }
@@ -245,16 +193,12 @@ public class HtmlFormat {
         public static Div keyValTable() {
             return new MyDiv(keyValTable);
         }
-
     } // End inner class Divs
 
-
     public static class Titles {
-
         public static Caption table(String text) {
             return new MyTitle(table, "Table: " + text);
         }
-
     }
 
     /**
@@ -301,7 +245,6 @@ public class HtmlFormat {
     }
 
     static class MyTitle extends Caption { // Really a caption but in my lingo its a Title
-
         MyTitle(String className) {
             super();
             super.setClass(className);
@@ -313,13 +256,8 @@ public class HtmlFormat {
         }
     }
 
-    /**
-     * Privatized class constructor
-     */
-    private HtmlFormat() {
-    }
+    private HtmlFormat() { }
 
-    //-----------------------------------------------------------------//
     public static Caption caption(String s) {
         Caption c = new Caption();
         c.addElement(s);
@@ -347,17 +285,13 @@ public class HtmlFormat {
         return false;
     }
 
-    public static TD _td(final String term,
-                         final String bgColor,
-                         final Linked linked) {
-
+    public static TD _td(final String term, final String bgColor, final Linked linked) {
         TD td = _td(term);
 
         if (linked != null) {
             Hyperlink[] links = linked.createAllLinks(); // @note we are creating them just in time - no caching etc till here
 
             if (links.length > 1) { // place the links seperate from the term
-
                 td.addElement(new BR());
                 for (int i = 0; i < links.length; i++) {
                     if (isNullOrNA(links[i].getURL())) {
@@ -380,7 +314,6 @@ public class HtmlFormat {
             }
         }
 
-        //klog.debug(">>>> bgcolor " + bgColor + " linked: " + linked + " term: " + term);
         if (bgColor != null) {
             td = td.setBgColor(bgColor);
         }
@@ -425,5 +358,4 @@ public class HtmlFormat {
             return _td(obj.toString());
         }
     }
-
-} // End class HFormat
+}
