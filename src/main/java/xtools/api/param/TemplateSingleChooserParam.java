@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2021 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package xtools.api.param;
 
 import java.awt.event.ActionEvent;
@@ -29,10 +29,8 @@ import edu.mit.broad.xbench.xchoosers.TemplateSelection;
  * Only 1 template choosable
  *
  * @author Aravind Subramanian
- * @version %I%, %G%
  */
 public class TemplateSingleChooserParam extends StringMultiChooserParam implements ActionListener {
-
     protected TemplateMode fMode;
     private TemplateChooserUI fTemplateChooser;
     private TemplateSelection fCurrBag;
@@ -56,7 +54,6 @@ public class TemplateSingleChooserParam extends StringMultiChooserParam implemen
     }
 
     protected GFieldPlusChooser _getSelectionComponent() {
-    
         if (fTemplateChooser == null) {
             //log.debug("creating TemplateChooser component");
             fTemplateChooser = new TemplateChooserUI(false, fMode);
@@ -81,7 +78,6 @@ public class TemplateSingleChooserParam extends StringMultiChooserParam implemen
     }
 
     private Template[] _getGeneTemplates(final String[] ss, final Dataset ds) {
-    
         if (ss == null || ss.length == 0) {
             return null;
         }
@@ -102,7 +98,6 @@ public class TemplateSingleChooserParam extends StringMultiChooserParam implemen
     }
 
     protected Template[] _getTemplates(Dataset dsOptX) throws Exception {
-    
         String[] ss = getStrings();
         Printf.out(ss);
     
@@ -112,10 +107,10 @@ public class TemplateSingleChooserParam extends StringMultiChooserParam implemen
         }
     
         if (ss.length == 0) {
-            throw new IllegalArgumentException("No templates specified -- 0 length str array");
+            throw new IllegalArgumentException("No templates specified.  Please load a CLS file and choose the phenotype labels.");
         }
     
-        List templates = new ArrayList();
+        List<Template> templates = new ArrayList<>();
         Template currMainTemplate = null;
     
         for (int i = 0; i < ss.length; i++) {
@@ -144,19 +139,14 @@ public class TemplateSingleChooserParam extends StringMultiChooserParam implemen
             }
         }
     
-        return (Template[]) templates.toArray(new Template[templates.size()]);
+        return templates.toArray(new Template[templates.size()]);
     }
 
     private boolean _isPath(String pathOrName) {
-        if (pathOrName.indexOf(File.separator) == -1) {
-            return false;
-        } else {
-            return true;
-        }
+        return pathOrName.indexOf(File.separator) >= 0;
     }
 
     private Template _getSourceTemplate(String pathOrName, Template currTemplate) throws Exception {
-        //System.out.println("asking for: " + pathOrName);
         if (pathOrName.indexOf(File.separatorChar) == -1) { // eg, not a path
             if (currTemplate == null) {
                 // may still be in cwd (dir of execution so try) josh gould fix
@@ -168,5 +158,4 @@ public class TemplateSingleChooserParam extends StringMultiChooserParam implemen
             return ParserFactory.readTemplate(new File(pathOrName));
         }
     }
-
-}    // End class TemplateSingleChooserParam
+}
