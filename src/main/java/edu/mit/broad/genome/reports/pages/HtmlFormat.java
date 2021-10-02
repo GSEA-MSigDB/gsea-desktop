@@ -34,24 +34,12 @@ public class HtmlFormat {
 
     public static final Link CSS_XTOOLS_CANNED_REPORTS = new Link();
     public static final Link ICON_CANNED_REPORTS = new Link();
-
-    public static final Script GP_S3_BUG_WORKAROUND = new Script();
     
     static {
         CSS_XTOOLS_CANNED_REPORTS.setRel("stylesheet");
         CSS_XTOOLS_CANNED_REPORTS.setHref("xtools.css");
         ICON_CANNED_REPORTS.setRel("shortcut icon");
         ICON_CANNED_REPORTS.setHref(GseaWebResources.getGseaBaseURL() + "/images/icon_16x16.png");
-        
-        // Embedded JavaScript workaround for an issue with reports on GenePattern saving to AWS S3, introduced July 2021.
-        // The bug is that, on S3, GP links to files through a redirect and this breaks any relative URLs in the document. 
-        // The idea here is to set a <base> element on the report page make all URLs absolute.  However, we have to do it
-        // dynamically since we won't know the correct base URL when the reports are generated (not without a lot of extra
-        // config & bother, anyway).
-        // Fix is due to Ted Liefeld
-        GP_S3_BUG_WORKAROUND.setType("text/javascript");
-        StringElement scriptString = new StringElement("document.write(\"<base href='\" + window.location.href.substring(0, window.location.href.lastIndexOf('/')+1) + \"' />\");");
-        GP_S3_BUG_WORKAROUND.addElement(scriptString);
     }
 
     public static void setCommonDocThings(final String title, final Document doc) {
@@ -73,7 +61,6 @@ public class HtmlFormat {
         // the title - shows up in the browser title bar and NOT in the content of the page
         doc.setTitle(new Title(title));
 
-        doc.appendHead(GP_S3_BUG_WORKAROUND);
         doc.appendHead(CSS_XTOOLS_CANNED_REPORTS);
         doc.appendHead(ICON_CANNED_REPORTS);
     }
