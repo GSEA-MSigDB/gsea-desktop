@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2020 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2021 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package xtools.gsea;
 
@@ -10,12 +10,14 @@ import edu.mit.broad.genome.objects.Dataset;
 import edu.mit.broad.genome.objects.GeneSet;
 import edu.mit.broad.genome.objects.Template;
 import edu.mit.broad.genome.objects.strucs.CollapsedDetails;
+import edu.mit.broad.genome.parsers.GctParser;
 import edu.mit.broad.genome.reports.api.ReportIndexState;
 import edu.mit.broad.genome.reports.pages.HtmlReportIndexPage;
 import edu.mit.broad.vdb.chip.Chip;
 import xtools.api.AbstractTool;
 import xtools.api.param.*;
 
+import java.io.File;
 import java.util.Properties;
 
 import org.apache.commons.lang3.StringUtils;
@@ -26,7 +28,7 @@ import org.apache.commons.lang3.StringUtils;
  * This program has several checks to provide nice error messages.
  * Its NOT representative of xtool code!!
  *
- * @author Aravind Subramanian
+ * @author Aravind Subramanian, David Eby
  */
 public class Gsea extends AbstractGsea2Tool {
 
@@ -94,6 +96,16 @@ public class Gsea extends AbstractGsea2Tool {
             // Make a summary etiology always
             fReport.savePageTsv(cds.makeEtiologySdf());
 
+            // Also save the collapsed dataset if Create GCTs is true
+            if (fCreateGctsParam.isSpecified() && fCreateGctsParam.isTrue()) {
+                File reportDir = fReport.getReportDir();
+                File edbDir = new File(reportDir, "edb");
+                if (!edbDir.exists()) { edbDir.mkdirs(); }
+                File collapsedGct = new File(edbDir, collapsed.getName() + ".gct");
+                GctParser gctExporter = new GctParser();
+                gctExporter.export(collapsed, collapsedGct);
+            }
+            
             cd.chip = chip;
             cd.wasCollapsed = true;
             cd.collapsed = collapsed;
@@ -111,7 +123,6 @@ public class Gsea extends AbstractGsea2Tool {
     }
 
     public void execute() throws Exception {
-
         // to preserve memory & for custom indexing
         final ReportIndexState state = new ReportIndexState(true, false, false, createHeader(fDatasetParam));
         startExec(state);
