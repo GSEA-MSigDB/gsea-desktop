@@ -7,7 +7,6 @@ import edu.mit.broad.genome.Constants;
 import edu.mit.broad.genome.NamingConventions;
 import edu.mit.broad.genome.NotImplementedException;
 import edu.mit.broad.genome.Printf;
-import edu.mit.broad.genome.alg.ComparatorFactory;
 import edu.mit.broad.genome.alg.DatasetGenerators;
 import edu.mit.broad.genome.alg.gsea.PValueCalculator;
 import edu.mit.broad.genome.alg.gsea.PValueCalculatorImpls;
@@ -21,6 +20,7 @@ import edu.mit.broad.genome.objects.strucs.CollapsedDetails;
 import edu.mit.broad.genome.parsers.AuxUtils;
 import edu.mit.broad.genome.parsers.GctParser;
 import edu.mit.broad.genome.reports.api.PicFile;
+import edu.mit.broad.genome.reports.api.Report;
 import edu.mit.broad.genome.reports.api.ToolReport;
 import edu.mit.broad.genome.reports.pages.*;
 import edu.mit.broad.genome.reports.web.LinkedFactory;
@@ -164,6 +164,12 @@ public class EnrichmentReports {
             saveInThisDir.mkdir();
         }
 
+        // Copy over any warnings from the RankedList(s)/Dataset(s) and EnrichmentDB to be displayed as Report Comments
+        // TODO: consider doing likewise for Template, FeatureAnnotation, etc
+        copyPobWarnings(cd.orig, report);
+        if (cd.wasCollapsed) { copyPobWarnings(cd.collapsed, report); }
+        copyPobWarnings(edb_original, report);
+        
         String phenotypeName = _createPhenotypeName(edb_original);
 
         final String[] classNames = _createClassNames(edb_original.getTemplate());
@@ -474,6 +480,11 @@ public class EnrichmentReports {
         ret.savedInDir = saveInThisDir;
         ret.edb = edb;
         return ret;
+    }
+
+    private static void copyPobWarnings(PersistentObject pob, Report report) {
+        List<String> warnings = pob.getWarnings();
+        for (String warning : warnings) { report.addWarning(warning); }
     }
 
     public static BasicReportStruc createReport(final EnrichmentResult[] results,

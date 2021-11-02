@@ -73,9 +73,8 @@ public abstract class AbstractGsea2Tool extends AbstractGseaTool {
         fParamSet.addParamAdv(fRndTypeParam);
     }
 
-    private EnrichmentDb execute_one(final CollapsedDetails.Data fullCd,
-                                     final Template template, final GeneSet[] gsets,
-                                     List<RankedList> store_rnd_ranked_lists_here_opt) throws Exception {
+    private EnrichmentDb execute_one(final CollapsedDetails.Data fullCd, final Template template, final GeneSet[] origGeneSets,
+            List<RankedList> store_rnd_ranked_lists_here_opt) throws Exception {
         final RandomSeedGenerator rst = fRndSeedTypeParam.createSeed();
         final DatasetTemplate dt = new DatasetGenerators().extract(fullCd.getDataset(), template);
 
@@ -89,20 +88,19 @@ public abstract class AbstractGsea2Tool extends AbstractGseaTool {
                     ((RandomSeedGenerators.Timestamp)rst).getTimestamp());
         }
 
-        return tests.executeGsea(dt, gsets, fNumPermParam.getIValue(), fMetricParam.getMetric(),
-        		fSortParam.getMode(), fOrderParam.getOrder(), rst,
-                fRndTypeParam.getRandomizerType(), getMetricParams(fMedianParam),
-                fGcohGenReqdParam.createGeneSetCohortGenerator(), fPermuteTypeParamType.permuteTemplate(),
-                fNumMarkersParam.getIValue(), store_rnd_ranked_lists_here_opt);
+        return tests.executeGsea(dt, origGeneSets, fNumPermParam.getIValue(), fMetricParam.getMetric(),
+        		fSortParam.getMode(), fOrderParam.getOrder(), rst, fRndTypeParam.getRandomizerType(), getMetricParams(fMedianParam),
+                fGcohGenReqdParam.createGeneSetCohortGenerator(fGeneSetMinSizeParam.getIValue(), fGeneSetMaxSizeParam.getIValue()), 
+                fPermuteTypeParamType.permuteTemplate(), fNumMarkersParam.getIValue(), store_rnd_ranked_lists_here_opt);
 
     }
 
-    protected void execute_one_with_reporting(final CollapsedDetails.Data fullCd, final Template template, final GeneSet[] gsets, final HtmlReportIndexPage reportIndexPage, 
-    		final GeneSet[] origGeneSets, final int showDetailsForTopXSets, final boolean makeZippedReport, final boolean makeGeneSetReports, final boolean createSvgs, 
+    protected void execute_one_with_reporting(final CollapsedDetails.Data fullCd, final Template template, final GeneSet[] origGeneSets,
+            final int showDetailsForTopXSets, final boolean makeZippedReport, final boolean makeGeneSetReports, final boolean createSvgs,
     		final boolean createGcts) throws Exception {
         List<RankedList> store_rnd_ranked_lists_here_opt = fSaveRndRankedListsParam.isTrue() ? new ArrayList<RankedList>() : null;
 
-        final EnrichmentDb edb = execute_one(fullCd, template, gsets, store_rnd_ranked_lists_here_opt);
+        final EnrichmentDb edb = execute_one(fullCd, template, origGeneSets, store_rnd_ranked_lists_here_opt);
 
         // -------------------------------------------------------------------------------------------- //
         // rest are for the reporting
@@ -113,6 +111,8 @@ public abstract class AbstractGsea2Tool extends AbstractGseaTool {
 
         final DatasetTemplate dt = new DatasetGenerators().extract(fullCd.getDataset(), template);
 
+        final HtmlReportIndexPage reportIndexPage = fReport.getIndexPage();
+        
         // Make the report
         EnrichmentReports.Ret ret = EnrichmentReports.createGseaLikeReport(edb, getOutputStream(), fullCd, reportIndexPage, fReport, showDetailsForTopXSets, minSize, maxSize, 
         		makeGeneSetReports, makeZippedReport, createSvgs, createGcts, origGeneSets, metric.getName(), fNormModeParam.getNormModeName());
@@ -136,15 +136,15 @@ public abstract class AbstractGsea2Tool extends AbstractGseaTool {
 
         if (fPermuteTypeParamType.permuteTemplate() && dt.getTemplate().isCategorical()) {
             if (dt.getTemplate().getClass(0).getSize() < 7) {
-                fReport.addComment("Warning: Phenotype permutation was performed but the number of samples in class A is < 7, phenotype: " + dt.getTemplateName());
+                fReport.addWarning("Phenotype permutation was performed but the number of samples in class A is < 7, phenotype: " + dt.getTemplateName());
             }
 
             if (dt.getTemplate().getClass(1).getSize() < 7) {
-                fReport.addComment("Warning: Phenotype permutation was performed but the number of samples in class B is < 7, phenotype: " + dt.getTemplateName());
+                fReport.addWarning("Phenotype permutation was performed but the number of samples in class B is < 7, phenotype: " + dt.getTemplateName());
             }
 
             if (dt.getTemplate().getNumItems() < 14) {
-                fReport.addComment("With small datasets, there might not be enough random permutations of sample labels to generate a sufficient null distribution. " +
+                fReport.addWarning("With small datasets, there might not be enough random permutations of sample labels to generate a sufficient null distribution. " +
                         "In such cases, gene_set randomization might be a better choice.");
             }
         }

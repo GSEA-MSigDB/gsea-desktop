@@ -1,10 +1,12 @@
 /*
- * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2021 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.genome.objects;
 
 import org.apache.log4j.Logger;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 
 /**
@@ -18,17 +20,12 @@ import java.util.Properties;
  * <p/>
  * IMPORTANT see item 54 in bloch for the initialization stuff.
  *
- * @author Aravind Subramanian
- * @version 1.0
+ * @author Aravind Subramanian, David Eby
  */
 // NOTE: the above javadoc is *incorrect*.  There is no use of UUIDs.
 // Leaving it in place as a historical marker in case we ever get around
 // to proving IDs are unnecessary.
 public abstract class AbstractObject implements PersistentObject {
-
-    /**
-     * Name of this object
-     */
     private String fName;
 
     private String fNameEnglish;
@@ -38,7 +35,8 @@ public abstract class AbstractObject implements PersistentObject {
      */
     private Id fId;
 
-    private StringBuffer fComment;
+    private StringBuilder fComment;
+    private List<String> warnings = new ArrayList<String>();
 
     /**
      * For logging support
@@ -161,14 +159,20 @@ public abstract class AbstractObject implements PersistentObject {
     }
 
     public String getComment() {
-        if (fComment == null)
-            return "";
-        else
-            return fComment.toString();
+        return (fComment == null) ? "" : fComment.toString();
     }
 
     public void addComment(String comment) {
-        if (fComment == null) fComment = new StringBuffer(comment);
+        if (fComment == null) { fComment = new StringBuilder(comment); }
+        else { fComment.append("\n").append(comment); }
+    }
+
+    public List<String> getWarnings() {
+        return warnings;
+    }
+
+    public void addWarning(String warning) {
+        warnings.add(warning);
     }
 
     /**

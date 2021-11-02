@@ -13,10 +13,9 @@ import java.util.*;
 /**
  * Object that captures statistics for dataset rows
  *
- * @author Aravind Subramanian
+ * @author Aravind Subramanian, David Eby
  */
 public class DatasetStatsCore {
-
     private Logger log = Logger.getLogger(DatasetStatsCore.class);
 
     public DatasetStatsCore() { }
@@ -38,6 +37,10 @@ public class DatasetStatsCore {
         private double me_all;
         private double stdev_all;
 
+        // This is the only field currently used.  Added recently for tracking rows with missing samples for later removal.
+        // This can probably be accomplished a better way, possibly allowing removal of the entire class.
+        public boolean omit = false;
+        
         public double getScore() {
             return score;
         }
@@ -67,99 +70,58 @@ public class DatasetStatsCore {
         }
     }
 
-    public static void check2ClassCategoricalDS(final Dataset ds, final Template template, final Metric metric) {
+    // key -> feature name, value -> TwoClassMarkerStats
+    // Currently only called from PermutationTestBuilder, which does not make use of the
+    // TwoClassMarkerStats map.  Relies on calling this for error checks and nothing more.
+    //TODO: refactor to separate error checks from the rest.
+    public boolean calc2ClassCategoricalMetricMarkerScores(final Dataset ds, final Template template, final Metric metric, 
+            final Map<String, Boolean> params, Map<String, TwoClassMarkerStats> markerScores) {
         if (!metric.isCategorical()) {
             throw new IllegalArgumentException("Not a 2 class categorical metric: " + metric);
         }
+        if (template.getNumClasses() != 2) {
+            throw new RuntimeException("Template is not biphasic. Name: " + template.getName() + 
+                    "\n<br>This metric can only be used with 2 class comparisons");
+        }
 
-        VectorSplitter splitter = new VectorSplitter(metric.getMinNumSamplesNeededPerClassForCalculation());
-
-        Vector profile = ds.getRow(0);
-        Vector[] vs = splitter.splitBiphasic_nansafe(profile, template);
-
-        // Pause for a helpful error message for gsea GUI
-        // need to watch out for throwing out baby with bathwater: sometimes, esp with cdna data there might not be enough or any values in the split vectors
-        // DOC this rather than catching
-
-        // TODO: eval whether we can just do these checks in the Metric code
-        if (metric.getName().equalsIgnoreCase(Metrics.Signal2Noise.NAME) || metric.getName().equalsIgnoreCase(Metrics.tTest.NAME)) {
-            if (ds.getNumCol() < 6) {
+        final boolean reqThreeSamplesPerClass = metric.getName().equalsIgnoreCase(Metrics.Signal2Noise.NAME) || metric.getName().equalsIgnoreCase(Metrics.tTest.NAME);
+        if (reqThreeSamplesPerClass) {
+            if (ds.getNumCol() < 6) { 
                 throw new BadParamException("Too few samples in the dataset to use this metric", 1006);
             }
-
-            if (vs == null) {
-                throw new BadParamException("One of the classes in this dataset has too few samples in one of the classes of the dataset to use this metric", 1006);
-            }
-
-            // These checks are probably redundant since splitter.splitBiphasic_nansafe(profile, template) appears to return
-            // null if either class has too few samples.
-            if (vs[0].getSize() < 3) {
+            if (template.getClass(0).getSize() < 3) {
                 throw new BadParamException("Too few samples in class A of the dataset to use this metric", 1006);
             }
-
-            if (vs[1].getSize() < 3) {
+            if (template.getClass(1).getSize() < 3) {
                 throw new BadParamException("Too few samples in class B of the dataset to use this metric", 1006);
             }
         }
-    }
-    
-    // key -> feature name, value -> TwoClassMarkerStats
-    // Currently only called from PermutationTestBuilder, which does not make use of the
-    // return value.  Relies on this for error checks and nothing more.
-    //TODO: refactor to separate error checks from the rest.
-    public Map<String, TwoClassMarkerStats> calc2ClassCategoricalMetricMarkerScores(final Dataset ds,
-    		final Template template, final Metric metric, final Map<String, Boolean> params) {
-
-        if (!metric.isCategorical()) {
-            throw new IllegalArgumentException("Not a 2 class categorical metric: " + metric);
-        }
-
-        Map<String, TwoClassMarkerStats> all = new HashMap<String, TwoClassMarkerStats>();
 
         boolean usebiased = AlgMap.isBiased(params);
         boolean fixlow = AlgMap.isFixLowVar(params);
         boolean useMedian = AlgMap.isMedian(params);
 
-        VectorSplitter splitter = new VectorSplitter(metric.getMinNumSamplesNeededPerClassForCalculation());
+        int minSampleCount = metric.getMinNumSamplesNeededPerClassForCalculation();
+        VectorSplitter splitter = new VectorSplitter(minSampleCount);
 
+        boolean foundRowsWithMissingData = false;
         for (int r = 0; r < ds.getNumRow(); r++) { 
-
             String rowName = ds.getRowName(r);
-            //System.out.println(">>" + rowName);
 
             Vector profile = ds.getRow(r);
-            Vector[] vs = splitter.splitBiphasic_nansafe(profile, template);
+            Vector[] vs = splitter.splitBiphasic(profile, template);
+            vs[0] = vs[0].toVectorNaNless();
+            vs[1] = vs[1].toVectorNaNless();
 
-            // Pause for a helpful error message for gsea GUI
-            // need to watch out for throwing out baby with bathwater: sometimes, esp with cdna data there might not be enough or any values in the split vectors
-            // DOC this rather than catching
-
-            if (r == 0) {
-                if (metric.getName().equalsIgnoreCase(Metrics.Signal2Noise.NAME) || metric.getName().equalsIgnoreCase(Metrics.tTest.NAME)) {
-                    if (ds.getNumCol() < 6) {
-                        throw new BadParamException("Too few samples in the dataset to use this metric", 1006);
-                    }
-
-                    if (vs == null) {
-                        throw new BadParamException("One of the classes in this dataset has too few samples in one of the classes of the dataset to use this metric", 1006);
-                    }
-
-                    // These checks are probably redundant since splitter.splitBiphasic_nansafe(profile, template) appears to return
-                    // null if either class has too few samples.
-                    if (vs[0].getSize() < 3) {
-                        throw new BadParamException("Too few samples in class A of the dataset to use this metric", 1006);
-                    }
-
-                    if (vs[1].getSize() < 3) {
-                        throw new BadParamException("Too few samples in class B of the dataset to use this metric", 1006);
-                    }
-                }
-            }
-
+            // TODO: these stats seem to never be used.  Eval for removal
+            // At the moment they are only used for tracking rows with too many missing values via the 'omit' field.
+            // The remaining question, really, is whether they have a meaningful side-effect since they are never
+            // directly used.  Otherwise it appears that the computations in this loop could be removed.
+            // We will keep this in place for now until that can be checked.
             TwoClassMarkerStats stats = new TwoClassMarkerStats();
 
-            // sometimes, esp with cdna data there might not be enough or any values in the split vectors
-            if (vs == null || vs[0] == null || vs[1] == null) {
+            if (vs == null || vs[0] == null || vs[1] == null || vs[0].getSize() == 0 || vs[1].getSize() == 0) {
+                // sometimes, esp with cdna data there might not be enough or any values in the split vectors
                 stats.score = Float.NaN;
                 stats.me0 = Float.NaN;
                 stats.me1 = Float.NaN;
@@ -167,18 +129,17 @@ public class DatasetStatsCore {
                 stats.stdev0 = Float.NaN;
                 stats.stdev1 = Float.NaN;
                 stats.stdev_all = Float.NaN;
-                log.warn("Omitting as too few good data points: " + rowName);
-                //throw new RuntimeException("Omitting as too few good data points: " + rowName + " " + template.getName() + "\n" + template.getAsString(false));
+                log.warn("Omitting row " + (r+1) + " of this dataset with name ' " + rowName
+                        + "' as all the data is missing for one or both of the classes.");
+                stats.omit = true;
+                foundRowsWithMissingData = true;
             } else {
-                stats.score = (float) metric.getScore(profile, template, params);
-                // @note not all of the cols in the ds might be used in the template
-                // so this test is not correct
-                /*
-                final Vector full_row_as_is = template.extractProfile(r, ds);
-                if (vs[0].getSize() + vs[1].getSize() != full_row.getSize()) {
-                    throw new IllegalStateException();
+                if (vs[0].getSize() < minSampleCount || vs[1].getSize() < minSampleCount) {
+                    log.warn("In row " + (r+1) + " of this dataset with name '" + rowName
+                            + "', one or both of the classes has too few samples to use the chosen metric");
                 }
-                */
+
+                stats.score = (float) metric.getScore(profile, template, params);
                 Vector full = new Vector(vs);
 
                 if (useMedian) {
@@ -186,8 +147,8 @@ public class DatasetStatsCore {
                     stats.me1 = vs[1].median();
                     stats.me_all = full.median();
                 } else {
-                    stats.me0 = vs[0].mean();
-                    stats.me1 = vs[1].mean();
+                    stats.me0 = vs[0].meanNaNsafe();
+                    stats.me1 = vs[1].meanNaNsafe();
                     stats.me_all = full.meanNaNsafe();
                 }
 
@@ -196,13 +157,12 @@ public class DatasetStatsCore {
                 stats.stdev_all = (float) full.stddev(usebiased, fixlow);
             }
 
-            if (all.containsKey(rowName)) {
-                throw new RuntimeException("Duplicate row names in dataset: " + ds.getName() + " rowname: " + rowName + " row: " + r);
+            if (markerScores.containsKey(rowName)) {
+                throw new RuntimeException("Duplicate row names in dataset: " + ds.getName() + " rowname: " + rowName + " row: " + (r+1));
             }
-            all.put(rowName, stats);
-
+            markerScores.put(rowName, stats);
         }
 
-        return Collections.unmodifiableMap(all);
+        return foundRowsWithMissingData;
     }
 }

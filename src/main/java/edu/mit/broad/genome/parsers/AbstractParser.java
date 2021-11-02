@@ -6,7 +6,12 @@ package edu.mit.broad.genome.parsers;
 import edu.mit.broad.genome.Constants;
 import edu.mit.broad.genome.NotImplementedException;
 import edu.mit.broad.genome.math.Matrix;
+import edu.mit.broad.genome.objects.Annot;
+import edu.mit.broad.genome.objects.Dataset;
+import edu.mit.broad.genome.objects.DefaultDataset;
+import edu.mit.broad.genome.objects.FeatureAnnot;
 import edu.mit.broad.genome.objects.PersistentObject;
+import edu.mit.broad.genome.objects.SampleAnnot;
 import edu.mit.broad.genome.utils.ClassUtils;
 import org.apache.log4j.Logger;
 
@@ -269,32 +274,106 @@ public abstract class AbstractParser implements Parser {
             throw nfe;
         }
     }
+
+    protected List parseTextMatrixToDataset(String objName, List<String> lines, List<String> colNames, boolean hasDesc) throws Exception {
+        final int lineCount = lines.size();
+        List<String> rowNames = new ArrayList<String>(lineCount);
+        List<String> rowDescs = new ArrayList<String>(lineCount);
+        List<float[]> data = new ArrayList<float[]>(lineCount);
+        int skippedMissingRows = 0, partialMissingRows = 0;
+
+        int startPos = (hasDesc) ? 2 : 1;
+        int expFields = colNames.size() + startPos;
+        for (int i = 0; i < lineCount; i++) {
+            String currLine = lines.get(i);
+            List<String> fields = string2stringsV2(currLine, expFields); // spaces allowed in name & desc field so DONT tokenize them
+            String rowname = parseRowname(fields.get(0).trim(), i);
+
+            float[] dataRow = parseFieldsIntoFloatArray(fields, i, startPos, rowname);
+            int countMissing = countMissingValues(dataRow, i, rowname);
+            if (countMissing < dataRow.length) {
+                if (countMissing > 0) { partialMissingRows++; }
+                data.add(dataRow);
+                rowNames.add(rowname);
+
+                if (hasDesc) {
+                    String desc = fields.get(1).trim();
+                    if (desc.length() == 0) { desc = Constants.NA; }
+                    rowDescs.add(desc);
+                }
+            } else {
+                skippedMissingRows++;
+            }
+        }
+
+        if (data.isEmpty()) { throw new ParserException("Data was missing in all rows!"); }
+
+        Matrix matrix = new Matrix(data.size(), colNames.size());
+        for (int i = 0; i < data.size(); i++) {
+            matrix.setRow(i, data.get(i));
+        }
+
+        final FeatureAnnot ann = new FeatureAnnot(objName, rowNames, rowDescs);
+        ann.addComment(fComment.toString());
+        final SampleAnnot sann = new SampleAnnot(objName, colNames);
+
+        final Dataset ds = new DefaultDataset(objName, matrix, rowNames, colNames, new Annot(ann, sann));
+        ds.addComment(fComment.toString());
+        if (partialMissingRows > 0) {
+            String warning = "There were " + partialMissingRows + " row(s) in total with partially missing data in this dataset.";
+            log.warn(warning);
+            ds.addWarning(warning + "  See the log for more details.");
+        }
+        if (skippedMissingRows > 0) {
+            String warning = "There were " + skippedMissingRows + " row(s) in total with all data missing in this dataset.  These will be ignored.";
+            log.warn(warning);
+            ds.addWarning(warning + "  See the log for more details.");
+        }
+        doneImport();
+        return unmodlist(new PersistentObject[]{ds});
+    }
+
+    protected int countMissingValues(float[] dataRow, int row, String rowname) {
+        int missingCount = 0;
+        for (int i = 0; i < dataRow.length; i++) {
+            float value = dataRow[i];
+            if (Float.isNaN(value)) { missingCount++; }
+        }
+        if (missingCount == dataRow.length) {
+            log.warn("All values missing in row " + (row+1) + " of the data matrix with Name '" + rowname + "'.  Row will be ignored.");
+        } else  if (missingCount > 0) {
+            log.warn("Missing values found in row " + (row+1) + " of the data matrix with Name '" + rowname + "'.");
+        }
+        return missingCount;
+    }
     
-    protected String parseRowname(String rowname, int i, String currLine) throws ParserException {
+    protected float[] parseFieldsIntoFloatArray(List<String> fields, int row, int startingField, String rowname) {
+        float[] dataRow = new float[fields.size() - startingField];
+        for (int f = startingField, col = 0; f < fields.size(); f++) {
+            String s = fields.get(f);
+            try {
+                dataRow[col++] = parseStringToFloat(s, true);
+            } catch (NumberFormatException nfe) {
+                log.error("Could not parse '" + s + "' as a floating point number in row " + (row+1) + " of the data matrix with Name '" + rowname + "'.");
+                throw nfe;
+            }
+        }
+        return dataRow;
+    }
+
+    protected String parseRowname(String rowname, int row) throws ParserException {
         if (rowname.length() == 0) {
-            throw new ParserException("Bad rowname - cant be empty at: " + i + " >" + currLine);
+            throw new ParserException("Bad rowname - cant be empty at row " + (row+1) + " of data matrix.");
         } else {
             // Strip double-quotes if present (but only if present on *both* ends and not the only character!)
             if (rowname.startsWith("\"") && rowname.endsWith("\"") && rowname.length() > 1) {
                 rowname = rowname.substring(1, rowname.length()-1).trim();
                 if (rowname.length() == 0) {
-                    throw new ParserException("Bad rowname - cant be empty at: " + i + " >" + currLine);
+                    throw new ParserException("Bad rowname - cant be empty at row " + (row+1) + " of data matrix.");
                 }
             }
         }
         return rowname;
-    }
-
-    protected void parseFieldsIntoFloatMatrix(List<String> fields, int row, int startingField, Matrix matrix) {
-        for (int f = startingField, coln = 0; f < fields.size(); f++) {
-            String s = fields.get(f);
-            try {
-                matrix.setElement(row, coln++, parseStringToFloat(s, true));
-            } catch (NumberFormatException nfe) {
-                log.error("Could not parse '" + s + "' as a floating point number.");
-                throw nfe;
-            }
-        }
     }
     
     protected class Comment {

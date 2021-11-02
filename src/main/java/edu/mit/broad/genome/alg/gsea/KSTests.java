@@ -6,6 +6,7 @@ package edu.mit.broad.genome.alg.gsea;
 import edu.mit.broad.genome.MismatchedSizeException;
 import edu.mit.broad.genome.NamingConventions;
 import edu.mit.broad.genome.alg.*;
+import edu.mit.broad.genome.alg.DatasetStatsCore.TwoClassMarkerStats;
 import edu.mit.broad.genome.alg.markers.PermutationTest;
 import edu.mit.broad.genome.math.*;
 import edu.mit.broad.genome.objects.*;
@@ -16,6 +17,7 @@ import edu.mit.broad.vdb.chip.Chip;
 import org.apache.log4j.Logger;
 
 import java.io.PrintStream;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,8 +27,7 @@ import java.util.Map;
  * <p/>
  * Many things here are specific to gsea;
  *
- * @author Aravind Subramanian
- * @author David Eby
+ * @author Aravind Subramanian, David Eby
  * @see KSCore
  */
 public class KSTests {
@@ -48,7 +49,7 @@ public class KSTests {
         this.core = new KSCore();
     }
 
-    public EnrichmentDb executeGsea(final DatasetTemplate dt, final GeneSet[] gsets, final int nperm, final Metric metric,
+    public EnrichmentDb executeGsea(final DatasetTemplate dt, final GeneSet[] origGeneSets, final int nperm, final Metric metric,
     		final SortMode sort, final Order order, final RandomSeedGenerator rst, final TemplateRandomizerType rt, 
     		final Map<String, Boolean> mps, final GeneSetCohort.Generator gcohgen, final boolean permuteTemplate, 
     		final int numMarkers, final List<RankedList> store_rnd_ranked_lists_here_opt) throws Exception {
@@ -56,12 +57,24 @@ public class KSTests {
         final Template t = dt.getTemplate();
 		log.debug("!!!! Executing for: " + ds.getName() + " # samples: " + ds.getNumCol());
 		
+        // calc mean/median and stdev for each class for each marker
+        // Also does some error checking.  Actually, we do not use the MarkerScores map at all,
+        // so in essence *the only thing* we care about is the error checking.
+        // NOTE: this was formerly done within shuffleTemplate only.  We lift it here so the same error
+        // checking happens for gene_set permutation.
+        // TODO: refactor the called method to separate the error checks from the rest.
+        Map<String, TwoClassMarkerStats> markerScores = new HashMap<String, TwoClassMarkerStats>();
+		boolean filterFeaturesWithMissingValues = 
+		        (t.isCategorical()) && new DatasetStatsCore().calc2ClassCategoricalMetricMarkerScores(ds, t, metric, mps, markerScores);
+
+        if (!filterFeaturesWithMissingValues) { markerScores = null; }
+		
 		try {
 			if (permuteTemplate) {
-			    return shuffleTemplate(nperm, metric, sort, order, mps, 
-			    		ds, t, gsets, gcohgen, rt, rst, numMarkers, store_rnd_ranked_lists_here_opt);
+			    return shuffleTemplate(nperm, metric, sort, order, mps, ds, t, origGeneSets, gcohgen, rt, 
+			            rst, numMarkers, store_rnd_ranked_lists_here_opt, markerScores);
 			} else {
-			    return shuffleGeneSet(nperm, metric, sort, order, mps, ds, t, gsets, gcohgen, rst);
+			    return shuffleGeneSet(nperm, metric, sort, order, mps, ds, t, origGeneSets, gcohgen, rst, markerScores);
 			}
 		}
 		finally {
@@ -69,10 +82,11 @@ public class KSTests {
 		}
     }
 
-    public EnrichmentDb executeGsea(final RankedList rl_real, final GeneSet[] gsets, final int nperm, 
+    public EnrichmentDb executeGsea(final RankedList rl_real, final GeneSet[] origGeneSets, final int nperm, 
     		final RandomSeedGenerator rst, final Chip chip,final GeneSetCohort.Generator gcohgen) throws Exception {
         log.debug("!!!! Executing for: " + rl_real.getName() + " # features: " + rl_real.getSize());
 
+        final GeneSet[] gsets = gcohgen.filterGeneSetsByMembersAndSize(rl_real, origGeneSets);
         EnrichmentResult[] results = shuffleGeneSet_precannedRankedList(nperm, rl_real, null, gsets, chip, gcohgen, rst);
         // The NONE_METRIC is just included for purposes of Export.
         return new EnrichmentDb(rl_real.getName(),
@@ -80,32 +94,29 @@ public class KSTests {
                 SortMode.REAL, Order.DESCENDING, nperm, null, null);
     }
 
-    // ------------------------------------------------------------------------ //
-    // --------------------------- TEMPLATE CALCULATIONS ----------------------//
-    // ------------------------------------------------------------------------ //
     private EnrichmentDb shuffleTemplate(final int nperm, final Metric metric, final SortMode sort, final Order order,
-    		final Map<String, Boolean> metricParams, final Dataset ds, final Template template, final GeneSet[] gsets, 
+    		final Map<String, Boolean> metricParams, final Dataset ds, final Template template, final GeneSet[] origGeneSets, 
     		final GeneSetCohort.Generator gcohgen, final TemplateRandomizerType rt, final RandomSeedGenerator rst, 
-    		final int numMarkers, final List<RankedList> store_rnd_ranked_lists_here_opt) {
+    		final int numMarkers, final List<RankedList> store_rnd_ranked_lists_here_opt, Map<String, TwoClassMarkerStats> markerScores)
+    		        throws Exception {
         final Template[] rndTemplates = TemplateFactoryRandomizer.createRandomTemplates(nperm, template, rt, rst);
         log.debug("Done generating rnd templates: " + rndTemplates.length);
-
-        log.debug("shuffleTemplate with -- nperm: " + rndTemplates.length + " Order: " + order + " Sort: " + sort + " gsets: " + gsets.length);
         final String dstName = NamingConventions.generateName(ds, template, true);
         final Chip chip = ds.getAnnot().getChip();
 
         final DatasetMetrics dm = new DatasetMetrics();
-        final RankedList rlReal;
         PermutationTest ptest = new PermutationTest(dstName, numMarkers, rndTemplates.length, 
                 metric, sort, order, metricParams, ds, template, null, template.isCategorical());
 
-        rlReal = dm.scoreDataset(metric, sort, order, metricParams, ds, template);
-
         // calc real scores
-        if (rlReal.getSize() != ds.getNumRow()) {// sanity check
-            throw new MismatchedSizeException();
-        }
+        ScoredDataset rlReal = dm.scoreDataset(metric, sort, order, metricParams, ds, template);
 
+        int origSize = rlReal.getSize();
+        if (origSize != ds.getNumRow()) { throw new MismatchedSizeException(); } // sanity check
+        rlReal = filterRankedListIfNecessary(rlReal, ds, markerScores);
+        final GeneSet[] gsets = gcohgen.filterGeneSetsByMembersAndSize(rlReal, origGeneSets);
+
+        log.debug("shuffleTemplate with -- nperm: " + rndTemplates.length + " Order: " + order + " Sort: " + sort + " gsets: " + gsets.length);
         final GeneSetCohort gcoh = gcohgen.createGeneSetCohort(rlReal, gsets, true); // @note ASSUME already qualified
         final EnrichmentScore[] realScores = core.calculateKSScore(gcoh, true); // need to store details as we need the hit indices
         final Vector[] rndEss = new Vector[gsets.length];
@@ -115,11 +126,10 @@ public class KSTests {
 
         // Each row is a "geneset", and each column a randomization
         for (int c = 0; c < rndTemplates.length; c++) {
-            final RankedList rndRl = dm.scoreDataset(metric, sort, order, metricParams, ds, rndTemplates[c]);
-
-            if (store_rnd_ranked_lists_here_opt != null) {
-                store_rnd_ranked_lists_here_opt.add(rndRl);
-            }
+            ScoredDataset rndRl = dm.scoreDataset(metric, sort, order, metricParams, ds, rndTemplates[c]);
+            rndRl = filterRankedListIfNecessary(rndRl, ds, markerScores);
+            
+            if (store_rnd_ranked_lists_here_opt != null) { store_rnd_ranked_lists_here_opt.add(rndRl); }
 
         	// TODO: eval for performance.
         	// Could use sout.print() instead, to avoid String concat.  Could also try to avoid the modulo call:
@@ -139,17 +149,14 @@ public class KSTests {
             // @note better to just clone the existing real gcoh rather than generate a whole new one
             // as only the ranked list has changed and not the feature or gene set content
             final GeneSetCohort gcohRnd = gcohgen.createGeneSetCohort(rndRl, gsets, false);
-            //System.out.println("starting calc: " + gcoh.getNumGeneSets());
             final EnrichmentScore[] rndScores = core.calculateKSScore(gcohRnd, false);
-            //System.out.println("done calc");
 
             for (int g = 0; g < gsets.length; g++) {
                 rndEss[g].setElement(c, rndScores[g].getES());
             }
 
             ptest.addRnd(rndTemplates[c], rndRl);
-
-        } // End computation loop
+        }
 
         // 1 result for every gene set
         final EnrichmentResult[] results = new EnrichmentResult[gsets.length];
@@ -159,13 +166,15 @@ public class KSTests {
 
         ptest.doCalc();
 
-        return new EnrichmentDb(dstName, rlReal, ds, template,
+        EnrichmentDb enrichmentDb = new EnrichmentDb(dstName, rlReal, ds, template,
                 results, metric, metricParams, sort, order, rndTemplates.length, null, ptest);
+        int rowsNotMeetingMetricSize = origSize - rlReal.getSize();
+        if (rowsNotMeetingMetricSize > 0) {
+            enrichmentDb.addWarning("There were " + rowsNotMeetingMetricSize + 
+                    " row(s) of this dataset where one of the classes has too few samples to use the chosen metric.  See the log for more details.");
+        }
+        return enrichmentDb;
     }
-
-    // ------------------------------------------------------------------------ //
-    // -------------------------------- GENE TAG CALCULATIONS ------------------//
-    // ------------------------------------------------------------------------ //
 
     // this is the CORE method
     private EnrichmentResult[] shuffleGeneSet_precannedRankedList(final int nperm, final RankedList rlReal, 
@@ -210,22 +219,46 @@ public class KSTests {
     }
 
     private EnrichmentDb shuffleGeneSet(final int nperm, final Metric metric, final SortMode sort, final Order order,
-    		final Map<String, Boolean> metricParams, final Dataset ds, final Template template, final GeneSet[] gsets, 
-    		final GeneSetCohort.Generator gen, final RandomSeedGenerator rst) {
+    		final Map<String, Boolean> metricParams, final Dataset ds, final Template template, final GeneSet[] origGeneSets, 
+    		final GeneSetCohort.Generator gen, final RandomSeedGenerator rst, Map<String, TwoClassMarkerStats> markerScores)
+    		        throws Exception {
         if (ds == null) {
             throw new IllegalArgumentException("Param ds cannot be null");
         }
 
         // The same (real template) scored dataset for all gsets
         final DatasetMetrics dm = new DatasetMetrics();
-        final ScoredDataset rlReal = dm.scoreDataset(metric, sort, order, metricParams, ds, template);
+        ScoredDataset rlReal = dm.scoreDataset(metric, sort, order, metricParams, ds, template);
+        int origSize = rlReal.getSize();
+        rlReal = filterRankedListIfNecessary(rlReal, ds, markerScores);
+        final GeneSet[] gsets = gen.filterGeneSetsByMembersAndSize(rlReal, origGeneSets);
+        
         final Chip chip = ds.getAnnot().getChip();
-
         final EnrichmentResult[] results = shuffleGeneSet_precannedRankedList(nperm,
                 rlReal, template, gsets, chip, gen, rst);
 
         final String name = NamingConventions.generateName(ds, template, true);
-        return new EnrichmentDb(name, rlReal, ds, template,
+        EnrichmentDb enrichmentDb = new EnrichmentDb(name, rlReal, ds, template,
                 results, metric, metricParams, sort, order, nperm, null, null);
+        
+        int rowsNotMeetingMetricSize = origSize - rlReal.getSize();
+        if (rowsNotMeetingMetricSize > 0) {
+            enrichmentDb.addWarning("There were " + rowsNotMeetingMetricSize + 
+                    " row(s) of this dataset where one of the classes has too few samples to use the chosen metric.  See the log for more details.");
+        }
+        return enrichmentDb;
+    }
+    
+    // Some features may need to be filtered out due to missing values causing them to not meet Metric min-sample requirements.
+    // This is signaled by being passed a non-null/non-empty markerScores Map by the caller; otherwise we ignore this filtering pass.
+    private ScoredDataset filterRankedListIfNecessary(ScoredDataset rlReal, final Dataset ds, Map<String, TwoClassMarkerStats> markerScores) {
+        if (markerScores == null || markerScores.isEmpty()) { return rlReal; }
+        
+        List<DoubleElement> dels = new ArrayList<DoubleElement>(rlReal.getSize());
+        for (String feature: rlReal.getRankedNames()) {
+            TwoClassMarkerStats markerScore = markerScores.get(feature);
+            if (!markerScore.omit) { dels.add(new DoubleElement(ds.getRowIndex(feature), rlReal.getScore(feature))); }
+        }
+        return new ScoredDatasetImpl(new AddressedVector(dels), ds);
     }
 }

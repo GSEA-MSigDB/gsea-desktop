@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2021 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package xtools.api.param;
 
@@ -14,10 +14,9 @@ import java.awt.event.ActionListener;
 /**
  * Object to capture commandline params</p>
  *
- * @author Aravind Subramanian
+ * @author Aravind Subramanian, David Eby
  */
 public class GeneSetScoringTableReqdParam extends AbstractParam implements ActionListener {
-
     private GComboBoxField cbOptions;
 
     public GeneSetScoringTableReqdParam() {
@@ -29,9 +28,9 @@ public class GeneSetScoringTableReqdParam extends AbstractParam implements Actio
                 def, GeneSetScoringTables.createAllScoringTables(), true);
     }
 
-    public GeneSetCohort.Generator createGeneSetCohortGenerator() {
+    public GeneSetCohort.Generator createGeneSetCohortGenerator(int geneSetMinSize, int geneSetMaxSize) {
         GeneSetScoringTable table = getGeneSetScoringTable();
-        return new GeneSetCohort.Generator(table);
+        return new GeneSetCohort.Generator(table, geneSetMinSize, geneSetMaxSize);
     }
 
     public GeneSetScoringTable getGeneSetScoringTable() {
@@ -43,7 +42,6 @@ public class GeneSetScoringTableReqdParam extends AbstractParam implements Actio
     }
 
     public void setValue(Object value) {
-
         if (value == null) {
             super.setValue(null);
         } else {
@@ -57,14 +55,12 @@ public class GeneSetScoringTableReqdParam extends AbstractParam implements Actio
 
 
     public GFieldPlusChooser getSelectionComponent() {
-
         if (cbOptions == null) {
             cbOptions = ParamHelper.createActionListenerBoundHintsComboBox(false, this, this);
             ParamHelper.safeSelectValueDefaultByString(cbOptions.getComboBox(), this);
         }
 
         return cbOptions;
-
     }
 
     public void actionPerformed(ActionEvent evt) {

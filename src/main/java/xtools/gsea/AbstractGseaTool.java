@@ -15,32 +15,9 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * @author Aravind Subramanian
+ * @author Aravind Subramanian, David Eby
  */
 public abstract class AbstractGseaTool extends AbstractTool {
-    // barfs if size is zero or content is zero for all sets
-    public static void checkAndBarfIfZeroSets(final GeneSet[] qual_gsets) {
-        boolean wasError = false;
-        if (qual_gsets.length == 0) {
-            wasError = true;
-        } else {
-            boolean at_least_one_non_empty_set = false;
-            for (int i = 0; i < qual_gsets.length; i++) {
-                if (qual_gsets[i].getNumMembers() > 0) {
-                    at_least_one_non_empty_set = true;
-                    break;
-                }
-            }
-            if (!at_least_one_non_empty_set) {
-                wasError = true;
-            }
-        }
-    
-        if (wasError) {
-            throw new BadParamException("After pruning, none of the gene sets passed size thresholds.", 1001);
-        }
-    }
-
     protected GeneSetMatrixMultiChooserParam fGeneSetMatrixParam;
     protected ChipOptParam fChipParam = new ChipOptParam(false);
 

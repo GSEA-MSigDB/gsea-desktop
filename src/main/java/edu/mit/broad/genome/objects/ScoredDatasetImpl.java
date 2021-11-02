@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2021 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.genome.objects;
 
@@ -20,11 +20,10 @@ import java.util.Map;
  * (Note: the getMatrix method does NOT return shared data - it duplicates as needed)
  * In addition, the scores that caused the ranking are available through getScore()
  * <p/>
- * IMP IMP IMP: Dataset is NOT sorted -> thats whay the indexed vector is for
+ * IMP IMP IMP: Dataset is NOT sorted -> thats what the indexed vector is for
  * see the sdsrown2posinds method
  *
- * @author Aravind Subramanian
- * @version %I%, %G%
+ * @author Aravind Subramanian, David Eby
  */
 public class ScoredDatasetImpl extends AbstractObject implements ScoredDataset {
 
@@ -150,22 +149,9 @@ public class ScoredDatasetImpl extends AbstractObject implements ScoredDataset {
      * @see cacheRowNameIndex()
      */
     public int getRowIndex(final String rowName) {
-
-        if (fRowNameSdsRowIndexMap == null) {
-            cacheRowNameIndex();
-        }
-
-        int index = fRowNameSdsRowIndexMap.get(rowName);
-
-        // IMP needed as returns 0 and not -1 on no hits!!
-        if (index == 0) {
-            if (!fRowNameSdsRowIndexMap.containsKey(rowName)) {
-                return -1;
-            } else {
-                return 0;
-            }
-        }
-
+        if (fRowNameSdsRowIndexMap == null) { cacheRowNameIndex(); }
+        Integer index = fRowNameSdsRowIndexMap.get(rowName);
+        if (index == null) { return -1; }
         return index;
     }
 
@@ -224,7 +210,6 @@ public class ScoredDatasetImpl extends AbstractObject implements ScoredDataset {
      */
     // Hmm to avoid duplicating data we need a sorted matrix - but dont want that.
     public Matrix getMatrix() {
-
         Matrix matrix = new Matrix(fIndVector.getSize(), fDataset.getNumCol());
 
         for (int i = 0; i < fIndVector.getSize(); i++) {
@@ -333,6 +318,4 @@ public class ScoredDatasetImpl extends AbstractObject implements ScoredDataset {
 
         return ws;
     }
-
-
-}    // End ScoredDataset
+}

@@ -242,21 +242,19 @@ public class Vector {
     }
 
     /**
-     * Sum of the squares of every element.  
-     * Does a "NaN-safe" calculation, where any Nan values are ignored for the purpose of the computation.
-     * Calling on an empty Vector, however, still returns an NaN result.
+     * Sum of the squares of every element.  NOTE: this assumes that a "NaN-safe" computation is not necessary, for example 
+     * because this is being called on a Vector that is the output of toVectorNaNless().  
+     * Calling on an empty Vector returns an NaN result.
      */
     // IMP that return doubles!!
-    public double squaresumNaNsafe() {
-        int nonMissingSize = elementCount;
+    public double squaresum() {
+        if (elementCount == 0) { return Double.NaN; }
         double squaresum = 0;
         for (int i = 0; i < elementCount; i++) {
-            float value = elementData[i];
-            if (!Float.isNaN(value)) { squaresum += value * value; } 
-            else { nonMissingSize--; }
+            final float value = elementData[i];
+            squaresum += value * value;
         }
-
-        return (nonMissingSize == 0) ? Double.NaN : squaresum;
+        return squaresum;
     }
 
     /**
@@ -290,9 +288,7 @@ public class Vector {
     }
 
     /**
-     * Calculates the median.  NOTE: this assumes that a "NaN-safe" computation is not necessary, for example 
-     * because this is being called on a Vector that is the output of toVectorNaNless().  This should be slightly
-     * more performant than medianNaNsafe().  Calling on an empty Vector, however, still returns an NaN result.
+     * Calculates the median.  This is NaN-safe.
      */
     public double median() {
         return XMath.median(elementData);
@@ -307,9 +303,7 @@ public class Vector {
             int pos = 0;
             for (int i = 0; i < size; i++) {
                 final float val = elementData[i];
-                if (!Float.isNaN(val)) {
-                    nanlessArr[pos++] = val;
-                }
+                if (!Float.isNaN(val)) { nanlessArr[pos++] = val; }
             }
 
             if (pos == size) {
@@ -324,6 +318,22 @@ public class Vector {
         return fNaNless;
     }
 
+    public Vector synchVectorNaNless(Vector other) {
+        if (elementCount != other.elementCount) { 
+            throw new IllegalArgumentException("Other vector must be equal length to synch NaNless values");
+        }
+        // Force population of fNaNless on this Vector since we need it anyway and it allows a fast short-circuit comparison:
+        // if there were no NaN values then just return the original 'other' Vector.
+        toVectorNaNless();
+        if (this == fNaNless) { return other; }
+        
+        final float[] otherNaNless = new float[fNaNless.elementCount];
+        for (int i = 0, pos = 0; i < other.elementCount; i++) {
+            if (!Float.isNaN(elementData[i])) { otherNaNless[pos++] = other.elementData[i]; }
+        }
+        return new Vector(otherNaNless, true);
+    }
+    
     /**
      * Trouble is the fixing low thing. Know how to do that
      * for stddevs but nto vars. So, get var, getsttdev,m fix and then get var!
@@ -347,7 +357,6 @@ public class Vector {
             return _var(biased);
         }
     }
-
 
     /**
      * the real var calcs are here
@@ -519,26 +528,27 @@ public class Vector {
     /**
      * sum of products of elements of 2 vectors
      * Sum xi * yi
-     * NOTE: NaN values are ignored and do not contribute to the computation; an NaN value in *either*
-     * Vector will cause the value from *both* Vectors to be ignored. 
-     * Calling on an empty Vector returns an NaN result.
+     * NOTE: this assumes that a "NaN-safe" computation is not necessary, for example 
+     * because this is being called on a Vector that is the output of toVectorNaNless().
      */
     public double sumprod(Vector y) {
+        // TODO: eval for performance since it's only used in the context of Pearson.
+        // Possibly just move this to XMath since that's the only user.
+        // - No need to check size since we did that earlier.
+        // - use elementData array refs directly
         final int xSize = elementCount;
         if (xSize != y.getSize()) {
             throw new RuntimeException("Unequal vector sizes x: " + xSize + " y: " + y.getSize());
         }
 
-        int nonMissingSize = xSize;
         double prodsum = 0;
         for (int i = 0; i < xSize; i++) {
             float xVal = getElement(i);
             float yVal = y.getElement(i);
-            if (Float.isNaN(xVal) || Float.isNaN(yVal)) { nonMissingSize--;}
-            else { prodsum += xVal * yVal; }
+            prodsum += xVal * yVal;
         }
 
-        return (nonMissingSize == 0) ? Double.NaN : prodsum;
+        return prodsum;
     }
 
     /**

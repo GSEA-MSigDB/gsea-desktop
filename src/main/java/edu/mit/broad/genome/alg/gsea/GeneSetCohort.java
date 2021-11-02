@@ -1,24 +1,27 @@
 /*
- * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2021 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.genome.alg.gsea;
 
 import edu.mit.broad.genome.TraceUtils;
+import edu.mit.broad.genome.alg.GeneSetGenerators;
 import edu.mit.broad.genome.objects.GeneSet;
 import edu.mit.broad.genome.objects.RankedList;
 import gnu.trove.THashSet;
+import xtools.api.param.BadParamException;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
 
 /**
  * Defines a collection of gene sets and their associated scoring scheme (weights)
- * @author Aravind Subramanian
+ * @author Aravind Subramanian, David Eby
  */
 public class GeneSetCohort {
-
     private Logger log = Logger.getLogger(GeneSetCohort.class);
 
     private GeneSet[] fGeneSets;
@@ -53,9 +56,9 @@ public class GeneSetCohort {
 		
 		boolean atleastonewithits = false; // for a sanity check
 		for (int g1 = 0; g1 < gsets.length; g1++) {
-		
 			this.fGeneSets[g1] = gsets[g1]; // trust that already qualified
 		
+			// TODO: remove trove
 		    this.fFastSets[g1] = new THashSet(fGeneSets[g1].getMembers());
 		    this.fGeneSetNameGeneSetMap.put(fGeneSets[g1].getName(), fGeneSets[g1]);
 		    if (!atleastonewithits && fGeneSets[g1].getNumMembers() > 0) {
@@ -113,7 +116,7 @@ public class GeneSetCohort {
     }
 
     public boolean isMember(int gsetNum, String name) {
-        //return fGeneSets[gsetNum].isMember(name); // @noyte faster??
+        //return fGeneSets[gsetNum].isMember(name); // @note faster??
         return fFastSets[gsetNum].contains(name);
     }
 
@@ -146,28 +149,82 @@ public class GeneSetCohort {
     }
 
     public static class Generator {
-
         private Logger log = Logger.getLogger(Generator.class);
+        private int geneSetMinSize;
+        private int geneSetMaxSize;
+        private GeneSetScoringTable origTable;
 
-        private GeneSetScoringTable fOrigTable;
-
-        public Generator(final GeneSetScoringTable scoringTable) {
-            this.fOrigTable = scoringTable;
+        public Generator(final GeneSetScoringTable scoringTable, int geneSetMinSize, int geneSetMaxSize) {
+            this.origTable = scoringTable;
+            this.geneSetMinSize = geneSetMinSize;
+            this.geneSetMaxSize = geneSetMaxSize;
         }
 
         public GeneSetCohort createGeneSetCohort(final RankedList rl, final GeneSet[] gsets, final boolean realRl) {
             GeneToGeneSetMap g2gsetMap = GeneToGeneSetMap.generateGeneToGenesetMap(gsets);
-            if (realRl && fOrigTable instanceof GeneSetScoringTables.WeightedDoubleSidedAs) {
+            if (realRl && origTable instanceof GeneSetScoringTables.WeightedDoubleSidedAs) {
                 log.warn("### SETTING REAL RL: " + rl.getName());
-                ((GeneSetScoringTables.WeightedDoubleSidedAs) fOrigTable).setReal(rl);
+                ((GeneSetScoringTables.WeightedDoubleSidedAs) origTable).setReal(rl);
             }
 
-            if (realRl && fOrigTable instanceof GeneSetScoringTables.WeightedDoubleSidedAs1) {
+            if (realRl && origTable instanceof GeneSetScoringTables.WeightedDoubleSidedAs1) {
                 log.warn("### SETTING REAL RL: " + rl.getName());
-                ((GeneSetScoringTables.WeightedDoubleSidedAs1) fOrigTable).setReal(rl);
+                ((GeneSetScoringTables.WeightedDoubleSidedAs1) origTable).setReal(rl);
             }
 
-            return new GeneSetCohort(fOrigTable, rl, gsets, g2gsetMap);
+            return new GeneSetCohort(origTable, rl, gsets, g2gsetMap);
+        }
+
+        // The magic here is:
+        // the ds and the gene sets have to match
+        // The ds prior to this call was either collapsed or not collapsed
+        // If not collapsed, do nothing at all. If it was collapsed
+        // If they dont match (i.e all gsets are 0) using the chip to map the gsets
+        // in two ways:
+        // 1) from their source format to gene symbols
+        public GeneSet[] filterGeneSetsByMembersAndSize(final RankedList rl, GeneSet[] gsets) throws Exception {
+            if (geneSetMaxSize < geneSetMinSize) { throw new IllegalArgumentException("Max size cannot be less than min size"); }
+
+            if (geneSetMinSize != geneSetMaxSize) {
+                log.info("Got gsets: " + gsets.length + " now preprocessing them ... min: " + geneSetMinSize + " max: " + geneSetMaxSize);
+                gsets = GeneSetGenerators.removeGeneSetsSmallerThan(gsets, geneSetMinSize, rl);
+                log.info("Done preproc for smaller than: " + geneSetMinSize);
+                // TODO: eval for performance: no need to filter by RL here since we already did it in the min filter
+                gsets = GeneSetGenerators.removeGeneSetsLargerThan(gsets, geneSetMaxSize, rl);
+                log.info("Done preproc for larger than: " + geneSetMaxSize);
+           } else { // @note hack
+                log.info("Skipped gene set size filtering: max and min thresholds are equal");
+            }
+
+            // Finally remove all 0 size gene sets (if min is 0 these will still be in there)
+            gsets = removeAllZeroMemberSets(gsets);
+            checkForZeroContentGeneSets(gsets);
+            log.debug("Done geneset preproc starting analysis ...");
+            return gsets;
+        }
+
+        private GeneSet[] removeAllZeroMemberSets(final GeneSet[] gsets) {
+            // Finally remove all 0 size gene sets (if min is 0 these will still be in there)
+            List<GeneSet> list = new ArrayList<GeneSet>();
+            for (int i = 0; i < gsets.length; i++) {
+                if (gsets[i].getNumMembers() > 0) {
+                    list.add(gsets[i]);
+                }
+            }
+
+            return list.toArray(new GeneSet[list.size()]);
+        }
+        
+        // Check if size is zero or content is zero for all sets
+        private void checkForZeroContentGeneSets(final GeneSet[] qual_gsets) {
+            if (qual_gsets != null) {
+                for (int i = 0; i < qual_gsets.length; i++) {
+                    if (qual_gsets[i].getNumMembers() > 0) {
+                        return;
+                    }
+                }
+            }
+            throw new BadParamException("After pruning, none of the gene sets passed size thresholds.", 1001);
         }
     }
 }

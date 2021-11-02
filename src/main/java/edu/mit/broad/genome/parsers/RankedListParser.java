@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2021 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.genome.parsers;
 
@@ -16,34 +16,27 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class RankedListParser extends AbstractParser {
+    public RankedListParser() { super(RankedList.class); }
 
     /**
-     * Class Constructor.
-     */
-    public RankedListParser() {
-        super(RankedList.class);
-    }
-
-    /**
-     * Export a Dataset to file in gct format
+     * Export a Dataset to file in RNK format
      * Only works with Datasets
      *
      * @see "Above for format"
      */
     public void export(PersistentObject pob, File file) throws Exception {
-
         RankedList rl = (RankedList) pob;
-        PrintWriter pw = startExport(pob, file);
-
-        for (int i = 0; i < rl.getSize(); i++) {
-            //System.out.println(">>>> " + m.getMember(i));
-            pw.println(rl.getRankName(i) + "\t" + rl.getScore(i));
+        try (PrintWriter pw = startExport(pob, file)) {
+            final int size = rl.getSize();
+            for (int i = 0; i < size; i++) {
+                pw.print(rl.getRankName(i));
+                pw.print("\t");
+                pw.println(rl.getScore(i));
+            }
+        } finally {
+            doneExport();
         }
-
-        pw.close();
-
-        doneExport();
-    }    // End export
+    }
 
     /**
      * @returns 1 Dataset object
@@ -53,69 +46,56 @@ public class RankedListParser extends AbstractParser {
     public List parse(String sourcepath, InputStream is) throws Exception {
         startImport(sourcepath);
 
-        BufferedReader bin = new BufferedReader(new InputStreamReader(is));
-        return _parse(sourcepath, bin);
+        try (BufferedReader bin = new BufferedReader(new InputStreamReader(is))) {
+            String objname = NamingConventions.removeExtension(new File(sourcepath).getName());
+    
+            List<String> names = new ArrayList<String>();
+            // TODO: remove trove
+            TFloatArrayList floats = new TFloatArrayList();
+            int skippedMissingRows = 0;
 
-    }
-
-    /// does the real parsing
-    // expects the bin to be untouched
-    private List _parse(String objname, BufferedReader buf) throws Exception {
-
-        String currLine = nextLine(buf);
-        objname = NamingConventions.removeExtension(new File(objname).getName());
-
-        List names = new ArrayList();
-        TFloatArrayList floats = new TFloatArrayList();
-        int cnt = 0;
-
-
-        while (currLine != null) {
-
-            String[] fields = ParseUtils.string2strings(currLine, "\t"); // DONT USE SPACES
-            if (fields.length != 2) {
-                throw new ParserException("Bad rnk file format exception - expected 2 fields but got: " + fields.length + " line>" + currLine + "<");
-                //floats.add(cnt++);
+            int row = 0;
+            String currLine = nextLine(bin);
+            if (currLine == null) { throw new ParserException("RNK file was empty!"); }
+            
+            // Check if the first line is a header; if so, skip it.
+            List<String> fields = string2stringsV2(currLine, 2);
+            if (fields.get(0).equalsIgnoreCase("Name") || fields.get(1).equalsIgnoreCase("Rank")) {
+                currLine = nextLine(bin);
             }
-
-            boolean doParse = true;
-
-
-            if (fields[0].equalsIgnoreCase("Name") || fields[1].equalsIgnoreCase("Rank")) {
-                doParse = false;
-            }
-
-            if (cnt == 0) { // @note sometimes the first line is a header -- ignore that error
+            
+            while (currLine != null) {
+                fields = string2stringsV2(currLine, 2);
+                String name = parseRowname(fields.get(0).trim(), row++);
                 try {
-                    Float.parseFloat(fields[1]);
-                } catch (Throwable t) {
-                    doParse = false; // skip line on error
-                } finally {
-                    cnt++;
+                    float value = parseStringToFloat(fields.get(1), true);
+                    if (! Float.isNaN(value)) {
+                        names.add(name);
+                        floats.add(value);
+                    } else {
+                        skippedMissingRows++;
+                        log.warn("Missing value found in row " + (row+1) + " of the data matrix with Name '" + name + "'.");
+                    }
+                } catch (NumberFormatException nfe) {
+                    log.error("Could not parse '" + fields.get(1) + "' as a floating point number in row " + (row+1) + " of the data matrix with Name '" + name + "'.");
+                    throw nfe;
                 }
+    
+                currLine = nextLine(bin);
             }
-
-            if (doParse) {
-
-                names.add(fields[0]);
-                floats.add(Float.parseFloat(fields[1]));
+            if (floats.isEmpty()) { throw new ParserException("Data was missing in all rows!"); }
+    
+            doneImport();
+    
+            // changed march 2006 for the sorting
+            RankedList rl = RankedListGenerators.createBySorting(objname, names.toArray(new String[names.size()]), floats.toNativeArray(), SortMode.REAL, Order.DESCENDING);
+            if (skippedMissingRows > 0) {
+                String warning = "There were " + skippedMissingRows + " row(s) in total of missing data in this RNK file.  These will be ignored.";
+                log.warn(warning);
+                rl.addWarning(warning + "  See the log for more details.");
             }
-
-            currLine = nextLine(buf);
+    
+            return unmodlist(rl);
         }
-
-        //klog.debug("### of lines: " + names.size() + " from objname: " + objname);
-
-        buf.close();
-
-        doneImport();
-
-        // changed march 2006 for the sorting
-        RankedList rl = RankedListGenerators.createBySorting(objname, (String[]) names.toArray(new String[names.size()]), floats.toNativeArray(), SortMode.REAL, Order.DESCENDING);
-
-        return unmodlist(rl);
-        // return unmodlist(new DefaultRankedList(objname, (String[]) names.toArray(new String[names.size()]), floats));
     }
-
-
-}    // End of class RankedListParser
+}

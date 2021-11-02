@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2021 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.genome.math;
 
@@ -11,16 +11,12 @@ import java.util.List;
  * An object encapsulating a double element of an array.
  * Captures it (double) value and position in the array.
  *
- * @author Aravind Subramanian
+ * @author Aravind Subramanian, David Eby
  */
 public class DoubleElement {
-
     public int fIndex;
     public double fValue;
 
-    /**
-     * Class Constructor.
-     */
     public DoubleElement(int index, double value) {
         this.fIndex = index;
         this.fValue = value;
@@ -36,7 +32,7 @@ public class DoubleElement {
     }
 
     /**
-     * @param delist A list with DoubleElement as elements
+     * @param delist A list with the DoubleElement indexes as elements
      *               Typically used after a sort.
      */
     public static int[] indexArray(List<DoubleElement> delist) {
@@ -48,7 +44,7 @@ public class DoubleElement {
     }
 
     /**
-     * @param delist A list with DoubleElement as elements
+     * @param delist A list with the DoubleElement values as elements
      * @return
      */
     public static double[] valueArray(List<DoubleElement> delist) {
@@ -76,7 +72,6 @@ public class DoubleElement {
     }
 
     public static class DoubleElementComparator implements java.util.Comparator<DoubleElement> {
-
         private final boolean fIsAbsolute;
         private final Boolean fAscending;
         private final int firstObjReturn;
@@ -89,40 +84,69 @@ public class DoubleElement {
             this.secondObjReturn = fAscending ? +1 : -1;
         }
 
-        public int compare(final DoubleElement obj1, final DoubleElement obj2) {
-            
-            if (obj1 == null) {
-                if (obj2 == null) return 0;     // can't compare
+        public int compare(final DoubleElement element1, final DoubleElement element2) {
+            if (element1 == null) {
+                if (element2 == null) { return 0; }    // can't compare
                 return firstObjReturn;    // null is always least
             }
-            if (obj2 == null) {
-                return secondObjReturn;    // null is always least
-            }
+            if (element2 == null) { return secondObjReturn; }    // null is always least
             
             // Note: this does NOT work the same as Double.compare(d1, d2).
-            // TODO: evaluate if this whole section should just be Double.compare(d1, d2).
-            double d1 = obj1.fValue;
-            double d2 = obj2.fValue;
+            double value1 = element1.fValue;
+            double value2 = element2.fValue;
 
-            if (Double.isNaN(d1)) {
-                if (Double.isNaN(d2)) return 0;
+            if (Double.isNaN(value1)) {
+                if (Double.isNaN(value2)) { return 0; }
                 return firstObjReturn;
             }
-            if (Double.isNaN(d2)) {
-                return secondObjReturn;
-            }
+            if (Double.isNaN(value2)) { return secondObjReturn; }
 
             if (fIsAbsolute) {
-                d1 = Math.abs(d1);
-                d2 = Math.abs(d2);
+                value1 = Math.abs(value1);
+                value2 = Math.abs(value2);
             }
 
-            if (d1 < d2) {
-                return firstObjReturn;
-            }
-            if (d1 > d2) {
-                return secondObjReturn;
-            }
+            if (value1 < value2) { return firstObjReturn; }
+            if (value1 > value2) { return secondObjReturn; }
+            return 0;
+        }
+    }
+
+    // Based on DoubleElementComparator but used where it is safe to assume no NaNs (or nulls) are present.
+    // Also includes a helper for optimizing Spearman, to check whether any ties were detected.
+    public static class DoubleElementNaNlessComparator implements java.util.Comparator<DoubleElement> {
+        private final Boolean fAscending;
+        private final int firstObjReturn;
+        private final int secondObjReturn;
+        private boolean tiesDetected = false;
+
+        public DoubleElementNaNlessComparator(boolean ascending) {
+            this.fAscending = ascending;
+            this.firstObjReturn = fAscending ? -1 : +1;
+            this.secondObjReturn = fAscending ? +1 : -1;
+        }
+        
+        public boolean isTiesDetected() { return tiesDetected; }
+
+        public int compare(final DoubleElement element1, final DoubleElement element2) {
+            // We skip any Null checks because we never use this with Null items
+            final double value1 = element1.fValue;
+            final double value2 = element2.fValue;
+            if (value1 < value2) { return firstObjReturn; }
+            if (value1 > value2) { return secondObjReturn; }
+
+            // Equal values indicates a tie, though not when comparing to an identical reference.
+            if (element1 != element2) { tiesDetected = true; }
+
+            // Treat the index as a secondary comparison field. We mostly don't care about this but need
+            // to break such ties to keep both values in a collection (e.g. TreeSet).
+            final int index1 = element1.fIndex;
+            final int index2 = element2.fIndex;
+            if (index1 < index2) { return firstObjReturn; }
+            if (index1 > index2) { return secondObjReturn; }
+
+            // Otherwise they are equal.  This shouldn't happen with our originally intended use but 
+            // we'll handle it anyway for completeness.
             return 0;
         }
     }

@@ -5,7 +5,6 @@ package edu.mit.broad.genome.parsers;
 
 import edu.mit.broad.genome.Constants;
 import edu.mit.broad.genome.NamingConventions;
-import edu.mit.broad.genome.math.Matrix;
 import edu.mit.broad.genome.objects.*;
 
 import java.io.*;
@@ -28,9 +27,7 @@ import java.util.List;
  * NO AP calls
  */
 public class GctParser extends AbstractParser {
-    public GctParser() {
-        super(Dataset.class);
-    }
+    public GctParser() { super(Dataset.class); }
 
     /**
      * Export a Dataset to file in gct format
@@ -141,43 +138,7 @@ public class GctParser extends AbstractParser {
                 throw new ParserException("Bad gct format -- exepcted nrows from specification on header line: " + nrows + " but found in data: " + lines.size());
             }
 
-            return _parseHasDesc(objName, lines, colnames);
+            return parseTextMatrixToDataset(objName, lines, colnames, true);
         }
-    }
-
-    private List _parseHasDesc(String objName, List<String> lines, List<String> colNames) throws Exception {
-        Matrix matrix = new Matrix(lines.size(), colNames.size());
-        List<String> rowNames = new ArrayList<String>();
-        List<String> rowDescs = new ArrayList<String>();
-
-        for (int i = 0; i < lines.size(); i++) {
-            String currLine = lines.get(i);
-            List<String> fields = string2stringsV2(currLine, colNames.size() + 2); // spaces allowed in name & desc field so DONT tokenize them
-
-            if (fields.size() != colNames.size() + 1 + 1) {
-                throw new ParserException("Bad format - expect ncols: " + (colNames.size() + 1 + 1)
-                        + " but found: " + fields.size() + " on line >"
-                        + currLine + "<\nIf this dataset has missing values, use ImputeDataset to fill these in before importing as a Dataset");
-            }
-
-            String rowname = parseRowname(fields.get(0).trim(), i, currLine);
-
-            String desc = fields.get(1).trim();
-            if (desc.length() == 0) { desc = Constants.NA; }
-
-            rowDescs.add(desc);
-            rowNames.add(rowname);
-
-            parseFieldsIntoFloatMatrix(fields, i, 2, matrix);
-        }
-
-        final FeatureAnnot ann = new FeatureAnnot(objName, rowNames, rowDescs);
-        ann.addComment(fComment.toString());
-        final SampleAnnot sann = new SampleAnnot(objName, colNames);
-
-        final Dataset ds = new DefaultDataset(objName, matrix, rowNames, colNames, new Annot(ann, sann));
-        ds.addComment(fComment.toString());
-        doneImport();
-        return unmodlist(new PersistentObject[]{ds});
     }
 }

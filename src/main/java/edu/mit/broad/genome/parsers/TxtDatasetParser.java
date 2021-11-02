@@ -21,9 +21,7 @@ import java.util.List;
  * @author David Eby
  */
 public class TxtDatasetParser extends AbstractParser {
-    public TxtDatasetParser() {
-        super(Dataset.class);
-    }
+    public TxtDatasetParser() { super(Dataset.class); }
 
     /**
      * Only accepts Dataset objects.
@@ -108,77 +106,7 @@ public class TxtDatasetParser extends AbstractParser {
                 //currLine = nextLine(bin);
                 currLine = nextLineTrimless(bin); /// imp for mv datasets -> last col(s) can be a tab
             }
-            if (hasDesc) {
-                return _parseHasDesc(objName, lines, colnames);
-            }
-            return _parseNoDesc(objName, lines, colnames);
+            return parseTextMatrixToDataset(objName, lines, colnames, hasDesc);
         }
-    }
-
-    private List _parseNoDesc(String objName, List<String> lines, List<String> colNames) throws Exception {
-        objName = NamingConventions.removeExtension(objName);
-        Matrix matrix = new Matrix(lines.size(), colNames.size());
-        List<String> rowNames = new ArrayList<String>();
-        List<String> rowDescs = new ArrayList<String>();
-
-        for (int i = 0; i < lines.size(); i++) {
-            String currLine = lines.get(i);
-            List<String> fields = string2stringsV2(currLine, colNames.size() + 1); // spaces allowed in name & desc field so DONT tokenize them
-
-            if (fields.size() != colNames.size() + 1) {
-                throw new ParserException("Bad format - expect ncols: " + (colNames.size() + 1)
-                        + " but found: " + fields.size() + " on line >"
-                        + currLine + "<\nIf this dataset has missing values, use ImputeDataset to fill these in before importing as a Dataset");
-            }
-
-            rowDescs.add(Constants.NA);
-            rowNames.add(parseRowname(fields.get(0).trim(), i, currLine));
-
-            parseFieldsIntoFloatMatrix(fields, i, 1, matrix);
-        }
-
-        final FeatureAnnot ann = new FeatureAnnot(objName, rowNames, rowDescs);
-        ann.addComment(fComment.toString());
-        final SampleAnnot sann = new SampleAnnot(objName, colNames);
-
-        final Dataset ds = new DefaultDataset(objName, matrix, rowNames, colNames, new Annot(ann, sann));
-        ds.addComment(fComment.toString());
-        doneImport();
-        return unmodlist(new PersistentObject[]{ds});
-    }
-
-    private List _parseHasDesc(String objName, List<String> lines, List<String> colNames) throws Exception {
-        objName = NamingConventions.removeExtension(objName);
-        Matrix matrix = new Matrix(lines.size(), colNames.size());
-        List<String> rowNames = new ArrayList<String>();
-        List<String> rowDescs = new ArrayList<String>();
-
-        for (int i = 0; i < lines.size(); i++) {
-            String currLine = (String) lines.get(i);
-            List<String> fields = string2stringsV2(currLine, colNames.size() + 2); // spaces allowed in name & desc field so DONT tokenize them
-
-            if (fields.size() != colNames.size() + 2) {
-                throw new ParserException("Bad format - expect ncols: " + (colNames.size() + 2)
-                        + " but found: " + fields.size() + " on line >"
-                        + currLine + "<\nIf this dataset has missing values, use ImputeDataset to fill these in before importing as a Dataset");
-            }
-
-            rowNames.add(parseRowname(fields.get(0).trim(), i, currLine));
-
-            String desc = fields.get(1).trim();
-            if (desc.length() == 0) { desc = Constants.NA; }
-            rowDescs.add(desc);
-
-            parseFieldsIntoFloatMatrix(fields, i, 2, matrix);
-        }
-
-        final FeatureAnnot ann = new FeatureAnnot(objName, rowNames, rowDescs);
-        ann.addComment(fComment.toString());
-        final SampleAnnot sann = new SampleAnnot(objName, colNames);
-
-        final Dataset ds = new DefaultDataset(objName, matrix, rowNames, colNames, new Annot(ann, sann));
-        ds.addComment(fComment.toString());
-        doneImport();
-        return unmodlist(new PersistentObject[]{ds});
     }
 }

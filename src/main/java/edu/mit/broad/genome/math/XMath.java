@@ -5,10 +5,13 @@ package edu.mit.broad.genome.math;
 
 import org.apache.log4j.Logger;
 
+import edu.mit.broad.genome.math.DoubleElement.DoubleElementNaNlessComparator;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
+import java.util.TreeSet;
 
 /**
  * Functionally extends java.lang.Math with additional math related methods.
@@ -243,14 +246,7 @@ public class XMath {
         } // @note isnt this redundant
         return (float) (((double) cnt) / (double) values1.length);
     }
-
-    private static void enforceEqualSize(final Vector x, final Vector y) {
-        if (x.getSize() != y.getSize()) {
-            throw new IllegalArgumentException("Vector lengths not equal x=" + x.getSize()
-                    + " and y=" + y.getSize());
-        }
-    }
-
+    
     private static void enforceEqualSize(final Vector[] vss) {
         if (vss.length == 0) {
             return;
@@ -265,53 +261,42 @@ public class XMath {
         }
     }
 
-    private static void enforceEqualSize(final float[] x, final float[] y) {
-        if (x.length != y.length) {
-            throw new IllegalArgumentException("Vector lengths not equal x=" + x.length
-                    + " and y=" + y.length);
-        }
-    }
-
     /**
      * dist <- sqrt(sum((x-y)*(x-y)))
      * No parameters.
      */
-    public static double euclidean(final Vector x, final Vector y) {
-        enforceEqualSize(x, y);
+    public static double euclidean(Vector x, Vector y) {
+        y = x.synchVectorNaNless(y);
+        x = x.toVectorNaNless();
 
         final int size = x.getSize();
-        int nonMissingSize = size;
         float sum = 0f;
         for (int i = 0; i < size; i++) {
             float xVal = x.getElement(i);
             float yVal = y.getElement(i);
-            if (Float.isNaN(xVal) || Float.isNaN(yVal)) { nonMissingSize--; }
-            else {
-                float diff = xVal - yVal;
-                sum += diff * diff;
-            }
+            float diff = xVal - yVal;
+            sum += diff * diff;
         }
-        return (nonMissingSize == 0) ? Double.NaN : Math.sqrt(sum);
+        return Math.sqrt(sum);
     }
 
     /**
      * dist <- sum(abs(x-y))
      * No parameters.
      */
-    public static double manhattan(final Vector x, final Vector y) {
-        enforceEqualSize(x, y);
+    public static double manhattan(Vector x, Vector y) {
+        y = x.synchVectorNaNless(y);
+        x = x.toVectorNaNless();
 
         final int size = x.getSize();
-        int nonMissingSize = size;
         double sum = 0.0;
         for (int i = 0; i < size; i++) {
             float xVal = x.getElement(i);
             float yVal = y.getElement(i);
-            if (Float.isNaN(xVal) || Float.isNaN(yVal)) { nonMissingSize--;}
-            else { sum += Math.abs(xVal - yVal); }
+            sum += Math.abs(xVal - yVal);
         }
 
-        return (nonMissingSize == 0) ? Double.NaN : sum;
+        return sum;
     }
 
     public static double meanOrMedianRatio(final Vector x, final Vector y, final boolean useMean) {
@@ -407,9 +392,7 @@ public class XMath {
     }
 
     public static float median(final float[] x) {
-        if (x.length == 0) {
-            return Float.NaN;
-        }
+        if (x.length == 0) { return Float.NaN; }
 
         final int size = x.length;
         float[] v1 = new float[size];
@@ -450,9 +433,7 @@ public class XMath {
     }
 
     public static float mean(final float[] x) {
-        if (x.length == 0) {
-            return Float.NaN;
-        }
+        if (x.length == 0) { return Float.NaN; }
 
         int nonMissingSize = x.length;
         float runningSum = 0.0f;
@@ -464,9 +445,7 @@ public class XMath {
     }
 
     public static float sum(final float[] x) {
-        if (x.length == 0) {
-            return Float.NaN;
-        }
+        if (x.length == 0) { return Float.NaN; }
 
         int nonMissingSize = x.length;
         float runningSum = 0.0f;
@@ -478,25 +457,122 @@ public class XMath {
     }
 
     /*
-     * @see http://www.ruf.rice.edu/~lane/hyperstat/A51911.html
+     * @see https://davidmlane.com/hyperstat/A51911.html
      *      <p/>
      *      will ret Nan if only 1 element in each vector
      */
-    public static double pearson(final Vector x, final Vector y) {
-        enforceEqualSize(x, y);
+    public static double pearson(Vector x, Vector y) {
+        y = x.synchVectorNaNless(y);
+        x = x.toVectorNaNless();
+        return pearson_core(x, y);
+    }
 
-        if (x.getSize() <= 1) { return Double.NaN; }
-        double N = (double) x.getSize();
+    private static final double pearson_core(Vector x, Vector y) {
+        int N = x.getSize();
+        if (N <= 1) { return Double.NaN; }
 
-        final double xSum = x.sumNaNsafe();
-        final double ySum = y.sumNaNsafe();
+        final double xSum = x.sum();
+        final double ySum = y.sum();
         double numr = x.sumprod(y) - ((xSum * ySum) / N);
-        double denr = ((x.squaresumNaNsafe() - ((xSum * xSum) / N)))
-                * ((y.squaresumNaNsafe() - ((ySum * ySum) / N)));
+        double denr = ((x.squaresum() - ((xSum * xSum) / N)))
+                * ((y.squaresum() - ((ySum * ySum) / N)));
 
         denr = Math.sqrt(denr);
 
         return numr / denr;
+    }
+
+    /*
+     * Spearman is Pearson performed on the ranked vectors.
+     * @see https://davidmlane.com/hyperstat/A62436.html
+     * @see https://en.wikipedia.org/wiki/Spearman%27s_rank_correlation_coefficient
+     *      <p/>
+     *      will ret Nan if only 1 element in each vector
+     */
+    public static double spearman(Vector x, Vector y) {
+        y = x.synchVectorNaNless(y);
+        x = x.toVectorNaNless();
+
+        int N = x.getSize();
+        if (N <= 1) { return Double.NaN; }
+        // At this point we know there are at least two elements.
+        // Traverse the elements, sorting as we go, then assign ranks by position.  We will detect ties 
+        // through the comparator. Note that we need to use the more complicated Spearman formula if
+        // *either* of the vectors have ties, so we can use the same comparator for both.
+        DoubleElementNaNlessComparator doubleElementComparator = new DoubleElementNaNlessComparator(false);
+        TreeSet<DoubleElement> xSorted = sortAndCheckTies(x, doubleElementComparator);
+        TreeSet<DoubleElement> ySorted = sortAndCheckTies(y, doubleElementComparator);
+
+        if (doubleElementComparator.isTiesDetected()) {
+            // Use the full Pearson formula on the ranked vectors.  Note that these need to be double arrays since some
+            // ranks will have been averaged across ties.
+            double[] xRanks = computeRanks_withTies(xSorted);
+            double[] yRanks = computeRanks_withTies(ySorted);
+            return pearson_core(new Vector(xRanks), new Vector(yRanks));
+        } else {
+            // Use the simple formula for Spearman
+            int[] xRanks = computeRanks_noTies(xSorted);
+            int[] yRanks = computeRanks_noTies(ySorted);
+            
+            final int d = sumOfDiffsSquared(xRanks, yRanks);
+            final int numr = 6 * d;
+            final int denr = N * ((N * N) - 1);
+            return 1.0d - ((double)numr)/denr;
+        }
+    }
+    
+    private static final TreeSet<DoubleElement> sortAndCheckTies(Vector vector, DoubleElementNaNlessComparator doubleElementComparator) {
+        TreeSet<DoubleElement> sorted = new TreeSet<DoubleElement>(doubleElementComparator);
+        for (int i = 0; i < vector.getSize(); i++) { sorted.add(new DoubleElement(i, vector.elementData[i])); }
+        return sorted;
+    }
+    
+    private static final int[] computeRanks_noTies(TreeSet<DoubleElement> sorted) {
+        // Traverse the elements, sorting as we go, then assign ranks by position.
+        int rank = 1;
+        int[] ranks = new int[sorted.size()];
+        for (DoubleElement doubleElement : sorted) { ranks[doubleElement.fIndex] = rank++; }
+        return ranks;
+    }
+    
+    private static final double[] computeRanks_withTies(TreeSet<DoubleElement> sorted) {
+        int currRank = 1, rankSum = 0;
+        double[] ranks = new double[sorted.size()];
+        
+        DoubleElement curr = sorted.first();
+        List<DoubleElement> ties = new ArrayList<DoubleElement>();
+        for (DoubleElement next : sorted.tailSet(curr, false)) {
+            rankSum = accumRanks(curr, next, ties, ranks, currRank++, rankSum);
+            curr = next;
+        }
+        accumRanks(curr, null, ties, ranks, currRank, rankSum);
+        return ranks;
+    }
+
+    private static final int accumRanks(DoubleElement curr, DoubleElement next, List<DoubleElement> ties, double[] ranks, int currRank, int rankSum) {
+        if (next != null && curr.fValue == next.fValue) {
+            ties.add(curr);
+            return rankSum + currRank;
+        }
+        else {
+            if (ties.isEmpty()) { ranks[curr.fIndex] = currRank; } 
+            else {
+                ties.add(curr);
+                double avgRank = ((double)rankSum + currRank)/ties.size();
+                for (DoubleElement tie : ties) { ranks[tie.fIndex] = avgRank; }
+                ties.clear();
+            }
+            return 0;
+        }
+    }
+
+    private static final int sumOfDiffsSquared(final int[] x, final int[] y) {
+        int accumulator = 0;
+        for (int i = 0; i < x.length; i++) {
+            final int value = x[i] - y[i];
+            accumulator += value * value;
+        }
+        return accumulator;
     }
 
     /**
@@ -508,26 +584,23 @@ public class XMath {
      * <p/>
      * No parameters
      */
-    public static double cosine(final Vector x, final Vector y) {
+    public static double cosine(Vector x, Vector y) {
+        y = x.synchVectorNaNless(y);
+        x = x.toVectorNaNless();
         final float[] x1 = x.elementData;
         final float[] y1 = y.elementData;
-        enforceEqualSize(x1, y1);
         
         double mag_x = 0.0;
         double mag_y = 0.0;
         double sump = 0.0;
         
-        int nonMissingSize = x1.length;
         for (int i = 0; i < x1.length; i++) {
-            if (Double.isNaN(x1[i]) || Double.isNaN(x1[i])) { nonMissingSize--;}
-            else {
-                mag_x += x1[i] * x1[i];
-                mag_y += y1[i] * y1[i];
-                sump += x1[i] * y1[i];
-            }
+            mag_x += x1[i] * x1[i];
+            mag_y += y1[i] * y1[i];
+            sump += x1[i] * y1[i];
         }
         
-        return (nonMissingSize == 0) ? Double.NaN : 1.0d - (sump / Math.sqrt(mag_x * mag_y));
+        return 1.0d - (sump / Math.sqrt(mag_x * mag_y));
     }
 
     public static double s2n(final Vector x, final Vector y,

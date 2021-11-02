@@ -29,7 +29,7 @@ public class Metrics {
 
     // @maint add a metric and this array might need updating
     public static Metric[] METRICS_FOR_GSEA = new Metric[] { new Signal2Noise(), new tTest(), new Cosine(), 
-            new Euclidean(), new Manhattan(), new Pearson(), new ClassRatio(), new ClassDiff(), new ClassLog2Ratio()
+            new Euclidean(), new Manhattan(), new Pearson(), new Spearman(), new ClassRatio(), new ClassDiff(), new ClassLog2Ratio()
     };
     public static Metric NONE_METRIC = new None();
 
@@ -173,6 +173,21 @@ public class Metrics {
         }
     }
 
+    public static class Spearman extends AbstractMetric {
+        public Spearman() { super(CONTINUOUS, "Spearman"); }
+
+        /**
+         * No parameters
+         * Template is required.
+         * Remember, this is only sensible when the template is continuous.
+         * Template needs to be equal in length to profile.
+         * Always determining distance of profile to template.
+         */
+        public double getScore(Vector profile, Template template, Map<String, Boolean> params) {
+            return XMath.spearman(template.synchProfile(profile), template.toVector());
+        }
+    }
+
     public static class Cosine extends AbstractMetric {
         public Cosine() { super(CONTINUOUS, "Cosine"); }
 
@@ -209,15 +224,12 @@ public class Metrics {
             boolean usemedian = AlgMap.isMedian(params);
             Vector[] vs = fSplitter.splitBiphasic_nansafe(profile, template);
 
-            if (vs == null) {
-                return 0;
+            if (vs == null) { return 0.0; }
+            int coiIndex = template.getClassOfInterestIndex();
+            if (coiIndex == 0) {
+                return XMath.s2n(vs[0], vs[1], usebiased, usemedian, fixlow);
             } else {
-                int coiIndex = template.getClassOfInterestIndex();
-                if (coiIndex == 0) {
-                    return XMath.s2n(vs[0], vs[1], usebiased, usemedian, fixlow);
-                } else {
-                    return XMath.s2n(vs[1], vs[0], usebiased, usemedian, fixlow);
-                }
+                return XMath.s2n(vs[1], vs[0], usebiased, usemedian, fixlow);
             }
         }
     }
@@ -241,6 +253,7 @@ public class Metrics {
             boolean fixlow = AlgMap.isFixLowVar(params);
             Vector[] vs = fSplitter.splitBiphasic_nansafe(profile, template);
 
+            if (vs == null) { return 0.0; }
             int coiIndex = template.getClassOfInterestIndex();
             if (coiIndex == 0) {
                 return XMath.tTest(vs[0], vs[1], usebiased, usemedian, fixlow);
@@ -264,6 +277,7 @@ public class Metrics {
             int coiIndex = template.getClassOfInterestIndex();
 
             final boolean useMean = AlgMap.isMean(params);
+            if (vs == null) { return 0.0; }
             if (coiIndex == 0) {
                 return XMath.meanOrMedianRatio(vs[0], vs[1], useMean);
             } else {
@@ -286,6 +300,7 @@ public class Metrics {
             int coiIndex = template.getClassOfInterestIndex();
 
             final boolean useMean = AlgMap.isMean(params);
+            if (vs == null) { return 0.0; }
             if (coiIndex == 0) {
                 return XMath.log2(XMath.meanOrMedianRatio(vs[0], vs[1], useMean));
             } else {
@@ -308,6 +323,7 @@ public class Metrics {
             int coiIndex = template.getClassOfInterestIndex();
 
             final boolean useMean = AlgMap.isMean(params);
+            if (vs == null) { return 0.0; }
             if (coiIndex == 0) {
                 return XMath.meanOrMedianDiff(vs[0], vs[1], useMean);
             } else {

@@ -114,14 +114,6 @@ public class PermutationTest {
         // calc real metric levels
         this.fRealScoredDataset = dm.scoreDataset(fMetric, fSort, fOrder, fMetricParams, fDataset, fTemplate);
 
-        // calc mean/median and stdev for each class for each marker
-        if (categorical) {
-            // Also does some error checking.  Actually, we do not use the return value here at all,
-            // so in essence *the only thing* we care about is the error checking.
-            // TODO: refactor the called method to separate the error checks from the rest.
-            Map<String, TwoClassMarkerStats> fMarkerScores = new DatasetStatsCore().calc2ClassCategoricalMetricMarkerScores(fDataset, fTemplate, fMetric, fMetricParams);
-        }
-
         // Init arrays and matrices
         // each row is a rank, each col is a score for a perm
         this.nMarkersUpMatrix = new Matrix(fNumMarkers, fNumPerms);
@@ -243,7 +235,7 @@ public class PermutationTest {
             nMarkersUpMatrix.setElement(r, fNumSetCalls, rndRl.getScore(r)); // Pth ranked random score
         }
 
-        int p = fDataset.getNumRow() - 1;
+        int p = rndRl.getSize() - 1;
         for (int cnt = 0; cnt < fNumMarkers; cnt++, p--) {
             nMarkersDnMatrix.setElement(cnt, fNumSetCalls, rndRl.getScore(p));
         }

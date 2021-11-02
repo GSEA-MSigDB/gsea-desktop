@@ -4,6 +4,7 @@
 package edu.mit.broad.genome.objects;
 
 import java.io.Serializable;
+import java.util.List;
 
 /**
  * An object that can be saved and loaded (i.e is persistent)
@@ -56,6 +57,10 @@ public interface PersistentObject extends Serializable {
      */
     public void addComment(String comment);
 
+    public List<String> getWarnings();
+    
+    public void addWarning(String warning);
+    
     /**
      * Info on the object that can be quickly and efficiently retrieved
      * Used in UI contexts such as tooltips and in combo boxes

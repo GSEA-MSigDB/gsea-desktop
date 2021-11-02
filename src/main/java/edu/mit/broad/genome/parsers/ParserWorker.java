@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2021 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.parsers;
 
 import java.io.File;
@@ -32,10 +32,11 @@ public class ParserWorker extends SwingWorker<Object, Void> {
 
     @Override
     protected Object doInBackground() throws Exception {
-        final StringBuffer buf_s = new StringBuffer("Loading ... " + files.length + " files\n\n");
+        final StringBuilder buf_s = new StringBuilder("<html>Loading ... " + files.length + " files<br><br>");
         int sucess = 0;
 
         final Errors errors = new Errors();
+        boolean hadWarnings = false;
         for (int f = 0; f < files.length; f++) {
             if (files[f].isDirectory()) {
                 errors.add(new RuntimeException(
@@ -55,6 +56,7 @@ public class ParserWorker extends SwingWorker<Object, Void> {
                     }
                     else {
                         klog.info("Loaded file: " + files[f].getPath());
+                        if (!pob.getWarnings().isEmpty()) { hadWarnings = true; }
                         Application.getFileManager().registerRecentlyOpenedFile(files[f]);
                         buf_s.append(files[f].getName()).append("\n");
                         sucess++;
@@ -65,10 +67,12 @@ public class ParserWorker extends SwingWorker<Object, Void> {
             }
         }
 
-        buf_s.append("\nFiles loaded successfully: ").append(sucess).append(" / ")
-                .append(files.length).append('\n');
+        buf_s.append("<br>Files loaded successfully: ").append(sucess).append(" / ")
+                .append(files.length).append("<br>");
         if (errors.isEmpty()) {
             buf_s.append("There were NO errors");
+            if (hadWarnings) { buf_s.append("<br><br><b>There were warnings. See the [+] console log for details.</b>"); }
+            buf_s.append("</html>");
             Application.getWindowManager().showMessage(buf_s.toString());
         } else {
             Application.getWindowManager().showError(errors);

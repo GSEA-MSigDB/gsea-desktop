@@ -46,8 +46,6 @@ public class GseaPreranked extends AbstractGseaTool {
     private final StringInputParam fAltDelimParam = new StringInputParam("altDelim", "Alternate delimiter", 
             "Optional alternate delimiter character for gene set names instead of comma", null, false, new char[] { ';' }, Param.ADVANCED);
 
-    private GeneSet[] fOrigGeneSets;
-
     public GseaPreranked(final Properties properties) {
         super("Remap_Only");
         super.init(properties, "");
@@ -96,15 +94,8 @@ public class GseaPreranked extends AbstractGseaTool {
             fGeneSetMatrixParam.setAlternateDelimiter(fAltDelimParam.getValue().toString());
         }
 
-        this.fOrigGeneSets = fGeneSetMatrixParam.getGeneSetMatrixCombo(true).getGeneSets();
-
-        final GeneSet[] gsets = Helper.getGeneSets(cd.getRankedList(), fOrigGeneSets, fGeneSetMinSizeParam, fGeneSetMaxSizeParam);
-
-        checkAndBarfIfZeroSets(gsets);
-
-        final HtmlReportIndexPage htmlReportIndexPage = fReport.getIndexPage();
-
-        execute_one(cd, gsets, htmlReportIndexPage);
+        GeneSet[] origGeneSets = fGeneSetMatrixParam.getGeneSetMatrixCombo(true).getGeneSets();
+        execute_one(cd, origGeneSets);
 
         if (fMakeZippedReportParam.isTrue()) {
             // custom close before zipping
@@ -115,14 +106,13 @@ public class GseaPreranked extends AbstractGseaTool {
         doneExec();
     }
 
-    private void execute_one(final CollapsedDetails.Ranked fullRL, final GeneSet[] gsets,
-                             final HtmlReportIndexPage reportIndexPage) throws Exception {
+    private void execute_one(final CollapsedDetails.Ranked fullRL, final GeneSet[] origGeneSets) throws Exception {
         final int nperms = fNumPermParam.getIValue();
         final int topXSets = fShowDetailsForTopXSetsParam.getIValue();
         final RandomSeedGenerator rst = RandomSeedGenerators.lookup((String)fRndSeedTypeParam.getValue(), this);
-        final GeneSetCohort.Generator gcohgen = fGcohGenReqdParam.createGeneSetCohortGenerator();
         final int minSize = fGeneSetMinSizeParam.getIValue();
         final int maxSize = fGeneSetMaxSizeParam.getIValue();
+        final GeneSetCohort.Generator gcohgen = fGcohGenReqdParam.createGeneSetCohortGenerator(minSize, maxSize);
         final boolean createSvgs = fCreateSvgsParam.isSpecified() && fCreateSvgsParam.isTrue();
         RankedList rl = fullRL.getRankedList();
         Chip chip = null;
@@ -147,12 +137,14 @@ public class GseaPreranked extends AbstractGseaTool {
             fReport.addComment("Timestamp used as the random seed: " + 
                     ((RandomSeedGenerators.Timestamp)rst).getTimestamp());
         }
+        
+        EnrichmentDb edb = tests.executeGsea(rl, origGeneSets, nperms, rst, chip, gcohgen);
 
-        EnrichmentDb edb = tests.executeGsea(rl, gsets, nperms, rst, chip, gcohgen);
+        final HtmlReportIndexPage reportIndexPage = fReport.getIndexPage();
 
         // Make the report
         EnrichmentReports.Ret ret = EnrichmentReports.createGseaLikeReport(edb, getOutputStream(), fullRL, reportIndexPage, fReport, topXSets, minSize, maxSize,
-                fMakeGeneSetReportsParam.isTrue(), fMakeZippedReportParam.isTrue(), createSvgs, fOrigGeneSets, "PreRanked", fNormModeParam.getNormModeName(), fann);
+                fMakeGeneSetReportsParam.isTrue(), fMakeZippedReportParam.isTrue(), createSvgs, origGeneSets, "PreRanked", fNormModeParam.getNormModeName(), fann);
 
         // Make an edb folder thing
         new EdbFolderParser().export(ret.edb, ret.savedInDir);

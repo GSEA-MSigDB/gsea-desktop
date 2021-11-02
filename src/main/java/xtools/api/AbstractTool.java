@@ -5,7 +5,6 @@ package xtools.api;
 
 import edu.mit.broad.genome.Conf;
 import edu.mit.broad.genome.JarResources;
-import edu.mit.broad.genome.alg.GeneSetGenerators;
 import edu.mit.broad.genome.objects.*;
 import edu.mit.broad.genome.parsers.ParseUtils;
 import edu.mit.broad.genome.reports.api.Report;
@@ -41,7 +40,6 @@ import java.util.*;
  * @author Aravind Subramanian, David Eby
  */
 public abstract class AbstractTool implements Tool {
-
     // @imp note: needed here as otherwise jar resources tries to load icons
     static {
         if (!SystemUtils.isPropertyDefined("java.awt.headless")) {
@@ -93,16 +91,9 @@ public abstract class AbstractTool implements Tool {
         return fOut;
     }
 
-    /**
-     * Only for junit usage
-     *
-     * @param toolName
-     */
-
     // Dont call declareParams()  - class vars arent yet inited
     // constructed using instantiation and npe is thrown.
     protected AbstractTool(final String toolName) {
-
         this.fTimer = new edu.mit.broad.genome.utils.Timer();
         //this.fHelpMode = Boolean.getBoolean(System.getProperty("help")); // just doesnt work!!
         //this.fHelpMode = SystemUtils.isPropertyTrue("help");
@@ -139,8 +130,6 @@ public abstract class AbstractTool implements Tool {
             }
         }
 
-        //System.out.println(">>>> prp: " + prp + " " + fHelpMode + " val>>" + prp.getProperty("help"));
-
         if (isHelpMode()) {
             // no filling nor checking
             fParamSet.printfUsage();
@@ -155,8 +144,6 @@ public abstract class AbstractTool implements Tool {
                 //ParamSet.printf();
                 fParamSet.check();
                 ensureAllDeclaredWereAdded();
-                checkHeadlessState();
-
             } catch (Throwable t) {
                 t.printStackTrace();
                 // if the rpt dir was made try to rename it so that easily identifiable
@@ -241,14 +228,23 @@ public abstract class AbstractTool implements Tool {
     }
 
     public void doneExec() {
-        //fOut.close(); // dont let the giver take care of that
-
         if (!fReport.getToolComments().isEmpty()) {
             if (fReport.getIndexPage() != null) {
                 Div div = new Div();
                 H4 h4 = new H4("Comments");
                 div.addElement(h4);
                 div.addElement(fReport.getToolComments().toHTML());
+                fReport.getIndexPage().addBlock(div, false);
+            }
+        }
+        
+        if (!fReport.getToolWarnings().isEmpty()) {
+            if (fReport.getIndexPage() != null) {
+                Div div = new Div();
+                H4 h4 = new H4("Warnings");
+                h4.addAttribute("style", "color: magenta;");
+                div.addElement(h4);
+                div.addElement(fReport.getToolWarnings().toHTML());
                 fReport.getIndexPage().addBlock(div, false);
             }
         }
@@ -293,23 +289,6 @@ public abstract class AbstractTool implements Tool {
         return fReport;
     }
 
-    /**
-     * Make sure that if we are headless (aka on unix, lsf) that the GUI param is always off
-     */
-    private void checkHeadlessState() {
-
-        /* comm out dec 18
-        if (GraphicsEnvironment.isHeadless()) {
-            GuiParam gui = fParamSet.getGuiParam();
-            if (gui == null) {
-                gui = new GuiParam();
-                fParamSet.addParam(gui);
-            }
-            gui.setValue(false); // always
-        }
-        */
-    }
-
     // TODO: parameterize the Class with the correct generic type
     private int countParamFields(Class cl) {
         Field[] fields = cl.getDeclaredFields();
@@ -349,9 +328,7 @@ public abstract class AbstractTool implements Tool {
         }
 
         if (fParamSet.getNumParams() != paramCnt) {
-            StringBuffer buf =
-                    new StringBuffer("Have you forgotten to update declareParams()?").append('\n');
-
+            StringBuilder buf = new StringBuilder("Have you forgotten to update declareParams()?").append('\n');
             buf.append("In ParamSet # declared: ").append(fParamSet.getNumParams()).append(" is NOT equal to deduced thro reflection # : ").append(paramCnt);
 
             throw new IllegalStateException(buf.toString());
@@ -433,66 +410,6 @@ public abstract class AbstractTool implements Tool {
                 tool.getReport().setErroredOut();
             }
             return false;
-        }
-    }
-
-    /**
-     * A number of Helper methods for dealing with params, common extractions etc
-     */
-    public static class Helper {
-
-        // The magic here is:
-        // the ds and the gene sets have to match
-        // The ds prior to this call was either collapsed or not collapsed
-        // If not collapsed, do nothing at all. If it was collapsed
-        // If they dont match (i.e all gsets are 0) using the chip to map the gsets
-        // in two ways:
-        // 1) from their source format to gene symbols
-        public static GeneSet[] getGeneSets(final Object ds_or_rl, GeneSet[] gsets, final IntegerParam geneSetMinSizeParam,
-                                            final IntegerParam geneSetMaxSizeParam) throws Exception {
-            if (geneSetMaxSizeParam.getIValue() < geneSetMinSizeParam.getIValue()) {
-                throw new IllegalArgumentException("Max size cannot be less than min size");
-            }
-
-            klog.info("Got gsets: " + gsets.length + " now preprocessing them ... min: " + geneSetMinSizeParam.getIValue() + " max: " + geneSetMaxSizeParam.getIValue());
-
-            if (geneSetMinSizeParam.getIValue() != geneSetMaxSizeParam.getIValue()) {
-                //int bef = gsets.length;
-                boolean do_cloning;
-                if (geneSetMinSizeParam.isSpecified()) {
-                    gsets = GeneSetGenerators.removeGeneSetsSmallerThan(gsets, geneSetMinSizeParam.getIValue(), ds_or_rl, true);
-                    do_cloning = false;
-                } else {
-                    do_cloning = true;
-                }
-
-                klog.info("Done preproc for smaller than: " + geneSetMinSizeParam.getIValue());
-
-                if (geneSetMaxSizeParam.isSpecified()) {
-                    gsets = GeneSetGenerators.removeGeneSetsLargerThan(gsets, geneSetMaxSizeParam.getIValue(), ds_or_rl, do_cloning);
-                }
-
-
-            } else { // @note hack
-                klog.info("Skipped gene set size filtering");
-            }
-
-            klog.debug("Done geneset preproc starting analysis ...");
-
-            // Finally remove all 0 size gene sets (if min is 0 these will still be in there)
-            return removeAllZeroMemberSets(gsets);
-        }
-
-        private static GeneSet[] removeAllZeroMemberSets(final GeneSet[] gsets) {
-            // Finally remove all 0 size gene sets (if min is 0 these will still be in there)
-            List<GeneSet> list = new ArrayList<GeneSet>();
-            for (int i = 0; i < gsets.length; i++) {
-                if (gsets[i].getNumMembers() > 0) {
-                    list.add(gsets[i]);
-                }
-            }
-
-            return list.toArray(new GeneSet[list.size()]);
         }
     }
 

@@ -12,7 +12,6 @@ import edu.mit.broad.genome.objects.Template;
 import edu.mit.broad.genome.objects.strucs.CollapsedDetails;
 import edu.mit.broad.genome.parsers.GctParser;
 import edu.mit.broad.genome.reports.api.ReportIndexState;
-import edu.mit.broad.genome.reports.pages.HtmlReportIndexPage;
 import edu.mit.broad.vdb.chip.Chip;
 import xtools.api.AbstractTool;
 import xtools.api.param.*;
@@ -31,7 +30,6 @@ import org.apache.commons.lang3.StringUtils;
  * @author Aravind Subramanian, David Eby
  */
 public class Gsea extends AbstractGsea2Tool {
-
     private final IntegerParam fShowDetailsForTopXSetsParam = new IntegerParam("plot_top_x", "Plot graphs for the top sets of each phenotype", "Plot GSEA mountain and related plots for the top sets of each phenotype", 20, false, Param.ADVANCED);
     private final BooleanParam fMakeZippedReportParam = AbstractTool.createZipReportParam(false);
     private final BooleanParam fMakeGeneSetReportsParam = new BooleanParam("make_sets", "Make detailed gene set report", "Create detailed gene set reports (heat-map, mountain plot etc) for every enriched gene set", true, false, Param.ADVANCED);
@@ -164,19 +162,11 @@ public class Gsea extends AbstractGsea2Tool {
             fGeneSetMatrixParam.setAlternateDelimiter(fAltDelimParam.getValue().toString());
         }
 
-        //log.debug("# of templates: " + tss.length);
         final GeneSet[] origGeneSets = fGeneSetMatrixParam.getGeneSetMatrixCombo(true).getGeneSets();
 
-        final GeneSet[] gsets = Helper.getGeneSets(cd.getDataset(), origGeneSets, fGeneSetMinSizeParam, fGeneSetMaxSizeParam);
-
-        checkAndBarfIfZeroSets(gsets);
-
-        final HtmlReportIndexPage htmlReportIndexPage = fReport.getIndexPage();
-
-        execute_one_with_reporting(cd, template, gsets,
-                htmlReportIndexPage, origGeneSets, fShowDetailsForTopXSetsParam.getIValue(), fMakeZippedReportParam.isTrue(), fMakeGeneSetReportsParam.isTrue(), 
-                (fCreateSvgsParam.isSpecified() && fCreateSvgsParam.isTrue()),
-                (fCreateGctsParam.isSpecified() && fCreateGctsParam.isTrue()));
+        execute_one_with_reporting(cd, template, origGeneSets, fShowDetailsForTopXSetsParam.getIValue(), 
+                (fMakeZippedReportParam.isSpecified() && fMakeZippedReportParam.isTrue()), (fMakeGeneSetReportsParam.isSpecified() && fMakeGeneSetReportsParam.isTrue()), 
+                (fCreateSvgsParam.isSpecified() && fCreateSvgsParam.isTrue()), (fCreateGctsParam.isSpecified() && fCreateGctsParam.isTrue()));
 
         if (fMakeZippedReportParam.isTrue()) {
             // custom close before zipping

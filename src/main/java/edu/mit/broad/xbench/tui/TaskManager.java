@@ -1,10 +1,11 @@
 /*
- * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2021 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.xbench.tui;
 
 import edu.mit.broad.genome.JarResources;
 import edu.mit.broad.genome.reports.api.Report;
+import edu.mit.broad.genome.reports.api.ToolReport;
 import edu.mit.broad.genome.swing.GuiHelper;
 import edu.mit.broad.xbench.actions.XDCAction;
 import edu.mit.broad.xbench.core.JObjectsList;
@@ -37,11 +38,9 @@ import java.util.Properties;
  * <p/>
  * Placed the createTable method in here as easier to handle updates etc.
  *
- * @author Aravind Subramanian
- * @version %I%, %G%
+ * @author Aravind Subramanian, David Eby
  */
 public class TaskManager {
-
     private static final Logger klog = Logger.getLogger(TaskManager.class);
 
     /**
@@ -69,7 +68,7 @@ public class TaskManager {
     /**
      * Holds ToolRunnable objects
      */
-    private final List fToolRunnables;
+    private final List<ToolRunnable> fToolRunnables;
 
     /**
      * @return Get a ref to the singleton
@@ -92,8 +91,7 @@ public class TaskManager {
      * Use getInstance to get a ref to the singleton
      */
     private TaskManager() {
-
-        fToolRunnables = new ArrayList();
+        fToolRunnables = new ArrayList<ToolRunnable>();
 
         // must be made now - cant be done lazily
         fModel = new Model();
@@ -119,12 +117,11 @@ public class TaskManager {
         if (tool == null) {
             throw new IllegalArgumentException("Param tool cannot be null");
         }
-
         if (pset == null) {
             throw new IllegalArgumentException("Param pset cannot be null");
         }
 
-        // errors here are propogated right away
+        // errors here are propagated right away
         // -- tool NOT added to table
         // no task created
         Tool clonedTool;
@@ -133,15 +130,12 @@ public class TaskManager {
             clonedTool = createTool(tool, pset);
         } catch (Exception t) {
             ToolRunnable pstate = ToolRunnable.createParamErrorToolState(tool, pset, t);    // @note adding tool skeleton directly
-
             fToolRunnables.add(pstate);
             kInstance.updateTable();
-
             throw t;
         }
 
         ToolRunnable trunnable = new ToolRunnable(clonedTool);
-
         fToolRunnables.add(trunnable);
         kInstance.updateTable();
 
@@ -162,7 +156,6 @@ public class TaskManager {
     // Exceptions are all reflection related + if any params are not set
 
     public static Tool createTool(final Tool tool, final ParamSet pset) throws Exception {
-
         String toolName = tool.getClass().getName();
         Class toolClass = Class.forName(toolName);
         klog.debug("toolClass: " + toolClass + " pset: " + pset);
@@ -196,10 +189,8 @@ public class TaskManager {
      * Inner class
      *
      * @author Aravind Subramanian
-     * @version %I%, %G%
      */
     private class Model extends AbstractTableModel {
-
         private TIntObjectHashMap fRowToolButtonMap;
         private TIntObjectHashMap fRowReportButtonMap;
 
@@ -222,9 +213,6 @@ public class TaskManager {
         * then the components dont show up.
         */
         public Class getColumnClass(int col) {
-
-            // NO!
-            //return getValueAt(0, col).getClass();
             // synched with the Editor
             return Object.class;
         }
@@ -233,12 +221,6 @@ public class TaskManager {
             return COL_HEADERS[col];
         }
 
-        /**
-         * Everything is editable ->> but not the data -- needed for the
-         * buttons etc to work
-         *
-         * @return always true
-         */
         public boolean isCellEditable(int row, int col) {
             return col != COL_NUM;
         }
@@ -266,13 +248,11 @@ public class TaskManager {
         private final Icon LHS_TOOL_ICON = JarResources.getIcon("dirty_ov.gif");
 
         public Object getValueAt(int row, int col) {
-
             ToolRunnable trunnable = (ToolRunnable) fToolRunnables.get(row);
 
             if (col == COL_NUM) {
                 return new Integer(row + 1);
             } else if (col == COL_NAME) {
-
                 JButton but;
                 if (fRowToolButtonMap.get(row) == null) {
                     //klog.debug("Making new button for row: " + row);
@@ -289,17 +269,10 @@ public class TaskManager {
                 SingleToolLauncherAction action = new SingleToolLauncherAction(tool, trunnable.pset, null);
                 but.setAction(action);
                 but.setIcon(LHS_TOOL_ICON);
-                // decided against double clicking -- seemed to be more consistent
-                //action.setDoubleClickOnly(true); // for consistency
-                //but.addMouseListener(action); // needed for the doubleclicking
-
                 return but;
-
             } else if (col == COL_STATUS) {
-
                 JButton but;
                 if (fRowReportButtonMap.get(row) == null) {
-                    //klog.debug("Making new button for row: " + row);
                     but = new JButton();
                     but.setBorderPainted(false);
                     but.setFocusPainted(false);
@@ -311,10 +284,6 @@ public class TaskManager {
                 ToolRunnableStateAction action = new ToolRunnableStateAction(trunnable, fOnClickShowResultsInBrowserOnly);
                 but.setAction(action);
 
-                // decided against dclicking
-                //action.setDoubleClickOnly(true); // for consistency
-                // but.addMouseListener(action); // needed for the doubleclicking
-
                 if (trunnable.state == ExecState.SUCCESS) {
                     Report report = trunnable.tool.getReport();
                     if (report == null) {
@@ -324,14 +293,11 @@ public class TaskManager {
                         if (len == 0) {
                             but.setText("0 Result Objects");
                         } else {
-                            //but.setIcon(JarResources.getIcon("ToolRunnerResults.png"));
                             but.setForeground(Color.GREEN);
-                            //but.setText("Success");
                             but.setText("<html><body><font color=green>Success</font></body></html>");
                             but.setIcon(GuiHelper.ICON_ELLIPSIS);
                             but.setVerticalTextPosition(JButton.TOP);
                             but.setToolTipText(but.getText());
-                            //but.setFont(GuiHelper.FONT_DEFAULT);
                         }
                     }
                 } else {
@@ -340,7 +306,6 @@ public class TaskManager {
 
                 but.setHorizontalAlignment(SwingConstants.CENTER);
                 but.setForeground(trunnable.state.color);
-                //but.setBackground(Color.white);
                 but.setBorderPainted(false);
 
                 return but;
@@ -348,21 +313,19 @@ public class TaskManager {
             }
             //add a button to launch Enrichmentmaps in cytoscape (which is placed in the options column)
             //   maybe more options will become available later so try and make it more generic
-              else {
+            else {
                 return "Bad col: " + col;
             }
         }
-    }    // End Model
+    }
 
     /**
      * A custom renderer for table cells that works in conjunction with the table
      * and the Model to display the components corerectly
      *
      * @author Aravind Subramanian
-     * @version %I%, %G%
      */
     private class Renderer extends DefaultTableCellRenderer {
-
         public Component getTableCellRendererComponent(JTable table, Object value,
                                                        boolean isSelected, boolean hasFocus, int row, int column) {
 
@@ -374,16 +337,14 @@ public class TaskManager {
                 return this;
             }
         }
-    }    // End inner class GramTableCellRenderer
+    }
 
     /**
      * Object that represents a Tool and its ExecState
      *
      * @author Aravind Subramanian
-     * @version %I%, %G%
      */
     static class ToolRunnable implements Runnable {
-
         private Tool tool;
 
         // may NOT be same as Tool pset!! esp when creation failed
@@ -400,10 +361,7 @@ public class TaskManager {
          * creates a new ToolState
          */
         private ToolRunnable(Tool p) {
-
-            if (p == null) {
-                throw new IllegalArgumentException("Param p cannot be null");
-            }
+            if (p == null) { throw new IllegalArgumentException("Param p cannot be null"); }
 
             this.tool = p;
             this.pset = p.getParamSet();    // same one -- instantiated correctly
@@ -412,10 +370,7 @@ public class TaskManager {
         }
 
         private static ToolRunnable createParamErrorToolState(Tool p, ParamSet pset, Throwable throwable) {
-
-            if (pset == null) {
-                throw new IllegalArgumentException("Param pset cannto be null");
-            }
+            if (pset == null) { throw new IllegalArgumentException("Param pset cannot be null"); }
 
             ToolRunnable ps = new ToolRunnable(p);
 
@@ -427,19 +382,21 @@ public class TaskManager {
         }
 
         public void run() {
-
             try {
                 this.state = ExecState.RUNNING;
 
                 kInstance.updateTable();
                 this.tool.execute();
-
-                if (wasKilled) {
+                ToolReport report = (ToolReport)this.tool.getReport();
+                if (report == null) {
+                    this.state = ExecState.EXEC_ERROR;
+                } else if (wasKilled) {
                     this.state = ExecState.KILLED;
-                } else {
+                } else if (report.getToolWarnings().isEmpty()) {
                     this.state = ExecState.SUCCESS;
+                } else {
+                    this.state = ExecState.SUCCESS_WARN;
                 }
-
             } catch (Throwable t) {
                 this.state = ExecState.EXEC_ERROR;
                 this.throwable = t;
@@ -447,7 +404,6 @@ public class TaskManager {
                 if (tool != null && tool.getReport() != null) {
                     tool.getReport().setErroredOut();
                 }
-
             } finally {
                 kInstance.updateTable();
             }
@@ -502,7 +458,6 @@ public class TaskManager {
      * Error, Param error -> display of the stack trace
      */
     private class ToolRunnableStateAction extends XDCAction {
-
         private final ToolRunnable trunnable;
         private final ToolRunnableStateAction fTrsaInstance = this;
         private boolean fDoBrowser;
@@ -537,7 +492,7 @@ public class TaskManager {
                 
                 // TODO: also need to look at Thread priority setting mechanism.
 
-            } else if ((trunnable.state == ExecState.SUCCESS) || (trunnable.state == ExecState.KILLED)) {
+            } else if ((trunnable.state == ExecState.SUCCESS) || (trunnable.state == ExecState.SUCCESS_WARN) || (trunnable.state == ExecState.KILLED)) {
                 kInstance.updateTable();
                 // TODO: track down meaning and usage of KILLED.  Can a Thread still get into this state?  How?
                 Report report = trunnable.tool.getReport();
@@ -566,13 +521,9 @@ public class TaskManager {
                 Application.getWindowManager().showMessage("No actions defined for this state " + trunnable.state + " " + trunnable.tool.getClass().getName());
             }
         }
-    }    // End ToolStateAction
+    }
 
-    /**
-     *
-     */
     private class Editor extends AbstractCellEditor implements TableCellEditor {
-
         private Object currVal;
 
         /**
@@ -581,22 +532,18 @@ public class TaskManager {
          */
         public Component getTableCellEditorComponent(JTable table, Object value,
                                                      boolean isSelected, int row, int column) {
-
-            //klog.debug("Getting editor: " + value);
             currVal = value;
 
             if (value instanceof Component) {
                 return (Component) value;
             } else {
-
                 currVal = new JLabel(value.toString());
                 return (JLabel) currVal;
             }
         }
 
         public Object getCellEditorValue() {
-            //klog.debug("Curr value: " + currVal);
             return currVal;
         }
-    }    // End inner class Editor
-}        // End TaskManager
+    }
+}

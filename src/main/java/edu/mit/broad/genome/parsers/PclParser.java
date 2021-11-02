@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2021 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.genome.parsers;
 
@@ -17,20 +17,12 @@ import java.util.List;
  * <p/>
  * http://genome-www5.stanford.edu/help/formats.shtml#pcl
  *
- * @author Aravind Subramanian
- * @version %I%, %G%
+ * @author Aravind Subramanian, David Eby
  */
 public class PclParser extends AbstractParser {
-
-    /**
-     * Class Constructor.
-     */
-    protected PclParser() {
-        super(Dataset.class);
-    }
+    protected PclParser() { super(Dataset.class); }
 
     public void export(PersistentObject pob, File file) throws Exception {
-
         PrintWriter pw = new PrintWriter(new FileOutputStream(file));
 
         Dataset ds = (Dataset) pob;
@@ -76,98 +68,103 @@ public class PclParser extends AbstractParser {
         pw.close();
 
         doneExport();
+    }
 
-    }    // End export
-
-    /**
-     *
-     *
-     */
     public List parse(String hackINeedFullPath, InputStream is) throws Exception {
-
         startImport(hackINeedFullPath);
         int nlines = FileUtils.countLines(hackINeedFullPath, true);
         int nfloatlines = nlines - 2;
         log.debug("Number of float lines = " + nfloatlines);
 
-        BufferedReader bin = new BufferedReader(new InputStreamReader(is));
-        String currLine = nextLine(bin);
-
-        List<String> colNames = ParseUtils.string2stringsList(currLine, "\t"); // spaces allowed in col names
-        int expectedNCols = colNames.size();
-        colNames.remove(0); // get rid of UNIQUID field name
-        colNames.remove(0); // get rid of NAME field name
-        colNames.remove(0); // get rid of GWEIGHT field name
-        log.debug("Number of columns of floats = " + colNames.size());
-
-        // get rid of the EWUIGHT line
-        nextLine(bin);
-
-        // Initialize the Dataset and Annotation
-        List<String> rowNames = new ArrayList<String>(nfloatlines);
-        List<String> rowDescs = new ArrayList<String>(nfloatlines);
-        Matrix matrix = new Matrix(nfloatlines, colNames.size());
-
-        int r = 0;
-        currLine = nextLineTrimless(bin); // first line of float data @note trimless as may be missing fields
-        while (currLine != null) {
-            //System.out.println(">> " + currLine);
-            List<String> fields = string2stringsV2(currLine, expectedNCols); // spaces allowed in name & desc field so DONT tokenize them
-
-            if (fields.size() != expectedNCols) { // silly check
-                throw new ParserException("Invalid format on line: " + currLine + " expected # fields = " + expectedNCols + " but found: " + fields.size());
-            }
-
-            String rowName = fields.get(0).toString().trim();
-            if (rowName.length() == 0) {
-                throw new ParserException("Bad rowname - cant be empty at: " + r + " >" + currLine);
-            }
-
-            rowNames.add(rowName);
-
-            String desc = fields.get(1).toString().trim();
-            if (desc.length() == 0) {
-                throw new ParserException("Bad rowdescname - cant be empty at: " + r + " >" + currLine);
-            }
-
-            rowDescs.add(desc);
-
-            // ignore the GWEIGHT, actually just a check
-            if (Integer.parseInt(fields.get(2).toString()) != 1) {
-                throw new ParserException("Expected field was not 1 for GWEIGHT: " + fields.get(2) + " " + currLine);
-            }
-
-            // -- then, onto the floats
-            for (int f = 3; f < fields.size(); f++) {
-                String s = fields.get(f).toString().trim();
-                float val;
-                if (s.length() == 0) {
-                    val = Float.NaN;
-                } else {
-                    val = Float.parseFloat(s);
+        try (BufferedReader bin = new BufferedReader(new InputStreamReader(is))) {
+            String currLine = nextLine(bin);
+    
+            List<String> colNames = ParseUtils.string2stringsList(currLine, "\t"); // spaces allowed in col names
+            int expectedNCols = colNames.size();
+            colNames.remove(0); // get rid of UNIQUID field name
+            colNames.remove(0); // get rid of NAME field name
+            colNames.remove(0); // get rid of GWEIGHT field name
+            log.debug("Number of columns of floats = " + colNames.size());
+    
+            // get rid of the EWUIGHT line
+            nextLine(bin);
+    
+            // Initialize the Dataset and Annotation
+            List<String> rowNames = new ArrayList<String>(nfloatlines);
+            List<String> rowDescs = new ArrayList<String>(nfloatlines);
+            List<float[]> data = new ArrayList<float[]>(nfloatlines);
+            int skippedMissingRows = 0, partialMissingRows = 0;
+    
+            int r = 0;
+            currLine = nextLineTrimless(bin); // first line of float data @note trimless as may be missing fields
+            while (currLine != null) {
+                //System.out.println(">> " + currLine);
+                List<String> fields = string2stringsV2(currLine, expectedNCols); // spaces allowed in name & desc field so DONT tokenize them
+    
+                if (fields.size() != expectedNCols) { // silly check
+                    throw new ParserException("Invalid format on line: " + currLine + " expected # fields = " + expectedNCols + " but found: " + fields.size());
                 }
-                matrix.setElement(r, f - 3, val);
+    
+                String rowName = fields.get(0).toString().trim();
+                if (rowName.length() == 0) {
+                    throw new ParserException("Bad rowname - cant be empty at: " + r + " >" + currLine);
+                }
+    
+                String desc = fields.get(1).toString().trim();
+                if (desc.length() == 0) {
+                    throw new ParserException("Bad rowdescname - cant be empty at: " + r + " >" + currLine);
+                }
+    
+                // ignore the GWEIGHT, actually just a check
+                if (Integer.parseInt(fields.get(2).toString()) != 1) {
+                    throw new ParserException("Expected field was not 1 for GWEIGHT: " + fields.get(2) + " " + currLine);
+                }
+    
+                // -- then, onto the floats
+                float[] dataRow = parseFieldsIntoFloatArray(fields, r, 3, rowName);
+                int countMissing = countMissingValues(dataRow, r, rowName);
+                if (countMissing < dataRow.length) {
+                    if (countMissing > 0) { partialMissingRows++; }
+                    data.add(dataRow);
+                    rowNames.add(rowName);
+                    rowDescs.add(desc);
+                } else {
+                    skippedMissingRows++;
+                }
+                
+                r++;
+                currLine = nextLineTrimless(bin);
             }
+            
+            if (data.isEmpty()) { throw new ParserException("Data was missing in all rows!"); }
 
-            r++;
-            currLine = nextLineTrimless(bin);
+            Matrix matrix = new Matrix(data.size(), colNames.size());
+            for (int i = 0; i < data.size(); i++) {
+                matrix.setRow(i, data.get(i));
+            }
+    
+            // Initialize the Dataset and Annotation
+            String name = new File(hackINeedFullPath).getName();
+    
+            FeatureAnnot fann = new FeatureAnnot(name, rowNames, rowDescs);
+            fann.addComment(fComment.toString());
+    
+            final SampleAnnot sann = new SampleAnnot(name, colNames);
+    
+            Dataset ds = new DefaultDataset(name, matrix, rowNames, colNames, new Annot(fann, sann));
+            ds.addComment(fComment.toString());
+            if (partialMissingRows > 0) {
+                String warning = "There were " + partialMissingRows + " row(s) in total with partially missing data in this dataset.";
+                log.warn(warning);
+                ds.addWarning(warning + "  See the log for more details.");
+            }
+            if (skippedMissingRows > 0) {
+                String warning = "There were " + skippedMissingRows + " row(s) in total with all data missing in this dataset.  These will be ignored.";
+                log.warn(warning);
+                ds.addWarning(warning + "  See the log for more details.");
+            }
+            doneImport();
+            return unmodlist(new PersistentObject[]{ds});
         }
-
-        bin.close();
-
-        // Initialize the Dataset and Annotation
-        String name = new File(hackINeedFullPath).getName();
-
-        FeatureAnnot fann = new FeatureAnnot(name, rowNames, rowDescs);
-        fann.addComment(fComment.toString());
-
-        final SampleAnnot sann = new SampleAnnot(name, colNames);
-
-        Dataset ds = new DefaultDataset(name, matrix, rowNames, colNames, new Annot(fann, sann));
-        ds.addComment(fComment.toString());
-
-        doneImport();
-        return unmodlist(new PersistentObject[]{ds});
     }
-
-}    // End StanfordDatasetFormatParser
+}

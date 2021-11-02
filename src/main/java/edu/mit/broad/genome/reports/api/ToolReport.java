@@ -50,11 +50,10 @@ import java.util.*;
  * that the reports produced. If odf, would mostly all be in the file
  * if htnl, would be linked etc
  *
- * @author Aravind Subramanian
+ * @author Aravind Subramanian, David Eby
  */
 // dont extend abstractobject -- easier to impl ourselves here as impl not pob but reports
 public class ToolReport implements Report {
-
     private transient static Logger klog = Logger.getLogger(ToolReport.class);
 
     private static String COMMON_ERROR_PREFIX = "The Tool ran successfully but at least one part of the reports production failed\nwith the following details\nThe reports is INcomplete";
@@ -78,6 +77,7 @@ public class ToolReport implements Report {
     private File fReportDir;
 
     private ToolComments fToolComments;
+    private ToolComments fToolWarnings;
 
     private final long fTimestamp = System.currentTimeMillis();
     private transient Date fDate;
@@ -125,18 +125,8 @@ public class ToolReport implements Report {
     private File fHtmlIndexPageFile;
     private ReportIndexState fReportIndexState;
 
-    /**
-     * Class constructor
-     *
-     * @param reportForTool
-     * @param makeReportSubDir
-     * @throws IOException
-     * @throws IllegalArgumentException
-     */
-    public ToolReport(final Tool reportForTool,
-                      final boolean cacheToolObject,
-                      final ReportIndexState indexState) throws IOException, IllegalArgumentException {
-
+    public ToolReport(final Tool reportForTool, final boolean cacheToolObject, 
+            final ReportIndexState indexState) throws IOException, IllegalArgumentException {
         if (reportForTool == null) {
             throw new IllegalArgumentException("Parameter reportForTool cannot be null");
         }
@@ -152,40 +142,29 @@ public class ToolReport implements Report {
         // This is the dir into which rpt files are written
         File rptDir = createIfNeededAndGetReportDir(analysisEnvBaseDir, reportForTool, this);
 
-        init(reportForTool, cacheToolObject, rptDir, indexState);
-    }
-
-
-    // central init routine
-    private void init(final Tool reportForTool_opt,
-                      final boolean cacheToolObject,
-                      final File useThisRptDir,
-                      final ReportIndexState indexState) throws IllegalArgumentException {
-
-        if (!useThisRptDir.exists()) {
-            throw new IllegalArgumentException("Report dir does not exists!!: " + useThisRptDir.getAbsolutePath());
+        if (!rptDir.exists()) {
+            throw new IllegalArgumentException("Report dir does not exists!!: " + rptDir.getAbsolutePath());
         }
 
-        this.fReportDir = useThisRptDir;
+        this.fReportDir = rptDir;
         this.fToolComments = new ToolComments();
+        this.fToolWarnings = new ToolComments();
 
-        if (reportForTool_opt != null) {
-            this.fProducerClass = reportForTool_opt.getClass();
-            this.fProducerName = reportForTool_opt.getClass().getName();
+        this.fProducerClass = reportForTool.getClass();
+        this.fProducerName = reportForTool.getClass().getName();
 
-            if (cacheToolObject) {
-                this.fTool_opt = reportForTool_opt;
-            }
-
-            // parameter checks
-            // just a helpful tool check -- no real need in this class
-            if (reportForTool_opt.getParamSet().getReportLabelParam() == null) {
-                throw new IllegalArgumentException("Specified tool does not have a declared ReportLabelParam -- check Tool!");
-            }
-            this.fReportName = generateReportName(this, reportForTool_opt);
-            // this is the PARENT dir (i.e -out) and NOT the specific rpt dir (the one with the timestamp)
-            this.fReportParamsFile = new File(fReportDir, fReportName);
+        if (cacheToolObject) {
+            this.fTool_opt = reportForTool;
         }
+
+        // parameter checks
+        // just a helpful tool check -- no real need in this class
+        if (reportForTool.getParamSet().getReportLabelParam() == null) {
+            throw new IllegalArgumentException("Specified tool does not have a declared ReportLabelParam -- check Tool!");
+        }
+        this.fReportName = generateReportName(this, reportForTool);
+        // this is the PARENT dir (i.e -out) and NOT the specific rpt dir (the one with the timestamp)
+        this.fReportParamsFile = new File(fReportDir, fReportName);
 
         this.fPages = new Pages();
 
@@ -206,7 +185,6 @@ public class ToolReport implements Report {
      * @return
      */
     private static String generateReportName(final Report report, final Tool tool) {
-
         final ReportLabelParam lp = tool.getParamSet().getReportLabelParam();
         String label = lp.getReportLabel();
 
@@ -235,7 +213,6 @@ public class ToolReport implements Report {
     }
 
     public File zipReport() {
-
         File zipped_file = getZipReportFile();
 
         try {
@@ -380,6 +357,10 @@ public class ToolReport implements Report {
         fToolComments.add(comment);
     }
 
+    public void addWarning(String warning) {
+        fToolWarnings.add(warning);
+    }
+
     // this must never fail
     public void addError(final String msg, final Throwable t) {
         if (fErrors == null) {
@@ -391,11 +372,19 @@ public class ToolReport implements Report {
     }
 
     public String getComment() {
-        throw new RuntimeException("use getToolComment instead");
+        throw new RuntimeException("use getToolComments instead");
+    }
+
+    public List<String> getWarnings() {
+        throw new RuntimeException("use getToolWarnings instead");
     }
 
     public ToolComments getToolComments() {
         return fToolComments;
+    }
+
+    public ToolComments getToolWarnings() {
+        return fToolWarnings;
     }
 
     public File getReportDir() {
@@ -522,7 +511,6 @@ public class ToolReport implements Report {
     private File savePage(String name, String desc, final PersistentObject pob, File inDir, boolean centralAddPage) {
         File file = null;
         try {
-
             if (pob instanceof RankedList) {
                 file = _createFile(name, Constants.TSV, inDir);
                 ParserFactory.save((RankedList) pob, file);
@@ -548,12 +536,9 @@ public class ToolReport implements Report {
                 ParserFactory.save(pob, file);
             }
 
-            //log.debug("******* " + file + " " + pob.getName());
-
             if (file != null) {
                 _centralAddPage(new FileWrapperPage(file, desc), centralAddPage);    // @note
             }
-
         } catch (Throwable t) {
             addError("Trouble saving pob to reports", t);
         }
@@ -836,7 +821,6 @@ public class ToolReport implements Report {
 
 
     private static File _createFile(final String fname, final String suffix, final File inDir) {
-
         File file = null;
 
         try {
@@ -870,7 +854,6 @@ public class ToolReport implements Report {
                     throw new IOException("Could not make file: " + file.getAbsolutePath());
                 }
             }
-
         } catch (Throwable t) {
             if (file == null) {
                 file = createSafeReportFile("tmp_report_error_file." + System.currentTimeMillis() + suffix, inDir);
@@ -896,10 +879,8 @@ public class ToolReport implements Report {
      *         For example some programs, only likes to put output files in the parent dir
      *         Use a -D switch for this
      */
-    private static File createIfNeededAndGetReportDir(final File rptWorkingBaseDir,
-                                                      final Tool tool,
-                                                      final Report rpt) throws IOException {
-
+    private static File createIfNeededAndGetReportDir(final File rptWorkingBaseDir, final Tool tool, 
+            final Report rpt) throws IOException {
         if (!rptWorkingBaseDir.exists()) {
             boolean made = rptWorkingBaseDir.mkdir();
 
@@ -940,7 +921,6 @@ public class ToolReport implements Report {
      * @return
      */
     private static File generateReportDir(final Report report, final Tool tool) {
-
         if (Conf.isMakeReportDirOffMode()) { // use the -out specified dir and dont make a subdir
             return tool.getParamSet().getAnalysisDirParam().getAnalysisDir();
         } else { // make a report sub dir
@@ -974,7 +954,6 @@ public class ToolReport implements Report {
      * Also manages some of the business rules when pages are added - event firing etc
      */
     private static class Pages implements java.io.Serializable {
-
         private List<Page> plist;
         private List<File> flist;
 
