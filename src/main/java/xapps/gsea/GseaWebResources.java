@@ -10,13 +10,10 @@ import edu.mit.broad.genome.parsers.AuxUtils;
  */
 public class GseaWebResources {
 
-    // The duplication here is a leftover from when there used to be two FTP servers.
-    // It's just temporary; we plan to switch to HTTP(S) in the future.
-    private final static String BROAD_FTP_SERVER = "ftp.broadinstitute.org";
-    private final static String GSEA_FTP_SERVER = "ftp.broadinstitute.org";
+    public final static String GSEA_FTP_SERVER = "ftp.broadinstitute.org";
     private final static String GSEA_FTP_SERVER_USERNAME = "anonymous";
     private final static String GSEA_FTP_SERVER_PASSWORD = "gsea@broadinstitute.org";
-    private final static String GSEA_FTP_SERVER_BASE_DIR = "/pub/gsea";
+    public final static String GSEA_FTP_SERVER_BASE_DIR = "/pub/gsea";
     private final static String GSEA_FTP_SERVER_CHIPFILES_SUB_DIR = "annotations_versioned";
     private final static String GSEA_FTP_SERVER_GENESETS_SUB_DIR = "gene_sets";
 
@@ -30,10 +27,6 @@ public class GseaWebResources {
 
     public static String getGseaFTPServerPassword() {
         return GSEA_FTP_SERVER_PASSWORD;
-    }
-
-    public static String getBroadFTPBase() {
-        return "ftp://" + BROAD_FTP_SERVER + GSEA_FTP_SERVER_BASE_DIR;
     }
     
     public static String getGseaFTPServerChipDir() {

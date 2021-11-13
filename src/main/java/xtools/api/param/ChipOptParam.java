@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2021 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package xtools.api.param;
 
@@ -30,21 +30,16 @@ import xapps.gsea.GseaWebResources;
 import xtools.api.ui.NamedModel;
 
 /**
- * @author Aravind Subramanian
- * @version %I%, %G%
+ * @author Aravind Subramanian, David Eby
  */
 public class ChipOptParam extends AbstractParam {
-
     private WChipChooserUI fChooser;
 
     public ChipOptParam(boolean reqd) {
         this(CHIP, CHIP_ENGLISH, CHIP_DESC, reqd);
     }
 
-    public ChipOptParam(final String name,
-            final String nameEnglish,
-            final String desc,
-            final boolean reqd) {
+    public ChipOptParam(final String name, final String nameEnglish, final String desc, final boolean reqd) {
         super(name, nameEnglish, Chip.class, desc, null, new Chip[]{}, reqd);
     }
     
@@ -55,12 +50,9 @@ public class ChipOptParam extends AbstractParam {
     }
 
     private String format(final Object[] vals) {
-        if (vals == null) {
-            return "";
-        }
+        if (vals == null) { return ""; }
 
-        StringBuffer buf = new StringBuffer();
-
+        StringBuilder buf = new StringBuilder();
         for (int i = 0; i < vals.length; i++) {
 
             if (vals[i] == null) {
@@ -84,19 +76,15 @@ public class ChipOptParam extends AbstractParam {
         return buf.toString();
     }
 
-    public boolean isFileBased() {
-        return true;
-    }
+    public boolean isFileBased() { return true; }
 
     // redo from the abstract super class here as we dont want to swap out the model
     // (model is the datasets etc)
     private static class MyPobActionListener implements ActionListener {
-
         private WChipChooserUI fChooser;
         private ChipListRenderer rend = new ChipListRenderer();
 
-        public MyPobActionListener() {
-        }
+        public MyPobActionListener() { }
 
         // cant have this in the class constructor as the action list needs to
         // be instantiated before the chooser object is made
@@ -105,17 +93,16 @@ public class ChipOptParam extends AbstractParam {
         }
 
         private ListModel createFTPModel() {
-
             if (! XPreferencesFactory.kOnlineMode.getBoolean()) {
                 DefaultListModel model = new DefaultListModel();
                 model.addElement("Offline mode");
                 model.addElement("Change this in Menu=>Preferences");
+                model.addElement("Use 'Load Data' to access local CHIP files.");
                 model.addElement("Choose chips from other tabs");
                 // Bit of a hack: disable special CHIP rendering since none are loaded.
                 rend.setSkipRenderCheck(true);
                 return model;
             } else {
-
                 try {
                     FTPList ftpList;
                     ftpList = new FTPList(GseaWebResources.getGseaFTPServer(),
@@ -130,6 +117,7 @@ public class ChipOptParam extends AbstractParam {
                     DefaultListModel model = new DefaultListModel();
                     model.addElement("Error listing Broad website");
                     model.addElement(e.getMessage());
+                    model.addElement("Use 'Load Data' to access local CHIP files.");
                     model.addElement("Choose chips from other tabs");
                     // Ditto.  It's more important here since the error message can (and does) contain
                     // Strings that match on the rendering code.
@@ -137,11 +125,9 @@ public class ChipOptParam extends AbstractParam {
                     return model;
                 }
             }
-
         }
 
         public void actionPerformed(ActionEvent e) {
-
             if (fChooser == null) {
                 return;
             }
@@ -149,16 +135,14 @@ public class ChipOptParam extends AbstractParam {
             NamedModel[] models;
             final NamedModel chipsFromFTPModel = new NamedModel("Chips (from website)", createFTPModel());
 
-            models = new NamedModel[]
-                    {
+            models = new NamedModel[] {
                             chipsFromFTPModel,
                             new NamedModel("Chips (local .chip)", ObjectBindery.getModel(Chip.class))
                     };
 
             final Object[] sels = fChooser.getJListWindow().showDirectlyWithModels(models, ListSelectionModel.SINGLE_SELECTION, rend);
 
-            if ((sels == null) || (sels.length == 0)) { // <-- @note
-            } else {
+            if ((sels != null) && (sels.length > 0)) {
                 String[] paths = new String[sels.length];
                 for (int i = 0; i < sels.length; i++) {
                     if (sels[i] instanceof FTPFile) {
@@ -181,13 +165,9 @@ public class ChipOptParam extends AbstractParam {
             this.skipRenderCheck = skipRenderCheck;
         }
 
-        public Component getListCellRendererComponent(JList list, Object value, int index,
-                                                      boolean isSelected, boolean cellHasFocus) {
-
-            // doesnt work properly unless called
+        public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
             super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
 
-            //log.debug(value + " class: " + value.getClass());
             // order is important
             if (value == null) {
                 return this;
@@ -215,11 +195,10 @@ public class ChipOptParam extends AbstractParam {
             
             return this;
         }
-    }    // End ChipListRenderer
+    }
 
     // have to make the strs into paths
     public String getValueStringRepresentation(final boolean full) {
-
         Object val = getValue();
 
         if (val == null) {
@@ -234,11 +213,9 @@ public class ChipOptParam extends AbstractParam {
         } else {
             return format(new Object[]{val});
         }
-
     }
 
     public GFieldPlusChooser getSelectionComponent() {
-
         if (fChooser == null) {
             // do in 2 stages, as the actionListener needs a valid (non-null) chooser at its construction
             fChooser = new WChipChooserUI();
@@ -256,5 +233,4 @@ public class ChipOptParam extends AbstractParam {
 
         return fChooser;
     }
-
-} // End class WChipChooserAbstractParam
+}

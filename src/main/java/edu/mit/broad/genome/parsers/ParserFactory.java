@@ -595,6 +595,18 @@ public class ParserFactory implements Constants {
         return readGeneSetMatrix(file.getPath(), createInputStream(file), useCache);
     }
 
+    public static GeneSetMatrix readGeneSetMatrix(String path, boolean useCache) throws Exception {
+        if (AuxUtils.isAux(path)) { path = AuxUtils.getBaseStringFromAux(path); }
+        if (useCache) {
+            String ext = NamingConventions.getExtension(path);
+            if (!(ext.equals(Constants.GRP)) && (_getCache().isCached(path, GeneSetMatrix.class))) {
+                return (GeneSetMatrix) _getCache().get(path, GeneSetMatrix.class);
+            }
+        }
+        
+        return readGeneSetMatrix(path, createInputStream(path), useCache);
+    }
+
     public static GeneSetMatrix readGeneSetMatrix(String path, InputStream is, boolean useCache) throws Exception {
         return readGeneSetMatrix(path, is, useCache, true, true);
     }
@@ -688,9 +700,10 @@ public class ParserFactory implements Constants {
             return readGeneSetMatrix(path, is, useCache, checkForDuplicates, add2Cache);
         }
 
+        String path_name = toName(path);
         if (ext.equals(Constants.GRP)) {
             GeneSet gset = readGeneSet(path, is, useCache);
-            return new DefaultGeneSetMatrix(toName(path), new GeneSet[]{gset});
+            return new DefaultGeneSetMatrix(path_name, new GeneSet[]{gset});
         }
 
         if (useCache && (_getCache().isCached(path, GeneSetMatrix.class))) {
@@ -701,7 +714,7 @@ public class ParserFactory implements Constants {
 
         Parser parser = new GmtParser();
         //parser.setCheckForDuplicates(checkForDuplicates);
-        GeneSetMatrix gmx = (GeneSetMatrix) parser.parse(toName(path), is).get(0);
+        GeneSetMatrix gmx = (GeneSetMatrix) parser.parse(path_name, is).get(0);
 
         _getCache().add(path, gmx, GeneSetMatrix.class);
 

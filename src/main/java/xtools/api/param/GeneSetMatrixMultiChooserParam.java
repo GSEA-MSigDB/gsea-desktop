@@ -1,11 +1,9 @@
 /*
- * Copyright (c) 2003-2020 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2021 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package xtools.api.param;
 
 import edu.mit.broad.genome.charts.XChart;
-import edu.mit.broad.genome.io.FtpResultInputStream;
-import edu.mit.broad.genome.io.FtpSingleUrlTransferCommand;
 import edu.mit.broad.genome.objects.*;
 import edu.mit.broad.genome.parsers.AuxUtils;
 import edu.mit.broad.genome.parsers.DataFormat;
@@ -18,6 +16,7 @@ import edu.mit.broad.xbench.core.ObjectBindery;
 import edu.mit.broad.xbench.prefs.XPreferencesFactory;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.SystemUtils;
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 import org.genepattern.uiutil.FTPFile;
 import org.genepattern.uiutil.FTPList;
@@ -36,10 +35,9 @@ import java.util.*;
 import java.util.List;
 
 /**
- * @author Aravind Subramanian
+ * @author Aravind Subramanian, David Eby
  */
 public class GeneSetMatrixMultiChooserParam extends AbstractParam {
-
     private MyPobActionListener fAl;
     private GeneSetMatrixChooserUI fChooser;
 
@@ -50,10 +48,7 @@ public class GeneSetMatrixMultiChooserParam extends AbstractParam {
         this(GMX, GMX_ENGLISH, GMX_DESC_MULTI, reqd);
     }
 
-    public GeneSetMatrixMultiChooserParam(final String name,
-                                      final String nameEnglish,
-                                      final String desc,
-                                      final boolean reqd) {
+    public GeneSetMatrixMultiChooserParam(final String name, final String nameEnglish, final String desc, final boolean reqd) {
         super(name, nameEnglish, GeneSetMatrix[].class, desc, new GeneSetMatrix[]{}, new GeneSetMatrix[]{}, reqd);
     }
 
@@ -78,48 +73,48 @@ public class GeneSetMatrixMultiChooserParam extends AbstractParam {
         this.delimiter = alternateDelimiter;
     }
 
-    //-----------------------------------------------------------------------//
+    private static final String GSEA_ALTERED_FTP_PATH = GseaWebResources.GSEA_FTP_SERVER + ":" + GseaWebResources.GSEA_FTP_SERVER_BASE_DIR;
+    private static final String GSEA_BASE_FTP_PATH = GseaWebResources.GSEA_FTP_SERVER + ":/" + GseaWebResources.GSEA_FTP_SERVER_BASE_DIR;
+    
     //------------------------- CORE METHODS --------------------------------//
-    //-----------------------------------------------------------------------//
     private Object[] _getObjects() throws Exception {
-
         Object val = getValue();
-
         Object[] objs;
 
-        // cant et a ftp file object because it has to be a string n the obect chooser text area
+        // cant get a ftp file object because it has to be a string in the object chooser text area
         // log.debug("value = " + val + " class: " + val.getClass());
 
         if (val instanceof String) {
             String[] paths = _parse(val.toString());
             objs = new Object[paths.length];
             for (int p = 0; p < paths.length; p++) {
-                if (paths[p].toLowerCase().startsWith("ftp.") || paths[p].toLowerCase().startsWith("gseaftp.")) {                    
-                    java.net.URL ftpURL = new java.net.URL("ftp://" + paths[p]);
-                    FtpSingleUrlTransferCommand ftpCommand = new FtpSingleUrlTransferCommand(ftpURL);
-                    FtpResultInputStream resultInputStream = null;
-                    try {
-                        resultInputStream = ftpCommand.retrieveAsInputStream();
-                        GeneSetMatrix gm = ParserFactory.readGeneSetMatrix(paths[p], resultInputStream, false);
-                        if (AuxUtils.isAux(paths[p])) {
-                            objs[p] = gm.getGeneSet(AuxUtils.getAuxNameOnlyIncludingHash(paths[p]));
-                        } else {
-                            objs[p] = gm;
+                String path = paths[p];
+                if (path.toLowerCase().startsWith("ftp.") || path.toLowerCase().startsWith("gseaftp.")) {
+                    if (AuxUtils.isAux(path)) {
+                        // We're looking for just one gene set out of an FTP-based file.
+                        // Hack the path if necessary.  The FTP paths used in caching the individual gene sets may get munged 
+                        // so we put them back as expected, otherwise there will be a cache miss and we'll re-fetch the file
+                        // unnecessarily.  This is specific to Broad FTP paths.
+                        // TODO: clean up the caching behind this.
+                        // This path munging happens because the keys are stored as *Files*, which causes issues when converting
+                        // back-and-forth to Strings (as needed for URLs).  Part of that is implicit canonicalization and part is
+                        // platform-specific (i.e. Windows) conversion.  It's not simple though since the Files are used elsewhere.
+                        if (StringUtils.containsIgnoreCase(path, GseaWebResources.GSEA_FTP_SERVER)) {
+                            // Special case: correct Windows path separators
+                            if (SystemUtils.IS_OS_WINDOWS) { path = StringUtils.replace(path, "\\", "/"); }
+                            path = StringUtils.replace(path, GSEA_ALTERED_FTP_PATH, GSEA_BASE_FTP_PATH);
                         }
+                        
+                        GeneSetMatrix gm = ParserFactory.readGeneSetMatrix(path, true);
+                        GeneSet geneSet = gm.getGeneSet(AuxUtils.getAuxNameOnlyIncludingHash(path));
+                        objs[p] = geneSet;
+                    } else {
+                        objs[p] = ParserFactory.readGeneSetMatrix(path, true);
                     }
-                    finally {
-                        // If the inputStream came from an FTP download, clean up the underlying 
-                        // temp file on disk after processing is complete.
-                        if (resultInputStream != null) {
-                            File tempFile = resultInputStream.getFile();
-                            // Try to delete the file.  If that fails, set it to be deleted when the JVM exits.
-                            if (!tempFile.delete()) tempFile.deleteOnExit();
-                        }
-                    }
-                } else if (AuxUtils.isAux(paths[p])) {
-                    objs[p] = ParserFactory.readGeneSet(new File(paths[p]), true);
+                } else if (AuxUtils.isAux(path)) {
+                    objs[p] = ParserFactory.readGeneSet(new File(path), true);
                 } else {
-                    objs[p] = ParserFactory.read(new File(paths[p]));
+                    objs[p] = ParserFactory.read(new File(path));
                 }
             }
         } else if (val instanceof Object[]) {
@@ -162,10 +157,7 @@ public class GeneSetMatrixMultiChooserParam extends AbstractParam {
     }
 
     private GeneSetsStruc _getGeneSets() throws Exception {
-
         Object[] objs = _getObjects();
-
-        //log.debug("num of selections: " + objs.length);
 
         if (isReqd() && objs.length == 0) {
             throw new IllegalArgumentException("Must specify GeneSetMatrix parameter: " + getNameEnglish() + " (" + getDesc() + ")");
@@ -258,7 +250,6 @@ public class GeneSetMatrixMultiChooserParam extends AbstractParam {
     }
 
     private static class MyPobActionListener implements ActionListener {
-
         private GeneSetMatrixChooserUI fChooser;
 
         public MyPobActionListener() {}
@@ -277,12 +268,12 @@ public class GeneSetMatrixMultiChooserParam extends AbstractParam {
                 DefaultListModel model = new DefaultListModel();
                 model.addElement("Offline mode");
                 model.addElement("Change this in Menu=>Preferences");
+                model.addElement("Use 'Load Data' to access local GMT/GMX files.");
                 model.addElement("Choose gene sets from other tabs");
                 return model;
             } else {
 
                 try {
-
                     FTPList ftpList;
                     ftpList = new FTPList(GseaWebResources.getGseaFTPServer(),
                                           GseaWebResources.getGseaFTPServerUserName(),
@@ -296,12 +287,12 @@ public class GeneSetMatrixMultiChooserParam extends AbstractParam {
                     DefaultListModel model = new DefaultListModel();
                     model.addElement("Error listing Broad website");
                     model.addElement(e.getMessage());
-                    model.addElement("Choose gene sets from other tabs");
+                    model.addElement("Use 'Load Data' to access local GMT/GMX files.");
+                    model.addElement("Choose gene sets from other tabs.");
                     return model;
                 }
             }
         }
-
 
         public void actionPerformed(ActionEvent e) {
 
@@ -319,8 +310,7 @@ public class GeneSetMatrixMultiChooserParam extends AbstractParam {
 
             final Object[] sels = fChooser.getJListWindow().showDirectlyWithModels(models, ListSelectionModel.MULTIPLE_INTERVAL_SELECTION, rend);
 
-            if ((sels == null) || (sels.length == 0)) { // <-- @note
-            } else {
+            if ((sels != null) && (sels.length >  0)) {
                 String[] paths = new String[sels.length];
                 for (int i = 0; i < sels.length; i++) {
                     if (sels[i] instanceof FTPFile) {
@@ -358,9 +348,7 @@ public class GeneSetMatrixMultiChooserParam extends AbstractParam {
 
     }
 
-
     public GFieldPlusChooser getSelectionComponent() {
-
         if (fChooser == null) {
             //fChooser = new GOptionsFieldPlusChooser(getActionListener(), Application.getWindowManager().getRootFrame());
             // do in 2 stages, as the al needs a valid (non-null) chooser at its construction
@@ -385,7 +373,6 @@ public class GeneSetMatrixMultiChooserParam extends AbstractParam {
 
 
     public static class GeneSetsFromFTPSiteComparator implements Comparator {
-
         /* private static member used to track highest seen version */
         private static String highestVersionId;
         private static DefaultArtifactVersion highestVersion;
@@ -448,7 +435,7 @@ public class GeneSetMatrixMultiChooserParam extends AbstractParam {
         public boolean equals(Object o2) {
             return false;
         }
-    }    // End GeneSetsFromFTPSiteComparator
+    }
 
     /**
      * static nested class for parsing names of gmt files retrievable from
@@ -525,10 +512,7 @@ public class GeneSetMatrixMultiChooserParam extends AbstractParam {
             this(false); // default is to show the full path
         }
 
-        public Component getListCellRendererComponent(JList list, Object value, int index,
-                                                      boolean isSelected, boolean cellHasFocus) {
-
-            // doesnt work properly unless called
+        public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
             super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
 
             // order is important
@@ -566,7 +550,6 @@ public class GeneSetMatrixMultiChooserParam extends AbstractParam {
                 this.setText(((XChart) value).getName());
                 this.setIcon(XChart.ICON);
             } else if (value instanceof FTPFile) {
-
                 String s = ((FTPFile) value).getName();
                 String slc = s.toLowerCase();
                 if (slc.indexOf("c1.") != -1) {
@@ -583,6 +566,8 @@ public class GeneSetMatrixMultiChooserParam extends AbstractParam {
                     s = s + " [Oncogenic signatures]";
                 } else if (slc.indexOf("c7.") != -1) {
                     s = s + " [Immunologic signatures]";
+                } else if (slc.indexOf("c8.") != -1) {
+                    s = s + " [Cell type signatures]";
                 } else if (slc.indexOf("h.") != -1) {
                     s = s + " [Hallmarks]";                 
                 }

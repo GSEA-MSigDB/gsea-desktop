@@ -1,4 +1,4 @@
-0// Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents 
+// Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents 
 // of the University of California. All rights reserved.
 apply plugin: 'java'
 import org.apache.tools.ant.filters.ReplaceTokens
@@ -227,7 +227,7 @@ task createWinExeDist(type: Exec, dependsOn: createWinDist) {
         
 task signWinExeDist(type: Exec, dependsOn: createWinExeDist) {
     standardInput = new ByteArrayInputStream( keyPassword.getBytes() );
-    commandLine(signcodeCommand, "-spc", spcFile, "-v", pvkFile, "-a", "sha1", 
+    commandLine(signcodeCommand, "-spc", spcFile, "-v", pvkFile, "-a", "sha512", 
                 "-\$", "commercial", "-n", "GSEA ${version}", "-i", "http://www.gsea-msigdb.org/",
                 "-t", tsaurl, "-tr", "10", "${buildDir}/GSEA-WinExe-dist/GSEA_Win_${version}-installer.exe")
     doLast {
