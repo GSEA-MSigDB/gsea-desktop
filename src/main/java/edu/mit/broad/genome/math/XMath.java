@@ -703,4 +703,8 @@ public class XMath {
 	    // instead of FLT_EPSILON (see http://www.cplusplus.com/reference/cfloat/)
 	    return (Math.abs(d) <= 1e-9d);
 	}
+	
+	public static boolean isInfiniteOrNaN(float f) {
+	    return Float.isNaN(f) || Float.isInfinite(f);
+	}
 }

@@ -180,10 +180,27 @@ public class EnrichmentReports {
         final EnrichmentResult[] results = pvc.calcNPValuesAndFDR(edb_original.getResults());
         final EnrichmentDb edb = edb_original.cloneDeep(results);
 
+        boolean haveInfiniteOrNaN = false;
+        for (int i = 0; i < results.length; i++) {
+            EnrichmentScore score = results[i].getScore();
+            if (XMath.isInfiniteOrNaN(score.getES()) || XMath.isInfiniteOrNaN(score.getNES()) || XMath.isInfiniteOrNaN(score.getNP())
+                    || XMath.isInfiniteOrNaN(score.getFDR()) || XMath.isInfiniteOrNaN(score.getFWER())) {
+                haveInfiniteOrNaN = true;
+                klog.warn("Scoring of " + results[i].getGeneSetName()  + " produced infinite Or NaN value(s)");
+            }
+        }
+        if (haveInfiniteOrNaN) {
+            report.addWarning("Scoring produced infinite or NaNs values which may have prevented plotting for certain gene sets.  See the log for more details.");
+        }
+        
         Dataset my_gex_ds_for_heat_map = edb.getDataset();
 
-        final RankedList rlReal = edb.getRankedList();
         final GeneSet[] gsets = edb.getGeneSets();
+        if (gsets.length == 1) {
+            report.addWarning("FDR values were computed but only one gene set was detected in the output. Reported FDRs are not an accurate representation of the true false discovery rate when derived from a single gene set.");
+        }
+        
+        final RankedList rlReal = edb.getRankedList();
         final MetricWeightStruc mws = rlReal.getMetricWeightStruc();
         if (mws != null && metricName != null && mws.getMetricName() == null) {
             mws.setMetricName(metricName);
