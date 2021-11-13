@@ -14,6 +14,8 @@ import edu.mit.broad.genome.objects.esmatrix.db.*;
 import edu.mit.broad.genome.objects.strucs.DatasetTemplate;
 import edu.mit.broad.genome.objects.strucs.TemplateRandomizerType;
 import edu.mit.broad.vdb.chip.Chip;
+import xtools.api.param.BadParamException;
+
 import org.apache.log4j.Logger;
 
 import java.io.PrintStream;
@@ -67,6 +69,11 @@ public class KSTests {
 		boolean filterFeaturesWithMissingValues = 
 		        (t.isCategorical()) && new DatasetStatsCore().calc2ClassCategoricalMetricMarkerScores(ds, t, metric, mps, markerScores);
 
+		// For continuous phenotypes, do a min-sample check.  The equivalent is handled by the above for categorical phenotypes
+		if (t.isContinuous() && ds.getNumCol() < 3) { 
+            throw new BadParamException("Too few samples in the dataset to use this metric", 1006);
+		}
+		
         if (!filterFeaturesWithMissingValues) { markerScores = null; }
 		
 		try {

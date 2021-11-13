@@ -134,16 +134,20 @@ public abstract class AbstractGsea2Tool extends AbstractGseaTool {
             }
         }
 
-        if (fPermuteTypeParamType.permuteTemplate() && dt.getTemplate().isCategorical()) {
-            if (dt.getTemplate().getClass(0).getSize() < 7) {
-                fReport.addWarning("Phenotype permutation was performed but the number of samples in class A is < 7, phenotype: " + dt.getTemplateName());
-            }
-
-            if (dt.getTemplate().getClass(1).getSize() < 7) {
-                fReport.addWarning("Phenotype permutation was performed but the number of samples in class B is < 7, phenotype: " + dt.getTemplateName());
-            }
-
-            if (dt.getTemplate().getNumItems() < 14) {
+        if (fPermuteTypeParamType.permuteTemplate()) {
+            if (dt.getTemplate().isCategorical()) {
+                if (dt.getTemplate().getClass(0).getSize() < 7) {
+                    fReport.addWarning("Phenotype permutation was performed but the number of samples in class A is < 7, phenotype: " + dt.getTemplateName());
+                }
+                if (dt.getTemplate().getClass(1).getSize() < 7) {
+                    fReport.addWarning("Phenotype permutation was performed but the number of samples in class B is < 7, phenotype: " + dt.getTemplateName());
+                }
+                if (dt.getTemplate().getNumItems() < 14) {
+                    fReport.addWarning("With small datasets, there might not be enough random permutations of sample labels to generate a sufficient null distribution. " +
+                            "In such cases, gene_set randomization might be a better choice.");
+                }
+            } else if (dt.getTemplate().isContinuous() && dt.getDataset().getNumCol() < 7) { 
+                fReport.addWarning("Phenotype permutation was performed but the number of samples in dataset is < 7");
                 fReport.addWarning("With small datasets, there might not be enough random permutations of sample labels to generate a sufficient null distribution. " +
                         "In such cases, gene_set randomization might be a better choice.");
             }
