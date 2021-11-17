@@ -28,7 +28,7 @@ public abstract class AbstractGseaTool extends AbstractTool {
     protected final IntegerParam fNumPermParam = new IntegerParam("nperm", "Number of permutations", "The number of permutations", 1000, new int[]{0, 1, 10, 100, 1000}, true);
     protected final RandomSeedTypeParam fRndSeedTypeParam = new RandomSeedTypeParam(this);
 
-    protected final ModeReqdParam fCollapseModeParam = new ModeReqdParam("mode", "Collapsing mode for probe sets => 1 gene", "Collapsing mode for probe sets => 1 gene", "Max_probe", new String[]{"Max_probe", "Median_of_probes", "Mean_of_probes", "Sum_of_probes"});
+    protected final ModeReqdParam fCollapseModeParam; 
     protected final FeatureSpaceReqdParam fFeatureSpaceParam;
     protected final BooleanParam fIncludeOnlySymbols = new BooleanParam("include_only_symbols", "Omit features with no symbol match", "If there is no known gene symbol match for a probe set omit if from the collapsed dataset", true, false);
 
@@ -36,8 +36,9 @@ public abstract class AbstractGseaTool extends AbstractTool {
     protected final NormModeReqdParam fNormModeParam = new NormModeReqdParam();
     protected final GeneSetScoringTableReqdParam fGcohGenReqdParam = new GeneSetScoringTableReqdParam();
 
-    protected AbstractGseaTool(String defFeatureSpace) {
+    protected AbstractGseaTool(String defFeatureSpace, String defCollapseMode) {
         fFeatureSpaceParam = new FeatureSpaceReqdParam(defFeatureSpace);
+        fCollapseModeParam = new ModeReqdParam("mode", "Collapsing mode for probe sets => 1 gene", "Collapsing mode for probe sets => 1 gene", defCollapseMode, new String[]{"Max_probe", "Median_of_probes", "Mean_of_probes", "Sum_of_probes", "Abs_max_of_probes"});
     }
 
     public ToolCategory getCategory() {

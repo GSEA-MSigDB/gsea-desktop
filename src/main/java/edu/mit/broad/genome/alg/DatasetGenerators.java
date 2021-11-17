@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2020 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2021 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.genome.alg;
 
@@ -46,22 +46,15 @@ import edu.mit.broad.vdb.chip.NullSymbolModes;
  * 1) from artificial fdr
  * 2) by splitting in pre-existing datasets
  *
- * @author Aravind Subramanian
+ * @author Aravind Subramanian, David Eby
  */
 public class DatasetGenerators {
-
     private final Logger log = Logger.getLogger(DatasetGenerators.class);
 
-    /**
-     * Class constructor
-     */
-    public DatasetGenerators() {
-    }
+    public DatasetGenerators() { }
 
     public ColorDataset createColorDataset(final int numRanges, final RankedList rl, final ColorScheme cs) {
-
         final Range[] ranges = RangeFactory.createRanges(numRanges, 0, rl.getSize());
-
         final Vector v_full = rl.getScoresV(false);
 
         // Generate a color dataset
@@ -69,7 +62,6 @@ public class DatasetGenerators {
         for (int c = 0; c < ranges.length; c++) {
             m.setElement(0, c, (float) v_full.mean((int) ranges[c].getMin(), (int) ranges[c].getMax()));
         }
-
 
         return new ColorDatasetImpl(new DefaultDataset("foo", m), cs);
     }
@@ -82,14 +74,12 @@ public class DatasetGenerators {
      * @param chip
      * @param includeOnlySymbols  whether to omit features with no symbol match
      * @param collapse_gex_mode   collapsing mode for when multiple probes map to a single gene.  0 is max_probe,
-     *                            1 is median_of_probes, 2 is mean_of_probes, 3 is sum_of_probes, 4 is remap_only.
+     *                            1 is median_of_probes, 2 is mean_of_probes, 3 is sum_of_probes, 4 is abs_max_of_probes,  
+     *                            5 is remap_only (results in an error for multiple probes)
      * @return
      */
-    public CollapsedDataset collapse(final Dataset origDs, final Chip chip, final boolean includeOnlySymbols,
-                                     final int collapse_gex_mode, final String resultFileName) {
-        if (origDs == null) {
-            throw new IllegalArgumentException("Param ds cannot be null");
-        }
+    public CollapsedDataset collapse(final Dataset origDs, final Chip chip, final boolean includeOnlySymbols, final int collapse_gex_mode, final String resultFileName) {
+        if (origDs == null) { throw new IllegalArgumentException("Param ds cannot be null"); }
 
         CollapsedDataset cds = new CollapsedDataset();
         cds.orig = origDs;
@@ -118,23 +108,27 @@ public class DatasetGenerators {
                 // multiple probes mapped to this symbol
                 Vector[] vss = origDs.getRows(new GeneSet("foo", "foo", pss));
                 // TODO: This should really be done with an Enum rather than hard-coded index values
-                if (collapse_gex_mode == 0) {
-                    // use max of probe values
-                    m.setRow(row, XMath.maxVector(vss));
-                } else if (collapse_gex_mode == 1) {
-                    // use median of probe values
+                switch (collapse_gex_mode) {
+				case 0:
+					m.setRow(row, XMath.maxVector(vss));
+					break;
+				case 1:
                     m.setRow(row, XMath.medianVector(vss));
-                } else if (collapse_gex_mode == 2) {
-                    // use mean of probe values
+					break;
+				case 2:
                     m.setRow(row, XMath.meanVector(vss));
-                } else if (collapse_gex_mode == 3) {
-                    // use sum of probe values
+					break;
+				case 3:
                     m.setRow(row, XMath.sumVector(vss));
-                } else {
+					break;
+				case 4:
+                    m.setRow(row, XMath.abs_maxVector(vss));
+					break;
+				default:
                     // Remapping only.  We consider it an error if multiple probes map when in this mode
                     throw new BadParamException("Multiple rows mapped to the symbol ''" + collapseStruc.symbol
                             + "'.  This is not allowed in Remap_only mode.", 1020);
-                }
+				}
             }
             row++;
         }
@@ -149,13 +143,8 @@ public class DatasetGenerators {
         return cds;
     }
     
-	public CollapsedRL collapse(final RankedList origRL,
-	                            final Chip chip,
-	                            final boolean includeOnlySymbols,
-	                            final int collapse_gex_mode) {
-	    if (origRL == null) {
-	        throw new IllegalArgumentException("Param origRL cannot be null");
-	    }
+	public CollapsedRL collapse(final RankedList origRL, final Chip chip, final boolean includeOnlySymbols, final int collapse_gex_mode) {
+	    if (origRL == null) { throw new IllegalArgumentException("Param origRL cannot be null"); }
 	
 		CollapsedRL collapsedRL = new CollapsedRL();
 	    collapsedRL.orig = origRL;
@@ -177,19 +166,27 @@ public class DatasetGenerators {
 	        } else {
 	            // TODO: This should really be done with an Enum rather than hard-coded index values
 	            float[] fss = origRL.getScores(new GeneSet("foo", "foo", pss));
-	            if (collapse_gex_mode == 0) {
+	            switch (collapse_gex_mode) {
+				case 0:
 	                cl_scores.setElement(row, XMath.max(fss));
-	            } else if (collapse_gex_mode == 1) {
+	            	break;
+				case 1:
 	                cl_scores.setElement(row, XMath.median(fss));
-	            } else if (collapse_gex_mode == 2) {
+					break;
+				case 2:
 	                cl_scores.setElement(row, XMath.mean(fss));
-	            } else if (collapse_gex_mode == 3) {
+					break;
+				case 3:
 	                cl_scores.setElement(row, XMath.sum(fss));
-	            } else {
+					break;
+				case 4:
+	                cl_scores.setElement(row, XMath.abs_max(fss));
+					break;
+				default:
 	                // Remapping only.  We consider it an error if multiple probes map when in this mode
 	                throw new BadParamException("Multiple rows mapped to the symbol ''" + collapseStruc.symbol
 	                        + "'.  This is not allowed in Remap_only mode.", 1020);
-	            }
+				}
 	        }
 	        row++;
 	    }
@@ -204,13 +201,9 @@ public class DatasetGenerators {
 		return collapsedRL;
 	}
 
-	private void populateCollapseStrucMap(List<String> origRowNames, final Map<String, CollapseStruc> symbolCollapseStrucMap,
-    		final Chip chip, final boolean includeOnlySymbols,
-            final int collapse_gex_mode) {
-
-        if (chip == null) {
-            throw new IllegalArgumentException("Param chip cannot be null");
-        }
+	private void populateCollapseStrucMap(List<String> origRowNames, final Map<String, CollapseStruc> symbolCollapseStrucMap, final Chip chip, final boolean includeOnlySymbols,
+			final int collapse_gex_mode) {
+        if (chip == null) { throw new IllegalArgumentException("Param chip cannot be null"); }
 
         NullSymbolMode nm = (includeOnlySymbols) ? NullSymbolModes.OmitNulls : NullSymbolModes.ReplaceWithProbeId;
 
@@ -219,8 +212,7 @@ public class DatasetGenerators {
             if (StringUtils.isNotEmpty(symbol)) {
             	CollapseStruc struc = symbolCollapseStrucMap.get(symbol);
                 if (struc == null) {
-                    // Note: we only save the *first* title, so if they differ the subsequent
-                    // ones are ignored.
+                    // Note: we only save the *first* title, so if they differ the subsequent ones are ignored.
                     struc = new CollapseStruc(symbol, chip.getTitle(name, nm));
                     symbolCollapseStrucMap.put(symbol, struc);
                 }
@@ -230,13 +222,12 @@ public class DatasetGenerators {
     }
     
     private String getExtendedName(final int collapse_gex_mode) {
-		return (collapse_gex_mode <= 3) ? "_collapsed" : "_remapped";
+		return (collapse_gex_mode <= 4) ? "_collapsed" : "_remapped";
 	}
 
 	public static class CollapsedDataset {
         public Dataset symbolized;
         public Dataset orig;
-        
         final Map<String, CollapseStruc> symbolCollapseStrucMap = new HashMap<String, CollapseStruc>();
 
     	public StringDataframe makeEtiologySdf() {
@@ -255,7 +246,6 @@ public class DatasetGenerators {
     }
 
     public static class CollapseStruc {
-
         String symbol;
         String title;
         Set<String> probes;
@@ -266,38 +256,26 @@ public class DatasetGenerators {
             this.probes = new HashSet<String>();
         }
 
-        private void add(String ps) {
-            this.probes.add(ps);
-        }
+        private void add(String ps) { this.probes.add(ps); }
 
         public String[] getProbes() {
             return probes.toArray(new String[probes.size()]);
         }
 
-        public String toString() {
-            return symbol;
-        }
+        public String toString() { return symbol; }
 
-        public int hashCode() {
-            return symbol.hashCode();
-        }
+        public int hashCode() { return symbol.hashCode(); }
 
-        public boolean equals(Object obj) {
-            return symbol.equals(obj);
-        }
+        public boolean equals(Object obj) { return symbol.equals(obj); }
 
-        public String getTitle() {
-            return title;
-        }
+        public String getTitle() { return title; }
     }
 
     public DatasetTemplate extract(final Dataset fullDs, final Template template) {
         return extract(fullDs, template, true);
     }
 
-    public static synchronized DatasetTemplate extract(final Dataset fullDs,
-                                                       final Template origT,
-                                                       final boolean verbose) {
+    public static synchronized DatasetTemplate extract(final Dataset fullDs, final Template origT, final boolean verbose) {
         return TemplateFactory.extract(fullDs, origT, verbose);
     }
 
@@ -305,31 +283,20 @@ public class DatasetGenerators {
      * Create a new dataset with profile data only for specified probes
      */
     private Dataset extractRows(final String newName, final Dataset ds, final List<String> rowNames) {
-
-        if (newName == null) {
-            throw new IllegalArgumentException("Parameter newName cannot be null");
-        }
-
-        if (rowNames == null) {
-            throw new IllegalArgumentException("Parameter probenames cannot be null");
-        }
-
-        if (ds == null) {
-            throw new IllegalArgumentException("Parameter fullDs cannot be null");
-        }
+        if (newName == null) { throw new IllegalArgumentException("Parameter newName cannot be null"); }
+        if (rowNames == null) { throw new IllegalArgumentException("Parameter probenames cannot be null"); }
+        if (ds == null) { throw new IllegalArgumentException("Parameter fullDs cannot be null"); }
 
         DatasetBuilder builder = new DatasetBuilder(newName, ds.getColumnNames());
         int misscnt = 0;
         List<String> hitNames = new ArrayList<String>();
 
         for (int i = 0; i < rowNames.size(); i++) {
-            String probeName = (String) rowNames.get(i);
-
+            String probeName = rowNames.get(i);
             int index = ds.getRowIndex(probeName);
 
-            if (index == -1) {
-                misscnt++;
-            } else {
+            if (index == -1) { misscnt++; }
+            else {
                 hitNames.add(probeName);
                 builder.addRow(index, ds);
             }
@@ -344,40 +311,24 @@ public class DatasetGenerators {
     }
 
     public Dataset extractRows(final Dataset fullDs, final GeneSet gset) {
-        if (gset == null) {
-            throw new IllegalArgumentException("Parameter gset cannot be null");
-        }
-
-        if (fullDs == null) {
-            throw new IllegalArgumentException("Parameter fullDs cannot be null");
-        }
+        if (gset == null) { throw new IllegalArgumentException("Parameter gset cannot be null"); }
+        if (fullDs == null) { throw new IllegalArgumentException("Parameter fullDs cannot be null"); }
 
         String name = NamingConventions.generateName(fullDs, gset, true);
         return extractRows(name, fullDs, gset.getMembers());
     }
 
     public Dataset extractRows(final Dataset ds, final List<String> rowNames) {
-        if (rowNames == null) {
-            throw new IllegalArgumentException("Parameter names cannot be null");
-        }
-
-        if (ds == null) {
-            throw new IllegalArgumentException("Parameter fullDs cannot be null");
-        }
+        if (rowNames == null) { throw new IllegalArgumentException("Parameter names cannot be null"); }
+        if (ds == null) { throw new IllegalArgumentException("Parameter fullDs cannot be null"); }
 
         String name = ds.getName() + "_nrows" + rowNames.size();
         return extractRows(name, ds, rowNames);
     }
 
     public Dataset extractRowsSorted(final ScoredDataset fullSds, final GeneSet gset) {
-
-        if (gset == null) {
-            throw new IllegalArgumentException("Parameter fset cannot be null");
-        }
-
-        if (fullSds == null) {
-            throw new IllegalArgumentException("Parameter fullSds cannot be null");
-        }
+        if (gset == null) { throw new IllegalArgumentException("Parameter fset cannot be null"); }
+        if (fullSds == null) { throw new IllegalArgumentException("Parameter fullSds cannot be null"); }
 
         // the trick is to order the gene set by the scores in the sds
         // then the usual extract method picks up rows in the same order as the fset
@@ -388,7 +339,7 @@ public class DatasetGenerators {
     }
 
 	private static StringDataframe makeEtiologySdf(Map<String, CollapseStruc> symbolCollapseStrucMap, List<String> names) {
-		final String[] colNames = new String[]{"# MATCHING PROBE SETS", "MATCHING PROBE SET(S)"};
+		final String[] colNames = new String[]{ "# MATCHING PROBE SETS", "MATCHING PROBE SET(S)" };
         final String[] rowNames = new String[names.size()];
         final StringMatrix sm = new StringMatrix(rowNames.length, colNames.length);
         int r = 0;

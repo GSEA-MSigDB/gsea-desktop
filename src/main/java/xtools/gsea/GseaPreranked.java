@@ -47,17 +47,17 @@ public class GseaPreranked extends AbstractGseaTool {
             "Optional alternate delimiter character for gene set names instead of comma", null, false, new char[] { ';' }, Param.ADVANCED);
 
     public GseaPreranked(final Properties properties) {
-        super("Remap_Only");
+        super("Remap_Only", "Max_probe");
         super.init(properties, "");
     }
 
     public GseaPreranked(final Properties properties, String paramFilePath) {
-        super("Remap_Only");
+        super("Remap_Only", "Max_probe");
         super.init(properties, paramFilePath);
     }
 
     public GseaPreranked(final String[] args) {
-        super("Remap_Only");
+        super("Remap_Only", "Max_probe");
         super.init(args);
     }
 
@@ -67,7 +67,7 @@ public class GseaPreranked extends AbstractGseaTool {
      * @param name
      */
     public GseaPreranked() {
-        super("Remap_Only");
+        super("Remap_Only", "Abs_max_of_probes");
         declareParams();
     }
     
@@ -170,7 +170,7 @@ public class GseaPreranked extends AbstractGseaTool {
             }
             final Chip chip = fChipParam.getChip();
             // Remap_only is actually implemented as a Collapse Mode beneath everything else.
-            int collapseModeIndex = fFeatureSpaceParam.isRemap() ? 4 : fCollapseModeParam.getStringIndexChoosen();
+            int collapseModeIndex = fFeatureSpaceParam.isRemap() ? 5 : fCollapseModeParam.getStringIndexChoosen();
             DatasetGenerators.CollapsedRL collapsedRL = new DatasetGenerators().collapse(origRL, chip, fIncludeOnlySymbols.isTrue(), collapseModeIndex);
 			RankedList collapsed = collapsedRL.symbolized;
             log.info("Collapsing dataset was done. Original: " + origRL.getQuickInfo() + " collapsed: " + collapsed.getQuickInfo());

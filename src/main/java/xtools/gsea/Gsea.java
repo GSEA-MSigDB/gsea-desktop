@@ -65,9 +65,7 @@ public class Gsea extends AbstractGsea2Tool {
         declareParams();
     }
     
-    public String getName() {
-        return "GSEA";
-    }
+    public String getName() { return "GSEA"; }
 
     protected CollapsedDetails.Data getDataset(final Dataset origDs) throws Exception {
         CollapsedDetails.Data cd = new CollapsedDetails.Data();
@@ -84,7 +82,7 @@ public class Gsea extends AbstractGsea2Tool {
             final Chip chip = fChipParam.getChip();
             // Remap_only is actually implemented as a Collapse Mode beneath everything else.
             // Also note: we do not allow result file renaming when collapsing via the GSEA tool.
-            int collapseModeIndex = fFeatureSpaceParam.isRemap() ? 4 : fCollapseModeParam.getStringIndexChoosen();
+            int collapseModeIndex = fFeatureSpaceParam.isRemap() ? 5 : fCollapseModeParam.getStringIndexChoosen();
             DatasetGenerators.CollapsedDataset cds = new DatasetGenerators().collapse(origDs, chip,
                     fIncludeOnlySymbols.isTrue(), collapseModeIndex, null);
 
@@ -181,9 +179,7 @@ public class Gsea extends AbstractGsea2Tool {
         return new Param[]{fShowDetailsForTopXSetsParam, fMakeZippedReportParam, fMakeGeneSetReportsParam, fCreateSvgsParam, fCreateGctsParam, fAltDelimParam};
     }
 
-    public String getDesc() {
-        return "Set parameters and run enrichment tests";
-    }
+    public String getDesc() { return "Set parameters and run enrichment tests"; }
 
     public static void main(String[] args) {
         Gsea tool = new Gsea(args);

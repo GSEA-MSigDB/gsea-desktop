@@ -340,6 +340,31 @@ public class XMath {
         return new Vector(means);
     }
 
+    public static Vector abs_maxVector(final Vector[] vss) {
+        enforceEqualSize(vss);
+        int size = vss[0].getSize();
+        float[] maxs = new float[size];
+
+        for (int i = 0; i < size; i++) {
+            int nonMissingSize = vss.length;
+            float max = Float.NEGATIVE_INFINITY;
+            float abs_max = Float.NEGATIVE_INFINITY;
+            for (int c = 0; c < vss.length; c++) {
+                float value = vss[c].getElement(i);
+                float absValue = Math.abs(value);
+                if (Float.isNaN(value)) { nonMissingSize--; }
+                else {
+                	if (abs_max < absValue) {
+                		max = value;
+                		abs_max = absValue;
+                    }
+                }
+            }
+            maxs[i] = (nonMissingSize == 0) ? Float.NaN : max;
+        }
+        return new Vector(maxs);
+    }
+
     public static Vector maxVector(final Vector[] vss) {
         enforceEqualSize(vss);
         int size = vss[0].getSize();
@@ -374,6 +399,28 @@ public class XMath {
             sums[i] = (nonMissingSize == 0) ? Float.NaN : runningSum;
         }
         return new Vector(sums);
+    }
+
+    public static float abs_max(final float[] values) {
+        if (values.length == 0) {
+            klog.warn("FIX ME Zero length array");
+            throw new IllegalArgumentException("Zero length array not allowed");
+        }
+    
+        int nonMissingSize = values.length;
+        int maxIndex = 0;
+        float max = Float.NEGATIVE_INFINITY;
+        for (int i = 0; i < values.length; i++) {
+            if (Float.isNaN(values[i])) { nonMissingSize--; }
+            else {
+            	float absVal = Math.abs(values[i]);
+            	if (max < absVal) { 
+                	max = absVal;
+                	maxIndex = i;
+                }
+            }
+        }
+        return (nonMissingSize == 0) ? Float.NaN : values[maxIndex];
     }
 
     public static float max(final float[] values) {

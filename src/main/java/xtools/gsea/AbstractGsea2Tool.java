@@ -57,7 +57,7 @@ public abstract class AbstractGsea2Tool extends AbstractGseaTool {
                     TemplateRandomizerType.EQUALIZE_AND_BALANCE}, true);
 
     protected AbstractGsea2Tool(String defCollapseMode) {
-        super(defCollapseMode);
+        super(defCollapseMode, "Max_probe");
     }
 
     protected void doAdditionalParams() {
