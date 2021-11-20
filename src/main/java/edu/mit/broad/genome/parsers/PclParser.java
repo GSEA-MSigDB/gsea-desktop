@@ -94,6 +94,7 @@ public class PclParser extends AbstractParser {
             List<String> rowDescs = new ArrayList<String>(nfloatlines);
             List<float[]> data = new ArrayList<float[]>(nfloatlines);
             int skippedMissingRows = 0, partialMissingRows = 0;
+            boolean foundInfiniteValues = false;
     
             int r = 0;
             currLine = nextLineTrimless(bin); // first line of float data @note trimless as may be missing fields
@@ -131,7 +132,8 @@ public class PclParser extends AbstractParser {
                 } else {
                     skippedMissingRows++;
                 }
-                
+                foundInfiniteValues |= checkForInfiniteValues(dataRow, r, rowName);
+
                 r++;
                 currLine = nextLineTrimless(bin);
             }
@@ -153,6 +155,11 @@ public class PclParser extends AbstractParser {
     
             Dataset ds = new DefaultDataset(name, matrix, rowNames, colNames, new Annot(fann, sann));
             ds.addComment(fComment.toString());
+            if (foundInfiniteValues) {
+                String warning = "Infinite values detected in this dataset. This may cause unexpected results in the calculations or failures in plotting.";
+                log.warn(warning);
+                ds.addWarning(warning + "  See the log for more details.");
+            }
             if (partialMissingRows > 0) {
                 String warning = "There were " + partialMissingRows + " row(s) in total with partially missing data in this dataset.";
                 log.warn(warning);

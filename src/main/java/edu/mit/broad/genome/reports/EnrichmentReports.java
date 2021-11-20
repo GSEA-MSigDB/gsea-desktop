@@ -1032,7 +1032,7 @@ public class EnrichmentReports {
 
         return new XChartImpl("gset_rnd_es_dist", "Gene set null distribution of ES for <b>" + gsetName + "</b>", chart);
     }
-
+    
     // @note an optimization: markers made once as its persistent across gene sets for the same ranked list
     private static EnrichmentCharts _createComboChart(final String gsetName, final Vector enrichmentScoreProfile, final Vector esProfile_full_opt,
     		final Vector hitIndices, final RankedList rl, final String classAName_opt, final String classBName_opt, final IntervalMarker[] markers) {
@@ -1052,7 +1052,7 @@ public class EnrichmentReports {
         XChart chart1 = createHitProfileChart(hitIndices, rl);
         XChart chart2 = _createHitProfileChart(hitIndices, false, markers);
         XChart chart3 = RankedListCharts.createRankedListChart(rl, classAName_opt, classBName_opt, enrichmentScoreProfile.maxDevFrom0Index());
-
+        
         // Lots of tweaks to the plots to more closely match our legacy settings; these changed with JFreeChart 1.5.0
         XYPlot plot = chart0.getFreeChart().getXYPlot();
         plot.setAxisOffset(new RectangleInsets(-1,0,0,0));

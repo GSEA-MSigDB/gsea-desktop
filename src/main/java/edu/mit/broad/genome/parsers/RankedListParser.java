@@ -53,6 +53,7 @@ public class RankedListParser extends AbstractParser {
             // TODO: remove trove
             TFloatArrayList floats = new TFloatArrayList();
             int skippedMissingRows = 0;
+            boolean foundInfiniteValues = false;
 
             int row = 0;
             String currLine = nextLine(bin);
@@ -72,6 +73,10 @@ public class RankedListParser extends AbstractParser {
                     if (! Float.isNaN(value)) {
                         names.add(name);
                         floats.add(value);
+                        if (Float.isInfinite(value)) {
+                        	foundInfiniteValues = true;
+                            log.warn("Infinite values found in row " + (row+1) + " of the data matrix with Name '" + name + "'.");
+                        }
                     } else {
                         skippedMissingRows++;
                         log.warn("Missing value found in row " + (row+1) + " of the data matrix with Name '" + name + "'.");
@@ -89,6 +94,11 @@ public class RankedListParser extends AbstractParser {
     
             // changed march 2006 for the sorting
             RankedList rl = RankedListGenerators.createBySorting(objname, names.toArray(new String[names.size()]), floats.toNativeArray(), SortMode.REAL, Order.DESCENDING);
+            if (foundInfiniteValues) {
+                String warning = "Infinite values detected in this RNK file. This may cause unexpected results in the calculations or failures in plotting.";
+                log.warn(warning);
+                rl.addWarning(warning + "  See the log for more details.");
+            }
             if (skippedMissingRows > 0) {
                 String warning = "There were " + skippedMissingRows + " row(s) in total of missing data in this RNK file.  These will be ignored.";
                 log.warn(warning);

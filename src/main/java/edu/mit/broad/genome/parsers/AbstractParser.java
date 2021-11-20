@@ -281,6 +281,7 @@ public abstract class AbstractParser implements Parser {
         List<String> rowDescs = new ArrayList<String>(lineCount);
         List<float[]> data = new ArrayList<float[]>(lineCount);
         int skippedMissingRows = 0, partialMissingRows = 0;
+        boolean foundInfiniteValues = false;
 
         int startPos = (hasDesc) ? 2 : 1;
         int expFields = colNames.size() + startPos;
@@ -304,6 +305,7 @@ public abstract class AbstractParser implements Parser {
             } else {
                 skippedMissingRows++;
             }
+            foundInfiniteValues |= checkForInfiniteValues(dataRow, i, rowname);
         }
 
         if (data.isEmpty()) { throw new ParserException("Data was missing in all rows!"); }
@@ -319,6 +321,11 @@ public abstract class AbstractParser implements Parser {
 
         final Dataset ds = new DefaultDataset(objName, matrix, rowNames, colNames, new Annot(ann, sann));
         ds.addComment(fComment.toString());
+        if (foundInfiniteValues) {
+            String warning = "Infinite values detected in this dataset. This may cause unexpected results in the calculations or failures in plotting.";
+            log.warn(warning);
+            ds.addWarning(warning + "  See the log for more details.");
+        }
         if (partialMissingRows > 0) {
             String warning = "There were " + partialMissingRows + " row(s) in total with partially missing data in this dataset.";
             log.warn(warning);
@@ -332,12 +339,21 @@ public abstract class AbstractParser implements Parser {
         doneImport();
         return unmodlist(new PersistentObject[]{ds});
     }
+    
+    protected boolean checkForInfiniteValues(float[] dataRow, int row, String rowname) {
+        for (int i = 0; i < dataRow.length; i++) {
+        	if (Float.isInfinite(dataRow[i])) {
+                log.warn("Infinite values found in row " + (row+1) + " of the data matrix with Name '" + rowname + "'.");
+                return true;
+        	}
+        }
+    	return false;
+    }
 
     protected int countMissingValues(float[] dataRow, int row, String rowname) {
         int missingCount = 0;
         for (int i = 0; i < dataRow.length; i++) {
-            float value = dataRow[i];
-            if (Float.isNaN(value)) { missingCount++; }
+        	if (Float.isNaN(dataRow[i])) { missingCount++; }
         }
         if (missingCount == dataRow.length) {
             log.warn("All values missing in row " + (row+1) + " of the data matrix with Name '" + rowname + "'.  Row will be ignored.");

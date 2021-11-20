@@ -41,9 +41,7 @@ public abstract class AbstractGseaTool extends AbstractTool {
         fCollapseModeParam = new ModeReqdParam("mode", "Collapsing mode for probe sets => 1 gene", "Collapsing mode for probe sets => 1 gene", defCollapseMode, new String[]{"Max_probe", "Median_of_probes", "Mean_of_probes", "Sum_of_probes", "Abs_max_of_probes"});
     }
 
-    public ToolCategory getCategory() {
-        return ToolCategory.GSEA;
-    }
+    public ToolCategory getCategory() { return ToolCategory.GSEA; }
 
     protected abstract Param[] getAdditionalParams();
 
@@ -79,57 +77,82 @@ public abstract class AbstractGseaTool extends AbstractTool {
 
     protected Dataset uniquize(final Dataset ds) {
         final GeneSet gset = ds.getRowNamesGeneSet();
-        if (gset.getNumMembers() == ds.getNumRow()) {
+        final int numRow = ds.getNumRow();
+		if (gset.getNumMembers() == numRow) {
             return ds;
         } else {
             StringBuilder buf = new StringBuilder();
             buf.append("There were duplicate row identifiers in the specified dataset. One id was arbitarilly choosen. Details are below");
-            buf.append("\nGenerally, this is OK, but if you want to avoid this automagic, edit your dataset so that all row ids are unique\n");
+            buf.append("\n<br>Generally this is OK but if you want to avoid this, edit your dataset so that all row ids are unique\n<br>");
             buf.append('\n');
-            buf.append("# of row ids in original dataset: ").append(ds.getNumRow()).append('\n');
-            buf.append("# of row UNIQUE ids in original dataset: ").append(gset.getNumMembers()).append('\n');
-            buf.append("# The duplicates were\n");
+            buf.append("<br># of row ids in original dataset: ").append(numRow).append('\n');
+            buf.append("<br># of row UNIQUE ids in original dataset: ").append(gset.getNumMembers()).append('\n');
+            buf.append("<br>The duplicates were\n<br><pre>");
 
             Set<String> all = new HashSet<>();
-            for (int i = 0; i < ds.getNumRow(); i++) {
+            Set<String> dup = new HashSet<>();
+            int perLine = 0;
+            for (int i = 0; i < numRow; i++) {
                 String member = ds.getRowName(i);
                 if (all.contains(member)) {
-                    buf.append(member).append('\n');
+            		// Only show each dup once
+                	if (!dup.contains(member)) {
+                		buf.append(member).append('\t');
+                		// Allow 5 per line
+                		if (perLine++ > 5) {
+                			buf.append('\n');
+                			perLine = 0;
+                		}
+                		dup.add(member);
+                	}
+                } else {
+                    all.add(member);
                 }
-
-                all.add(member);
             }
 
-            fReport.addComment(buf.toString());
+            buf.append("</pre>");
+            fReport.addWarning(buf.toString());
             return new DatasetGenerators().extractRows(ds, gset);
         }
     }
 
     protected RankedList uniquize(final RankedList rl) {
         final GeneSet gset = new GeneSet(rl.getName(), rl.getName(), rl.getRankedNames(), true);
-        if (gset.getNumMembers() == rl.getSize()) {
+        final int size = rl.getSize();
+		if (gset.getNumMembers() == size) {
             return rl;
         } else {
             StringBuilder buf = new StringBuilder();
             buf.append("There were duplicate row identifiers in the specified ranked list. One id was arbitarilly choosen. Details are below. ");
-            buf.append("\nGenerally, this is OK, but if you want to avoid this automagic, edit your ranked list so that all row ids are unique\n");
+            buf.append("\n<br>Generally this is OK but if you want to avoid this, edit your ranked list so that all row ids are unique\n<br>");
             buf.append('\n');
-            buf.append("# of row ids in original dataset: ").append(rl.getSize()).append('\n');
-            buf.append("# of row UNIQUE ids in original dataset: ").append(gset.getNumMembers()).append('\n');
-            buf.append("# The duplicates were\n<br><pre>");
+            buf.append("<br># of row ids in original dataset: ").append(size).append('\n');
+            buf.append("<br># of row UNIQUE ids in original dataset: ").append(gset.getNumMembers()).append('\n');
+            buf.append("<br>The duplicates were\n<br><pre>");
 
             Set<String> all = new HashSet<>();
-            for (int i = 0; i < rl.getSize(); i++) {
+            Set<String> dup = new HashSet<>();
+            int perLine = 0;
+            for (int i = 0; i < size; i++) {
                 String member = rl.getRankName(i);
                 if (all.contains(member)) {
-                    buf.append(member).append('\n');
+            		// Only show each dup once
+                	if (!dup.contains(member)) {
+                		buf.append(member).append('\t');
+                		// Allow 5 per line
+                		if (perLine++ > 5) {
+                			buf.append('\n');
+                			perLine = 0;
+                		}
+                		dup.add(member);
+                	}
+                } else {
+                    all.add(member);
                 }
-
-                all.add(member);
             }
 
             buf.append("</pre>");
-            fReport.addComment(buf.toString());
+            fReport.addWarning(buf.toString());
             return rl.extractRanked(gset);
         }
     }
