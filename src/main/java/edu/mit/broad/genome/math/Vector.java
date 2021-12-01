@@ -318,6 +318,18 @@ public class Vector {
         return fNaNless;
     }
 
+    public Vector toVectorInfinityAdjusted() {
+        int size = getSize();
+        float[] infAdjArr = new float[size];
+        for (int i = 0; i < size; i++) {
+            infAdjArr[i] = XMath.infintyAdjustedScore(elementData[i]);
+        }
+
+        Vector infAdj = new Vector(infAdjArr);
+        infAdj.setImmutable();
+        return infAdj;
+    }
+
     public Vector synchVectorNaNless(Vector other) {
         if (elementCount != other.elementCount) { 
             throw new IllegalArgumentException("Other vector must be equal length to synch NaNless values");

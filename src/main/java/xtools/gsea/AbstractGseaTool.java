@@ -81,6 +81,12 @@ public abstract class AbstractGseaTool extends AbstractTool {
 		if (gset.getNumMembers() == numRow) {
             return ds;
         } else {
+            // Preserve any warnings attached to the DS
+            if (!ds.getWarnings().isEmpty()) {
+                for (String warning : ds.getWarnings()) {
+                    fReport.addWarning(warning);
+                }
+            }
             StringBuilder buf = new StringBuilder();
             buf.append("There were duplicate row identifiers in the specified dataset. One id was arbitarilly choosen. Details are below");
             buf.append("\n<br>Generally this is OK but if you want to avoid this, edit your dataset so that all row ids are unique\n<br>");
@@ -122,6 +128,12 @@ public abstract class AbstractGseaTool extends AbstractTool {
 		if (gset.getNumMembers() == size) {
             return rl;
         } else {
+            // Preserve any warnings attached to the RL
+            if (!rl.getWarnings().isEmpty()) {
+                for (String warning : rl.getWarnings()) {
+                    fReport.addWarning(warning);
+                }
+            }
             StringBuilder buf = new StringBuilder();
             buf.append("There were duplicate row identifiers in the specified ranked list. One id was arbitarilly choosen. Details are below. ");
             buf.append("\n<br>Generally this is OK but if you want to avoid this, edit your ranked list so that all row ids are unique\n<br>");

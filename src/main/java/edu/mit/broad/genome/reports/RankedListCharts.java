@@ -58,7 +58,6 @@ public class RankedListCharts {
             midLine.setLabel(label);
             midLine.setLabelBackgroundColor(Color.WHITE);
             midLine.setLabelAnchor(RectangleAnchor.TOP_RIGHT);
-            //currentEnd.setLabelTextAnchor(TextAnchor.HALF_ASCENT_CENTER);
             plot.addDomainMarker(midLine);
         }
 
@@ -79,7 +78,6 @@ public class RankedListCharts {
             midLine.setLabel(label);
             midLine.setLabelBackgroundColor(Color.WHITE);
             midLine.setLabelAnchor(RectangleAnchor.CENTER);
-            //currentEnd.setLabelTextAnchor(TextAnchor.HALF_ASCENT_CENTER);
             plot.addDomainMarker(midLine);
         }
 
@@ -103,8 +101,8 @@ public class RankedListCharts {
         yAxis.setTickMarksVisible(false);
         yAxis.setTickLabelsVisible(true);
 
-
-        data = new XYDatasetProxy2(rl.getScoresV(false), "Ranking metric scores"); // dont show legend
+        Vector scores = rl.getScoresV(false).toVectorInfinityAdjusted();
+        data = new XYDatasetProxy2(scores, "Ranking metric scores"); // dont show legend
         rend = new StandardXYItemRenderer(StandardXYItemRenderer.DISCONTINUOUS_LINES);
         XYPlot plot = new XYPlot(data, xAxis, yAxis, rend);
 
@@ -112,12 +110,9 @@ public class RankedListCharts {
         plot.getRenderer().setSeriesPaint(0, Color.LIGHT_GRAY);
 
         if (classAName_opt != null || classBName_opt != null) {
-            Vector scores = rl.getScoresV(false);
-            float min = scores.min();
-            float max = scores.max();
-
             if (classAName_opt != null && classAName_opt.length() > 0) {
                 // represents an interval to be highlighted in some manner
+                float max = scores.max();
                 IntervalMarker target = new IntervalMarker(max, max); // @note max max so width = 0
                 target.setLabel("'" + classAName_opt + "' (positively correlated)");
                 target.setLabelFont(new Font("SansSerif", Font.PLAIN, 10));
@@ -132,11 +127,11 @@ public class RankedListCharts {
             }
 
             if (classBName_opt != null && classBName_opt.length() > 0) {
+                float min = scores.min();
                 IntervalMarker target = new IntervalMarker(min, min);
                 target.setLabel("'" + classBName_opt + "' (negatively correlated)");
                 target.setLabelFont(new Font("SansSerif", Font.PLAIN, 10));
                 target.setLabelAnchor(RectangleAnchor.BOTTOM);
-                //target.setLabelAnchor(RectangleAnchor.RIGHT);
                 target.setLabelTextAnchor(TextAnchor.CENTER_LEFT);
                 target.setLabelPaint(Color.BLUE);
                 target.setLabelBackgroundColor(Color.WHITE);

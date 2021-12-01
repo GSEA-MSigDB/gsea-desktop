@@ -266,6 +266,13 @@ public class KSTests {
             TwoClassMarkerStats markerScore = markerScores.get(feature);
             if (!markerScore.omit) { dels.add(new DoubleElement(ds.getRowIndex(feature), rlReal.getScore(feature))); }
         }
-        return new ScoredDatasetImpl(new AddressedVector(dels), ds);
+        ScoredDatasetImpl filtered = new ScoredDatasetImpl(new AddressedVector(dels), ds);
+        // Preserve any warnings attached to the RL
+        if (!rlReal.getWarnings().isEmpty()) {
+            for (String warning : rlReal.getWarnings()) {
+                filtered.addWarning(warning);
+            }
+        }
+        return filtered;
     }
 }

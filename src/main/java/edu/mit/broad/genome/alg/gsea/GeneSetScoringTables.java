@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2021 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.genome.alg.gsea;
 
@@ -9,10 +9,9 @@ import edu.mit.broad.genome.objects.RankedList;
 import org.apache.log4j.Logger;
 
 /**
- * @author Aravind Subramanian
+ * @author Aravind Subramanian, David Eby
  */
 public class GeneSetScoringTables {
-
     private static final Logger klog = Logger.getLogger(GeneSetScoringTables.class);
 
     public static GeneSetScoringTable[] createAllScoringTables() {
@@ -25,17 +24,10 @@ public class GeneSetScoringTables {
     }
 
     public static GeneSetScoringTable lookupGeneSetScoringTable(Object obj) {
-
-        if (obj == null) {
-            throw new NullPointerException("Cannot lookup for null object");
-        }
-
-        if (obj instanceof GeneSetScoringTable) {
-            return (GeneSetScoringTable) obj;
-        }
+        if (obj == null) { throw new NullPointerException("Cannot lookup for null object"); }
+        if (obj instanceof GeneSetScoringTable) { return (GeneSetScoringTable) obj; }
 
         GeneSetScoringTable[] all = createAllScoringTables();
-
         for (int i = 0; i < all.length; i++) {
             if (all[i].getName().equalsIgnoreCase(obj.toString())) {
                 return all[i];
@@ -45,19 +37,12 @@ public class GeneSetScoringTables {
         throw new RuntimeException("Cannot lookup GeneSetScoringTable for: " + obj);
     }
 
-
     static abstract class AbstractScoringTable implements GeneSetScoringTable {
+        public AbstractScoringTable() { }
 
-
-        public AbstractScoringTable() {
-        }
-
-        public int hashCode() {
-            return getName().hashCode();
-        }
+        public int hashCode() { return getName().hashCode(); }
 
         public boolean equals(Object obj) {
-
             if (obj instanceof GeneSetScoringTable) {
                 return getName().equalsIgnoreCase(((GeneSetScoringTable) obj).getName());
             }
@@ -65,22 +50,18 @@ public class GeneSetScoringTables {
             return false;
         }
 
-        public String toString() {
-            return getName();
-        }
+        public String toString() { return getName(); }
     }
 
     // classic classic scheme (classic)
     public static class Classic extends AbstractScoringTable {
-
         private static final String NAME = "classic";
         // compute penalties
         private float hitpoints;
         private float misspoints;
         private RankedList rankedList;
 
-        public Classic() {
-        }
+        public Classic() { }
 
         // total score of hits G (1 per hit)
         // total score of misses -G so that total total = 0
@@ -93,30 +74,20 @@ public class GeneSetScoringTables {
             // compute penalties
             this.hitpoints = 1.0f / (float) ntrue;    // arbitarily
             this.misspoints = 1.0f / ((float) totSize - (float) ntrue);
-
         }
 
         public GeneSetScoringTable createTable(GeneSet gset, RankedList rl, RankedList realRankedList) {
             return new Classic(gset, rl);
         }
 
-        public String getName() {
-            return NAME;
-        }
+        public String getName() { return NAME; }
 
-        public RankedList getRankedList() {
-            return rankedList;
-        }
+        public RankedList getRankedList() { return rankedList; }
 
-        public float getHitScore(final String name) {
-            return hitpoints;
-        }
+        public float getHitScore(final String name) { return hitpoints; }
 
         // misses are not weighted
-        public float getMissScore(String name) {
-            return misspoints;
-        }
-
+        public float getMissScore(String name) { return misspoints; }
     }
 
     // Needed as cdna give some nans for the class metric
@@ -128,30 +99,23 @@ public class GeneSetScoringTables {
         }
     }
 
-
     public static class Weighted extends AbstractScoringTable {
-
         private static final String NAME = "weighted";
 
         private float totalWeight;
         private float nhExpected;
-
         private float miss_score;
 
         private GeneSet gset;
         private RankedList rankedList;
 
-        public Weighted() {
-        }
+        public Weighted() { }
 
         public Weighted(final GeneSet gset, final RankedList rl) {
-
             this.gset = gset;
             this.nhExpected = gset.getNumMembers();
 
-            if (nhExpected == 0) {
-                throw new IllegalArgumentException("Number of members in gene set cannot be 0: " + gset.getName());
-            }
+            if (nhExpected == 0) { throw new IllegalArgumentException("Number of members in gene set cannot be 0: " + gset.getName()); }
 
             this.rankedList = rl;
             for (int i = 0; i < this.gset.getNumMembers(); i++) {
@@ -163,60 +127,44 @@ public class GeneSetScoringTables {
             this.miss_score = 1.0f / (nTotal - nhExpected);
         }
 
-        public String getName() {
-            return NAME;
-        }
+        public String getName() { return NAME; }
 
-        public RankedList getRankedList() {
-            return rankedList;
-        }
+        public RankedList getRankedList() { return rankedList; }
 
         public GeneSetScoringTable createTable(final GeneSet gset, final RankedList rl, final RankedList realRankedList) {
             return new Weighted(gset, rl);
         }
 
         public float getHitScore(final String name) {
-
             float score = rankedList.getScore(name);
-
             score = _abs(score);
             return score / totalWeight;
         }
 
         // misses are not weighted
-        public float getMissScore(String name) {
-            return miss_score;
-        }
-    } // End class Weighted
-
+        public float getMissScore(String name) { return miss_score; }
+    }
 
     public static class WeightedSquared extends AbstractScoringTable {
-
         private static final String NAME = "weighted_p2";
 
         private float totalWeight_sq;
         private float nhExpected;
-
         private float miss_score;
-
         private GeneSet gset;
         private RankedList rankedList;
 
-        public WeightedSquared() {
-        }
+        public WeightedSquared() { }
 
         public WeightedSquared(final GeneSet gset, final RankedList rl) {
-
             this.gset = gset;
             this.nhExpected = gset.getNumMembers();
 
-            if (nhExpected == 0) {
-                throw new IllegalArgumentException("Number of members in gene set cannot be 0: " + gset.getName());
-            }
+            if (nhExpected == 0) { throw new IllegalArgumentException("Number of members in gene set cannot be 0: " + gset.getName()); }
 
             this.rankedList = rl;
             for (int i = 0; i < this.gset.getNumMembers(); i++) {
-                float score = this.rankedList.getScore(gset.getMember(i));
+                float score = XMath.infintyAdjustedScore(this.rankedList.getScore(gset.getMember(i)));
                 totalWeight_sq += score * score;
             }
 
@@ -224,58 +172,42 @@ public class GeneSetScoringTables {
             this.miss_score = 1.0f / (nTotal - nhExpected);
         }
 
-        public String getName() {
-            return NAME;
-        }
+        public String getName() { return NAME; }
 
-        public RankedList getRankedList() {
-            return rankedList;
-        }
+        public RankedList getRankedList() { return rankedList; }
 
         public GeneSetScoringTable createTable(GeneSet gset, RankedList rl, RankedList realRankedList) {
             return new WeightedSquared(gset, rl);
         }
 
         public float getHitScore(String name) {
-            float score = rankedList.getScore(name);
+            float score = XMath.infintyAdjustedScore(rankedList.getScore(name));
             return (score * score) / totalWeight_sq;
         }
 
         // misses are not weighted
-        public float getMissScore(String name) {
-            return miss_score;
-        }
-    } // End class WeightedSquared
+        public float getMissScore(String name) { return miss_score; }
+    }
 
     public static class WeightedOnePointFive extends AbstractScoringTable {
-
         private static final String NAME = "weighted_p1.5";
 
         private float totalWeight_sq;
-
         private float nhExpected;
-
         private float miss_score;
-
         private GeneSet gset;
-
         private RankedList rankedList;
 
-        public WeightedOnePointFive() {
-        }
+        public WeightedOnePointFive() { }
 
         public WeightedOnePointFive(final GeneSet gset, final RankedList rl) {
-
             this.gset = gset;
             this.nhExpected = gset.getNumMembers();
-
-            if (nhExpected == 0) {
-                throw new IllegalArgumentException("Number of members in gene set cannot be 0: " + gset.getName());
-            }
+            if (nhExpected == 0) { throw new IllegalArgumentException("Number of members in gene set cannot be 0: " + gset.getName()); }
 
             this.rankedList = rl;
             for (int i = 0; i < this.gset.getNumMembers(); i++) {
-                float score = this.rankedList.getScore(gset.getMember(i));
+                float score = XMath.infintyAdjustedScore(this.rankedList.getScore(gset.getMember(i)));
                 totalWeight_sq += Math.pow(score, 1.5);
             }
 
@@ -283,13 +215,9 @@ public class GeneSetScoringTables {
             this.miss_score = 1.5f / (nTotal - nhExpected);
         }
 
-        public String getName() {
-            return NAME;
-        }
+        public String getName() { return NAME; }
 
-        public RankedList getRankedList() {
-            return rankedList;
-        }
+        public RankedList getRankedList() { return rankedList; }
 
         public GeneSetScoringTable createTable(GeneSet gset, RankedList rl, RankedList realRankedList) {
             return new WeightedOnePointFive(gset, rl);
@@ -297,15 +225,13 @@ public class GeneSetScoringTables {
 
         public float getHitScore(String name) {
             float score = rankedList.getScore(name);
-            float ss = (float) Math.pow(score, 0.5);
+            float ss = XMath.infintyAdjustedScore((float) Math.pow(score, 0.5));
             return ss / totalWeight_sq;
         }
 
         // misses are not weighted
-        public float getMissScore(String name) {
-            return miss_score;
-        }
-    } // End class WeightedHalf
+        public float getMissScore(String name) { return miss_score; }
+    }
 
     public static class WeightedDoubleSidedAs extends AbstractScoringTable {
 
@@ -636,6 +562,4 @@ public class GeneSetScoringTables {
             }
         }
     }
-
-
-} // End class GeneSetCohorts
+}
