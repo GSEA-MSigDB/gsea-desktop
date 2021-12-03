@@ -158,7 +158,7 @@ task createMacAppDist(type: Copy, dependsOn: createDist) {
     }
     with copySpec {
         from ("scripts/java11/GSEA_mac.app.command")
-        rename "GSEA_mac.app.command", "GSEA"
+        rename "GSEA_mac.app_launcher", "GSEA"
         into "GSEA_${version}.app/Contents/MacOS"
     }
     with copySpec {

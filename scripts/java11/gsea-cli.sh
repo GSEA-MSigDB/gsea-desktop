@@ -3,7 +3,7 @@
 #This script is intended for launch on *nix machines
 
 #-Xmx4g indicates 4 gb of memory, adjust number up or down as needed
-prefix=`dirname $(readlink $0 || echo $0)`
+prefix=`dirname $(readlink -f $0 || echo $0)`
 
 # Check whether or not to use the bundled JDK
 if [ -d "${prefix}/jdk-11" ]; then
