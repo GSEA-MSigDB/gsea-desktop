@@ -12,6 +12,7 @@ if [ -d "${prefix}/jdk-11" ]; then
     PATH=$JAVA_HOME/bin:$PATH
 else
     echo "Using system JDK."
+    java -version
 fi
 
 if [ -e "${prefix}/modules/disable-prefs.jar" ]; then

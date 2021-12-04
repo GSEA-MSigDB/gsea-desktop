@@ -13,6 +13,7 @@ if [ -d "${prefix}/jdk-11" ]; then
     PATH=$JAVA_HOME/bin:$PATH
 else
     echo "Bundled JDK not found.  Using system JDK."
+    java -version
 fi
 
 exec java -showversion --module-path="${prefix}/modules" -Xmx4g \
