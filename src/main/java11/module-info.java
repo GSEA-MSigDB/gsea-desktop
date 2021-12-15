@@ -102,7 +102,6 @@ module org.gsea_msigdb.gsea {
     requires jgoodies.uif.lite;
     requires jide.common;
     requires json.simple;
-    requires log4j;
     requires org.apache.logging.log4j;
     requires org.apache.logging.log4j.core;
     requires looks;
