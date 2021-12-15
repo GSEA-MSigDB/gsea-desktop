@@ -30,7 +30,7 @@ configurations {
 }
 
 dependencies {
-    jarsToShipUntouched fileTree(dir: 'modules', include: ['batik-codec-1.10.jar', 'log4j-core-2.11.0.jar'])
+    jarsToShipUntouched fileTree(dir: 'modules', include: ['batik-codec-1.10.jar', 'log4j-core-2.15.0.jar'])
     compile fileTree(dir: 'modules', include: '*.jar') + fileTree(dir: 'lib', include: '*.jar')
 }
 
@@ -170,7 +170,7 @@ task signJars(dependsOn: createDist) {
             ant.jar( update: true, file: "build/GSEA-dist/lib/batik-codec-1.10.jar") {
                 delegate.manifest { attribute(name: 'Permissions', value: 'all-permissions') }
             }
-            ant.jar( update: true, file: "build/GSEA-dist/lib/log4j-core-2.11.0.jar") {
+            ant.jar( update: true, file: "build/GSEA-dist/lib/log4j-core-2.15.0.jar") {
                 delegate.manifest { attribute(name: 'Permissions', value: 'all-permissions') }
             }
             ant.signjar( jar: 'build/GSEA-dist/lib/*.jar', keystore:"${keystoreFile.absolutePath}",

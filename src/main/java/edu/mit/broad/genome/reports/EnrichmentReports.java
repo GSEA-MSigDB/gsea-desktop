@@ -183,8 +183,8 @@ public class EnrichmentReports {
         boolean haveInfiniteOrNaN = false;
         for (int i = 0; i < results.length; i++) {
             EnrichmentScore score = results[i].getScore();
-            if (XMath.isInfiniteOrNaN(score.getES()) || XMath.isInfiniteOrNaN(score.getNES()) || XMath.isInfiniteOrNaN(score.getNP())
-                    || XMath.isInfiniteOrNaN(score.getFDR()) || XMath.isInfiniteOrNaN(score.getFWER())) {
+            if (!Float.isFinite(score.getES()) || !Float.isFinite(score.getNES()) || !Float.isFinite(score.getNP())
+                    || !Float.isFinite(score.getFDR()) || !Float.isFinite(score.getFWER())) {
                 haveInfiniteOrNaN = true;
                 klog.warn("Scoring of " + results[i].getGeneSetName()  + " produced infinite Or NaN value(s)");
             }

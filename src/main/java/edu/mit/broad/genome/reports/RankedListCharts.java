@@ -101,7 +101,7 @@ public class RankedListCharts {
         yAxis.setTickMarksVisible(false);
         yAxis.setTickLabelsVisible(true);
 
-        Vector scores = rl.getScoresV(false).toVectorInfinityAdjusted();
+        Vector scores = Vector.infinityAdjustRankedScoreVector(rl.getScoresV(false));
         data = new XYDatasetProxy2(scores, "Ranking metric scores"); // dont show legend
         rend = new StandardXYItemRenderer(StandardXYItemRenderer.DISCONTINUOUS_LINES);
         XYPlot plot = new XYPlot(data, xAxis, yAxis, rend);

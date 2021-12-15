@@ -26,7 +26,7 @@
       initial-heap-size="@HEAP_MIN@m" max-heap-size="@HEAP_MAX@m"/>
     <jar href="gsea-@VERSION@.jar" />
     <jar href="batik-codec-1.10.jar" download="eager"/>
-    <jar href="log4j-core-2.11.0.jar" download="eager"/>
+    <jar href="log4j-core-2.15.0.jar" download="eager"/>
     <property name="com.apple.macos.useScreenMenuBar" value="true"/>
     <property name="debug" value="false"/>
   </resources>

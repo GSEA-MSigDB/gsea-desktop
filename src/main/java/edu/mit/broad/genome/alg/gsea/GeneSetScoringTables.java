@@ -92,11 +92,7 @@ public class GeneSetScoringTables {
 
     // Needed as cdna give some nans for the class metric
     private static final float _abs(float score) {
-        if (Float.isNaN(score) || Float.isInfinite(score)) {
-            return 0.01f;
-        } else {
-            return Math.abs(score);
-        }
+        return (Float.isFinite(score)) ? Math.abs(score) : 0.01f;
     }
 
     public static class Weighted extends AbstractScoringTable {
@@ -164,8 +160,9 @@ public class GeneSetScoringTables {
 
             this.rankedList = rl;
             for (int i = 0; i < this.gset.getNumMembers(); i++) {
-                float score = XMath.infintyAdjustedScore(this.rankedList.getScore(gset.getMember(i)));
-                totalWeight_sq += score * score;
+                float score = this.rankedList.getScore(gset.getMember(i));
+                float score_pow = score * score;
+                totalWeight_sq += Float.isFinite(score_pow) ? score_pow : 0.000001f;
             }
 
             final float nTotal = rankedList.getSize();
@@ -181,8 +178,9 @@ public class GeneSetScoringTables {
         }
 
         public float getHitScore(String name) {
-            float score = XMath.infintyAdjustedScore(rankedList.getScore(name));
-            return (score * score) / totalWeight_sq;
+            float score = rankedList.getScore(name);
+            float hitScore = (score * score) / totalWeight_sq;
+            return Float.isFinite(hitScore) ? hitScore : 0.000001f;
         }
 
         // misses are not weighted
@@ -207,12 +205,13 @@ public class GeneSetScoringTables {
 
             this.rankedList = rl;
             for (int i = 0; i < this.gset.getNumMembers(); i++) {
-                float score = XMath.infintyAdjustedScore(this.rankedList.getScore(gset.getMember(i)));
-                totalWeight_sq += Math.pow(score, 1.5);
+                float score = this.rankedList.getScore(gset.getMember(i));
+                float score_pow = (float) Math.pow(score, 1.5);
+                totalWeight_sq += Float.isFinite(score_pow) ? score_pow : 0.000001f;
             }
 
             final float nTotal = rankedList.getSize();
-            this.miss_score = 1.5f / (nTotal - nhExpected);
+            this.miss_score = 1.0f / (nTotal - nhExpected);
         }
 
         public String getName() { return NAME; }
@@ -225,8 +224,9 @@ public class GeneSetScoringTables {
 
         public float getHitScore(String name) {
             float score = rankedList.getScore(name);
-            float ss = XMath.infintyAdjustedScore((float) Math.pow(score, 0.5));
-            return ss / totalWeight_sq;
+            float ss = (float) Math.pow(score, 1.5);
+            float hitScore = ss / totalWeight_sq;
+            return Float.isFinite(hitScore) ? hitScore : 0.000001f;
         }
 
         // misses are not weighted

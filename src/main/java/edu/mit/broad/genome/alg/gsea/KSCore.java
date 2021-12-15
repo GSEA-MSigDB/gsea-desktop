@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2021 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.genome.alg.gsea;
 
@@ -14,36 +14,43 @@ import gnu.trove.TFloatArrayList;
 /**
  * This is the core class that implements the Kolmogorov-Smirnov algorithm
  *
- * @author Aravind Subramanian
+ * @author Aravind Subramanian, David Eby
  */
 public class KSCore {
-
-    /**
-     * Class Constructor.
-     * Stateless
-     */
-    public KSCore() {
-    }
+    public KSCore() { }
 
     // The common (gsea) way
-    public EnrichmentScore[] calculateKSScore(final GeneSetCohort gcoh,
-                                              final boolean storeDeep) {
-
+    public EnrichmentScore[] calculateKSScore(final GeneSetCohort gcoh, final boolean storeDeep) {
         EnrichmentScoreCohort[] cohorts = calculateKSScore_all_modes(gcoh, storeDeep);
         EnrichmentScore[] ess = new EnrichmentScore[cohorts.length];
         for (int i = 0; i < ess.length; i++) {
             ess[i] = cohorts[i].es_maxdev_style;
         }
-
         return ess;
     }
 
     // Justin Guinneys implementation
-    private EnrichmentScoreCohort[] calculateKSScore_all_modes(final GeneSetCohort gcoh,
-                                                               final boolean storeDeep) {
-        if (gcoh == null) {
-            throw new IllegalArgumentException("Param gcoh cannot be null");
-        }
+    // David Eby's attempt at documentation:
+    // - The idea is to iterator over each gene in the ranked list and only process the gene sets where it is a
+    //   member.  The running score for that gene gets incremented by the hitPoints for that gene.  *However*
+    //   before doing that we also account for all the misses between this hit and the previous (earlier) hit
+    //   in the ranked list.
+    // - We do that by tracking the rank of the last hit in the genesetJumps array.  When the rank of the current
+    //   hit is not the consecutive rank higher than the rank of the last hit, then it means there were misses
+    //   (genes *not* in the gene set) in between.  We can then find the total miss penalty to apply to the running
+    //   score as (gap * missPoints).
+    //   Note that we also track the individual misses in detail in scoresAtEachPoint for "smoother plots".  The code
+    //   always does this, but DE suspects that it's not actually necessary for the RND RLs.  There's a comment to that
+    //   effect even though the code is always triggered (it survived from refactoring based on inlining of constants).
+    //   Further testing is necessary to prove this, however.
+    // - The exception is that for the *final* gene in the ranked list we process *all* gene sets whether or not it's a
+    //   member.  This is to catch up the running score of every gene set; for those where it isn't a member there will
+    //   be a tail of misses from the final hit to the end of the ranked list.
+    //   A possible alternative would be to process this last gene the same as all the others, but then to do a loop
+    //   over all of the Gene Sets afterward and do this catch-up at that point based on genesetJumps.  It's not clear
+    //   whether or not that simplifies anything, though.
+    private EnrichmentScoreCohort[] calculateKSScore_all_modes(final GeneSetCohort gcoh, final boolean storeDeep) {
+        if (gcoh == null) { throw new IllegalArgumentException("Param gcoh cannot be null"); }
 
         TFloatArrayList[] scoresAtEachHitIndex = null;
         final int numGeneSets = gcoh.getNumGeneSets();
@@ -69,7 +76,6 @@ public class KSCore {
         // always filled as needed by mann whitney (even if it isnt saved after here)
         final HitIndices[] hitIndices = new HitIndices[numGeneSets];
         for (int g = 0; g < numGeneSets; g++) {
-            //log.debug("gene set: " + gcoh.getGeneSet(g).getName() + " numTrue: " + gcoh.getNumTrue(g) + " numMembers: " + gcoh.getGeneSet(g).getNumMembers());
             hitIndices[g] = new HitIndices(gcoh.getNumTrue(g));
         }
 
@@ -105,7 +111,6 @@ public class KSCore {
         
         final int rlSize = rl.getSize();
         for (int r = 0; r < rlSize; r++) {
-
             final boolean isLastRun = r == (rlSize - 1);
 
             String rowName = rl.getRankName(r);
@@ -115,6 +120,7 @@ public class KSCore {
             int[] genesetIndices = null;
             if (isLastRun) {
                 // for the last run, we want to iterate over all genesets
+            	// DE note: this is to catch up all the misses at the end of those sets
                 genesetIndices = new int[numGeneSets];
                 for (int i = 0; i < genesetIndices.length; ++i) {
                     genesetIndices[i] = i;
@@ -133,15 +139,24 @@ public class KSCore {
                 int g = genesetIndices[i];
                 int gap = r - genesetJumps[g] - 1;
                 if (gap > 0) {
+                	// DE note: there is a formerly undocumented assumption here, that the missPoints *are constant*
+                	// for every missed gene in the gap.  In fact, all of the underlying scoring methods *do indeed*
+                	// respect this assumption so this is safe in the current code.
+                	// However, this would no longer work if the missPoints would be scaled by the score in some
+                	// future scoring method.
                     double missPoints = gcoh.getMissPoints(g, rowName);
 
                     // backfill - this typically only happens on 'real', not permutations
+                    // DE note: the above comment suggests that these values are not needed for the permutation RLs.
+                    // That makes sense and seems to be the case AFAICT, but we need more testing to prove it.  This
+                    // would make for a decent optimization if it holds.
                     double trun = runningScores[g];
                     for (int j = genesetJumps[g] + 1; j < r; j++) {
                         trun -= missPoints;
                         scoresAtEachPoint[g].setElement(j, trun);
                     }
 
+                    // DE note: Adjust the running score for all the misses at once via multiplication.
                     runningScores[g] -= gap * missPoints;
 
                     if (Math.abs(ess_maxdev[g]) < Math.abs(runningScores[g])) { // @note abs here
@@ -152,24 +167,18 @@ public class KSCore {
                 }
 
                 if (isLastRun && !gcoh.isMember(i, rowName)) {
+                	// DE note: catch up all the misses at the tail of any gene sets where this is not a member.
                     runningScores[g] -= gcoh.getMissPoints(g, rowName);
                 } else {
+                	// DE note: flag this rank as the highest one processed so far, then add the corresponding hit points to the running score.
                     genesetJumps[g] = r;
                     double sr = gcoh.getHitPoints(g, rowName);
-                    if (Double.isNaN(sr) || Double.isInfinite(sr)) { // does this if the total weight is also 0
-                        sr = 0.000001d;
-                    }
-
                     runningScores[g] += sr;
 
                     hitIndices[g].hitsIndices[hitCnt[g]++] = r;
 
-                    if (storeDeep) {// Only store for hits
-                        scoresAtEachHitIndex[g].add((float) runningScores[g]);
-                    }
-
-                } // End last run loop
-
+                    if (storeDeep) { scoresAtEachHitIndex[g].add((float) runningScores[g]); } // Only store for hits
+                }
                 // END JG CHANGES //
 
                 // @note OUTside the loop
@@ -212,7 +221,6 @@ public class KSCore {
             }
         }
 
-
         final EnrichmentScoreCohort[] cohorts = new EnrichmentScoreCohort[numGeneSets];
 
         for (int g = 0; g < numGeneSets; g++) {
@@ -240,18 +248,15 @@ public class KSCore {
         return cohorts;
     }
 
-
     protected static class HitIndices {
         int[] hitsIndices;
 
         HitIndices(int len) {
             this.hitsIndices = new int[len];
         }
-
     }
 
     private static class EnrichmentScoreCohort {
-
         private EnrichmentScore es_maxdev_style;
 
         private EnrichmentScore es_on_pos_list_maxdev;
@@ -310,7 +315,6 @@ public class KSCore {
      * NO perms done so NO etc are not applicable
      */
     static class EnrichmentScoreImplSlim implements EnrichmentScore {
-
         private float fES;
         private int fRankAtES;
         private float fRankScoreAtES;
@@ -387,9 +391,6 @@ public class KSCore {
         public int[] getHitIndices() {
             return fScoreCoh.getHitIndices();
         }
-
-    } // End inner class EnrichmentScoreImplSlim
-
-
-} // End KSCore
+    }
+}
 

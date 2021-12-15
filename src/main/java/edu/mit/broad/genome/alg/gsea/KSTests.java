@@ -121,6 +121,7 @@ public class KSTests {
         int origSize = rlReal.getSize();
         if (origSize != ds.getNumRow()) { throw new MismatchedSizeException(); } // sanity check
         rlReal = filterRankedListIfNecessary(rlReal, ds, markerScores);
+        boolean warnGeneRankingValues = checkRankedListForInfinityOrNaN(rlReal);
         final GeneSet[] gsets = gcohgen.filterGeneSetsByMembersAndSize(rlReal, origGeneSets);
 
         log.debug("shuffleTemplate with -- nperm: " + rndTemplates.length + " Order: " + order + " Sort: " + sort + " gsets: " + gsets.length);
@@ -131,10 +132,12 @@ public class KSTests {
             rndEss[g] = new Vector(rndTemplates.length);
         }
 
+        boolean warnPermutationValues = false;
         // Each row is a "geneset", and each column a randomization
         for (int c = 0; c < rndTemplates.length; c++) {
             ScoredDataset rndRl = dm.scoreDataset(metric, sort, order, metricParams, ds, rndTemplates[c]);
             rndRl = filterRankedListIfNecessary(rndRl, ds, markerScores);
+            if (!warnPermutationValues) { warnPermutationValues = checkRankedListForInfinityOrNaN(rndRl); }
             
             if (store_rnd_ranked_lists_here_opt != null) { store_rnd_ranked_lists_here_opt.add(rndRl); }
 
@@ -179,6 +182,16 @@ public class KSTests {
         if (rowsNotMeetingMetricSize > 0) {
             enrichmentDb.addWarning("There were " + rowsNotMeetingMetricSize + 
                     " row(s) of this dataset where one of the classes has too few samples to use the chosen metric.  See the log for more details.");
+        }
+        if (warnGeneRankingValues) {
+            enrichmentDb.addWarning("Infinite or NaN value(s) detected during gene rank computations. "
+                    + "These will be scored using a value of 0.01 to reduce their impact. "
+                    + "This may affect enrichment score calculations and report plotting.");
+        }
+        if (warnPermutationValues) {
+            enrichmentDb.addWarning("Infinite or NaN value(s) detected during permutation computations. "
+                    + "These will be scored using a value of 0.01 to reduce their impact. "
+                    + "This may affect enrichment score calculations and report plotting.");
         }
         return enrichmentDb;
     }
@@ -229,15 +242,14 @@ public class KSTests {
     		final Map<String, Boolean> metricParams, final Dataset ds, final Template template, final GeneSet[] origGeneSets, 
     		final GeneSetCohort.Generator gen, final RandomSeedGenerator rst, Map<String, TwoClassMarkerStats> markerScores)
     		        throws Exception {
-        if (ds == null) {
-            throw new IllegalArgumentException("Param ds cannot be null");
-        }
+        if (ds == null) { throw new IllegalArgumentException("Param ds cannot be null"); }
 
         // The same (real template) scored dataset for all gsets
         final DatasetMetrics dm = new DatasetMetrics();
         ScoredDataset rlReal = dm.scoreDataset(metric, sort, order, metricParams, ds, template);
         int origSize = rlReal.getSize();
         rlReal = filterRankedListIfNecessary(rlReal, ds, markerScores);
+        boolean warnGeneRankingValues = checkRankedListForInfinityOrNaN(rlReal);
         final GeneSet[] gsets = gen.filterGeneSetsByMembersAndSize(rlReal, origGeneSets);
         
         final Chip chip = ds.getAnnot().getChip();
@@ -253,26 +265,37 @@ public class KSTests {
             enrichmentDb.addWarning("There were " + rowsNotMeetingMetricSize + 
                     " row(s) of this dataset where one of the classes has too few samples to use the chosen metric.  See the log for more details.");
         }
+        if (warnGeneRankingValues) {
+            enrichmentDb.addWarning("Infinite or NaN value(s) detected during gene rank computations. "
+                    + "These will be scored using a value of 0.01 to reduce their impact. "
+                    + "This may affect enrichment score calculations and report plotting.");
+        }
         return enrichmentDb;
     }
     
     // Some features may need to be filtered out due to missing values causing them to not meet Metric min-sample requirements.
     // This is signaled by being passed a non-null/non-empty markerScores Map by the caller; otherwise we ignore this filtering pass.
-    private ScoredDataset filterRankedListIfNecessary(ScoredDataset rlReal, final Dataset ds, Map<String, TwoClassMarkerStats> markerScores) {
-        if (markerScores == null || markerScores.isEmpty()) { return rlReal; }
+    private ScoredDataset filterRankedListIfNecessary(ScoredDataset rankedList, final Dataset ds, Map<String, TwoClassMarkerStats> markerScores) {
+        if (markerScores == null || markerScores.isEmpty()) { return rankedList; }
         
-        List<DoubleElement> dels = new ArrayList<DoubleElement>(rlReal.getSize());
-        for (String feature: rlReal.getRankedNames()) {
+        List<DoubleElement> dels = new ArrayList<DoubleElement>(rankedList.getSize());
+        for (String feature: rankedList.getRankedNames()) {
             TwoClassMarkerStats markerScore = markerScores.get(feature);
-            if (!markerScore.omit) { dels.add(new DoubleElement(ds.getRowIndex(feature), rlReal.getScore(feature))); }
+            if (!markerScore.omit) { dels.add(new DoubleElement(ds.getRowIndex(feature), rankedList.getScore(feature))); }
         }
         ScoredDatasetImpl filtered = new ScoredDatasetImpl(new AddressedVector(dels), ds);
         // Preserve any warnings attached to the RL
-        if (!rlReal.getWarnings().isEmpty()) {
-            for (String warning : rlReal.getWarnings()) {
+        if (!rankedList.getWarnings().isEmpty()) {
+            for (String warning : rankedList.getWarnings()) {
                 filtered.addWarning(warning);
             }
         }
         return filtered;
+    }
+    
+    private boolean checkRankedListForInfinityOrNaN(ScoredDataset rankedList) {
+        if (!Float.isFinite(rankedList.getScore(0))) { return true; }
+        final int end = rankedList.getNumRow() - 1;
+        return !Float.isFinite(rankedList.getScore(end));
     }
 }

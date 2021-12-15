@@ -59,6 +59,57 @@ public class Vector {
     private boolean fImmuted;
 
     /**
+     * Adjust any Infinite or NaN values in the given ranked score vector to (+/-)0.000001f.
+     * *NOTE*: this method assumes but does not check that the vector is *rank ordered*.  It
+     * is meant to be called after RankedList.getScoresV(boolean), for example. 
+     */
+    public static final Vector infinityAdjustRankedScoreVector(Vector vec) {
+    	if (vec.elementCount == 0) { return vec; }
+    	
+    	// Since the scores are ranked, if there are any Infinite or NaN scores they must
+    	// appear either at the very beginning or the very end.  There may be *other* such
+    	// values, but they must at least be in one (or both) of those positions.  If not,
+    	// we can skip the adjustments
+    	boolean finiteHead = false;
+    	float startVal = vec.elementData[0];
+        if (Float.isNaN(startVal)) { startVal = 0.000001f; }
+        else if (Float.isInfinite(startVal)) { startVal = (startVal < 0) ? -0.000001f : 0.000001f; }
+        else finiteHead = true;
+
+        final int end = vec.elementCount - 1;
+		float endVal = vec.elementData[end];
+        if (Float.isNaN(endVal)) { endVal = 0.000001f; }
+        else if (Float.isInfinite(endVal)) { endVal = (endVal < 0) ? -0.000001f : 0.000001f; }
+        else if (finiteHead) { return vec; }  // Finite values found in both Head & Tail position; no adjustments made
+    	
+        if (vec.fImmuted) { vec = new Vector(vec); }
+		
+        // We don't need to iterate over these two positions since they were already checked above.
+        vec.elementData[0] = startVal;
+        vec.elementData[end] = endVal;
+        // Work from the beginning going up, but break as soon as we find a Finite value.  There can't be
+        // any NaN or Infinite values after that until the very end of the list, which will be covered by
+        // loop below.  Note that we avoid re-checking array positions 0 & end since they were already
+        // adjusted above if necessary.
+        for (int fwdPtr = 1; fwdPtr < end; fwdPtr++) {
+        	final float score = vec.elementData[fwdPtr];
+	        if (Float.isNaN(score)) { vec.elementData[fwdPtr] = 0.000001f; }
+	        else if (Float.isInfinite(score)) { vec.elementData[fwdPtr] = (score < 0) ? -0.000001f : 0.000001f; }
+	        else break;
+        }
+        // Likewise, work from the end going down.  Note that this might halt immediately in the pathological
+        // case where *all* values were NaN or Infinite.  The above loop would have made that adjustment.
+        for (int bkwdPtr = end - 1; bkwdPtr > 1; bkwdPtr--) {
+        	final float score = vec.elementData[bkwdPtr];
+	        if (Float.isNaN(score)) { vec.elementData[bkwdPtr] = 0.000001f; }
+	        else if (Float.isInfinite(score)) { vec.elementData[bkwdPtr] = (score < 0) ? -0.000001f : 0.000001f; }
+	        else break;
+        }
+
+        return vec;
+    }
+
+    /**
      * Class Constructor.
      * Constructs a new generalized mathematic Vector with zero value (0.0)
      * elements; length represents the number of elements in the
@@ -316,18 +367,6 @@ public class Vector {
         }
 
         return fNaNless;
-    }
-
-    public Vector toVectorInfinityAdjusted() {
-        int size = getSize();
-        float[] infAdjArr = new float[size];
-        for (int i = 0; i < size; i++) {
-            infAdjArr[i] = XMath.infintyAdjustedScore(elementData[i]);
-        }
-
-        Vector infAdj = new Vector(infAdjArr);
-        infAdj.setImmutable();
-        return infAdj;
     }
 
     public Vector synchVectorNaNless(Vector other) {
