@@ -278,7 +278,7 @@ public abstract class AbstractParser implements Parser {
     protected List parseTextMatrixToDataset(String objName, List<String> lines, List<String> colNames, boolean hasDesc) throws Exception {
         final int lineCount = lines.size();
         List<String> rowNames = new ArrayList<String>(lineCount);
-        List<String> rowDescs = new ArrayList<String>(lineCount);
+        List<String> rowDescs = hasDesc ? new ArrayList<String>(lineCount) : null;
         List<float[]> data = new ArrayList<float[]>(lineCount);
         int skippedMissingRows = 0, partialMissingRows = 0;
         boolean foundInfiniteValues = false;
