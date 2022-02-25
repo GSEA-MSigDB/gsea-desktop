@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ *  Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package org.genepattern.modules;
 
@@ -14,7 +14,8 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.PosixParser;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import edu.mit.broad.genome.Conf;
 import xtools.api.AbstractTool;
@@ -28,7 +29,7 @@ import xtools.gsea.Gsea;
  * up the working directory so it only contains the zip file, the output files, and the input files that were uploaded by the run task page.
  */
 public class GseaWrapper extends AbstractModule {
-    private static final Logger klog = Logger.getLogger(GseaWrapper.class);
+    private static final Logger klog = LoggerFactory.getLogger(GseaWrapper.class);
     
     // Suppressing the static-access warnings because this is the recommended usage according to the Commons-CLI docs.
     @SuppressWarnings("static-access")
@@ -164,7 +165,7 @@ public class GseaWrapper extends AbstractModule {
                 // check it as it may exist in the file (in fact that's likely).  This same pattern will
                 // follow for other parameters below.
                 String paramName = (gpMode) ? "expression.dataset" : "-res";
-                klog.error("Required parameter '" + paramName + "' not found.");
+                klog.error("Required parameter '{}' not found.", paramName);
                 paramProcessingError = true;
             }
 
@@ -188,7 +189,7 @@ public class GseaWrapper extends AbstractModule {
                 }
             } else if (!hasParamFile) {
                 String paramName = (gpMode) ? "phenotype.labels" : "-cls";
-                klog.error("Required parameter '"+ paramName +"' not found.");
+                klog.error("Required parameter '{}' not found.", paramName);
                 paramProcessingError = true;
             }
 
@@ -202,7 +203,7 @@ public class GseaWrapper extends AbstractModule {
                 }
             } else if (isCollapseOrRemap(collapseParam) && !hasParamFile) {
                 String paramName = (gpMode) ? "chip.platform.file" : "-chip";
-                klog.error("A '"+ paramName + "' must be provided for collapse/remap");
+                klog.error("A '{}' must be provided for collapse/remap", paramName);
                 paramProcessingError = true;
             }
 
@@ -226,8 +227,7 @@ public class GseaWrapper extends AbstractModule {
             String altDelim = cl.getOptionValue("altDelim", "");
             if (StringUtils.isNotBlank(altDelim) && altDelim.length() > 1  && !hasParamFile) {
                 String paramName = (gpMode) ? "alt.delim" : "--altDelim";
-                klog.error("Invalid " + paramName + " '" + altDelim
-                        + "' specified. This must be only a single character and no whitespace.");
+                klog.error("Invalid {} '{}' specified. This must be only a single character and no whitespace.", paramName, altDelim);
                 paramProcessingError = true;
             }
 
@@ -310,7 +310,7 @@ public class GseaWrapper extends AbstractModule {
             }
         } catch (Throwable t) {
             success = false;
-            klog.error("Error while processng:");
+            klog.error("Error while processing:");
             klog.error(t.getMessage());
             t.printStackTrace(System.err);
         } finally {

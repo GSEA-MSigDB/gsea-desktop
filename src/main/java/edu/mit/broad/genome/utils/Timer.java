@@ -1,9 +1,7 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.utils;
-
-import org.apache.log4j.Logger;
 
 /**
  * Simple timer mechanism to help with performance benchmarking.
@@ -19,20 +17,16 @@ import org.apache.log4j.Logger;
  * </code>
  *
  * @author Aravind Subramanian
- * @version %I%, %G%
  * @todo See if there is an open-source junit-like class for this.
  * There is one junitperf but its more geared towards stress tests
  * rather than simple timing. The hunt continues.
  */
 public class Timer {
-
-    protected static final Logger klog = Logger.getLogger(Timer.class);
     private long fStart = 0;
     private long fStop = 0;
     private boolean stopped = false;
 
-    public Timer() {
-    }
+    public Timer() { }
 
     /**
      * Starts the timer
@@ -55,7 +49,6 @@ public class Timer {
     }
 
     private String _timeTaken(String label) {
-        //if (fStop < fStart) log.warn("Looks like the timer was not stop()'ed");
         if (!stopped) {
             stop();
         }
@@ -76,5 +69,4 @@ public class Timer {
             }
         }
     }
-
-}    // End Timer
+}

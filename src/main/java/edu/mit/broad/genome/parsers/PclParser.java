@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2021 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.genome.parsers;
 
@@ -74,7 +74,7 @@ public class PclParser extends AbstractParser {
         startImport(hackINeedFullPath);
         int nlines = FileUtils.countLines(hackINeedFullPath, true);
         int nfloatlines = nlines - 2;
-        log.debug("Number of float lines = " + nfloatlines);
+        log.debug("Number of float lines = {}", nfloatlines);
 
         try (BufferedReader bin = new BufferedReader(new InputStreamReader(is))) {
             String currLine = nextLine(bin);
@@ -84,7 +84,7 @@ public class PclParser extends AbstractParser {
             colNames.remove(0); // get rid of UNIQUID field name
             colNames.remove(0); // get rid of NAME field name
             colNames.remove(0); // get rid of GWEIGHT field name
-            log.debug("Number of columns of floats = " + colNames.size());
+            log.debug("Number of columns of floats = {}", colNames.size());
     
             // get rid of the EWUIGHT line
             nextLine(bin);

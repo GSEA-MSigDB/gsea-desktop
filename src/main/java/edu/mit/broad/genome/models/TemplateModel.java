@@ -1,23 +1,22 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.models;
 
 import edu.mit.broad.genome.objects.Template;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.table.AbstractTableModel;
 
 /**
  * An implementation of AbstractTableModel for Templates. <br>
  * <p/>
- * Must not replicate any of Templates's data strcutures to optimize on memory
+ * Must not replicate any of Templates's data structures to optimize on memory
  *
  * @author Aravind Subramanian
- * @version %I%, %G%
  */
 public class TemplateModel extends AbstractTableModel {
-
     /**
      * The underlying Template being modell'ed
      */
@@ -29,10 +28,7 @@ public class TemplateModel extends AbstractTableModel {
      */
     private static final String[] kColNames = {"Class Name", "Class Id", "Class Count"};
 
-    /**
-     * For logging support
-     */
-    private final Logger log = Logger.getLogger(TemplateModel.class);
+    private final Logger log = LoggerFactory.getLogger(TemplateModel.class);
 
     /**
      * Class Constructor.
@@ -77,7 +73,7 @@ public class TemplateModel extends AbstractTableModel {
         } else if (col == 2) {
             return Integer.toString(fTemplate.getClass(row).getSize());
         } else {
-            log.warn("Unexpectedly i was asked for coln=" + col);
+            log.warn("Unexpectedly i was asked for coln={}", col);
             return null;
         }
     }
@@ -105,4 +101,4 @@ public class TemplateModel extends AbstractTableModel {
     public boolean isCellEditable(int row, int col) {
         return false;
     }
-}    // End TemplateModel
+}

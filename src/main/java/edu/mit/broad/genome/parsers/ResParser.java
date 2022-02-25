@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.genome.parsers;
 
@@ -22,18 +22,11 @@ import java.util.StringTokenizer;
  *
  * @author Michael Angelo - original GeneCluster implementaion
  * @author Aravind Subramanian - adapted for xomics.
- * @version %I%, %G%
  * @todo consider ignoring the meg numrows line in favor of just using however many rows happen
  * to be in the file. Not doing this causes the "missing" rows to have wierd matrix values.
  */
 public class ResParser extends AbstractParser {
-
-    /**
-     * Class Constructor.
-     */
-    public ResParser() {
-        super(Dataset.class);
-    }
+    public ResParser() { super(Dataset.class); }
 
     /**
      * Accepts only Dataset objects.
@@ -107,7 +100,7 @@ public class ResParser extends AbstractParser {
 
         pw.close();
         doneExport();
-    }    // End export
+    }
 
     /**
      * The guts of the parsing
@@ -215,7 +208,7 @@ public class ResParser extends AbstractParser {
             //haveNumRows = false;
         }
 
-        log.info("Found meg data as numRows:" + numRows + " numCols:" + numCols);
+        log.info("Found meg data as numRows:{} numCols:{}", numRows, numCols);
 
         // Now that dataset has been initialized, assign column names
         List<String> colNames = new ArrayList<String>(numCols);
@@ -312,7 +305,7 @@ public class ResParser extends AbstractParser {
         System.out.println(">>>>> DONE PARSING: " + apmMatrix.getQuickInfo());
 
         return unmodlist(new PersistentObject[]{ds});
-    } // End of method parse
+    }
 
     private void checkIndex(int ind, int lineNum) throws ParserException {
 
@@ -320,5 +313,4 @@ public class ResParser extends AbstractParser {
             throw new ParserException("Invalid line index=" + ind + " . Expecting ind >=0 " + " on line: " + lineNum);
         }
     }
-
-}    // End of class ResParser
+}

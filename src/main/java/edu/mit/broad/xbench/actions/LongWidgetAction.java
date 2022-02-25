@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.xbench.actions;
 
 import edu.mit.broad.xbench.core.Widget;
@@ -17,26 +17,12 @@ import java.awt.event.MouseEvent;
  * Basicaly same as the WidgetAction except no cursor or app status stuff
  *
  * @author Aravind Subramanian
- * @version %I%, %G%
  */
 public abstract class LongWidgetAction extends WidgetAction {
-
     protected LongWidgetAction(String id, String name, String description, Icon icon) {
         super(id, name, description, icon);
     }
 
-    /*
-     * WITHOUT FOXTROT - orig amber style impl.
-     *  DONT DELETE YET
-     * public void actionPerformed(ActionEvent evt) {
-     *   //log.debug("actionPerformed: " + evt);
-     *
-     *   Runnable r = createTask(evt);
-     *   Thread t = new Thread(r);
-     *   t.start();
-     *   //log.debug("started thread");
-     * }
-     */
     public Runnable createTask(final ActionEvent evt) {
         final LongWidgetAction instance = this;
 
@@ -45,11 +31,8 @@ public abstract class LongWidgetAction extends WidgetAction {
             public void run() {
 
                 try {
-                    //log.debug("Waiting for action");
-                    //waitCursor("");
-                    //defaultCursor();
                     // this is just to indicate that something hapenned so a dummy timer
-                    log.info("Starting: " + getActionName(instance));
+                    log.info("Starting: {}", getActionName(instance));
                     Widget widget = getWidget();
 
                     if (widget != null) {
@@ -70,7 +53,7 @@ public abstract class LongWidgetAction extends WidgetAction {
                             }
                         }
 
-                        log.info("Opened widget: " + widget.getAssociatedTitle());
+                        log.info("Opened widget: {}", widget.getAssociatedTitle());
 
                     } else {
                         log.info("Null widget - no window opened");
@@ -124,4 +107,4 @@ public abstract class LongWidgetAction extends WidgetAction {
 
     public void mouseReleased(MouseEvent e) {
     }
-}    // End LongWidgetAction
+}

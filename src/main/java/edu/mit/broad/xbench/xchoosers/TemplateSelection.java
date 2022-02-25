@@ -1,13 +1,14 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.xbench.xchoosers;
 
 import edu.mit.broad.genome.objects.Template;
 import edu.mit.broad.genome.objects.TemplateDerivative;
 import edu.mit.broad.genome.parsers.AuxUtils;
 import edu.mit.broad.genome.parsers.ParserFactory;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.util.Collections;
@@ -18,21 +19,15 @@ import java.util.Set;
  * Class to hold a Template Selectection from 1 source file
  */
 public class TemplateSelection {
-
     private Object fMainTemplate_or_mainTemplateFile;
 
     protected Set fTemplateNamesOrPaths;
 
-    private Logger log = Logger.getLogger(TemplateSelection.class);
+    private Logger log = LoggerFactory.getLogger(TemplateSelection.class);
 
     protected TemplateSelection() {
     }
 
-    /**
-     * Class constructor
-     *
-     * @param mainTemplate
-     */
     //files  used for continuous templates
     public TemplateSelection(final Object mainTemplate_or_mainTemplateFile) {
         if (mainTemplate_or_mainTemplateFile == null) {
@@ -48,7 +43,7 @@ public class TemplateSelection {
 
     public Set getTemplateNames() {
         if (fTemplateNamesOrPaths == null) {
-            log.debug("Odd that fTemplateNamesOrPaths is null. fMainTemplate: " + fMainTemplate_or_mainTemplateFile);
+            log.debug("Odd that fTemplateNamesOrPaths is null. fMainTemplate: {}", fMainTemplate_or_mainTemplateFile);
             return new HashSet();
         } else {
             return Collections.unmodifiableSet(fTemplateNamesOrPaths);
@@ -61,7 +56,6 @@ public class TemplateSelection {
         }
 
         String add = td.getName(parentNamePlusMyName, fullPath);
-        //log.debug("Adding templateNameOrPath: " + add);
         fTemplateNamesOrPaths.add(add);
     }
 
@@ -100,12 +94,7 @@ public class TemplateSelection {
 
         file = AuxUtils.getBaseFileFromAuxFile(file);
 
-        //log.debug("Formatting for UI main template is: " + nm + " and its file path: " + file);
         buf.append(file.getPath());
-
-        //if (fMainTemplate.isContinuous()) {
-        //  buf.append('#').append(nm);
-        // } else {
 
         if (vals.length == 0) {
             return buf.toString(); // no extra ones, just the main template
@@ -132,11 +121,6 @@ public class TemplateSelection {
                 buf.append(',');
             }
         }
-        // }
-
-        //log.debug("Got string: " + buf.toString());
         return buf.toString();
     }
-
-
-} // End inner class CurrSel
+}

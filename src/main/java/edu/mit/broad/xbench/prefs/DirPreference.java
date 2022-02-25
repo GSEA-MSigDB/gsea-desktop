@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.xbench.prefs;
 
 import edu.mit.broad.genome.swing.fields.GDirFieldPlusChooser;
@@ -30,11 +30,10 @@ public class DirPreference extends AbstractPreference {
     }
 
     public File getDir(boolean makeItIfItDoesntAlreadyExist) {
-        //klog.debug("$$$ " + getValue());
         File f = (File) getValue();
         if ((f.exists() == false) && (makeItIfItDoesntAlreadyExist)) {
             boolean success = f.mkdir();
-            klog.info("Made pref dir: " + f + " status: " + success);
+            klog.info("Made pref dir: {} status: {}", f, success);
         }
         return (File) getValue();
     }
@@ -51,9 +50,6 @@ public class DirPreference extends AbstractPreference {
         }
 
         fChooser.setValue(getValue());
-
-        //klog.debug("Getting component");
-
         return fChooser;
 
     }
@@ -63,5 +59,4 @@ public class DirPreference extends AbstractPreference {
             super._setValueOfPref2SelectionComponentValue(fChooser.getValue());
         }
     }
-
-} // End DirPreference
+}

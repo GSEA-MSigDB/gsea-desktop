@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package org.broad.gsea.ui;
 
@@ -9,7 +9,8 @@ import java.awt.Image;
 import javax.swing.JOptionPane;
 
 import org.apache.commons.lang3.SystemUtils;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import apple.dts.samplecode.osxadapter.OSXAdapter;
 import xapps.gsea.GseaFijiTabsApplicationFrame;
@@ -19,7 +20,7 @@ import xapps.gsea.GseaFijiTabsApplicationFrame;
  * @author eby
  */
 public class DesktopIntegration {
-    private static Logger log = Logger.getLogger(DesktopIntegration.class);
+    private static Logger log = LoggerFactory.getLogger(DesktopIntegration.class);
 
     public static final void verifyJavaPlatform() {
         String javaVersion = System.getProperty("java.version");

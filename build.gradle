@@ -1,4 +1,4 @@
-// Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents 
+// Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents 
 // of the University of California. All rights reserved.
 apply plugin: 'java'
 import org.apache.tools.ant.filters.ReplaceTokens
@@ -30,7 +30,7 @@ configurations {
 }
 
 dependencies {
-    jarsToShipUntouched fileTree(dir: 'modules', include: ['batik-codec-1.10.jar', 'log4j-core-2.15.0.jar'])
+    jarsToShipUntouched fileTree(dir: 'modules', include: ['batik-codec-1.10.jar'])
     compile fileTree(dir: 'modules', include: '*.jar') + fileTree(dir: 'lib', include: '*.jar')
 }
 
@@ -168,9 +168,6 @@ task signJars(dependsOn: createDist) {
         ext.keystoreFile = file("${keystore}")
         if (keystoreFile.exists()) {
             ant.jar( update: true, file: "build/GSEA-dist/lib/batik-codec-1.10.jar") {
-                delegate.manifest { attribute(name: 'Permissions', value: 'all-permissions') }
-            }
-            ant.jar( update: true, file: "build/GSEA-dist/lib/log4j-core-2.15.0.jar") {
                 delegate.manifest { attribute(name: 'Permissions', value: 'all-permissions') }
             }
             ant.signjar( jar: 'build/GSEA-dist/lib/*.jar', keystore:"${keystoreFile.absolutePath}",

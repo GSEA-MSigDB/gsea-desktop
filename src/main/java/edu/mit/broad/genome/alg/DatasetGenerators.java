@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2021 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.genome.alg;
 
@@ -11,7 +11,8 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import xtools.api.param.BadParamException;
 import edu.mit.broad.genome.NamingConventions;
@@ -49,7 +50,7 @@ import edu.mit.broad.vdb.chip.NullSymbolModes;
  * @author Aravind Subramanian, David Eby
  */
 public class DatasetGenerators {
-    private final Logger log = Logger.getLogger(DatasetGenerators.class);
+    private final Logger log = LoggerFactory.getLogger(DatasetGenerators.class);
 
     public DatasetGenerators() { }
 
@@ -135,7 +136,7 @@ public class DatasetGenerators {
 
         String name = StringUtils.isNotBlank(resultFileName) ? resultFileName : 
                 origDs.getName() + getExtendedName(collapse_gex_mode) + "_to_symbols";
-        log.info("Creating collapsed dataset " + name + ", chosen mode " + collapse_gex_mode);
+        log.info("Creating collapsed dataset {}, chosen mode {}", name, collapse_gex_mode);
         Annot annot = new Annot(new FeatureAnnot(name, rowNames, rowDescs,
                 chip), origDs.getAnnot().getSampleAnnot_global());
 
@@ -303,8 +304,7 @@ public class DatasetGenerators {
         }
 
         if (misscnt != 0) {
-            log.warn("Not all probes had matches. Total probes:" + rowNames.size()
-                    + " missing number:" + misscnt + " hits:" + hitNames.size());
+            log.warn("Not all probes had matches. Total probes:{} missing number:{} hits:{}", rowNames.size(), misscnt, hitNames.size());
         }
 
         return builder.generate(ds.getAnnot());

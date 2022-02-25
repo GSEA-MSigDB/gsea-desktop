@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2021 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package xtools.gsea;
 
@@ -87,7 +87,7 @@ public class Gsea extends AbstractGsea2Tool {
                     fIncludeOnlySymbols.isTrue(), collapseModeIndex, null);
 
     		Dataset collapsed = cds.symbolized;
-            log.info("Collapsing dataset was done. Original: " + origDs.getQuickInfo() + " collapsed: " + collapsed.getQuickInfo());
+            log.info("Collapsing dataset was done. Original: {} collapsed: {}", origDs.getQuickInfo(), collapsed.getQuickInfo());
 
             // Make a summary etiology always
             fReport.savePageTsv(cds.makeEtiologySdf());

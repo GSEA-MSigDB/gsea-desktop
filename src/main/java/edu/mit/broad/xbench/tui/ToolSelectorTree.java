@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.xbench.tui;
 
@@ -11,7 +11,8 @@ import edu.mit.broad.genome.utils.DateUtils;
 import edu.mit.broad.xbench.ComparatorFactory2;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import xtools.api.Tool;
 import xtools.api.ToolCategory;
 
@@ -31,13 +32,11 @@ import java.util.List;
  * So the tree represents Tools available and reports of Tools run in the (immeadiate and far) past
  *
  * @author Aravind Subramanian
- * @version %I%, %G%
  */
 public class ToolSelectorTree extends JTree {
-
     private final Tool[] fTools = new Tool[]{};
 
-    private final Logger log = Logger.getLogger(ToolSelectorTree.class);
+    private final Logger log = LoggerFactory.getLogger(ToolSelectorTree.class);
     private final DefaultTreeModel fModel;
 
     /**
@@ -46,12 +45,7 @@ public class ToolSelectorTree extends JTree {
      */
     private final Map fToolNodeMap;
 
-    /**
-     * Class Constructor.
-     */
     public ToolSelectorTree() {
-
-        //TraceUtils.showTrace();
         this.setRootVisible(false);
         this.setShowsRootHandles(true);
 
@@ -75,7 +69,6 @@ public class ToolSelectorTree extends JTree {
         for (int i = 0; i < fTools.length; i++) {
             if (fTools[i].getClass().getName().equalsIgnoreCase(toolName)) {
                 TreePath tp = this.getPath(fTools[i]);
-                //log.debug("initing to Tree path " + tp + " tool: " + fTools[i].getName());
                 this.setSelectionPath(tp);
                 this.expandPath(tp);
                 this.fireTreeExpanded(tp);
@@ -84,8 +77,7 @@ public class ToolSelectorTree extends JTree {
             }
         }
 
-        //TraceUtils.showTrace(); // happens when last tool is changed
-        log.debug("Unknown tool name, and could not select it: " + toolName);
+        log.debug("Unknown tool name, and could not select it: {}", toolName);
 
         return null;
     }
@@ -117,19 +109,9 @@ public class ToolSelectorTree extends JTree {
         return new TreePath(tns);
     }
 
-    /**
-     * Class Model
-     *
-     * @author Aravind Subramanian
-     * @version %I%, %G%
-     */
     private class Model extends DefaultTreeModel {
 
-        /**
-         * Class Constructor.
-         */
         Model() {
-
             super(new DefaultMutableTreeNode("Tools", true));
 
             final DefaultMutableTreeNode toolNode = (DefaultMutableTreeNode) this.getRoot();
@@ -167,12 +149,8 @@ public class ToolSelectorTree extends JTree {
             // add the reports as another node
             toolNode.add(new ReportModel().createReportNode(this));
         }
+    }
 
-    }    // End inner class Model
-
-    /**
-     *
-     */
     public static class Renderer extends DefaultTreeCellRenderer {
 
         private static final Icon ICON_RPT_SMALL = JarResources.getIcon("Rpt15.png"); // makes it less intrusive
@@ -251,6 +229,5 @@ public class ToolSelectorTree extends JTree {
             label.setText(buf.toString());
             label.setBorder(null);
         }
-
-    }    // End TreeRenderer
-}        // End ToolTree
+    }
+}

@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.utils;
 
 import java.io.BufferedOutputStream;
@@ -19,13 +19,14 @@ import java.util.zip.ZipOutputStream;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Zip utilities
  */
 public class ZipUtility {
-    private static final Logger klog = Logger.getLogger(ZipUtility.class);
+    private static final Logger klog = LoggerFactory.getLogger(ZipUtility.class);
 
     /**
      * A method for unzipping of a directory archive; see org.genepattern.gsea.LeadingEdgeWidget.main This supports GenePattern Module
@@ -70,7 +71,7 @@ public class ZipUtility {
      * http://stackoverflow.com/questions/204784/how-to-construct-a-relative-path-in-java-from-two-absolute-paths-or-urls
      */
     public void zipDir(File sourceDir, File outputFile) throws IOException {
-        klog.info("Zipping: " + sourceDir.getName() + " to " + outputFile.getAbsolutePath());
+        klog.info("Zipping: {} to {}", sourceDir.getName(), outputFile.getAbsolutePath());
         ZipOutputStream zipFile = new ZipOutputStream(new FileOutputStream(outputFile));
         Path rootPath = Paths.get(sourceDir.getAbsolutePath());
         try {

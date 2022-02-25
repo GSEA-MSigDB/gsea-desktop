@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2021 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.genome.swing;
 
@@ -8,7 +8,8 @@ import edu.mit.broad.genome.JarResources;
 import edu.mit.broad.xbench.core.api.Application;
 import gnu.trove.TIntArrayList;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.LinkedList;
 import java.util.Queue;
@@ -46,7 +47,7 @@ public class GuiHelper implements Constants {
 
     public static final Icon ICON_OPTIONPANE_INFO16 = JarResources.getIcon("Inform16.gif");
 
-    // commonly used wondow size
+    // commonly used window size
     public static final Dimension DIMENSION_STANDARD_WINDOW = new Dimension(500, 500);
     public static final Font FONT_DEFAULT_BOLD = new Font("Helvetica", Font.BOLD, 12);
     public static final Font FONT_DEFAULT = new Font("Helvetica", Font.PLAIN, 12);
@@ -60,7 +61,7 @@ public class GuiHelper implements Constants {
     public static final Color COLOR_VERY_LIGHT_GRAY = new Color(239, 239, 239);
     public static final Color COLOR_DARK_BLUE = new Color(63, 64, 124);
 
-    private static final Logger klog = Logger.getLogger(GuiHelper.class);
+    private static final Logger klog = LoggerFactory.getLogger(GuiHelper.class);
     private static final Dimension kPlaceholderSize = new Dimension(200, 50);
 
     private GuiHelper() { }

@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package xtools.api.param;
 
 import edu.mit.broad.genome.swing.fields.GFieldPlusChooser;
@@ -57,7 +57,6 @@ public abstract class AbstractObjectChooserParam extends AbstractParam {
     }
 
     public void setValue(String[] ss) {
-        //log.debug("CALLING SUPER SETVALUES");
         super.setValue(ss);
     }
 
@@ -78,7 +77,7 @@ public abstract class AbstractObjectChooserParam extends AbstractParam {
                 //fChooser.getTextField().setEditable(false);
             }
 
-            log.debug("setting text: " + text + " " + getDefault());
+            log.debug("setting text: {} {}", text, getDefault());
             fChooser.setText(text);
             fChooser.setListSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
             ParamHelper.addDocumentListener(fChooser.getTextField(), this);
@@ -134,5 +133,4 @@ public abstract class AbstractObjectChooserParam extends AbstractParam {
     public boolean isFileBased() {
         return false;
     }
-
-} // End AbstractObjectsChooserParam
+}

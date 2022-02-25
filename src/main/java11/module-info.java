@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2018 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 module org.gsea_msigdb.gsea {
     exports edu.mit.broad.cytoscape;
@@ -13,6 +13,7 @@ module org.gsea_msigdb.gsea {
     exports edu.mit.broad.genome.alg.markers;
     exports edu.mit.broad.genome.charts;
     exports edu.mit.broad.genome.io;
+    exports edu.mit.broad.genome.logging;
     exports edu.mit.broad.genome.math;
     exports edu.mit.broad.genome.models;
     exports edu.mit.broad.genome.objects;
@@ -94,6 +95,7 @@ module org.gsea_msigdb.gsea {
     requires httpcore;
     requires java.datatransfer;
     requires java.desktop;
+    requires java.logging;
     requires java.prefs;
     requires java.xml;
     requires jcommon;
@@ -102,8 +104,6 @@ module org.gsea_msigdb.gsea {
     requires jgoodies.uif.lite;
     requires jide.common;
     requires json.simple;
-    requires org.apache.logging.log4j;
-    requires org.apache.logging.log4j.core;
     requires looks;
     requires maven.artifact;
     requires SGLayout;

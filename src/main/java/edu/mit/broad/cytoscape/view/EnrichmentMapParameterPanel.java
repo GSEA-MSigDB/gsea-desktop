@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2020 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.cytoscape.view;
 
@@ -34,7 +34,8 @@ import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JTextArea;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.jgoodies.forms.builder.PanelBuilder;
 import com.jgoodies.forms.layout.CellConstraints;
@@ -54,7 +55,7 @@ import xtools.munge.CollapseDataset;
 public class EnrichmentMapParameterPanel extends JPanel {
     public static final String LAUNCH_MSG = "Please launch Cytoscape 3.3+ with the Enrichment Map plug-in before continuing.";
 
-    private static final Logger klog = Logger.getLogger(EnrichmentMapParameterPanel.class);
+    private static final Logger klog = LoggerFactory.getLogger(EnrichmentMapParameterPanel.class);
 
     private DecimalFormat decFormat; // used in the formatted text fields
 
@@ -490,12 +491,12 @@ public class EnrichmentMapParameterPanel extends JPanel {
             }
 
         } catch (IOException e) {
-            klog.info("Unable to communicate with cytoscape:" + e.getMessage());
-            klog.info(LAUNCH_MSG);
+            klog.error("Unable to communicate with cytoscape: {}", e.getMessage());
+            klog.error(LAUNCH_MSG);
             Application.getWindowManager().showConfirm(LAUNCH_MSG);
 
         } catch (URISyntaxException e) {
-            klog.info("Issue with cytoscape rest command:" + e.getMessage());
+            klog.error("Issue with cytoscape rest command: {}", e.getMessage());
 
         }
     }

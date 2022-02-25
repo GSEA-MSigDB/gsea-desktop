@@ -19,5 +19,6 @@ fi
 exec java -showversion --module-path="${prefix}/modules" -Xmx4g \
     @"${prefix}/gsea.args" \
     --patch-module="jide.common=${prefix}/lib/jide-components-3.7.4.jar:${prefix}/lib/jide-dock-3.7.4.jar:${prefix}/lib/jide-grids-3.7.4.jar" \
+    -Djava.util.logging.config.file="${prefix}/logging.properties" \
     -Dapple.laf.useScreenMenuBar=true \
     --module=org.gsea_msigdb.gsea/xapps.gsea.GSEA "$@"

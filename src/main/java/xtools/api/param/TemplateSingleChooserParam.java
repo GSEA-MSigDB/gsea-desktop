@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2021 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package xtools.api.param;
 
@@ -8,8 +8,6 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-
-import org.apache.log4j.Logger;
 
 import edu.mit.broad.genome.Constants;
 import edu.mit.broad.genome.Printf;
@@ -34,7 +32,6 @@ public class TemplateSingleChooserParam extends StringMultiChooserParam implemen
     protected TemplateMode fMode;
     private TemplateChooserUI fTemplateChooser;
     private TemplateSelection fCurrBag;
-    private Logger log = Logger.getLogger(TemplateSingleChooserParam.class);
 
     public TemplateSingleChooserParam(String name, String nameEnglish, TemplateMode mode, boolean reqd) {
         super(name, nameEnglish, CLS_DESC, new String[]{}, new String[]{}, reqd);
@@ -55,7 +52,6 @@ public class TemplateSingleChooserParam extends StringMultiChooserParam implemen
 
     protected GFieldPlusChooser _getSelectionComponent() {
         if (fTemplateChooser == null) {
-            //log.debug("creating TemplateChooser component");
             fTemplateChooser = new TemplateChooserUI(false, fMode);
             fChooser = new TemplateChooserUI.Field(this);
             fChooser.setValue(getValueStringRepresentation(true));

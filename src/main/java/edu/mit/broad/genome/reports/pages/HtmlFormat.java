@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2021 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.genome.reports.pages;
 
@@ -11,7 +11,8 @@ import org.apache.ecs.Document;
 import org.apache.ecs.Element;
 import org.apache.ecs.StringElement;
 import org.apache.ecs.html.*;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import xapps.gsea.GseaWebResources;
 
 import java.io.File;
@@ -20,7 +21,7 @@ import java.io.File;
  * @author Aravind Subramanian
  */
 public class HtmlFormat {
-    private static final Logger klog = Logger.getLogger(HtmlFormat.class);
+    private static final Logger klog = LoggerFactory.getLogger(HtmlFormat.class);
 
     private static final String CENTER = "center";
 
@@ -128,7 +129,7 @@ public class HtmlFormat {
             }
 
             if (!linkThisDir.isDirectory()) {
-                klog.warn("Not a directory: " + linkThisDir);
+                klog.warn("Not a directory: {}", linkThisDir);
             }
 
             try {

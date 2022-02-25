@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.xbench.actions;
 
 import edu.mit.broad.genome.parsers.ParserFactory;
@@ -22,18 +22,11 @@ import java.io.File;
  * this class
  *
  * @author Aravind Subramanian
- * @version %I%, %G%
  */
 public class ProxyObjectAction extends LongWidgetAction {
     private ObjectAction fAction;
     private Object fFileOrObj;
 
-    /**
-     * Class constructor
-     *
-     * @param action
-     * @param obj
-     */
     public ProxyObjectAction(ObjectAction action, Object obj) {
         super(getActionId(action), getActionName(action), 
                 getActionDescription(action), getActionIcon(action));
@@ -54,7 +47,7 @@ public class ProxyObjectAction extends LongWidgetAction {
 
             if (fFileOrObj instanceof File) {
                 File f = (File) fFileOrObj;
-                log.debug("Reading file for action: " + f);
+                log.debug("Reading file for action: {}", f);
                 obj = ParserFactory.read(f);
             } else {
                 obj = fFileOrObj;
@@ -74,4 +67,4 @@ public class ProxyObjectAction extends LongWidgetAction {
 
         return null;
     }
-}    // End ProxyObjectAction
+}

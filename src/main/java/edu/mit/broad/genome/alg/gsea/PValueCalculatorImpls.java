@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.genome.alg.gsea;
 
@@ -12,14 +12,14 @@ import edu.mit.broad.genome.objects.esmatrix.db.EnrichmentResult;
 import edu.mit.broad.genome.objects.esmatrix.db.EnrichmentScore;
 import edu.mit.broad.genome.objects.esmatrix.db.EnrichmentScoreImpl;
 import edu.mit.broad.genome.objects.strucs.FdrStruc;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Aravind Subramanian
  */
 public class PValueCalculatorImpls {
-
-    private static final Logger klog = Logger.getLogger(PValueCalculatorImpls.class);
+    private static final Logger klog = LoggerFactory.getLogger(PValueCalculatorImpls.class);
 
     /**
      * The GSEA style implementation of pvalues and FDRs and FWERs
@@ -44,7 +44,7 @@ public class PValueCalculatorImpls {
         final LabelledVector realESS = EdbAlgs.createRealES(results);
         final Dataset rndESS = EdbAlgs.createRndESDataset(results);
 
-        klog.debug("Norm mode: " + normName);
+        klog.debug("Norm mode: {}", normName);
 
         final Norms.Struc struc = Norms.normalize(normName, realESS, rndESS);
 
@@ -87,7 +87,7 @@ public class PValueCalculatorImpls {
 
         final EnrichmentResult[] results = new EnrichmentResult[prev_results.length];
 
-        klog.debug("Started core calcFdrs in _calcGseaMethod for results: " + prev_results.length);
+        klog.debug("Started core calcFdrs in _calcGseaMethod for results: {}", prev_results.length);
         for (int r = 0; r < prev_results.length; r++) {
 
 
@@ -142,15 +142,12 @@ public class PValueCalculatorImpls {
                    prev_results[r].getGeneSet(), prev_results[r].getChip(), es_new, prev_results[r].getRndESS(), fdrStruc);
             */
 
-            if (r % 25 == 0) {
-                klog.debug("Done loop: " + r + " / " + prev_results.length);
-            }
-
+            // NOTE: eval for performance
+            if (r % 25 == 0) { klog.debug("Done loop: {} / {}", r, prev_results.length); }
         }
 
-        klog.debug("Done core calcFdrs in _calcGseaMethod for results: " + prev_results.length);
+        klog.debug("Done core calcFdrs in _calcGseaMethod for results: {}", prev_results.length);
 
         return results;
     }
-
-} // End class PValueCalculatorImpls
+}

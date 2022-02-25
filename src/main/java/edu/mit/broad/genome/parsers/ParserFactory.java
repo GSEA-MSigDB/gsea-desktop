@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2021 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.genome.parsers;
 
@@ -13,7 +13,8 @@ import edu.mit.broad.genome.utils.FileUtils;
 import edu.mit.broad.vdb.chip.Chip;
 import edu.mit.broad.xbench.core.api.Application;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import xapps.gsea.GseaWebResources;
 
@@ -30,7 +31,6 @@ import java.util.*;
  *
  * @author Aravind Subramanian
  * @author David Eby
- * @version %I%, %G%
  */
 public class ParserFactory implements Constants {
     
@@ -44,7 +44,7 @@ public class ParserFactory implements Constants {
         }
     }
     
-    private static final Logger klog = Logger.getLogger(ParserFactory.class);
+    private static final Logger klog = LoggerFactory.getLogger(ParserFactory.class);
 
     /**
      * Privatized Class constructor
@@ -360,7 +360,7 @@ public class ParserFactory implements Constants {
             }
 
             if (!silentMode) {
-                klog.debug("From: " + path + " (and its supers & auxes) total # of templates made: " + allTemplates.size());
+                klog.debug("From: {} (and its supers & auxes) total # of templates made: {}", path, allTemplates.size());
             }
 
             if (add2cache) {
@@ -761,6 +761,9 @@ public class ParserFactory implements Constants {
             } else if (ext.equalsIgnoreCase(PCL)) {
                 return readDatasetPcl(path, is, useCache);
             } else if (ext.startsWith(CLS)) { // IMP note -- special for the aux hash
+                // TODO: fix CLS caching bug.
+                // We should really set add2cache=true here, but that causes us to have multiple
+                // copies of the CLS.
                 return readTemplate(path, is, useCache, useCache, false);
             } else if (ext.equalsIgnoreCase(GRP)) {
                 return readGeneSet(path, is, useCache);
@@ -1069,7 +1072,7 @@ public class ParserFactory implements Constants {
     }
 
     private static InputStream createInputStream(URL url) throws IOException {
-        klog.debug("Parsing URL: " + url.getPath() + " >> " + url.toString());
+        klog.debug("Parsing URL: {} >> {}", url.getPath(), url.toString());
         if (url.getProtocol().equalsIgnoreCase("ftp") && url.getHost().equalsIgnoreCase(GseaWebResources.getGseaFTPServer())) {
             try {
                 FtpSingleUrlTransferCommand ftpCommand = new FtpSingleUrlTransferCommand(url);

@@ -1,10 +1,11 @@
 /*
- * Copyright (c) 2003-2021 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.genome.math;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import xtools.api.Tool;
 
@@ -14,8 +15,7 @@ import java.util.Random;
  * @author Aravind Subramanian, David Eby
  */
 public class RandomSeedGenerators {
-
-    private static final Logger klog = Logger.getLogger(RandomSeedGenerators.class);
+    private static final Logger klog = LoggerFactory.getLogger(RandomSeedGenerators.class);
 
     public static RandomSeedGenerator lookup(String seedString, Tool tool) {
         if (StringUtils.isBlank(seedString)) { 
@@ -60,7 +60,7 @@ public class RandomSeedGenerators {
             }
         }
 
-        if (klog.isDebugEnabled()) { klog.debug("Creating a new seed with long: " + obj.toString()); }
+        if (klog.isDebugEnabled()) { klog.debug("Creating a new seed with long: {}", obj.toString()); }
         return new RandomSeedGenerators.Custom(seed.longValue());
     }
 

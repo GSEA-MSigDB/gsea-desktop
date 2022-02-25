@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2021 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.xbench.core.api;
 
@@ -8,7 +8,8 @@ import com.jidesoft.dialog.ButtonPanel;
 import edu.mit.broad.genome.swing.GuiHelper;
 import edu.mit.broad.xbench.actions.ext.BrowserAction;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import xapps.gsea.GseaWebResources;
 
@@ -26,7 +27,7 @@ import java.awt.event.MouseEvent;
  * @author Aravind Subramanian
  */
 public class DialogDescriptorJide implements DialogDescriptor {
-    private static final Logger klog = Logger.getLogger(DialogDescriptorJide.class);
+    private static final Logger klog = LoggerFactory.getLogger(DialogDescriptorJide.class);
 
     private JPanel fMainPanel;
     private int fChoosenOption = -1;
@@ -166,13 +167,13 @@ public class DialogDescriptorJide implements DialogDescriptor {
             buttonPanel.addButton(bCancel, ButtonPanel.CANCEL_BUTTON);
 
             if (fHelpAction_opt != null) {
-                klog.debug("Making help action button: " + fHelpAction_opt);
+                klog.debug("Making help action button: {}", fHelpAction_opt);
                 fChoosenOption = CANCEL_OPTION;
                 JButton bHelp = new JButton("Help");
                 bHelp.setAction(fHelpAction_opt);
                 buttonPanel.addButton(bHelp, ButtonPanel.HELP_BUTTON);
             } else {
-                klog.debug("Not making help action button: " + fHelpAction_opt);
+                klog.debug("Not making help action button: {}", fHelpAction_opt);
             }
 
             if (showLicenseButton) {

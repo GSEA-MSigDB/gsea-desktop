@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.io;
 
 import java.io.BufferedOutputStream;
@@ -12,7 +12,8 @@ import java.net.URL;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import xapps.gsea.GseaWebResources;
 
@@ -31,7 +32,7 @@ import edu.mit.broad.xbench.core.api.Application;
  * @author David Eby
  */
 public class FtpSingleUrlTransferCommand {
-    private static final Logger klog = Logger.getLogger(FtpSingleUrlTransferCommand.class);
+    private static final Logger klog = LoggerFactory.getLogger(FtpSingleUrlTransferCommand.class);
 
     private final FileTransferClient client;
     private final URL ftpURL;
@@ -99,7 +100,7 @@ public class FtpSingleUrlTransferCommand {
     }
 
     public FtpResultInputStream retrieveAsInputStream() throws FTPException, IOException {
-        klog.info("File download started.  Retrieving " + fileName + " from remote server...");
+        klog.info("File download started.  Retrieving {} from remote server...", fileName);
         setMonitorNote("Starting download");
         try {
             try {

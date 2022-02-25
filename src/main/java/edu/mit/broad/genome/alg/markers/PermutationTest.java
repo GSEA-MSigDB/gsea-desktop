@@ -1,14 +1,12 @@
 /*
- * Copyright (c) 2003-2020 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.genome.alg.markers;
 
 import edu.mit.broad.genome.StandardException;
 import edu.mit.broad.genome.alg.DatasetMetrics;
-import edu.mit.broad.genome.alg.DatasetStatsCore;
 import edu.mit.broad.genome.alg.Metric;
 import edu.mit.broad.genome.alg.RankedListGenerators;
-import edu.mit.broad.genome.alg.DatasetStatsCore.TwoClassMarkerStats;
 import edu.mit.broad.genome.math.*;
 import edu.mit.broad.genome.objects.*;
 import gnu.trove.TFloatArrayList;
@@ -18,7 +16,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * NamingConventions permutation tests
@@ -26,8 +25,7 @@ import org.apache.log4j.Logger;
  * @author Aravind Subramanian
  */
 public class PermutationTest {
-
-    private final Logger log = Logger.getLogger(PermutationTest.class);
+    private final Logger log = LoggerFactory.getLogger(PermutationTest.class);
 
     // The original dataset, untouched
     private Dataset fDataset;

@@ -1,12 +1,11 @@
 /*
- * Copyright (c) 2003-2021 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.genome.alg;
 
 import edu.mit.broad.genome.math.Vector;
 import edu.mit.broad.genome.math.XMath;
 import edu.mit.broad.genome.objects.Template;
-import org.apache.log4j.Logger;
 
 import java.util.Map;
 
@@ -23,8 +22,6 @@ import java.util.Map;
  * across i.e. different size feature vectors.
  */
 public class Metrics {
-    protected static final transient Logger klog = Logger.getLogger(Metrics.class);
-
     private static final int MIN_NUM_FOR_VAR = 3;
 
     // @maint add a metric and this array might need updating

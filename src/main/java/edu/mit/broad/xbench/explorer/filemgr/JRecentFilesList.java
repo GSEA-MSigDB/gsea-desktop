@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2020 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.xbench.explorer.filemgr;
 
@@ -17,7 +17,8 @@ import edu.mit.broad.xbench.actions.misc_actions.CopyFilesAction;
 import edu.mit.broad.xbench.actions.misc_actions.FilesSelectable;
 import edu.mit.broad.xbench.core.api.Application;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 
@@ -25,7 +26,6 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Font;
 import java.awt.Toolkit;
-//import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.ClipboardOwner;
 import java.awt.datatransfer.Transferable;
@@ -34,7 +34,6 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -48,8 +47,7 @@ import java.util.List;
  * @author Aravind Subramanian
  */
 public class JRecentFilesList extends JList implements DndSource, FilesSelectable {
-
-    private final Logger log = Logger.getLogger(JRecentFilesList.class);
+    private final Logger log = LoggerFactory.getLogger(JRecentFilesList.class);
     private JRecentFilesList fInstance;
     public static final String DEFAULT_TITLE = "Recent files";
     public static final Icon ICON = JarResources.getIcon("History24.gif");
@@ -100,7 +98,6 @@ public class JRecentFilesList extends JList implements DndSource, FilesSelectabl
      */
     public FileTransferable getSelectedFiles() {
         return (FileTransferable) getTransferable();
-
     }
 
     /**
@@ -132,18 +129,9 @@ public class JRecentFilesList extends JList implements DndSource, FilesSelectabl
         return this;
     }
 
-    /**
-     * Class ListCellRenderer
-     *
-     * @author Aravind Subramanian
-     * @version %I%, %G%
-     */
     class ListCellRenderer extends DefaultListCellRenderer {
 
         public ListCellRenderer() {
-
-            //log.debug(">>>> " + fInstance);
-
             // IMP to NOT place this piece of code in the popupmenu checker - that causes
             // the widget to launch twice
             fInstance.addMouseListener(new MouseAdapter() {
@@ -157,7 +145,7 @@ public class JRecentFilesList extends JList implements DndSource, FilesSelectabl
 
                         String item = fInstance.getSelectedValue().toString();
                         File file = new File(item);
-                        log.info("Loading ... " + file.getPath());
+                        log.info("Loading ... {}", file.getPath());
                         Application.getWindowManager().runDefaultAction(file);
                         Application.getFileManager().getRecentFilesStore().refresh(item);
                     }
@@ -179,9 +167,7 @@ public class JRecentFilesList extends JList implements DndSource, FilesSelectabl
             // doesnt work properly unless called
             super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
 
-            //log.debug(value + " class: " + value.getClass());
             if (value instanceof String) {
-
                 File file = new File(value.toString());
                 this.setText(FileUtils.shortenedPathRepresentation(file));
                 this.setIcon(DataFormat.getIcon(file));
@@ -206,7 +192,6 @@ public class JRecentFilesList extends JList implements DndSource, FilesSelectabl
 
             if (e.isPopupTrigger()) {
 
-                //log.debug("Launching popup trigger");
                 Object[] sel = fInstance.getSelectedValues();
 
                 if (sel == null) {
@@ -215,18 +200,15 @@ public class JRecentFilesList extends JList implements DndSource, FilesSelectabl
 
                 JPopupMenu popup = null;
 
-                log.debug(">> sel = " + sel.length);
+                log.debug(">> sel = {}", sel.length);
                 PurgeSelectedFilesAction purgeSelectedAction = null;
                 if (sel.length > 1) {
                     popup = new JPopupMenu();
                     File[] files = new File[sel.length];
                     for (int i = 0; i < sel.length; i++) {
-                        //log.debug(sel[i].getClass());
                         files[i] = new File(sel[i].toString());
                     }
 
-                    // old style that brings up a widget window
-                    //popup.add(new ParserAction(files));
                     // new way simply loads
                     popup.add(new ImportFilesAction(files));
                     purgeSelectedAction = new PurgeSelectedFilesAction(files);
@@ -247,17 +229,10 @@ public class JRecentFilesList extends JList implements DndSource, FilesSelectabl
                 }
             }
         }
-    }    // End of inner class MyPopupMouseListener
+    }
 
-    /**
-     * Class CopyFilePathAction
-     *
-     * @author Aravind Subramanian
-     */
     class CopyFilePathAction extends AbstractAction {
-
         CopyFilePathAction() {
-
             this.putValue(Action.NAME, "Copy File(s)");
             this.putValue(Action.SMALL_ICON, JarResources.getIcon("Copy16.gif"));
             this.putValue(Action.SHORT_DESCRIPTION, "Copy File(s)");

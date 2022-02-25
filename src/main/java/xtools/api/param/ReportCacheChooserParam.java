@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package xtools.api.param;
 
@@ -94,7 +94,7 @@ public class ReportCacheChooserParam extends AbstractObjectChooserParam {
                     buf.append(',');
                 }
             } else {
-                klog.warn("Illegal state: " + vals[i]);
+                klog.warn("Illegal state: {}", vals[i]);
             }
         }
 
@@ -148,7 +148,7 @@ public class ReportCacheChooserParam extends AbstractObjectChooserParam {
                     }
                 }
             } catch (Throwable t) {
-                log.error(t);
+                log.error(t.getMessage(), t);
             }
         }
 
@@ -176,7 +176,6 @@ public class ReportCacheChooserParam extends AbstractObjectChooserParam {
         return dir.listFiles(DataFormat.RPT_FORMAT.getFilenameFilter());
     }
 
-
     static class MyListRenderer extends DefaultListCellRenderer {
 
         public Component getListCellRendererComponent(final JList list,
@@ -195,7 +194,5 @@ public class ReportCacheChooserParam extends AbstractObjectChooserParam {
 
             return this;
         }
-    }    // End CommonLookListRenderer
-
-
-} // End class ReportCacheChooserParam
+    }
+}

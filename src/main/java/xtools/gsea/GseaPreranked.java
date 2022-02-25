@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2021 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package xtools.gsea;
 
@@ -173,7 +173,7 @@ public class GseaPreranked extends AbstractGseaTool {
             int collapseModeIndex = fFeatureSpaceParam.isRemap() ? 5 : fCollapseModeParam.getStringIndexChoosen();
             DatasetGenerators.CollapsedRL collapsedRL = new DatasetGenerators().collapse(origRL, chip, fIncludeOnlySymbols.isTrue(), collapseModeIndex);
 			RankedList collapsed = collapsedRL.symbolized;
-            log.info("Collapsing dataset was done. Original: " + origRL.getQuickInfo() + " collapsed: " + collapsed.getQuickInfo());
+            log.info("Collapsing dataset was done. Original: {} collapsed: {}", origRL.getQuickInfo(), collapsed.getQuickInfo());
 
             // Make a summary etiology always
             fReport.savePageTsv(collapsedRL.makeEtiologySdf());

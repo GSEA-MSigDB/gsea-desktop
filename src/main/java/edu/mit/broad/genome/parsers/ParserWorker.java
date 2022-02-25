@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2021 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.genome.parsers;
 
@@ -9,7 +9,8 @@ import java.io.FileInputStream;
 import javax.swing.ProgressMonitorInputStream;
 import javax.swing.SwingWorker;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import edu.mit.broad.genome.Errors;
 import edu.mit.broad.genome.objects.PersistentObject;
@@ -22,7 +23,7 @@ import edu.mit.broad.xbench.core.api.Application;
  * @author David Eby
  */
 public class ParserWorker extends SwingWorker<Object, Void> {
-    private static final Logger klog = Logger.getLogger(ParserWorker.class);
+    private static final Logger klog = LoggerFactory.getLogger(ParserWorker.class);
 
     private File[] files;
 
@@ -55,7 +56,7 @@ public class ParserWorker extends SwingWorker<Object, Void> {
                                 "' canceled.");
                     }
                     else {
-                        klog.info("Loaded file: " + files[f].getPath());
+                        klog.info("Loaded file: {}", files[f].getPath());
                         if (!pob.getWarnings().isEmpty()) { hadWarnings = true; }
                         Application.getFileManager().registerRecentlyOpenedFile(files[f]);
                         buf_s.append(files[f].getName()).append("\n");

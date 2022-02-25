@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package xapps.gsea;
 
@@ -31,7 +31,8 @@ import edu.mit.broad.xbench.actions.misc_actions.LoadAction;
 import edu.mit.broad.xbench.core.api.Application;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.awt.*;
 import java.io.File;
@@ -57,7 +58,7 @@ import javax.swing.JSeparator;
 public class GseaActionRegistry {
 
     private final Map<String, PobActions> fExtActionsMap = new HashMap<String, PobActions>();
-    private static final Logger klog = Logger.getLogger(GseaActionRegistry.class);
+    private static final Logger klog = LoggerFactory.getLogger(GseaActionRegistry.class);
 
     /**
      * @maint IMP Conventions:
@@ -260,9 +261,6 @@ public class GseaActionRegistry {
      * @maint Object <-> actions mapping mainatined here
      */
     public JPopupMenu createPopup(final Object obj) {
-    
-        //klog.debug("createPopup Object: " + obj);
-    
         if (obj instanceof File) {
             return createPopup((File) obj);
         } else {
@@ -319,7 +317,7 @@ public class GseaActionRegistry {
                     JMenuItem item = new JMenuItem(createAction(actions[i], file));
                     list.add(item);
                 } catch (Throwable e) {
-                    klog.error(e);
+                    klog.error(e.getMessage(), e);
                     list.add(new JMenuItem("Error making popup: " + e));
                 }
             }

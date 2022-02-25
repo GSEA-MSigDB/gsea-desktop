@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2021 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package xtools.gsea;
 
@@ -78,7 +78,7 @@ public abstract class AbstractGsea2Tool extends AbstractGseaTool {
         final RandomSeedGenerator rst = fRndSeedTypeParam.createSeed();
         final DatasetTemplate dt = new DatasetGenerators().extract(fullCd.getDataset(), template);
 
-        if (log.isDebugEnabled()) { log.debug(">>>>> Using samples: " + dt.getDataset().getColumnNames()); }
+        if (log.isDebugEnabled()) { log.debug(">>>>> Using samples: {}", dt.getDataset().getColumnNames()); }
 
         final KSTests tests = new KSTests(getOutputStream());
         

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2020 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.xbench.explorer.objmgr;
 
@@ -13,7 +13,8 @@ import edu.mit.broad.genome.swing.dnd.DragSourceDecorator;
 import edu.mit.broad.xbench.actions.misc_actions.CopyFilesAction;
 import edu.mit.broad.xbench.actions.misc_actions.FilesSelectable;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -38,8 +39,7 @@ import java.util.List;
  * @author Aravind Subramanian
  */
 public class ObjectTree extends JTree implements DndSource, FilesSelectable {
-
-    private static final Logger klog = Logger.getLogger(ObjectTree.class);
+    private static final Logger klog = LoggerFactory.getLogger(ObjectTree.class);
 
     /**
      * Class Constructor.
@@ -89,7 +89,6 @@ public class ObjectTree extends JTree implements DndSource, FilesSelectable {
             if (path == null) {
                 return;
             }
-            //log.info("path = " + path);
             GuiHelper.Tree.expandAll(this, path);
         } catch (Throwable t) {
             klog.warn("develop error -- ignoring", t);
@@ -130,7 +129,6 @@ public class ObjectTree extends JTree implements DndSource, FilesSelectable {
                     // its a "folder" those arent dndable
                 } else {
                     Object userobj = dmtr.getUserObject();
-                    //log.debug("UserObject is: " + userobj + " class: " + userobj.getClass());
                     if (userobj instanceof PersistentObject) {
                         pobs.add((PersistentObject)userobj);
                     }

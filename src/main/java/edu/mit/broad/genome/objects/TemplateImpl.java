@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.objects;
 
 import edu.mit.broad.genome.Printf;
@@ -31,7 +31,6 @@ import org.apache.commons.lang3.StringUtils;
  *
  * @author Michael Angelo
  * @author Aravind Subramanian (extensively re-engineered)
- * @version %I%, %G%
  */
 public class TemplateImpl extends AbstractTemplate {
 
@@ -639,9 +638,7 @@ public class TemplateImpl extends AbstractTemplate {
 
         Object obj = fItemProfilePosColorScheme.get(itemProfilePos);
         if (obj == null) {
-            //TraceUtils.showTrace();
-            log.warn("No color for item at profile pos: " + itemProfilePos + " existing pos-color scheme size: " + Printf.outs(fItemProfilePosColorScheme));
-            //throw new IllegalArgumentException("No color for item at profile pos: " + itemProfilePos + " existing pos-color map: " + Printf.outs(fItemProfilePosColorMap));
+            log.warn("No color for item at profile pos: {} existing pos-color scheme size: {}", itemProfilePos, Printf.outs(fItemProfilePosColorScheme));
             return Color.WHITE;
         }
 
@@ -680,11 +677,5 @@ public class TemplateImpl extends AbstractTemplate {
                 }
             }
         }
-
-        //log.debug(Printf.outs(fItemProfilePosColorScheme));
     }
-
-
-}        // End Template
-
-/*--- Formatted in Sun Java Convention Style on Fri, Sep 27, '02 ---*/
+}

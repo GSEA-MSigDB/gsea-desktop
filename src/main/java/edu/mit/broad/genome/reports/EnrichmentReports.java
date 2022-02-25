@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2021 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.genome.reports;
 
@@ -33,7 +33,8 @@ import gnu.trove.TIntObjectHashMap;
 import org.apache.commons.io.FileUtils;
 import org.apache.ecs.StringElement;
 import org.apache.ecs.html.*;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.genepattern.io.ImageUtil;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
@@ -75,7 +76,7 @@ import java.util.List;
  * Several enrichemnt related reports
  */
 public class EnrichmentReports {
-    protected static final transient Logger klog = Logger.getLogger(EnrichmentReports.class);
+    protected static final transient Logger klog = LoggerFactory.getLogger(EnrichmentReports.class);
 
     public static Shape createCircleShape() {
         return new Ellipse2D.Float(2f, 2f, 2f, 2f);
@@ -186,7 +187,7 @@ public class EnrichmentReports {
             if (!Float.isFinite(score.getES()) || !Float.isFinite(score.getNES()) || !Float.isFinite(score.getNP())
                     || !Float.isFinite(score.getFDR()) || !Float.isFinite(score.getFWER())) {
                 haveInfiniteOrNaN = true;
-                klog.warn("Scoring of " + results[i].getGeneSetName()  + " produced infinite Or NaN value(s)");
+                klog.warn("Scoring of {} produced infinite Or NaN value(s)", results[i].getGeneSetName());
             }
         }
         if (haveInfiniteOrNaN) {
@@ -560,7 +561,8 @@ public class EnrichmentReports {
                     // @note IMP IMP dont re-use as want this to be light (just files)
                     ereports.add(new EnrichmentReportImpl(htmlFile, plotFile));
                 } catch (Throwable thr) {
-                    klog.error("Error making details: " + gsetNames[r], thr);
+                    klog.error("Error making details: {}", gsetNames[r]);
+                    klog.error(thr.getMessage(), thr);
                 }
                 sm.setElement(r, coln++, "Details ..."); // i.e desc
             } else {
@@ -657,8 +659,7 @@ public class EnrichmentReports {
             }
 
             if ((int) esProfile.maxDevFrom0() != (int) es) { // int it as rounding errors
-                //TraceUtils.showTrace();
-                klog.warn("Possibly mismatched scores: " + esProfile.maxDevFrom0() + " " + es);
+                klog.warn("Possibly mismatched scores: {} {}", esProfile.maxDevFrom0(), es);
             }
 
             if (esProfile.getSize() != hitIndices.length) {
@@ -787,7 +788,7 @@ public class EnrichmentReports {
             sm.setElement(r, coln++, rank);
 
             if (!gset.isMember(symbol)) {
-                klog.warn("The ranked list content doesnt match the gene set content. Missing member: " + symbol);
+                klog.warn("The ranked list content doesnt match the gene set content. Missing member: {}", symbol);
             }
 
             sm.setElement(r, coln++, metricScore);
@@ -1171,13 +1172,13 @@ public class EnrichmentReports {
 
                 geneSets_sizes_file = report.savePageTsv(new StringDataframe("gene_set_sizes", sm, rowNames, colNames));
             } catch (Throwable t) {
-                klog.error(t); // dont penalize - not a critical error
+                klog.error(t.getMessage(), t); // dont penalize - not a critical error
                 geneSets_sizes_file = report.createFile("gene_set_sizes_errored_out.txt", "List of gene sets that errored out");
                 try {
                     FileUtils.writeStringToFile(geneSets_sizes_file, t.getStackTrace().toString());
                 }
                 catch (IOException ie) {
-                    klog.error(ie);
+                    klog.error(ie.getMessage(), ie);
                 }
             }
         }

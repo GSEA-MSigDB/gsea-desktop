@@ -78,6 +78,7 @@ task createDist(type: Copy, dependsOn: jar)  {
     from ("src/main/resources/edu/mit/broad/genome/resources/icon_64x64.png")
     from ('scripts/java11') {
         include 'gsea*'
+        include 'logging.properties'
         include 'readme.txt'
     }
     with copySpec {

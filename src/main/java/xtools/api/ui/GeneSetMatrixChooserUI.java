@@ -1,12 +1,10 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package xtools.api.ui;
 
 import edu.mit.broad.genome.swing.GuiHelper;
 import edu.mit.broad.genome.swing.fields.GFieldPlusChooser;
-import edu.mit.broad.genome.swing.fields.GOptionsFieldPlusChooser;
-import org.apache.log4j.Logger;
 
 import javax.swing.*;
 import java.awt.*;
@@ -15,11 +13,8 @@ import java.awt.event.ActionListener;
 
 /**
  * @author Aravind Subramanian
- * @version %I%, %G%
  */
 public class GeneSetMatrixChooserUI extends JPanel implements GFieldPlusChooser {
-
-    protected final Logger log = Logger.getLogger(GOptionsFieldPlusChooser.class);
     protected JTextField tfEntry = new JTextField(40);
     protected JButton bEntry = new JButton(GuiHelper.ICON_ELLIPSIS);
     protected GeneSetMatrixChooserWindow fWindow; // @note make lazilly -- see below
@@ -127,7 +122,4 @@ public class GeneSetMatrixChooserUI extends JPanel implements GFieldPlusChooser 
             this.setText(obj.toString());
         }
     }
-
-
-}    // End GeneSetMatrixChooserUI
-
+}

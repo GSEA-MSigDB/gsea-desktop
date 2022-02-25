@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.genome.parsers;
 
@@ -9,7 +9,10 @@ import edu.mit.broad.genome.objects.Template;
 import edu.mit.broad.genome.reports.api.Report;
 import edu.mit.broad.genome.swing.ProxyComboBoxModel;
 import edu.mit.broad.genome.swing.ProxyTreeModel;
-import org.apache.log4j.Logger;
+
+import org.jfree.util.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -25,8 +28,7 @@ import java.util.*;
  * @author Aravind Subramanian
  */
 public class ObjectCache {
-
-    private final Logger log = Logger.getLogger(ObjectCache.class);
+    private final Logger log = LoggerFactory.getLogger(ObjectCache.class);
 
     /**
      * key-> class names, value -> DefaultMutableTreeNode
@@ -189,8 +191,7 @@ public class ObjectCache {
         PathClass fc = new PathClass(path, cl);
 
         if (fObjectPathStringMap.containsKey(pob) && !(pob instanceof Template)) {
-            //TraceUtils.showTrace();
-            log.debug("Already cached object: " + pob + " in: " + fObjectPathStringMap.get(pob));
+            if (log.isDebugEnabled()) { log.debug("Already cached object: {} in: {}", pob, fObjectPathStringMap.get(pob)); }
         }
 
         fPathClassObjectMap.put(fc, pob);
@@ -211,8 +212,6 @@ public class ObjectCache {
         DefaultMutableTreeNode objclassNode = (DefaultMutableTreeNode) fClassNameNodeMap.get(cn);
         DefaultMutableTreeNode objNode = new DefaultMutableTreeNode(pob, false);
 
-        //log.debug("Added node: " + objNode);
-
         cleanupNode(pob, path, objclassNode);
         objclassNode.add(objNode);
 
@@ -221,7 +220,7 @@ public class ObjectCache {
                 fTreeModel.reload(objclassNode);
             }
         } catch (Throwable t) {
-            log.error(t);
+            log.error(t.getMessage(), t);
         }
 
         // then add to box model
@@ -297,7 +296,7 @@ public class ObjectCache {
     protected void sortModel(Class cn) {
         Object obj = fClassNameBoxModelMap.get(cn.getName());
         if (obj == null) {
-            log.debug("no object model yet for class: " + cn);
+            log.debug("no object model yet for class: {}", cn);
             return;
         }
 
@@ -327,7 +326,6 @@ public class ObjectCache {
     }
 
     public PobBoxModel _createBoxModel(Class cl) {
-
         Object emodel = fClassNameBoxModelMap.get(cl.getName());
         PobBoxModel real;
 
@@ -457,8 +455,7 @@ public class ObjectCache {
         public int hashCode() {
             return path.hashCode() + cl.getName().hashCode();
         }
-
-    } // End class PathClass
+    }
 
     public void makeVisible(PersistentObject pob, Class cl) {
         makeVisible(new PersistentObject[]{pob}, cl);
@@ -485,9 +482,7 @@ public class ObjectCache {
             throw new IllegalArgumentException("Parameter pob cannot be null");
         }
 
-        if (fInvisiblePobFileMap.containsKey(pob)) {
-            log.warn("Already registered: " + pob.getName() + " overwritting");
-        }
+        if (fInvisiblePobFileMap.containsKey(pob)) { log.warn("Already registered: {} overwriting", pob.getName()); }
 
         fInvisiblePobFileMap.put(pob, file);
     }

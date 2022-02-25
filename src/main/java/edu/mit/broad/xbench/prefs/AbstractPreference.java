@@ -1,15 +1,15 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.xbench.prefs;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Aravind Subramanian
  */
 abstract class AbstractPreference implements Preference {
-
     private String fName;
     private String fDesc;
     private Object fDefault;
@@ -18,7 +18,7 @@ abstract class AbstractPreference implements Preference {
 
     private boolean fNeedsRestart;
 
-    protected static final Logger klog = Logger.getLogger(AbstractPreference.class);
+    protected static final Logger klog = LoggerFactory.getLogger(AbstractPreference.class);
 
 
     /**
@@ -80,12 +80,7 @@ abstract class AbstractPreference implements Preference {
     }
 
     protected void _setValueOfPref2SelectionComponentValue(Object value) {
-        // Object value = getValue(); <- this gets the prefs value and not the components!
-        klog.debug("Saving pref: " + getName() + " getValue: " + value);
-        if (value != null) {
-            kPrefs.put(getName(), value.toString());
-        }
-
+        klog.debug("Saving pref: {} getValue: {}", getName(), value);
+        if (value != null) { kPrefs.put(getName(), value.toString()); }
     }
-
-} // End class AbstractPreference
+}

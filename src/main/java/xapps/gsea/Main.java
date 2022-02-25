@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package xapps.gsea;
 
@@ -14,7 +14,9 @@ import edu.mit.broad.genome.JarResources;
 import edu.mit.broad.xbench.ComparatorFactory2;
 
 import org.apache.commons.lang3.SystemUtils;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.MarkerFactory;
 import org.broad.gsea.ui.DesktopIntegration;
 
 import javax.swing.*;
@@ -24,9 +26,9 @@ import javax.swing.*;
  * Use this in jar files, command line etc to launch the application.
  *
  * @author Aravind Subramanian
- * @version %I%, %G%
  */
 public class Main {
+    private static final Logger klog = LoggerFactory.getLogger(Main.class);
 
     /**
      * Note that it is necessary to provide a JIDE Software license key in order to use JIDE Components, Dock and Grids.
@@ -48,8 +50,6 @@ public class Main {
         }
     }
 
-    private static final Logger klog = Logger.getLogger(Main.class);
-
     /**
      * Class Constructor.
      */
@@ -64,7 +64,6 @@ public class Main {
         SplashScreen.show();
 
         // start up the application
-
         final GseaFijiTabsApplicationFrame frame = new GseaFijiTabsApplicationFrame();
 
 	try {
@@ -95,7 +94,7 @@ public class Main {
             new Main();
         } catch (Throwable e) {
             e.printStackTrace();
-            klog.fatal("Could not create application", e);
+            klog.error(MarkerFactory.getMarker("FATAL"), "Could not create application", e);
         }
     }
 
@@ -164,4 +163,4 @@ public class Main {
         }
     
     }
-}    // End Main
+}

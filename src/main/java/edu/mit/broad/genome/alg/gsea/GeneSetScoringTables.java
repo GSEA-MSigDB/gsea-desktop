@@ -1,18 +1,19 @@
 /*
- * Copyright (c) 2003-2021 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.genome.alg.gsea;
 
 import edu.mit.broad.genome.math.XMath;
 import edu.mit.broad.genome.objects.GeneSet;
 import edu.mit.broad.genome.objects.RankedList;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Aravind Subramanian, David Eby
  */
 public class GeneSetScoringTables {
-    private static final Logger klog = Logger.getLogger(GeneSetScoringTables.class);
+    private static final Logger klog = LoggerFactory.getLogger(GeneSetScoringTables.class);
 
     public static GeneSetScoringTable[] createAllScoringTables() {
         return new GeneSetScoringTable[]{
@@ -278,7 +279,7 @@ public class GeneSetScoringTables {
             }
 
             if (real == null) {
-                klog.warn("Null real_rl so assuming real: " + rl.getName());
+                klog.warn("Null real_rl so assuming real: {}", rl.getName());
                 this.maxPosRealRank = rl.getMetricWeightStruc().getTotalPosLength();
             } else {
                 this.maxPosRealRank = real.getMetricWeightStruc().getTotalPosLength();
@@ -441,7 +442,7 @@ public class GeneSetScoringTables {
             }
 
             if (real == null) {
-                klog.warn("Null real_rl so assuming real: " + rl.getName());
+                klog.warn("Null real_rl so assuming real: {}", rl.getName());
                 this.maxPosRealRank = rl.getMetricWeightStruc().getTotalPosLength();
             } else {
                 this.maxPosRealRank = real.getMetricWeightStruc().getTotalPosLength();

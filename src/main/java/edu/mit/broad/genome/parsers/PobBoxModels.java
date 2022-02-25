@@ -1,9 +1,11 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.parsers;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.MarkerFactory;
 
 import javax.swing.*;
 import javax.swing.event.ListDataListener;
@@ -15,13 +17,11 @@ import javax.swing.event.ListDataListener;
  * IMP IKP: Unexpected behavior if models represnet the same data!
  *
  * @author Aravind Subramanian
- * @version %I%, %G%
  */
 public class PobBoxModels implements ComboBoxModel {
-
     private PobBoxModel[] fModels;
 
-    private Logger log = Logger.getLogger(PobBoxModels.class);
+    private Logger log = LoggerFactory.getLogger(PobBoxModels.class);
 
     /**
      * This is the comboination of model / no-selection sharing magic
@@ -65,7 +65,7 @@ public class PobBoxModels implements ComboBoxModel {
             }
         }
 
-        log.fatal("No model found for index: " + index);
+        log.error(MarkerFactory.getMarker("FATAL"), "No model found for index: {}", index);
         return null;
     }
 
@@ -82,13 +82,15 @@ public class PobBoxModels implements ComboBoxModel {
             }
         }
 
-        StringBuffer buf = new StringBuffer("No model found for object: " + obj).append('\n');
-        buf.append("# of models: " + fModels.length).append('\n');
-        for (int i = 0; i < fModels.length; i++) {
-            buf.append(fModels[i].getElementAt(0)).append('\n');
-        }
+        if (log.isErrorEnabled()) {
+            StringBuffer buf = new StringBuffer("No model found for object: " + obj).append('\n');
+            buf.append("# of models: " + fModels.length).append('\n');
+            for (int i = 0; i < fModels.length; i++) {
+                buf.append(fModels[i].getElementAt(0)).append('\n');
+            }
 
-        log.fatal(buf.toString());
+            log.error(MarkerFactory.getMarker("FATAL"), buf.toString());
+        }
         return null;
     }
 
@@ -146,6 +148,5 @@ public class PobBoxModels implements ComboBoxModel {
         Object getElement() {
             return model.getElementAt(itsElementIndex);
         }
-    } // End inner class ModelItsIndex
-
-} // End ProxyComboBoxModels
+    }
+}

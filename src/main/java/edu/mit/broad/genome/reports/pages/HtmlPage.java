@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2021 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.genome.reports.pages;
 
@@ -11,7 +11,8 @@ import edu.mit.broad.genome.reports.api.PicFile;
 
 import org.apache.ecs.Document;
 import org.apache.ecs.html.*;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.genepattern.heatmap.image.HeatMap;
 
 import java.io.File;
@@ -122,7 +123,7 @@ public class HtmlPage implements Page {
 
     private Document fDoc;
 
-    private Logger log = Logger.getLogger(HtmlPage.class);
+    private Logger log = LoggerFactory.getLogger(HtmlPage.class);
 
     private int fPicCnt = 1;
 

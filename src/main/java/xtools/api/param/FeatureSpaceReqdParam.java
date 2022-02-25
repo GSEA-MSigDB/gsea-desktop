@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package xtools.api.param;
 
@@ -7,18 +7,13 @@ import edu.mit.broad.genome.swing.fields.GFieldPlusChooser;
 
 import javax.swing.*;
 
-import org.apache.log4j.Logger;
-
 import java.awt.*;
 import java.awt.event.ActionListener;
 
 /**
  * @author Aravind Subramanian
- * @version %I%, %G%
  */
 public class FeatureSpaceReqdParam extends StringReqdParam implements ActionListener {
-    private static final Logger klog = Logger.getLogger(FeatureSpaceReqdParam.class);
-    
     // TODO: switch to an Enum rather than hard-coded Strings
     private static String[] MODES = new String[]{"Remap_Only", "Collapse", "No_Collapse"};
 

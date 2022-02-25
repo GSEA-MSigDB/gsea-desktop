@@ -8,7 +8,8 @@ import edu.mit.broad.genome.TraceUtils;
 import edu.mit.broad.vdb.chip.Chip;
 import edu.mit.broad.vdb.meg.Gene;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
@@ -24,7 +25,7 @@ public class FeatureAnnot extends AbstractObject {
     
         private boolean fReportedError = false;
     
-        private static final Logger klog = Logger.getLogger(Helper.class);
+        private static final Logger klog = LoggerFactory.getLogger(Helper.class);
     
         public Helper() {
         }
@@ -76,7 +77,7 @@ public class FeatureAnnot extends AbstractObject {
     
     }
 
-    private Logger log = Logger.getLogger(getClass());
+    private Logger log = LoggerFactory.getLogger(getClass());
 
     private List fFeatureNamesList;
 

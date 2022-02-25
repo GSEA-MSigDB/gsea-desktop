@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.xbench.searchers;
 
 import com.jidesoft.list.QuickListFilterField;
@@ -8,7 +8,8 @@ import com.jidesoft.swing.JideTitledBorder;
 import com.jidesoft.swing.PartialEtchedBorder;
 import com.jidesoft.swing.PartialSide;
 import com.jidesoft.swing.SearchableUtils;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import javax.swing.event.ListDataEvent;
@@ -32,7 +33,7 @@ public class GeneSearchList {
 
     private DefaultListModel listModel;
 
-    private Logger log = Logger.getLogger(GeneSearchList.class);
+    private Logger log = LoggerFactory.getLogger(GeneSearchList.class);
 
 
     public GeneSearchList() {
@@ -60,31 +61,8 @@ public class GeneSearchList {
     // @todo improve this
 
     public void setFeatures(final java.util.List featureNames) {
-        log.debug("setFeatures: " + featureNames.size());
+        log.debug("setFeatures: {}", featureNames.size());
         this.fFeatureNames = featureNames;
-
-        /*
-        if (listModelMap == null) {
-            listModelMap = new WeakHashMap();
-        }
-
-        DefaultListModel newListModel;
-        Object obj = listModelMap.get(featureNames);
-        if (obj != null) {
-            newListModel = (DefaultListModel) obj;
-        } else {
-            newListModel = new DefaultListModel();
-            //listModel.removeAllElements();
-            for (int i = 0; i < fFeatureNames.size(); i++) {
-                newListModel.addElement(fFeatureNames.get(i));
-                //listModel.addElement(fFeatureNames.get(i));
-            }
-            listModelMap.put(featureNames, newListModel);
-        }
-
-        this.listModel = newListModel;
-        */
-
         listModel.removeAllElements();
         for (int i = 0; i < fFeatureNames.size(); i++) {
             listModel.addElement(fFeatureNames.get(i));
@@ -162,5 +140,4 @@ public class GeneSearchList {
         fMainPanel.add(quickSearchPanel, BorderLayout.BEFORE_FIRST_LINE);
         fMainPanel.add(listPanel, BorderLayout.CENTER);
     }
-
-} // End class GeneSearchList
+}

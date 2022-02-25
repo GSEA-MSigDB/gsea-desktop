@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.xbench.tui;
 
@@ -11,7 +11,8 @@ import edu.mit.broad.genome.swing.GuiHelper;
 import edu.mit.broad.genome.swing.fields.GDirFieldPlusChooser;
 import edu.mit.broad.genome.swing.fields.GFieldPlusChooser;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import xtools.api.param.Param;
 import xtools.api.param.ParamSet;
@@ -28,8 +29,7 @@ import java.util.ArrayList;
  * Displays the params in a jgoodies form
  */
 public class ParamSetDisplay  {
-
-    private Logger log = Logger.getLogger(ParamSetDisplay.class);
+    private Logger log = LoggerFactory.getLogger(ParamSetDisplay.class);
 
     private ParamSet fParamSet;
 
@@ -372,7 +372,6 @@ public class ParamSetDisplay  {
      * restores defaults as got from the ParamSet
      */
     public void reset() {
-
         log.debug("Resetting params to defaults");
 
         for (int i = 0; i < fParamSet.getNumParams(); i++) {
@@ -421,5 +420,4 @@ public class ParamSetDisplay  {
         builder.setDefaultDialogBorder();
         return builder;
     }
-
-} // End class ParamSetForm
+}

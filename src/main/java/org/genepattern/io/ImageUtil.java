@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2018 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package org.genepattern.io;
 
 import edu.mit.broad.genome.StandardException;
@@ -11,7 +11,8 @@ import org.apache.batik.dom.GenericDOMImplementation;
 import org.apache.batik.svggen.SVGGraphics2D;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.genepattern.heatmap.image.HeatMap;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
@@ -35,7 +36,7 @@ import java.util.Set;
 import java.util.zip.GZIPOutputStream;
 
 public class ImageUtil {
-    private static final Logger klog = Logger.getLogger(ImageUtil.class);
+    private static final Logger klog = LoggerFactory.getLogger(ImageUtil.class);
 
     private ImageUtil() {
     }

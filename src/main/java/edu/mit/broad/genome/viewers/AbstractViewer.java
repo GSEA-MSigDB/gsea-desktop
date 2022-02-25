@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.viewers;
 
 import com.jidesoft.grid.SortableTable;
@@ -10,7 +10,8 @@ import edu.mit.broad.genome.objects.PersistentObject;
 import edu.mit.broad.genome.swing.GuiHelper;
 import edu.mit.broad.xbench.core.Widget;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import javax.swing.table.TableModel;
@@ -20,13 +21,9 @@ import javax.swing.table.TableModel;
  * Contains commonly useful initialization and methods.
  *
  * @author Aravind Subramanian
- * @version %I%, %G%
  */
 public abstract class AbstractViewer extends JPanel implements Widget {
-
     protected Logger log;
-
-    protected static final Logger klog = Logger.getLogger(AbstractViewer.class);
 
     private Icon fIcon;
 
@@ -49,7 +46,7 @@ public abstract class AbstractViewer extends JPanel implements Widget {
 
     // Users of this method must call init
     protected AbstractViewer() {
-        this.log = Logger.getLogger(this.getClass());
+        this.log = LoggerFactory.getLogger(this.getClass());
     }
 
     /**
@@ -87,9 +84,7 @@ public abstract class AbstractViewer extends JPanel implements Widget {
         this.fIcon = icon;
         this.fName = name;
         this.fTitle = title;
-        if (log == null) {
-            this.log = Logger.getLogger(this.getClass());
-        }
+        if (log == null) { this.log = LoggerFactory.getLogger(this.getClass()); }
 
     }
 
@@ -167,27 +162,15 @@ public abstract class AbstractViewer extends JPanel implements Widget {
             amodel = new NumberedProxyModel(model);
         }
 
-        //JTable table = new JTable(amodel);
         SortableTable table = new SortableTable(amodel); // @note changed for jide
 
         // @note comm out renderers Dec 2005 .. the move to jgoodies lnf makes the headers look not so good
 
         if (addRowNumCol) { // has to be done after setting model
-            //TableCellRenderer cellrend = new RendererFactory2.ColoredBgCellRenderer((GuiHelper.COLOR_VERY_LIGHT_GRAY));
-            //table.setDefaultRenderer(String.class, new RendererFactory2.RendererColumnAdapter(cellrend, 0));
             setColumnSize(35, 0, table, true);
         }
 
-        /*
-        if (boldHeaders) {
-            DefaultTableCellRenderer hrend = new RendererFactory2.BoldHeaderRenderer();
-            table.getTableHeader().setDefaultRenderer(hrend);
-        }
-        */
-
-        //table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
         table.setCellSelectionEnabled(true);
         return table;
     }
-
-} // End AbstractViewer
+}

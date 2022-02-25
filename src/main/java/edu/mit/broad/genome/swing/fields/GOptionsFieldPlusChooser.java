@@ -1,11 +1,10 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.swing.fields;
 
 import edu.mit.broad.genome.swing.GuiHelper;
 import edu.mit.broad.genome.swing.windows.GListWindow;
-import org.apache.log4j.Logger;
 
 import javax.swing.*;
 import java.awt.*;
@@ -16,16 +15,10 @@ import java.awt.event.ActionListener;
  * <p>JTextField with a button that when clicked on popus ups a JList window where  i or more
  * selections can be made. The selections are then pasted as comma delimited text into
  * the JTextField</p>
- * <p> </p>
- * <p> </p>
- * <p> </p>
  *
  * @author Aravind Subramanian
- * @version %I%, %G%
  */
 public class GOptionsFieldPlusChooser extends JPanel implements GFieldPlusChooser {
-
-    protected final Logger log = Logger.getLogger(GOptionsFieldPlusChooser.class);
     protected JTextField tfEntry = new JTextField(40);
     protected JButton bEntry = new JButton(GuiHelper.ICON_ELLIPSIS);
     protected GListWindow fWindow;
@@ -136,5 +129,4 @@ public class GOptionsFieldPlusChooser extends JPanel implements GFieldPlusChoose
             this.setText(obj.toString());
         }
     }
-
-}    // End GOptionsFieldPlusChooser
+}

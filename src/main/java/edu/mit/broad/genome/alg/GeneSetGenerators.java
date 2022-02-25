@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2021 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.genome.alg;
 
@@ -7,7 +7,8 @@ import edu.mit.broad.genome.NamingConventions;
 import edu.mit.broad.genome.math.*;
 import edu.mit.broad.genome.objects.*;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
@@ -15,7 +16,7 @@ import java.util.*;
  * @author Aravind Subramanian, David Eby
  */
 public class GeneSetGenerators {
-    private static Logger klog = Logger.getLogger(GeneSetGenerators.class);
+    private static Logger klog = LoggerFactory.getLogger(GeneSetGenerators.class);
 
     private GeneSetGenerators() { }
 
@@ -40,7 +41,7 @@ public class GeneSetGenerators {
             }
 
             if (members.size() != nmembers) {
-                klog.warn("Bad randomization -- repeated rnd members were made members: " + members.size() + " but wanted: " + nmembers);
+                klog.warn("Bad randomization -- repeated rnd members were made members: {} but wanted: {}", members.size(), nmembers);
             }
 
             rndgsets[g] = new GeneSet(prefix + "_" + g, members);

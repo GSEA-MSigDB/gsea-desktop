@@ -1,10 +1,11 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.utils;
 
 import edu.mit.broad.genome.parsers.ParseUtils;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
@@ -12,8 +13,7 @@ import java.util.*;
  * @author Aravind Subramanian
  */
 public class CmdLineArgs {
-
-    private static final Logger klog = Logger.getLogger(CmdLineArgs.class);
+    private static final Logger klog = LoggerFactory.getLogger(CmdLineArgs.class);
 
     public static String toString(String[] args) {
         // first recreate the arg line -- its easier to parse
@@ -92,8 +92,8 @@ public class CmdLineArgs {
             param_name = tokens.get(0).toString();
             param_val = tokens.get(1).toString();
         } else {
-            klog.warn("More than 2 tokens for key-value pair >" + origString + "<" + " " + tokens.size());
             int num = tokens.size();
+            klog.warn("More than 2 tokens for key-value pair >{}< {}", origString, num);
             param_name = tokens.get(0).toString();
 
             // heres the space fix
@@ -109,5 +109,4 @@ public class CmdLineArgs {
             prp.setProperty(param_name, param_val);
         }
     }
-
 }

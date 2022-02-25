@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.genome.objects;
 
@@ -19,10 +19,8 @@ import java.util.*;
  * This is the chief class that provides access to Dataset objects. Its used everywhere!
  *
  * @author Aravind Subramanian
- * @version %I%, %G%
  */
 public class DefaultDataset extends AbstractObject implements Dataset {
-
     private Matrix fMatrix;
 
     // these are Lists and not Sets as we want to be able to maintain the order
@@ -311,7 +309,7 @@ public class DefaultDataset extends AbstractObject implements Dataset {
             }
 
             try {
-                log.debug("LAZY loading dataset from: " + dsFile.getPath());
+                log.debug("LAZY loading dataset from: {}", dsFile.getPath());
                 // @note the annotation, row names , col names etc are NOT used
                 final Dataset ds = ParserFactory.readDataset(dsFile, true, true);
                 this.initMatrix(((DefaultDataset) ds).fMatrix, fRowNames.size(), fColNames.size());

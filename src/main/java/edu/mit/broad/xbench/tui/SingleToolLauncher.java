@@ -1,11 +1,10 @@
 /*
- * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.xbench.tui;
 
 import edu.mit.broad.genome.JarResources;
 import edu.mit.broad.xbench.core.Widget;
-import org.apache.log4j.Logger;
 import xtools.api.Tool;
 import xtools.api.param.ParamSet;
 
@@ -20,13 +19,10 @@ import java.util.StringTokenizer;
  * Tool rather than the discovery + tree display thing
  *
  * @author Aravind Subramanian
- * @version %I%, %G%
  */
 public class SingleToolLauncher extends JPanel implements Widget, MouseMotionListener, ToolRunnerControl.DisplayHook {
-
     public static final String TITLE = "Tool Launcher";
     public static final Icon ICON = JarResources.getIcon("ToolLauncher.gif");
-    private static final Logger klog = Logger.getLogger(SingleToolLauncher.class);
     private Tool fTool;
     private ParamSet fParamSet;
     private ToolRunnerControl fToolRunner;
@@ -157,5 +153,4 @@ public class SingleToolLauncher extends JPanel implements Widget, MouseMotionLis
     public void mouseMoved(MouseEvent e) {
         checkTable();
     }
-
-}    // End SingleToolLauncher
+}
