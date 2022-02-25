@@ -207,7 +207,7 @@ public class GeneSetScoringTables {
             this.rankedList = rl;
             for (int i = 0; i < this.gset.getNumMembers(); i++) {
                 float score = this.rankedList.getScore(gset.getMember(i));
-                float score_pow = (float) Math.pow(score, 1.5);
+                float score_pow = (float) Math.pow(Math.abs(score), 1.5);
                 totalWeight_sq += Float.isFinite(score_pow) ? score_pow : 0.000001f;
             }
 
