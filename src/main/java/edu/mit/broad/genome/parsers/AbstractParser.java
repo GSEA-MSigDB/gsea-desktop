@@ -298,13 +298,19 @@ public abstract class AbstractParser implements Parser {
         for (int i = 0; i < data.size(); i++) {
             matrix.setRow(i, data.get(i));
         }
-
+        
         final FeatureAnnot ann = new FeatureAnnot(objName, rowNames, rowDescs);
         ann.addComment(fComment.toString());
         final SampleAnnot sann = new SampleAnnot(objName, colNames);
 
         final Dataset ds = new DefaultDataset(objName, matrix, rowNames, colNames, new Annot(ann, sann));
         ds.addComment(fComment.toString());
+        if (data.size() <= 2000) {
+            String warning = "Loaded dataset with " + data.size() 
+                + " features.  This may be too few for GSEA, which expects data for all expressed genes for a proper analysis.";
+            log.warn(warning);
+            ds.addWarning(warning);
+        }
         if (foundInfiniteValues) {
             String warning = "Infinite values detected in this dataset. This may cause unexpected results in the calculations or failures in plotting.";
             log.warn(warning);

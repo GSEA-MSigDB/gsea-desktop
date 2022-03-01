@@ -94,6 +94,12 @@ public class RankedListParser extends AbstractParser {
     
             // changed march 2006 for the sorting
             RankedList rl = RankedListGenerators.createBySorting(objname, names.toArray(new String[names.size()]), floats.toNativeArray(), SortMode.REAL, Order.DESCENDING);
+            if (rl.getSize() <= 2000) {
+                String warning = "Loaded RNK with " + rl.getSize() 
+                    + " features.  This may be too few for GSEA, which expects data for all expressed genes for a proper analysis.";
+                log.warn(warning);
+                rl.addWarning(warning);
+            }
             if (foundInfiniteValues) {
                 String warning = "Infinite values detected in this RNK file. This may cause unexpected results in the calculations or failures in plotting.";
                 log.warn(warning);

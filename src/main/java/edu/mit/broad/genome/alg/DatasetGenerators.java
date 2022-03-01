@@ -141,6 +141,12 @@ public class DatasetGenerators {
                 chip), origDs.getAnnot().getSampleAnnot_global());
 
         cds.symbolized = new DefaultDataset(name, m, rowNames, origDs.getColumnNames(), annot);
+        if (cds.symbolized.getNumRow() <= 2000) {
+            String warning = "Collapsed dataset results in " + cds.symbolized.getNumRow() 
+                + " features.  This may be too few for GSEA, which expects data for all expressed genes for a proper analysis.";
+            log.warn(warning);
+            cds.symbolized.addWarning(warning);
+        }
         return cds;
     }
     
@@ -198,6 +204,12 @@ public class DatasetGenerators {
 	
 	    String newName = origRL.getName() + getExtendedName(collapse_gex_mode);
 	    RankedList sortedRL = RankedListGenerators.sortByVectorAndGetRankedList(cl_scores, SortMode.REAL, Order.DESCENDING, cl_rowNames).cloneShallowRL(newName);
+        if (sortedRL.getSize() <= 2000) {
+            String warning = "Collapsed ranked list results in " + sortedRL.getSize() 
+                + " features.  This may be too few for GSEA, which expects data for all expressed genes for a proper analysis.";
+            log.warn(warning);
+            sortedRL.addWarning(warning);
+        }
 		collapsedRL.symbolized = sortedRL;
 		return collapsedRL;
 	}

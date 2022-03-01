@@ -5,7 +5,6 @@ package edu.mit.broad.genome.parsers;
 
 import edu.mit.broad.genome.Constants;
 import edu.mit.broad.genome.NamingConventions;
-import edu.mit.broad.genome.math.Matrix;
 import edu.mit.broad.genome.objects.*;
 
 import java.io.*;

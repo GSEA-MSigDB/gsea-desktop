@@ -6,6 +6,8 @@ package xapps.api.frameworks.fiji;
 import com.jidesoft.popup.JidePopup;
 import com.jidesoft.status.*;
 import com.jidesoft.swing.JideBoxLayout;
+
+import edu.mit.broad.genome.Conf;
 import edu.mit.broad.genome.JarResources;
 import edu.mit.broad.genome.viewers.SystemConsoleViewer;
 
@@ -83,7 +85,7 @@ public class StatusBarAppender {
         final LabelStatusBarItem labelStatusBarItem;
         public LabelStatusBarLoggingHandler(LabelStatusBarItem labelStatusBarItem) {
             this.labelStatusBarItem = labelStatusBarItem;
-            this.setLevel(Level.INFO);
+            this.setLevel(Conf.isDebugMode() ? Level.FINE : Level.INFO);
             this.setFormatter(new SimpleFormatter());
         }
 
@@ -98,6 +100,9 @@ public class StatusBarAppender {
             if (!isLoggable(record)) { return; }
             try {
                 String message = getFormatter().format(record);
+                Level level = record.getLevel();
+                fStatusBarLabelItem.setForeground(Color.BLACK);
+                if (level == Level.WARNING) { fStatusBarLabelItem.setForeground(Color.MAGENTA); }
                 labelStatusBarItem.setText(message);
             } catch (Exception ex) {
                 reportError(null, ex, ErrorManager.FORMAT_FAILURE);
