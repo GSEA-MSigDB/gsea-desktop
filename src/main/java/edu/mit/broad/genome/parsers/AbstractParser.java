@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2021 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.genome.parsers;
 
@@ -13,7 +13,8 @@ import edu.mit.broad.genome.objects.FeatureAnnot;
 import edu.mit.broad.genome.objects.PersistentObject;
 import edu.mit.broad.genome.objects.SampleAnnot;
 import edu.mit.broad.genome.utils.ClassUtils;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.util.*;
@@ -25,9 +26,7 @@ import java.util.*;
  * @author David Eby
  */
 public abstract class AbstractParser implements Parser {
-    //TODO: let's just have ONE Logger, and use the actual subclass
     protected final Logger log;
-    protected static final Logger klog = Logger.getLogger(AbstractParser.class);
 
     protected final Comment fComment;
 
@@ -50,8 +49,7 @@ public abstract class AbstractParser implements Parser {
             throw new IllegalArgumentException("Parameter repClass cannot be null");
         }
 
-        //this.log = Logger.getLogger(this.getClass());
-        this.log = Logger.getLogger(AbstractParser.class);
+        this.log = LoggerFactory.getLogger(repClass);
         this.fComment = new Comment();
         this.fRepClass = repClass;
         this.fRepClassName = ClassUtils.shorten(fRepClass);
@@ -224,16 +222,7 @@ public abstract class AbstractParser implements Parser {
             throw new IllegalArgumentException("Parameter os cannot be null");
         }
 
-        /* @todo buggy
-        if (DataFormat.isCompatibleRepresentationClass(pob, fRepClass) == false) {
-            throw new IllegalArgumentException("Invalid pob for this parser - expecting: " + getRepresentationClass() + " but got: " + pob.getClass());
-        }
-        */
-
-        if (!fSilentMode) {
-            //TraceUtils.showTrace();
-            log.debug("Exporting: " + pob.getName() + " to: " + toName + " " + pob.getClass());
-        }
+        if (!fSilentMode) { log.debug("Exporting: {} to: {} {}", pob.getName(), toName, pob.getClass()); }
 
         _exportPw = new PrintWriter(os);
         return _exportPw;
@@ -247,15 +236,10 @@ public abstract class AbstractParser implements Parser {
     }
 
     protected void startImport(String sourcepath) {
-        if (!fSilentMode) {
-            //TraceUtils.showTrace();
-            log.info("Begun importing: " + fRepClassName + " from: " + sourcepath);
-        }
+        if (!fSilentMode) { log.info("Begun importing: {} from: {}", fRepClassName, sourcepath); }
     }
 
-    protected void doneImport() {
-        //log.info("Done importing: " + fRepClassName);
-    }
+    protected void doneImport() { }
 
     protected float parseStringToFloat(String s, boolean correctDoubleQuotes) {
         s = s.trim();
@@ -314,13 +298,19 @@ public abstract class AbstractParser implements Parser {
         for (int i = 0; i < data.size(); i++) {
             matrix.setRow(i, data.get(i));
         }
-
+        
         final FeatureAnnot ann = new FeatureAnnot(objName, rowNames, rowDescs);
         ann.addComment(fComment.toString());
         final SampleAnnot sann = new SampleAnnot(objName, colNames);
 
         final Dataset ds = new DefaultDataset(objName, matrix, rowNames, colNames, new Annot(ann, sann));
         ds.addComment(fComment.toString());
+        if (data.size() <= 2000) {
+            String warning = "Loaded dataset with " + data.size() 
+                + " features.  This may be too few for GSEA, which expects data for all expressed genes for a proper analysis.";
+            log.warn(warning);
+            ds.addWarning(warning);
+        }
         if (foundInfiniteValues) {
             String warning = "Infinite values detected in this dataset. This may cause unexpected results in the calculations or failures in plotting.";
             log.warn(warning);
@@ -343,7 +333,7 @@ public abstract class AbstractParser implements Parser {
     protected boolean checkForInfiniteValues(float[] dataRow, int row, String rowname) {
         for (int i = 0; i < dataRow.length; i++) {
         	if (Float.isInfinite(dataRow[i])) {
-                log.warn("Infinite values found in row " + (row+1) + " of the data matrix with Name '" + rowname + "'.");
+                log.warn("Infinite values found in row {} of the data matrix with Name '{}'.", (row+1), rowname);
                 return true;
         	}
         }
@@ -356,9 +346,9 @@ public abstract class AbstractParser implements Parser {
         	if (Float.isNaN(dataRow[i])) { missingCount++; }
         }
         if (missingCount == dataRow.length) {
-            log.warn("All values missing in row " + (row+1) + " of the data matrix with Name '" + rowname + "'.  Row will be ignored.");
+            log.warn("All values missing in row {} of the data matrix with Name '{}'.  Row will be ignored.", (row+1), rowname);
         } else  if (missingCount > 0) {
-            log.warn("Missing values found in row " + (row+1) + " of the data matrix with Name '" + rowname + "'.");
+            log.warn("Missing values found in row {} of the data matrix with Name '{}'.", (row+1), rowname);
         }
         return missingCount;
     }
@@ -370,7 +360,7 @@ public abstract class AbstractParser implements Parser {
             try {
                 dataRow[col++] = parseStringToFloat(s, true);
             } catch (NumberFormatException nfe) {
-                log.error("Could not parse '" + s + "' as a floating point number in row " + (row+1) + " of the data matrix with Name '" + rowname + "'.");
+                log.error("Could not parse '{}' as a floating point number in row {} of the data matrix with Name '{}'.", s, (row+1), rowname);
                 throw nfe;
             }
         }
@@ -419,7 +409,7 @@ public abstract class AbstractParser implements Parser {
                 } else if (fields.length == 2) {
                     fKeyValues.put(fields[0].toUpperCase(), fields[1]);
                 } else {
-                    log.warn("Bad comment KEY=VALUE field: Got more tokens than expected: " + fields.length);
+                    log.warn("Bad comment KEY=VALUE field: Got more tokens than expected: {}", fields.length);
                 }
             } else {
                 if (fLines == null) {

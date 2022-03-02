@@ -1,16 +1,16 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.xbench.xchoosers;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Inner class for a bag of templates possibly from seperate source files
  */
 public class TemplateSelectionMultiSource extends TemplateSelection {
-
-    protected Logger log = Logger.getLogger(TemplateSelectionMultiSource.class);
+    private Logger log = LoggerFactory.getLogger(TemplateSelectionMultiSource.class);
 
     // IMP IMP IMP
     // Override sub-class as we want the full paths for ALL templates
@@ -18,12 +18,9 @@ public class TemplateSelectionMultiSource extends TemplateSelection {
     // fullpath2mainTemplate#foo,fullpath2mainTemplate#bar ...
     // OVA and ALL_PAIRS are magic strings that expand
     public String formatForUI() {
-
         if (fTemplateNamesOrPaths == null) {
             return null;
         }
-
-        //klog.debug("TemplatePaths: " + fTemplatePaths);
 
         String[] vals = (String[]) fTemplateNamesOrPaths.toArray(new String[fTemplateNamesOrPaths.size()]);
 
@@ -31,7 +28,7 @@ public class TemplateSelectionMultiSource extends TemplateSelection {
             return "";
         }
 
-        StringBuffer buf = new StringBuffer();
+        StringBuilder buf = new StringBuilder();
         for (int i = 0; i < vals.length; i++) {
             if (vals[i] == null) {
                 continue;
@@ -44,8 +41,7 @@ public class TemplateSelectionMultiSource extends TemplateSelection {
             }
         }
 
-        log.debug("Got combo string: " + buf.toString());
+        log.debug("Got combo string: {}", buf.toString());
         return buf.toString();
     }
-
-} // End inner class MultiSource
+}

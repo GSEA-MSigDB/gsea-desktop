@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2020 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.xbench.core.api;
 
@@ -7,7 +7,9 @@ import edu.mit.broad.genome.alg.ComparatorFactory;
 import edu.mit.broad.genome.parsers.ParseUtils;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.MarkerFactory;
 
 import javax.swing.*;
 import java.io.File;
@@ -23,8 +25,7 @@ import java.util.List;
  * @note Does nothing if the JVM is not in xomics mode
  */
 public class XStore extends AbstractListModel<String> implements ComboBoxModel<String> {
-
-    private static final Logger klog = Logger.getLogger(XStore.class);
+    private static final Logger klog = LoggerFactory.getLogger(XStore.class);
 
     private File fFile;
 
@@ -90,7 +91,8 @@ public class XStore extends AbstractListModel<String> implements ComboBoxModel<S
             this.fireContentsChanged(this, 0, fLinesByFileExt.size());
 
         } catch (Throwable t) {
-            klog.fatal("Could not init store: " + fFile, t);
+            klog.error(MarkerFactory.getMarker("FATAL"), "Could not init store: {}", fFile);
+            klog.error(t.getMessage(), t);
         }
     }
 

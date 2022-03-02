@@ -1,11 +1,12 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.reports.api;
 
 import org.apache.ecs.html.LI;
 import org.apache.ecs.html.UL;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,10 +16,9 @@ import java.util.List;
  */
 // A simple container
 public class ToolComments {
-
     private List fComments;
 
-    private Logger log = Logger.getLogger(ToolComments.class);
+    private Logger log = LoggerFactory.getLogger(ToolComments.class);
 
     public ToolComments() {
         this.fComments = new ArrayList();
@@ -57,5 +57,4 @@ public class ToolComments {
 
         return buf.toString();
     }
-
-} // End class ToolComments
+}

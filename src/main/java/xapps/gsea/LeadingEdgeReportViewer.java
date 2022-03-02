@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package xapps.gsea;
 
@@ -47,21 +47,14 @@ public class LeadingEdgeReportViewer extends AbstractViewer {
 
     private LeadingEdgeReportViewer fInstance = this;
 
-    /**
-     * Builds a Viewer on specified FSet object
-     *
-     * @param gset
-     */
     public LeadingEdgeReportViewer() {
         super(NAME, ICON, "Leading edge analysis");
         jbInit();
     }
 
-
     private JideTabbedPane sharedTabbedPane;
 
     private void jbInit() {
-
         JButton bBuild = new JButton("Load GSEA Results");
 
         bBuild.addActionListener(new ActionListener() {
@@ -84,7 +77,7 @@ public class LeadingEdgeReportViewer extends AbstractViewer {
                                 }
 
                                 EnrichmentDb edb = ParserFactory.readEdb(curr_gseaResultDir, true);
-                                log.debug("edb: " + edb.getQuickInfo());
+                                if (log.isDebugEnabled()) { log.debug("edb: {}", edb.getQuickInfo()); }
 
                                 boolean first = false;
                                 if (sharedTabbedPane == null) {
@@ -124,7 +117,6 @@ public class LeadingEdgeReportViewer extends AbstractViewer {
         this.fDirParam = new DirParam("dir", "[ OR ] Locate a GSEA result folder from the file system", "[ OR ] Locate a GSEA report folder from the file system", false);
         final Param[] params = new Param[]{fReportParam, fDirParam};
 
-        // -------------------------------------------------------------------------------------------- //
         StringBuffer colStr = _createColStr();
         StringBuffer rowStr = _createRowStr(params);
 
@@ -153,7 +145,6 @@ public class LeadingEdgeReportViewer extends AbstractViewer {
         builder.add(bBuild, cc.xy(3, rowcnt));
 
         final JPanel paramPanel = builder.getPanel();
-        // -------------------------------------------------------------------------------------------- //
 
         this.setLayout(new BorderLayout(10, 10));
         this.add(paramPanel, BorderLayout.NORTH);
@@ -186,5 +177,4 @@ public class LeadingEdgeReportViewer extends AbstractViewer {
     public JMenuBar getJMenuBar() {
         return EMPTY_MENU_BAR;
     }
-
-} // End class LeadingEdgeReportWidget
+}

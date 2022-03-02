@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2020 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package xtools.gsea;
 
@@ -158,9 +158,8 @@ public class LeadingEdgeTool extends AbstractTool {
 
         Dataset lev_ds_clustered = null;
         try {
-            log.info("Clustering signal matrix: " + lev_ds.getQuickInfo() + " " + lev_ds_file.getPath());
+            log.info("Clustering signal matrix: {} {}", lev_ds.getQuickInfo(), lev_ds_file.getPath());
             lev_ds_clustered = HCLAlgorithm.cluster(lev_ds);
-
         } catch (Throwable t) {
             fReport.addError("Trouble clustering", t);
         }
@@ -319,11 +318,10 @@ public class LeadingEdgeTool extends AbstractTool {
         try {
             if (dirp.isSpecified()) {
                 String dpn = dirp.getDir().getName();
-                StringBuffer buf = new StringBuffer();
+                StringBuilder buf = new StringBuilder();
                 buf.append("<div id=\"footer\" style=\"width: 905; height: 35\">\n").append(
                         "<h3 style=\"text-align: left\"><font color=\"#808080\">Leading edge report for ").append(
                         "GSEA result folder: ").append(dpn).append("</font></h3>\n").append("</div>");
-
                 return buf.toString();
             }
         } catch (Throwable t) {

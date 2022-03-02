@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.genome.parsers;
 
@@ -26,7 +26,6 @@ import java.util.*;
  *
  * @author Michael Angelo
  * @author Aravind Subramanian (adapted for xomics)
- * @version %I%, %G%
  */
 public class ClsParser extends AbstractParser implements Constants {
 
@@ -360,9 +359,7 @@ public class ClsParser extends AbstractParser implements Constants {
         StringTokenizer st = new StringTokenizer(currLine, " \t");
         Template.Item[] items = new Template.Item[st.countTokens()];
 
-        if (!isSilentMode()) {
-            log.debug("# of items = " + st.countTokens());
-        }
+        if (!isSilentMode()) { log.debug("# of items = {}", st.countTokens()); }
 
         while (st.hasMoreTokens()) {
             String className = st.nextToken().trim();
@@ -426,8 +423,4 @@ public class ClsParser extends AbstractParser implements Constants {
     private static boolean isNumericColumn(final String colName) {
         return colName.equalsIgnoreCase("NUMERIC") || colName.equalsIgnoreCase("FLOAT");
     }
-
-
-}    // End ClsParser
-
-/*--- Formatted in Sun Java Convention Style on Fri, Sep 27, '02 ---*/
+}

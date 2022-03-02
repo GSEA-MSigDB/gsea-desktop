@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.genome.objects;
 
@@ -11,7 +11,6 @@ import java.util.*;
 
 /**
  * @author Aravind Subramanian
- * @version %I%, %G%
  */
 public class BitSetDataset extends AbstractObject {
 
@@ -128,7 +127,7 @@ public class BitSetDataset extends AbstractObject {
         if (shareBitSets) {
             this.fBitSets = bss;
         } else {
-            log.debug("NON-sharing mode, so making deep copy of bitsets: " + bss.length);
+            log.debug("NON-sharing mode, so making deep copy of bitsets: {}", bss.length);
             this.fBitSets = new BitSet[bss.length];
             for (int i = 0; i < bss.length; i++) {
                 this.fBitSets[i] = (BitSet) bss[i].clone();

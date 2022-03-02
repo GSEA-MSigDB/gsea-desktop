@@ -1,16 +1,16 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.xbench.actions;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Aravind Subramanian
  */
 public class PobActions {
-
-    private static final Logger klog = Logger.getLogger(PobActions.class);
+    private static final Logger klog = LoggerFactory.getLogger(PobActions.class);
 
     public XAction[] allActions;
     public int defObjectActionIndex;
@@ -31,22 +31,22 @@ public class PobActions {
 
         // dont exception, it is used in initialization
         if (defObjectActionIndex >= allActions.length) {
-            klog.fatal("Invalid default object action index: " + defObjectActionIndex + " length: " + allActions.length);
+            klog.error("Invalid default object action index: {} length: {}", defObjectActionIndex, allActions.length);
         }
 
         if (allActions[defObjectActionIndex] == null) {
-            klog.fatal("Invalid default object action index: " + defObjectActionIndex + " it is null");
+            klog.error("Invalid default object action index: {} it is null", defObjectActionIndex);
         }
 
         if (defFileActionIndex >= allActions.length) {
-            klog.fatal("Invalid default file action index: " + defObjectActionIndex + " length: " + allActions.length);
+            klog.error("Invalid default file action index: {} length: ", defObjectActionIndex, allActions.length);
         }
 
         if (allActions[defFileActionIndex] == null) {
-            klog.fatal("Invalid default file action index: " + defObjectActionIndex + " it is null");
+            klog.error("Invalid default file action index: {} it is null", defObjectActionIndex);
         }
 
         this.defObjectActionIndex = defObjectActionIndex;
         this.defFileActionIndex = defFileActionIndex;
     }
-} // End inner class DXAction
+}

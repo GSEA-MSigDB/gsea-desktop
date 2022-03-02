@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package xtools.api.ui;
 
@@ -9,7 +9,8 @@ import edu.mit.broad.genome.parsers.ParseUtils;
 import edu.mit.broad.genome.parsers.ParserFactory;
 import edu.mit.broad.xbench.core.api.Application;
 import edu.mit.broad.xbench.core.api.DialogDescriptor;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import xtools.api.param.Param;
 
 import javax.swing.*;
@@ -19,11 +20,9 @@ import java.util.ArrayList;
 
 /**
  * @author Aravind Subramanian
- * @version %I%, %G%
  */
 public class GeneSetMatrixChooserWindow {
-
-    private static final Logger klog = Logger.getLogger(GeneSetMatrixChooserWindow.class);
+    private static final Logger klog = LoggerFactory.getLogger(GeneSetMatrixChooserWindow.class);
     private JList[] jlGenes;
 
     private final JTextArea taGenes = new JTextArea();
@@ -31,13 +30,7 @@ public class GeneSetMatrixChooserWindow {
     private NamedModel[] fModels;
     private int fSelectionMode = ListSelectionModel.SINGLE_SELECTION;
 
-
-    /**
-     * Class Constructor.
-     */
-    public GeneSetMatrixChooserWindow() {
-    }
-
+    public GeneSetMatrixChooserWindow() { }
 
     /**
      * Model must already filled
@@ -145,7 +138,7 @@ public class GeneSetMatrixChooserWindow {
                     try {
                         ParserFactory.save(gset, File.createTempFile(gset.getName(), ".grp"));
                     } catch (Throwable t) {
-                        klog.error(t);
+                        klog.error(t.getMessage(), t);
                     }
                     allValues.add(gset);
                 }
@@ -153,6 +146,4 @@ public class GeneSetMatrixChooserWindow {
             return allValues.toArray(new Object[allValues.size()]);
         }
     }
-
-}        // End GListWindow
-
+}

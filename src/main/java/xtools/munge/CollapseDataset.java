@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2021 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package xtools.munge;
 
@@ -14,6 +14,7 @@ import xtools.api.param.DatasetReqdParam;
 import xtools.api.param.ModeReqdParam;
 import xtools.api.param.StringInputParam;
 
+import java.util.List;
 import java.util.Properties;
 
 /**
@@ -55,7 +56,12 @@ public class CollapseDataset extends AbstractTool {
         DatasetGenerators.CollapsedDataset cds = new DatasetGenerators().collapse(ds, chip, fIncludeOnlySymbols.isTrue(),
                 fModeParam.getStringIndexChoosen(), fResultFileNameParam.getValueStringRepresentation(true));
 
-        log.debug("# after collapsing: " + cds.symbolized.getNumRow());
+        List<String> warnings = ds.getWarnings();
+        for (String warning : warnings) { fReport.addWarning(warning); }
+        warnings = cds.symbolized.getWarnings();
+        for (String warning : warnings) { fReport.addWarning(warning); }
+        
+        log.debug("# after collapsing: {}", cds.symbolized.getNumRow());
 
         fReport.savePage(cds.symbolized, true);
 

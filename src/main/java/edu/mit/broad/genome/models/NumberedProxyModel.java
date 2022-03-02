@@ -1,38 +1,24 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.models;
-
-import org.apache.log4j.Logger;
 
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableModel;
 
 /**
- * proxy model that addds a rwo # as the first column to the specified real model
+ * proxy model that adds a row # as the first column to the specified real model
  *
  * @author Aravind Subramanian
- * @version %I%, %G%
  */
 public class NumberedProxyModel extends AbstractTableModel {
-
-    private final Logger log = Logger.getLogger(NumberedProxyModel.class);
     private TableModel fRealModel;
     private int fStartNumberingFromRowIndex;
 
-    /**
-     * Class Constructor.
-     * Cretaes a default row name based annotation for use.
-     */
-    public NumberedProxyModel(TableModel model) {
-        this(model, 0);
-    }
+    public NumberedProxyModel(TableModel model) { this(model, 0); }
 
     public NumberedProxyModel(TableModel model, int startNumberingFromRowIndex) {
-
-        if (model == null) {
-            throw new IllegalArgumentException("Param model cannot be null");
-        }
+        if (model == null) { throw new IllegalArgumentException("Param model cannot be null"); }
 
         this.fRealModel = model;
         this.fStartNumberingFromRowIndex = startNumberingFromRowIndex;
@@ -81,4 +67,4 @@ public class NumberedProxyModel extends AbstractTableModel {
     public boolean isCellEditable(int row, int col) {
         return false;
     }
-}    // End NumberedProxyModel
+}

@@ -24,6 +24,7 @@ fi;
 
 exec java --module-path="${prefix}/modules" -Xmx4g \
     -Djava.awt.headless=true $PREFS_PROP \
+    -Djava.util.logging.config.file="${prefix}/logging.properties" \
     @"${prefix}/gsea.args" \
     --patch-module="jide.common=${prefix}/lib/jide-components-3.7.4.jar:${prefix}/lib/jide-dock-3.7.4.jar:${prefix}/lib/jide-grids-3.7.4.jar" \
     --module=org.gsea_msigdb.gsea/xapps.gsea.CLI "$@"

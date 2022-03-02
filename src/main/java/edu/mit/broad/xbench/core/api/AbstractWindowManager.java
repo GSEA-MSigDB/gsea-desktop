@@ -1,12 +1,13 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.xbench.core.api;
 
 import edu.mit.broad.genome.Errors;
 import edu.mit.broad.xbench.core.ApplicationDialog;
 import edu.mit.broad.xbench.core.WrappedComponent;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
@@ -15,16 +16,10 @@ import java.awt.*;
  * @author Aravind Subramanian
  */
 public abstract class AbstractWindowManager implements WindowManager {
-
     private JFrame fRootFrame;
 
-    protected static final Logger klog = Logger.getLogger(AbstractWindowManager.class);
+    private static final Logger klog = LoggerFactory.getLogger(AbstractWindowManager.class);
 
-    /**
-     * Class constructor
-     *
-     * @param rootFrame
-     */
     public AbstractWindowManager(final JFrame rootFrame) {
         if (rootFrame == null) {
             throw new IllegalArgumentException("Param rootFrame cannot be null");
@@ -46,12 +41,6 @@ public abstract class AbstractWindowManager implements WindowManager {
         //klog.debug("Getting root frame: " + fRootFrame + " " + fRootFrame.getName());
         return fRootFrame;
     }
-
-    
-
-    // -------------------------------------------------------------------------------------------- //
-    // ----------------------------- DISPLAYS A MESSAGE INFO, WARNING ETC ------------------------- //
-    // -------------------------------------------------------------------------------------------- //
 
     public void showError(final String msg, final Throwable t) {
         klog.error(msg, t);
@@ -76,14 +65,8 @@ public abstract class AbstractWindowManager implements WindowManager {
                           final JButton[] customRemedyOptions) {
         klog.error(msg);
         ApplicationDialog.showError(msg, t);
-        klog.debug("TO DO the customRemedyOptions: " + customRemedyOptions);
+        klog.debug("TO DO the customRemedyOptions: {}", customRemedyOptions.toString());
     }
-
-    
-
-    // -------------------------------------------------------------------------------------------- //
-    // -------------------------------------------------------------------------------------------- //
-    // -------------------------------------------------------------------------------------------- //
 
     public boolean showConfirm(final String msg) {
         klog.info(msg);
@@ -114,8 +97,6 @@ public abstract class AbstractWindowManager implements WindowManager {
     }
 
     public DialogDescriptor createDialogDescriptor(final String title, final Component comp) {
-        //return new DialogDescriptor_v1(title, comp, null);
         return new DialogDescriptorJide(title, comp, null);
     }
-
-} // End class WindowManagerImpl
+}

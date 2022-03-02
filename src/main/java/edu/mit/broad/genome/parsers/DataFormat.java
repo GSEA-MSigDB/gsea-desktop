@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2020 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.genome.parsers;
 
@@ -12,7 +12,8 @@ import edu.mit.broad.genome.objects.esmatrix.db.EnrichmentDb;
 import edu.mit.broad.genome.reports.api.Report;
 import edu.mit.broad.genome.utils.SystemUtils;
 import edu.mit.broad.vdb.chip.Chip;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import javax.swing.filechooser.FileView;
@@ -30,15 +31,9 @@ import java.util.Map;
  */
 // TODO: parameterize class, throughout
 public class DataFormat extends DataType implements Constants {
+    public DataFormat() { }
 
-    /**
-     * Class constructor
-     * Does nothing. Dont use -- static methods only
-     */
-    public DataFormat() {
-    }
-
-    private static final Logger klog = Logger.getLogger(DataFormat.class);
+    private static final Logger klog = LoggerFactory.getLogger(DataFormat.class);
 
     public static final DataFormat XLS_FORMAT = new DataFormat(ExtFormat.class, "Excel",
             "Microsoft Excel", Constants.XLS,
@@ -411,7 +406,7 @@ public class DataFormat extends DataType implements Constants {
         if (obj != null) {
             return obj.toString();
         } else {
-            klog.warn("No extension found for class: " + cl);
+            klog.warn("No extension found for class: {}", cl);
             return "txt";
         }
     }

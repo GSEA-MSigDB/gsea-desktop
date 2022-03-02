@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.xbench.xchoosers;
 
 import com.jidesoft.dialog.ButtonPanel;
@@ -14,7 +14,8 @@ import edu.mit.broad.xbench.RendererFactory2;
 import edu.mit.broad.xbench.core.api.Application;
 import edu.mit.broad.xbench.core.api.DialogDescriptor;
 import gnu.trove.TIntArrayList;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import javax.swing.text.Document;
@@ -44,7 +45,7 @@ public class TemplateChooserUI {
 
     protected JComboBox cbTemplates;
 
-    private Logger log = Logger.getLogger(TemplateChooserUI.class);
+    private Logger log = LoggerFactory.getLogger(TemplateChooserUI.class);
 
     private boolean fIsMultiAllowed;
 
@@ -143,37 +144,6 @@ public class TemplateChooserUI {
             }
         });
 
-        /*
-        JButton bSummCombo = new JButton("Show All OVA/FOVA/ALL_PAIRS ");
-        bSummCombo.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                // get all current templates
-                List allTss = ParserFactory.getCache().getCachedObjectsL(Template.class);
-                List allTds = new ArrayList();
-                for (int i = 0; i < allTss.size(); i++) {
-                    Template template = (Template) allTss.get(i);
-                    if (template.isAux() == false) {
-                        TemplateDerivative[] tds = createOvaAllPairsTemplateOptions(template);
-                        for (int t = 0; t < tds.length; t++) {
-                            allTds.add(tds[t]);
-                        }
-                    }
-                }
-
-                DefaultComboBoxModel model = new DefaultComboBoxModel(allTds.toArray(new TemplateDerivative[allTds.size()]));
-                jlOptions.setModel(model);
-                setListOptionsInComboMode(true);
-            }
-        });
-        */
-
-        // -------------------------------------------------------------------------------------------- //
-        // -------------------------------------------------------------------------------------------- //
-
-        //JPanel butPanel = new JPanel(new VerticalFlowLayout());
-        //butPanel.add(bShowComboPhenotypes);
-        //tcPanel.add(butPanel, BorderLayout.SOUTH);
-
         this.chooserPanel = new JPanel(new BorderLayout());
 
         this.chooserPanel.add(tcPanel, BorderLayout.CENTER);
@@ -191,16 +161,6 @@ public class TemplateChooserUI {
                 DialogDescriptor dd = Application.getWindowManager().createDialogDescriptor("On-the-fly phenotype by sample names", otf, JarResources.createHelpAction("on_the_fly_phenotype"));
                 dd.setOnlyShowCloseOption();
                 dd.show();
-                /*
-                int res = dd.show();
-                if (res == DialogDescriptor.OK_OPTION) {
-                    try {
-                        otf.createTemplate();
-                    } catch (Throwable t) {
-                        Application.getWindowManager().showError(t);
-                    }
-                }
-                */
             }
         });
         bp.addButton(bOnTheFly);
@@ -239,20 +199,16 @@ public class TemplateChooserUI {
             jbInit();
         }
 
-        //TraceUtils.showTrace();
-
         // careful with rebuild / reset the model here -> that ruins the selection policy
         TIntArrayList indices = new TIntArrayList();
         if (sel != null && (sel instanceof TemplateSelectionMultiSource == false) && sel.getMainObject() != null) {
             final Object[] options = createTemplateOptions_safe(sel.getMainObject(), false); // we want to show the .cls ones here
-            //log.debug("Doing template chooser panel for: " + sel.getMainName());
             DefaultListModel model = new DefaultListModel();
             for (int i = 0; i < options.length; i++) {
                 model.add(i, options[i]);
             }
             jlOptions.setModel(model);
 
-            //log.debug("@@@@@@ # of tss: " + sel.getTemplateNames().size());
             if (sel.getTemplateNames() != null && sel.getTemplateNames().size() < 3) {
                 jlOptions.setSelectionMode(ListSelectionModel.SINGLE_SELECTION); // disable multi sels if only 1 or 2 options (i.e a simple 2 class template)
             } else {
@@ -337,7 +293,6 @@ public class TemplateChooserUI {
 
         } catch (Exception e) {
             Application.getWindowManager().showError("Error making Template options", e);
-            //log.fatal("Error making Template options", e);
             return new TemplateDerivative[]{};
         }
 
@@ -350,7 +305,7 @@ public class TemplateChooserUI {
             return new TemplateDerivative[]{};
         }
 
-        log.debug("Creating template from source file: " + fullTemplate_file.getPath());
+        if (log.isDebugEnabled()) { log.debug("Creating template from source file: {}", fullTemplate_file.getPath()); }
 
         Object obj = fTemplateOptionsArrayCacheMap.get(fullTemplate_file);
         if (obj != null) { // cache it
@@ -359,7 +314,6 @@ public class TemplateChooserUI {
 
         // continuous templates (they are not all in cache as cache clobbers multi cls from same file)
         Template[] cts = ParserFactory.readTemplates(fullTemplate_file);
-        //log.debug("$$ extracting cont: " + fullTemplate_file.getName() + " and got: " + cts.length + " from file: " + fullTemplate_file);
         Set set = new HashSet();
         for (int i = 0; i < cts.length; i++) {
             set.add(cts[i]);
@@ -375,8 +329,6 @@ public class TemplateChooserUI {
 
 
         fTemplateOptionsArrayCacheMap.put(fullTemplate_file, tds);
-
-        //log.debug("CREATED TEMPLATE OPTIONS: " + objs.length + " " + fullTemplate.getName());
         return tds;
     }
 
@@ -386,8 +338,6 @@ public class TemplateChooserUI {
         if (fullTemplate == null) {
             return new TemplateDerivative[]{};
         }
-
-        //log.debug("Creating template derivatives for: " + fullTemplate.getName());
 
         Object obj = fTemplateOptionsArrayCacheMap.get(fullTemplate);
         if (obj != null) { // cache it
@@ -401,14 +351,6 @@ public class TemplateChooserUI {
         tss = qualifyByTypeAndMode(tss, onlyHashOnesForBiphasic);
 
         List tdsList = new ArrayList();
-        if ((fullTemplate.isContinuous() == false) && (fIsMultiAllowed) && (fullTemplate.getNumClasses() > 2)) {
-            /*
-            tds[0] = new TemplateDerivatives.OvaTemplate(fullTemplate);
-            tds[1] = new TemplateDerivatives.OvaOnlyForwardTemplate(fullTemplate);
-            tds[2] = new TemplateDerivatives.AllPairsTemplate(fullTemplate);
-            */
-
-        }
 
         for (int i = 0; i < tss.length; i++) {
             tdsList.add(new TemplateDerivatives.AuxTemplateDerivative(tss[i].getName(), fullTemplate));
@@ -416,8 +358,6 @@ public class TemplateChooserUI {
 
         TemplateDerivative[] tds = (TemplateDerivative[]) tdsList.toArray(new TemplateDerivative[tdsList.size()]);
         fTemplateOptionsArrayCacheMap.put(fullTemplate, tds);
-
-        //log.debug("CREATED TEMPLATE OPTIONS: " + objs.length + " " + fullTemplate.getName());
         return tds;
     }
 
@@ -448,8 +388,6 @@ public class TemplateChooserUI {
     }
 
     private void doTemplateSelection(final Object selectedMainTemplate) {
-        //log.debug("cb selected item: " + selectedMainTemplate.getName());
-        //TraceUtils.showTrace();
         if (selectedMainTemplate == null) {
             return;
         }
@@ -546,10 +484,7 @@ public class TemplateChooserUI {
         } else {
             throw new RuntimeException("Unknown mode: " + fMode);
         }
-
-        //log.debug("### in: " + tss.length + " out: " + list.size());
         return (Template[]) list.toArray(new Template[list.size()]);
-
     }
 
     class Renderer extends DefaultListCellRenderer {
@@ -572,9 +507,8 @@ public class TemplateChooserUI {
             return this;
         }
 
-    }    // End Renderer
-
-
+    }
+    
     public static class Field extends GOptionsFieldPlusChooser {
 
         public Field(ActionListener al) {
@@ -596,7 +530,6 @@ public class TemplateChooserUI {
         }
 
         private class MyTextField extends JTextField {
-
             public void processKeyEvent(KeyEvent ev) {
                 Document doc = tfEntry.getDocument();
                 try {
@@ -608,80 +541,6 @@ public class TemplateChooserUI {
                     super.processKeyEvent(ev);
                 }
             }
-
-        } // End inner class MyTextField
-
-    }
-
-
-} // End TemplateChooserUI
-
-/*
-private TemplateDerivative[] createTemplateOptions(final Template fullTemplate, final boolean onlyHashOnesForBiphasic) {
-
-    try {
-        if (fullTemplate == null) {
-            return new TemplateDerivative[]{};
         }
-
-        log.debug("Creating template derivatives for: " + fullTemplate.getName());
-
-        Object obj = fTemplateOptionsArrayCacheMap.get(fullTemplate);
-        if (obj != null) { // cache it
-            return (TemplateDerivative[]) obj;
-        }
-
-        TemplateDerivative[] tds;
-
-        boolean addOrig = true;
-        if (fullTemplate.isContinuous()) {
-            addOrig = false;
-        }
-
-        Template[] tss = TemplateFactory.extractAllPossibleTemplates(fullTemplate, addOrig); // @note
-
-        log.debug("??Extracting all possible for: " + fullTemplate.getName() + " and got: " + tss.length);
-
-        // continuous templates (they are not all in cache as cache clobbers multi cls from same file)
-        if (fullTemplate.isContinuous()) {
-            File file = ParserFactory.getCache().getSourceFile(fullTemplate);
-            Template[] cts = ParserFactory.readTemplates(file, false, false, true);
-            log.debug("$$ extracting cont: " + fullTemplate.getName() + " and got: " + cts.length + " from file: " + file);
-            Set set = new HashSet();
-            for (int i = 0; i < tss.length; i++) {
-                set.add(tss[i]);
-            }
-
-            for (int i = 0; i < cts.length; i++) {
-                set.add(cts[i]);
-            }
-            tss = (Template[]) set.toArray(new Template[set.size()]);
-        }
-
-        tss = qualifyByTypeAndMode(tss, onlyHashOnesForBiphasic);
-
-        if ((fullTemplate.isContinuous() == false) && (fIsMultiAllowed) && (fullTemplate.getNumClasses() > 2)) {
-            tds = new TemplateDerivative[tss.length + 3];
-            tds[0] = new TemplateTypes.OvaTemplate(fullTemplate);
-            tds[1] = new TemplateTypes.OvaOnlyForwardTemplate(fullTemplate);
-            tds[2] = new TemplateTypes.AllPairsTemplate(fullTemplate);
-            for (int i = 3; i < tss.length + 3; i++) {
-                tds[i] = new TemplateTypes.AuxTemplateDerivative(tss[i - 3].getName(), fullTemplate);
-            }
-        } else {
-            tds = new TemplateDerivative[tss.length];
-            for (int i = 0; i < tss.length; i++) {
-                tds[i] = new TemplateTypes.AuxTemplateDerivative(tss[i].getName(), fullTemplate);
-            }
-        }
-
-        fTemplateOptionsArrayCacheMap.put(fullTemplate, tds);
-
-        //log.debug("CREATED TEMPLATE OPTIONS: " + objs.length + " " + fullTemplate.getName());
-        return tds;
-    } catch (Exception e) {
-        log.fatal("Error making Template options", e);
-        return new TemplateDerivative[]{};
     }
 }
-*/

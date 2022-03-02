@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.swing.windows;
 
 import edu.mit.broad.genome.swing.GuiHelper;
@@ -9,19 +9,14 @@ import edu.mit.broad.xbench.core.api.DialogDescriptor;
 
 import javax.swing.*;
 
-import org.apache.log4j.Logger;
-
 import java.awt.*;
 
 /**
  * JList that pops up in a new window by itself with 2 buttons - cancel and accept
  *
  * @author Aravind Subramanian
- * @version %I%, %G%
  */
 public class GListWindow {
-    protected static final Logger klog = Logger.getLogger(GListWindow.class);
-
     private final JList jlOptions = new JList();
     private DefaultListModel fModel = new DefaultListModel();
     private int fSelectionMode = ListSelectionModel.SINGLE_SELECTION;
@@ -132,4 +127,4 @@ public class GListWindow {
 
         jlOptions.setSelectionMode(fSelectionMode);
     }
-}        // End GListWindow
+}

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.genome.reports.api;
 
@@ -12,7 +12,8 @@ import edu.mit.broad.genome.swing.GuiHelper;
 import edu.mit.broad.xbench.actions.ext.*;
 import edu.mit.broad.xbench.core.api.Application;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 
@@ -31,7 +32,6 @@ import java.io.File;
  * Here because of linkage
  *
  * @author Aravind Subramanian
- * @version %I%, %G%
  */
 public class ToolReportDisplay {
 
@@ -47,7 +47,7 @@ public class ToolReportDisplay {
      */
     private JList jlDisplay;
     private ToolReport fReport;
-    private final Logger log = Logger.getLogger(this.getClass());
+    private final Logger log = LoggerFactory.getLogger(this.getClass());
     private JFrame fFrame;
     private static final Dimension DEFAULT_DIM = new Dimension(500, 325);
 
@@ -391,12 +391,11 @@ public class ToolReportDisplay {
         fFrame.dispose();
         //fFrame.hide();
         fFrame.setVisible(false);
-        log.debug("Debug mode, so not quiting but hiding");
+        log.debug("Debug mode, so not quitting but hiding");
     }
 
     /**
      * @author Aravind Subramanian
-     * @version %I%, %G%
      */
     // TODO: evaluate the ReportChartAction for removal.
     // DRE note: After removing some unused code, this class probably has no 
@@ -418,5 +417,4 @@ public class ToolReportDisplay {
             // whole class is unused - see comment above.
         }
     }
-
-}    // End ToolReportDisplay
+}

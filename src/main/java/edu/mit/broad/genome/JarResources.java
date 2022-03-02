@@ -1,11 +1,12 @@
-/*******************************************************************************
- * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome;
 
 import edu.mit.broad.xbench.core.api.Application;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import xapps.gsea.GseaWebResources;
 
@@ -61,10 +62,7 @@ public class JarResources {
     private static final String PKG_GENOME = "/edu/mit/broad/genome/";
     private static final String PKG_RESOURCE = PKG_GENOME + "resources/";
 
-    /**
-     * For internal logging support
-     */
-    private static Logger klog = Logger.getLogger(JarResources.class);
+    private static Logger klog = LoggerFactory.getLogger(JarResources.class);
 
     /**
      * Ensure that "not founds" are present
@@ -126,7 +124,7 @@ public class JarResources {
             urlStream.close();
         }
         } catch (Throwable t) {
-            klog.error(t);
+            klog.error(t.getMessage(), t);
         }
         return buildProps;
     }
@@ -225,11 +223,10 @@ public class JarResources {
                 return new ImageIcon(url);
             }
         } catch (Throwable t) {
-            klog.error(t);
+            klog.error(t.getMessage(), t);
         }
         //throw new RuntimeException("cant find: " + name);
-        klog.warn("could not find resource: " + name + " url: " + url
-                + " ... using default icon instead.");
+        klog.warn("could not find resource: {} url: {} ... using default icon instead.", name, url);
 
         return ICON_NOT_FOUND;
     }
@@ -247,5 +244,4 @@ public class JarResources {
     public static Image getImage(String name) {
         return ((ImageIcon) getIcon(name)).getImage();
     }
-
-}        // End JarResources
+}

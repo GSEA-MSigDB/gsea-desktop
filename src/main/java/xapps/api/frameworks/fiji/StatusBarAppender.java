@@ -1,50 +1,47 @@
-/*******************************************************************************
- * Copyright (c) 2003-2018 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package xapps.api.frameworks.fiji;
 
 import com.jidesoft.popup.JidePopup;
 import com.jidesoft.status.*;
 import com.jidesoft.swing.JideBoxLayout;
+
 import edu.mit.broad.genome.Conf;
 import edu.mit.broad.genome.JarResources;
 import edu.mit.broad.genome.viewers.SystemConsoleViewer;
 
 import javax.swing.*;
 
-import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.core.Filter;
-import org.apache.logging.log4j.core.Layout;
-import org.apache.logging.log4j.core.LogEvent;
-import org.apache.logging.log4j.core.appender.AbstractAppender;
-
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.io.Serializable;
+import java.util.logging.ErrorManager;
+import java.util.logging.Handler;
+import java.util.logging.Level;
+import java.util.logging.LogManager;
+import java.util.logging.LogRecord;
+import java.util.logging.SimpleFormatter;
 
-public class StatusBarAppender extends AbstractAppender {
-
+public class StatusBarAppender {
     private StatusBar fJideStatusBar;
-
     private LabelStatusBarItem fStatusBarLabelItem;
-
     private SystemConsoleViewer fSystemConsoleComp;
     
-    public StatusBarAppender(String name, Filter filter, Layout<? extends Serializable> layout) {
-        super(name, filter, layout);
-        
+    public StatusBarAppender(String name) {
         this.fJideStatusBar = new StatusBar();
         this.fSystemConsoleComp = new SystemConsoleViewer();
-        //fSystemConsoleComp.setBorder(BorderFactory.createTitledBorder("Process messages (for # of permutations)"));
         fSystemConsoleComp.setBorder(BorderFactory.createTitledBorder("Application messages"));
 
         fJideStatusBar.add(new TimeStatusBarItem(), JideBoxLayout.FIX);
 
-        //this.fLogObjects = new ArrayList(MAX_SIZE);
+        // Status bar component to display logging messages in the UI
         this.fStatusBarLabelItem = new LabelStatusBarItem();
         fStatusBarLabelItem.setIcon(JarResources.getIcon("expandall.png"));
         fStatusBarLabelItem.setToolTipText("Click for application messages (such as # of permutations complete)");
+        // Create a Logging Handler wrapped around this label object and register it with the Root logger
+        LabelStatusBarLoggingHandler handler = new LabelStatusBarLoggingHandler(fStatusBarLabelItem);
+        LogManager.getLogManager().getLogger("").addHandler(handler);
 
         fJideStatusBar.add(fStatusBarLabelItem, JideBoxLayout.FLEXIBLE);
 
@@ -58,28 +55,15 @@ public class StatusBarAppender extends AbstractAppender {
         fJideStatusBar.add(resize, JideBoxLayout.FIX);
 
         this.fStatusBarLabelItem.addMouseListener(new MouseAdapter() {
-            public void mouseClicked(MouseEvent e) {
-                showPopup(fStatusBarLabelItem);
-            }
-
-            public void mouseEntered(MouseEvent e) {
-                fStatusBarLabelItem.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-            }
-
-            public void mouseExited(MouseEvent e) {
-                fStatusBarLabelItem.setCursor(Cursor.getDefaultCursor());
-            }
-
+            public void mouseClicked(MouseEvent e) { showPopup(fStatusBarLabelItem); }
+            public void mouseEntered(MouseEvent e) { fStatusBarLabelItem.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)); }
+            public void mouseExited(MouseEvent e) {  fStatusBarLabelItem.setCursor(Cursor.getDefaultCursor()); }
         });
     }
 
-    public JComponent getAsComponent() {
-        return fJideStatusBar;
-    }
-
+    public JComponent getAsComponent() { return fJideStatusBar; }
 
     private void showPopup(final JComponent owner) {
-
         final JidePopup popup = new JidePopup();
         popup.setMovable(true);
         popup.getContentPane().setLayout(new BorderLayout());
@@ -95,23 +79,39 @@ public class StatusBarAppender extends AbstractAppender {
         } else {
             popup.showPopup();
         }
-
     }
+    
+    private class LabelStatusBarLoggingHandler extends Handler {
+        final LabelStatusBarItem labelStatusBarItem;
+        public LabelStatusBarLoggingHandler(LabelStatusBarItem labelStatusBarItem) {
+            this.labelStatusBarItem = labelStatusBarItem;
+            this.setLevel(Conf.isDebugMode() ? Level.FINE : Level.INFO);
+            this.setFormatter(new SimpleFormatter());
+        }
 
-    @Override
-    public void append(LogEvent event) {
-        String txt = new String(getLayout().toByteArray(event));
-        Level level = event.getLevel();
+        @Override
+        public void close() throws SecurityException { }
 
-        if (level == Level.INFO) {
-            fStatusBarLabelItem.setForeground(Color.BLACK);
-            fStatusBarLabelItem.setText(txt);
-        } else if (level == Level.DEBUG && Conf.isDebugMode()) {
-            fStatusBarLabelItem.setForeground(Color.DARK_GRAY);
-            fStatusBarLabelItem.setText(txt);
-        } else if (level == Level.WARN) {
-            fStatusBarLabelItem.setForeground(Color.ORANGE);
-            fStatusBarLabelItem.setText(txt);
+        @Override
+        public void flush() { }
+
+        @Override
+        public void publish(LogRecord record) {
+            if (!isLoggable(record)) { return; }
+            try {
+                String message = getFormatter().format(record);
+                Level level = record.getLevel();
+                fStatusBarLabelItem.setForeground(Color.BLACK);
+                if (level == Level.WARNING) { fStatusBarLabelItem.setForeground(Color.MAGENTA); }
+                labelStatusBarItem.setText(message);
+            } catch (Exception ex) {
+                reportError(null, ex, ErrorManager.FORMAT_FAILURE);
+            }
+        }
+        
+        @Override
+        public boolean isLoggable(LogRecord record) {
+            return this.labelStatusBarItem != null && super.isLoggable(record);
         }
     }
 }

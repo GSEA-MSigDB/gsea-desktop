@@ -1,9 +1,10 @@
 /*
- * Copyright (c) 2003-2021 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.genome.math;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import edu.mit.broad.genome.math.DoubleElement.DoubleElementNaNlessComparator;
 
@@ -22,7 +23,7 @@ import java.util.TreeSet;
  */
 public class XMath {
 
-    private static final Logger klog = Logger.getLogger(XMath.class);
+    private static final Logger klog = LoggerFactory.getLogger(XMath.class);
 
     private XMath() { }
 

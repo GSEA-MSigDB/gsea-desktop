@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.xbench.prefs;
 
 import edu.mit.broad.genome.Conf;
@@ -11,7 +11,9 @@ import edu.mit.broad.xbench.actions.XAction;
 import edu.mit.broad.xbench.core.ApplicationDialog;
 import edu.mit.broad.xbench.core.api.Application;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.MarkerFactory;
 
 import javax.swing.*;
 
@@ -28,8 +30,7 @@ import java.util.prefs.BackingStoreException;
  * IMP IMP: Dont use RuntimeResources to avoid recursion!!
  */
 public class XPreferencesFactory {
-
-    private static final Logger klog = Logger.getLogger(XPreferencesFactory.class);
+    private static final Logger klog = LoggerFactory.getLogger(XPreferencesFactory.class);
 
     /**
      * runtime home directory (i.e user's home for the application
@@ -59,15 +60,16 @@ public class XPreferencesFactory {
     static {
 
         kAppRuntimeHomeDir = new File(SystemUtils.getUserHome(), "gsea_home");
-        if (kAppRuntimeHomeDir.exists() == false) {
+        boolean exists = kAppRuntimeHomeDir.exists();
+        if (!exists) {
             boolean made = kAppRuntimeHomeDir.mkdir();
             if (!made) {
-                klog.fatal("Could not make gsea_home dir at: >" + kAppRuntimeHomeDir + "<");
+                klog.error(MarkerFactory.getMarker("FATAL"), "Could not make gsea_home dir at: >{}<", kAppRuntimeHomeDir);
             }
         }
 
         RESOURCES_DATA_FILE_NAME = "RdfGseaApp.txt";
-        klog.debug("kAppRuntimeHomeDir: " + kAppRuntimeHomeDir + " " + kAppRuntimeHomeDir.exists());
+        klog.debug("kAppRuntimeHomeDir: {} exists: {}", kAppRuntimeHomeDir, exists);
     }
 
     // -------------------------------------------------------------------------------------------- //
@@ -159,7 +161,7 @@ public class XPreferencesFactory {
                 screenSize = new Dimension(800, 600); // doesnt matter what
             }
         } catch (Throwable t) {
-            klog.fatal("Unexpected trouble", t);
+            klog.error(MarkerFactory.getMarker("FATAL"), "Unexpected trouble", t);
         }
     }
 
@@ -203,7 +205,7 @@ public class XPreferencesFactory {
                 //System.out.println(">> " + e);
                 try {
                     pref.setValue(Boolean.valueOf(mi.getState()));
-                    klog.debug("set pref: " + pref.getName() + " to: " + pref.getValue());
+                    klog.debug("set pref: {} to: {}", pref.getName(), pref.getValue());
                 } catch (Throwable t) {
                     Application.getWindowManager().showError("Could not set preference: " + pref.getName(), t);
                 }
@@ -220,10 +222,6 @@ public class XPreferencesFactory {
         ALL_CATEGORIES = new PreferenceCategory[]{ kGeneralCategory, kAlgCategory };
     }
 
-    /**
-     * @param pref
-     * @return
-     */
     public static Object showSetPreferenceDialog(final Preference pref) {
         GFieldPlusChooser field = pref.getSelectionComponent();
         String title = "Set preference: " + pref.getName();
@@ -255,12 +253,8 @@ public class XPreferencesFactory {
     }
 
     static class GenericPrefAction extends XAction {
-
         Preference fPref;
 
-        /**
-         * Class Constructor.
-         */
         GenericPrefAction(Preference pref) {
             this(pref, null);
         }
@@ -273,6 +267,5 @@ public class XPreferencesFactory {
         public void actionPerformed(ActionEvent evt) {
             showSetPreferenceDialog(fPref); // ignore the return value
         }
-    }    // End GenericPrefAction
-
-} // End XPreferencesFactory
+    }
+}

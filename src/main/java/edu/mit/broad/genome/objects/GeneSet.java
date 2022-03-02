@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.genome.objects;
 
@@ -133,7 +133,7 @@ public class GeneSet extends AbstractObject implements PersistentObject {
                 // IMP to add, as in some cases it might be legit
                 // for example when creating a combined dataset from bpog (when markers are shared)
                 if (fMembersSet.contains(mn)) {
-                    log.warn("Duplicate GeneSet member: " + mn);// dont barf, just warn (possible imp for randomizations)
+                    log.warn("Duplicate GeneSet member: {}", mn);// dont barf, just warn (possible imp for randomizations)
                 } else {
                     fMembers.add(mn);
                     fMembersSet.add(mn);
@@ -165,7 +165,7 @@ public class GeneSet extends AbstractObject implements PersistentObject {
 
             if (checkForDuplicates) {
                 if (fMembersSet.contains(members[i])) {
-                    log.warn("Duplicate GeneSet member: " + members[i]);// dont barf, just warn (possible imp for randomizations)
+                    log.warn("Duplicate GeneSet member: {}", members[i]);// dont barf, just warn (possible imp for randomizations)
                 } else {
                     fMembers.add(members[i]);
                     fMembersSet.add(members[i]);

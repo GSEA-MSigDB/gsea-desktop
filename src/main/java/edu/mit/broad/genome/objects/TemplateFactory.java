@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.genome.objects;
 
@@ -9,7 +9,8 @@ import edu.mit.broad.genome.Printf;
 import edu.mit.broad.genome.math.Matrix;
 import edu.mit.broad.genome.math.Vector;
 import edu.mit.broad.genome.objects.strucs.DatasetTemplate;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
@@ -21,20 +22,13 @@ import java.util.*;
  * (and access to non public fields needed for generation)
  *
  * @author Aravind Subramanian
- * @version %I%, %G%
  */
 public class TemplateFactory extends TemplateImpl {
-
-    private static final Logger klog = Logger.getLogger(TemplateFactory.class);
+    private static final Logger klog = LoggerFactory.getLogger(TemplateFactory.class);
 
     private static final String VS = "_versus_";
 
-    /**
-     * Class Constructor.
-     * Creates a new TemplateFactory.
-     */
-    private TemplateFactory() {
-    }
+    private TemplateFactory() { }
 
     /**
      * The dataset returned has its columns in the same order as the item's
@@ -74,15 +68,11 @@ public class TemplateFactory extends TemplateImpl {
         // 2) the primary positions of the template are in ascending order
         // as an opt check for this and return unchanged ds if true
         if (fullDs.getNumCol() == origT.getNumItems() && origT.isAscendingProfilePositions()) {
-            if (verbose) {
-                klog.info("Already a synched dataset-template -- NO extracting done");
-            }
+            if (verbose) { klog.info("Already a synched dataset-template -- NO extracting done"); }
             return new DatasetTemplate(fullDs, origT); // no extraction needed
         }
 
-        if (verbose) {
-            klog.info("Extracting ds: " + fullDs.getName() + " by template: " + origT.getName());
-        }
+        if (verbose) { klog.info("Extracting ds: {} by template: {}", fullDs.getName(), origT.getName()); }
 
         final Matrix matrix = new Matrix(fullDs.getNumRow(), origT.getNumItems());
         final List<String> colNames = new ArrayList<String>(origT.getNumItems());
@@ -639,8 +629,4 @@ public class TemplateFactory extends TemplateImpl {
 
         return unis;
     }
-
-
-}    // End TemplateFactory
-
-/*--- Formatted in Sun Java Convention Style on Fri, Sep 27, '02 ---*/
+}

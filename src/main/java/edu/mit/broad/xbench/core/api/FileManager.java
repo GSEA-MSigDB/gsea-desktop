@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2020 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.xbench.core.api;
 
@@ -10,7 +10,8 @@ import xapps.gsea.GseaFileFilter;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.JFileChooser;
 
@@ -33,8 +34,7 @@ import java.util.List;
  * @author Aravind Subramanian
  */
 public class FileManager {
-
-    private static final Logger klog = Logger.getLogger(FileManager.class);
+    private static final Logger klog = LoggerFactory.getLogger(FileManager.class);
     
     private static final GseaFileFilter expressionFileFilter = new GseaFileFilter(new String[] {"gct", "res", "rnk", "txt"}, "Expression File");
 
@@ -242,7 +242,7 @@ public class FileManager {
 
             } catch (Throwable t) {
                 t.printStackTrace();
-                klog.error("Recent file list initing error: " + t);
+                klog.error("Recent file list initing error: {}", t);
             }
         }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2021 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.genome.alg.gsea;
 
@@ -16,7 +16,8 @@ import edu.mit.broad.genome.objects.strucs.TemplateRandomizerType;
 import edu.mit.broad.vdb.chip.Chip;
 import xtools.api.param.BadParamException;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
@@ -33,7 +34,7 @@ import java.util.Map;
  * @see KSCore
  */
 public class KSTests {
-    private final Logger log = Logger.getLogger(KSTests.class);
+    private final Logger log = LoggerFactory.getLogger(KSTests.class);
 
     private final KSCore core;
 
@@ -57,7 +58,7 @@ public class KSTests {
     		final int numMarkers, final List<RankedList> store_rnd_ranked_lists_here_opt) throws Exception {
         final Dataset ds = dt.getDataset(false);
         final Template t = dt.getTemplate();
-		log.debug("!!!! Executing for: " + ds.getName() + " # samples: " + ds.getNumCol());
+		log.debug("!!!! Executing for: {} # samples: {}", ds.getName(), ds.getNumCol());
 		
         // calc mean/median and stdev for each class for each marker
         // Also does some error checking.  Actually, we do not use the MarkerScores map at all,
@@ -91,7 +92,7 @@ public class KSTests {
 
     public EnrichmentDb executeGsea(final RankedList rl_real, final GeneSet[] origGeneSets, final int nperm, 
     		final RandomSeedGenerator rst, final Chip chip,final GeneSetCohort.Generator gcohgen) throws Exception {
-        log.debug("!!!! Executing for: " + rl_real.getName() + " # features: " + rl_real.getSize());
+        log.debug("!!!! Executing for: {} # features: {}", rl_real.getName(), rl_real.getSize());
 
         final GeneSet[] gsets = gcohgen.filterGeneSetsByMembersAndSize(rl_real, origGeneSets);
         EnrichmentResult[] results = shuffleGeneSet_precannedRankedList(nperm, rl_real, null, gsets, chip, gcohgen, rst);
@@ -107,7 +108,7 @@ public class KSTests {
     		final int numMarkers, final List<RankedList> store_rnd_ranked_lists_here_opt, Map<String, TwoClassMarkerStats> markerScores)
     		        throws Exception {
         final Template[] rndTemplates = TemplateFactoryRandomizer.createRandomTemplates(nperm, template, rt, rst);
-        log.debug("Done generating rnd templates: " + rndTemplates.length);
+        log.debug("Done generating rnd templates: {}", rndTemplates.length);
         final String dstName = NamingConventions.generateName(ds, template, true);
         final Chip chip = ds.getAnnot().getChip();
 
@@ -124,7 +125,7 @@ public class KSTests {
         boolean warnGeneRankingValues = checkRankedListForInfinityOrNaN(rlReal);
         final GeneSet[] gsets = gcohgen.filterGeneSetsByMembersAndSize(rlReal, origGeneSets);
 
-        log.debug("shuffleTemplate with -- nperm: " + rndTemplates.length + " Order: " + order + " Sort: " + sort + " gsets: " + gsets.length);
+        log.debug("shuffleTemplate with -- nperm: {} Order: {} Sort: {} gsets: {}", rndTemplates.length, order, sort, gsets.length);
         final GeneSetCohort gcoh = gcohgen.createGeneSetCohort(rlReal, gsets, true); // @note ASSUME already qualified
         final EnrichmentScore[] realScores = core.calculateKSScore(gcoh, true); // need to store details as we need the hit indices
         final Vector[] rndEss = new Vector[gsets.length];

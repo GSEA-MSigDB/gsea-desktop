@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package xtools.api;
 
 import edu.mit.broad.genome.reports.api.ToolReport;
@@ -9,7 +9,8 @@ import org.apache.ecs.html.Div;
 import org.apache.ecs.html.H4;
 import org.apache.ecs.html.LI;
 import org.apache.ecs.html.UL;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 
@@ -17,8 +18,7 @@ import java.io.File;
  * @author Aravind Subramanian
  */
 public class ReportBlocks {
-
-    private static final Logger klog = Logger.getLogger(ReportBlocks.class);
+    private static final Logger klog = LoggerFactory.getLogger(ReportBlocks.class);
 
     // a report listing section that simply lists the elements in a block
     public static class SimpleBlockListing {
@@ -52,9 +52,7 @@ public class ReportBlocks {
         }
 
         public void add(final String hyperLinkThisTerm, final File file) {
-            if (fClosed) {
-                klog.warn("Already closed for: " + hyperLinkThisTerm + " " + file);
-            }
+            if (fClosed) { klog.warn("Already closed for: {} {}", hyperLinkThisTerm, file); }
 
             this.fUl.addElement(new LI(HtmlFormat.Links.hyper(hyperLinkThisTerm, file, "", fReport.getReportDir())));
         }
@@ -68,6 +66,5 @@ public class ReportBlocks {
             this.fReport.getIndexPage().addBlock(fDiv, false);
             fClosed = true;
         }
-
-    } // End class SimpleBlockListing
+    }
 }

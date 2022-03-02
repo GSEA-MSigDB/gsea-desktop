@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.genome.objects;
 
@@ -13,10 +13,8 @@ import java.awt.*;
  * to its float value.
  *
  * @author Aravind Subramanian
- * @version %I%, %G%
  */
 public class ColorDatasetImpl extends DatasetProxy implements ColorDataset {
-
     //TODO: evaluate if these instance variables are really needed. 
     // These are set but never used; they are protected but there are no subclasses
     protected ScaleMode fScaleMode;
@@ -126,7 +124,7 @@ public class ColorDatasetImpl extends DatasetProxy implements ColorDataset {
     protected void cacheColorsByColumn() {
 
         // wierd for loop structure as trying to optimize calcs
-        log.info("Beginning to cache fColors by COL from: " + this.getClass());
+        log.info("Beginning to cache fColors by COL from: {}", this.getClass());
 
         fColors = new Color[getNumRow()][getNumCol()];
 
@@ -158,12 +156,10 @@ public class ColorDatasetImpl extends DatasetProxy implements ColorDataset {
             }
         }
 
-        log.info("Finished caching Colors: " + this.getClass());
+        log.info("Finished caching Colors: {}", this.getClass());
     }
 
     public Color getColor(int row, int col) {
         return fColors[row][col];
     }
-
-
-}    // End ColorDataset
+}

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2021 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.genome.parsers;
 
@@ -75,14 +75,14 @@ public class RankedListParser extends AbstractParser {
                         floats.add(value);
                         if (Float.isInfinite(value)) {
                         	foundInfiniteValues = true;
-                            log.warn("Infinite values found in row " + (row+1) + " of the data matrix with Name '" + name + "'.");
+                            log.warn("Infinite values found in row {} of the data matrix with Name '{}'.", (row+1), name);
                         }
                     } else {
                         skippedMissingRows++;
-                        log.warn("Missing value found in row " + (row+1) + " of the data matrix with Name '" + name + "'.");
+                        log.warn("Missing value found in row {} of the data matrix with Name '{}'.", (row+1), name);
                     }
                 } catch (NumberFormatException nfe) {
-                    log.error("Could not parse '" + fields.get(1) + "' as a floating point number in row " + (row+1) + " of the data matrix with Name '" + name + "'.");
+                    log.error("Could not parse '{}' as a floating point number in row {} of the data matrix with Name '{}'.", fields.get(1), (row+1), name);
                     throw nfe;
                 }
     
@@ -94,6 +94,12 @@ public class RankedListParser extends AbstractParser {
     
             // changed march 2006 for the sorting
             RankedList rl = RankedListGenerators.createBySorting(objname, names.toArray(new String[names.size()]), floats.toNativeArray(), SortMode.REAL, Order.DESCENDING);
+            if (rl.getSize() <= 2000) {
+                String warning = "Loaded RNK with " + rl.getSize() 
+                    + " features.  This may be too few for GSEA, which expects data for all expressed genes for a proper analysis.";
+                log.warn(warning);
+                rl.addWarning(warning);
+            }
             if (foundInfiniteValues) {
                 String warning = "Infinite values detected in this RNK file. This may cause unexpected results in the calculations or failures in plotting.";
                 log.warn(warning);

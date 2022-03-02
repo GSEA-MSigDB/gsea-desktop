@@ -1,27 +1,17 @@
 /*
- * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.genome.utils;
 
-import org.apache.commons.io.IOUtils;
-import org.apache.log4j.Logger;
-
 import java.io.*;
-import java.net.URL;
 import java.util.*;
 
 /**
  * Collection of utility methods related to Files.
  * <p/>
  * @author Aravind Subramanian
- * @version %I%, %G%
  */
 public class FileUtils {
-    /**
-     * For logging support
-     */
-    private final static Logger klog = Logger.getLogger(FileUtils.class);
-
     public static int countLines(String path, boolean ignoreblanklines) throws IOException {
         BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(new File(path))));
         try {
@@ -118,4 +108,4 @@ public class FileUtils {
             return false;
         }
     }
-}        // End FileUtils
+}

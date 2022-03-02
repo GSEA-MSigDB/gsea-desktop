@@ -108,7 +108,7 @@ public class Chip extends AbstractObject {
                 return nmode.getTitle(probeName, null);
             }
         } catch (Throwable t) {
-            log.error(t);
+            log.error(t.getMessage(), t);
             return "";
         }
 
@@ -122,7 +122,7 @@ public class Chip extends AbstractObject {
         }
     
         if (!NamingConventions.isURL(sourcePath) && (sourcePath == null || ! new File(sourcePath).exists())) {
-            log.warn("Missing chip file: >" + sourcePath + "<");
+            log.warn("Missing chip file: >{}<", sourcePath);
         }
     
         if (probes == null) {
@@ -151,9 +151,9 @@ public class Chip extends AbstractObject {
         }
         
         if (!duplicates.isEmpty()) {
-            log.debug("There were duplicate probes: " + duplicates.size() + "\n" + duplicates + "\n" + getName());
+            log.debug("There were duplicate probes: {}\n{}\n{}", duplicates.size(), duplicates, getName());
         } else {
-            log.debug("There were no duplicates: " + names.size() + " " + getName());
+            log.debug("There were no duplicates: {} {}", names.size(), getName());
         }
     
         names.clear();

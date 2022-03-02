@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2021 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.genome.parsers;
 
@@ -114,10 +114,8 @@ public class ChipParser extends AbstractParser {
             final Probe[] probes = probesList.toArray(new Probe[probesList.size()]);
             String chipName = FilenameUtils.getName(sourcepath);
             final Chip chip = new Chip(chipName, sourcepath, probes);
-            log.info("Parsed from dotchip : " + probes.length);
-            if (!duplicates.isEmpty()) {
-                log.debug("There were duplicate probes: " + duplicates.size() + "\n" + duplicates + "\n" + chipName);
-            }
+            log.info("Parsed from dotchip : {}", probes.length);
+            if (!duplicates.isEmpty()) { log.debug("There were duplicate probes: {}\n{}\n{}", duplicates.size(), duplicates, chipName); }
 
             return unmodlist(chip);
         }

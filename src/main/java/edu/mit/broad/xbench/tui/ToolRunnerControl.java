@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.xbench.tui;
 
@@ -11,7 +11,8 @@ import edu.mit.broad.xbench.core.ApplicationDialog;
 import edu.mit.broad.xbench.core.api.Application;
 
 import org.apache.commons.lang3.SystemUtils;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import xtools.api.Tool;
 import xtools.api.param.ParamSet;
@@ -28,12 +29,9 @@ import java.util.Properties;
 
 /**
  * @author Aravind Subramanian
- * @version %I%, %G%
  */
 public class ToolRunnerControl extends JPanel {
-
-
-    private static final Logger klog = Logger.getLogger(ToolRunnerControl.class);
+    private static final Logger klog = LoggerFactory.getLogger(ToolRunnerControl.class);
     private JButton bRun;
     private JButton bResetDefaults;
     private JButton bCmd;
@@ -45,11 +43,6 @@ public class ToolRunnerControl extends JPanel {
 
     private ToolRunnerControl fInstance = this;
 
-    /**
-     * Class Constructor.
-     *
-     * @param hook
-     */
     public ToolRunnerControl(final ToolRunnerControl.DisplayHook hook) {
         this(hook, null);
     }
@@ -114,7 +107,7 @@ public class ToolRunnerControl extends JPanel {
 
         bHelp.addActionListener(new ActionListener() {
             public void actionPerformed(final ActionEvent evt) {
-                klog.debug("launching help for: " + fHook.getCurrentTool());
+                klog.debug("launching help for: {}", fHook.getCurrentTool());
                 if (fHook.getCurrentTool() != null) {
                     String url = fHook.getCurrentTool().getHelpURL();
                     BrowserAction ba = new BrowserAction("Help", "Online documentation for this tool", GuiHelper.ICON_HELP16, url);
@@ -321,10 +314,8 @@ public class ToolRunnerControl extends JPanel {
      * Tool info.
      *
      * @author Aravind Subramanian
-     * @version %I%, %G%
      */
     public interface DisplayHook {
-
         public Tool getCurrentTool();
 
         public ParamSet getCurrentParamSet();
@@ -332,8 +323,7 @@ public class ToolRunnerControl extends JPanel {
         public void resetParamSet();
 
         public boolean isRecordToolRun();
-
-    } // End innerclass DisplayHook
+    }
 
 
     public static Runnable createLoadToolTask(final Tool fill_this_tool,
@@ -342,19 +332,13 @@ public class ToolRunnerControl extends JPanel {
                                               final Properties source_params,
                                               final Component parentComponent,
                                               final boolean launchANewToolWindow) {
-
         return new Runnable() {
-
             public void run() {
-
                 try {
-
-                    //log.debug("tool name: " + tool.getName());
                     // imp have to fill and pass the tool's param set
                     // we have to manually check for rhs files as the params silently
                     // suppress any file not found kind of error
                     ParamSet.FoundMissingFile fmf = fill_this_tool.getParamSet().fileCheckingFill(source_params);
-                    //log.debug(tool.getParamSet().toProperties());
                     if (fmf.missingFiles.length != 0) {
                         if (showMissingDialog(fmf.missingFiles) == false) {
                             // do nothing
@@ -368,12 +352,13 @@ public class ToolRunnerControl extends JPanel {
                             try {
                                 if (fmf.foundFiles[i].isFile()) {
                                     String path = fmf.foundFiles[i].getPath();
-                                    klog.debug("Trying to parse: " + path + " for param: " + fmf.foundFilesParamNames[i]);
+                                    klog.debug("Trying to parse: {} for param: {}", path, fmf.foundFilesParamNames[i]);
                                     ProgressMonitorInputStream pis = new ProgressMonitorInputStream(parentComponent, "Loading: " + path, new FileInputStream(fmf.foundFiles[i]));
                                     ParserFactory.read(path, pis);
                                 }
                             } catch (Throwable t) {
-                                klog.debug("Parsing error for file from param: " + fmf.foundFilesParamNames[i] + " file >" + fmf.foundFiles[i].getPath(), t);
+                                klog.debug("Parsing error for file from param: [] file >{}", fmf.foundFilesParamNames[i], fmf.foundFiles[i].getPath());
+                                klog.debug(t.getMessage(), t);
                                 atleastoneerr = true;
                                 errs.append(t.getMessage()).append("<br>");
                             }
@@ -410,5 +395,4 @@ public class ToolRunnerControl extends JPanel {
 
         return Application.getWindowManager().showConfirm("Some Files Missing", buf.toString());
     }
-
-}    // End ToolRunnerControl
+}

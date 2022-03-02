@@ -1,20 +1,20 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.objects;
 
 import edu.mit.broad.genome.math.RandomSeedGenerator;
 import edu.mit.broad.genome.math.Vector;
 import edu.mit.broad.genome.math.XMath;
 import edu.mit.broad.genome.objects.strucs.TemplateRandomizerType;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Aravind Subramanian
  */
 public class TemplateFactoryRandomizer {
-
-    private static final Logger klog = Logger.getLogger(TemplateFactoryRandomizer.class);
+    private static final Logger klog = LoggerFactory.getLogger(TemplateFactoryRandomizer.class);
 
     public static Template[] createRandomTemplates(final int num,
                                                    final Template origTemplate,
@@ -33,9 +33,7 @@ public class TemplateFactoryRandomizer {
 
         Template[] tss;
 
-        if (silent == false) {
-            klog.debug("TemplateRandomizerType: " + rt.toString());
-        }
+        if (!silent) { klog.debug("TemplateRandomizerType: {}", rt.toString()); }
 
         if (rt == TemplateRandomizerType.NO_BALANCE) {
             tss = createRandomTemplates(num, origTemplate, rst);
@@ -347,5 +345,4 @@ public class TemplateFactoryRandomizer {
 
         return newt;
     }
-
-} // End class TemplateFactoryRandomizer
+}

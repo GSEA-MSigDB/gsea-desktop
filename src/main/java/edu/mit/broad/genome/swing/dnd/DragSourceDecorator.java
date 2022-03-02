@@ -1,9 +1,10 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.swing.dnd;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.awt.datatransfer.Transferable;
 import java.awt.dnd.*;
@@ -16,11 +17,10 @@ import java.awt.dnd.*;
  * DragSourceListener -> a listener that will track the state of the DnD operation
  *
  * @author Aravind Subramanian
- * @version %I%, %G%
  */
 public class DragSourceDecorator implements DragGestureListener, DragSourceListener {
 
-    private final Logger log = Logger.getLogger(DragSourceDecorator.class);
+    private final Logger log = LoggerFactory.getLogger(DragSourceDecorator.class);
     private DragSource fDragSource;
     private final int fDragAction = DnDConstants.ACTION_COPY_OR_MOVE;
     private DndSource fSource;
@@ -39,7 +39,7 @@ public class DragSourceDecorator implements DragGestureListener, DragSourceListe
 
         // component, action, listener
         if (fSource.getDraggableComponent() == null) {
-            log.warn("Null draggable component for: " + fSource);
+            log.warn("Null draggable component for: {}", fSource);
         }
 
         //log.debug("Using drag source comp: " + fSource.getDraggableComponent() + " class: " + fSource.getDraggableComponent().getClass());
@@ -72,7 +72,7 @@ public class DragSourceDecorator implements DragGestureListener, DragSourceListe
                 e.startDrag(DragSource.DefaultCopyNoDrop, trf, this);
             }
         } catch (InvalidDnDOperationException idoe) {
-            log.error(idoe);
+            log.error(idoe.getMessage(), idoe);
         }
     }
 
@@ -169,4 +169,4 @@ public class DragSourceDecorator implements DragGestureListener, DragSourceListe
 
         context.setCursor(DragSource.DefaultCopyNoDrop);
     }
-}    // End DragSourceDecorator
+}

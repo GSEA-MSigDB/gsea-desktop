@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2021 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.xbench.tui;
 
@@ -12,7 +12,8 @@ import edu.mit.broad.xbench.core.JObjectsList;
 import edu.mit.broad.xbench.core.api.Application;
 import gnu.trove.TIntObjectHashMap;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import xtools.api.Tool;
 import xtools.api.param.ParamSet;
@@ -41,7 +42,7 @@ import java.util.Properties;
  * @author Aravind Subramanian, David Eby
  */
 public class TaskManager {
-    private static final Logger klog = Logger.getLogger(TaskManager.class);
+    private static final Logger klog = LoggerFactory.getLogger(TaskManager.class);
 
     /**
      * Column headers for table model
@@ -144,7 +145,7 @@ public class TaskManager {
         trunnable.owner_thread = t;
 
         t.start();
-        klog.debug("Started executing Tool: " + clonedTool.getClass().getName() + " priority: " + priority);
+        klog.debug("Started executing Tool: {} priority: {}", clonedTool.getClass().getName(), priority);
         return clonedTool;
     }
 
@@ -158,10 +159,10 @@ public class TaskManager {
     public static Tool createTool(final Tool tool, final ParamSet pset) throws Exception {
         String toolName = tool.getClass().getName();
         Class toolClass = Class.forName(toolName);
-        klog.debug("toolClass: " + toolClass + " pset: " + pset);
+        klog.debug("toolClass: {} pset: {}", toolClass, pset);
         Class[] initArgsClass = new Class[]{Properties.class};    // reqd to have a ParamSet constructor
         Constructor initArgsConstructor = toolClass.getConstructor(initArgsClass);
-        klog.debug(initArgsConstructor);
+        klog.debug("{}", initArgsConstructor);
         Properties prp = pset.toProperties();
         prp.remove("help"); // @note imp else produces usage!!
         Properties[] initArgs = new Properties[]{prp};

@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package xapps.gsea;
 
 import edu.mit.broad.genome.Conf;
@@ -8,7 +8,8 @@ import edu.mit.broad.genome.NamingConventions;
 import edu.mit.broad.genome.TraceUtils;
 import edu.mit.broad.xbench.core.api.VdbManager;
 import edu.mit.broad.xbench.prefs.XPreferencesFactory;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 
@@ -19,11 +20,8 @@ public class VdbManagerForGsea implements VdbManager {
 
     private String fCacheDate;
 
-    private static final Logger klog = Logger.getLogger(VdbManagerForGsea.class);
+    private static final Logger klog = LoggerFactory.getLogger(VdbManagerForGsea.class);
 
-    /**
-     * Class constructor
-     */
     public VdbManagerForGsea(final String buildDate) {
         this.fCacheDate = buildDate;
     }
@@ -49,21 +47,18 @@ public class VdbManagerForGsea implements VdbManager {
     }
 
     private static File _mkdir(final File dir) {
-        //TraceUtils.showTrace();
         if (dir.exists() == false) {
             boolean made = dir.mkdir();
             if (!made) {
                 if (Conf.isDebugMode()) {
                     TraceUtils.showTrace();
                 }
-                klog.fatal("Could not make dir: " + dir);
+                klog.error("Could not make dir: {}", dir);
             } else {
-                klog.info("Made Vdb dir: " + dir);
+                klog.info("Made Vdb dir: {}", dir);
             }
         }
 
         return dir;
     }
-
-} // End class VdbManagerForGsea
-
+}

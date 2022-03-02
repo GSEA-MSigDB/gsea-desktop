@@ -1,12 +1,13 @@
 /*
- * Copyright (c) 2003-2020 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package org.genepattern.data.matrix;
 
 import java.util.Arrays;
 import java.util.List;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.ujmp.core.doublematrix.DenseDoubleMatrix2D;
 import org.ujmp.core.util.MathUtil;
 
@@ -17,7 +18,7 @@ import org.ujmp.core.util.MathUtil;
 // library directly, but I'll leave it for the moment as there is still a fair chance we'll switch
 // away to a different Matrix library.
 public class DoubleMatrix2D {
-    private static final transient Logger klog = Logger.getLogger(DoubleMatrix2D.class);
+    private static final transient Logger klog = LoggerFactory.getLogger(DoubleMatrix2D.class);
 
     // Wrapped data structure; to be unwrapped and used directly if possible.
     // Remember that it has metadata capabilities.

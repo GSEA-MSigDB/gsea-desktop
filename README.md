@@ -43,4 +43,4 @@ Cytoscape also requires Java 8.
 See the [LICENSE-3RD-PARTY.txt](LICENSE-3RD-PARTY.txt) file for a full list of the GSEA library dependencies.  In our binary builds, all required 3rd party library code is bundled into the single self-contained GSEA jar file so that no additional downloads or installation are required. 
 
 ------
-Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.

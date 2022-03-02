@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2021 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package xtools.api;
 
@@ -24,7 +24,8 @@ import org.apache.ecs.html.H4;
 import org.apache.ecs.html.LI;
 import org.apache.ecs.html.P;
 import org.apache.ecs.html.UL;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import xapps.gsea.UpdateChecker;
 import xtools.api.param.*;
@@ -52,8 +53,6 @@ public abstract class AbstractTool implements Tool {
     private PrintStream fOut;
 
     protected transient Logger log;
-
-    protected static final transient Logger klog = Logger.getLogger(AbstractTool.class);
 
     protected ToolParamSet fParamSet;
 
@@ -95,9 +94,7 @@ public abstract class AbstractTool implements Tool {
     // constructed using instantiation and npe is thrown.
     protected AbstractTool(final String toolName) {
         this.fTimer = new edu.mit.broad.genome.utils.Timer();
-        //this.fHelpMode = Boolean.getBoolean(System.getProperty("help")); // just doesnt work!!
-        //this.fHelpMode = SystemUtils.isPropertyTrue("help");
-        this.log = Logger.getLogger(this.getClass());
+        this.log = LoggerFactory.getLogger(this.getClass());
 
         if (Application.isHandlerSet() == false) {
             Application.registerHandler(new XToolsApplication());
@@ -182,7 +179,7 @@ public abstract class AbstractTool implements Tool {
             if (prp.containsKey(param_name)) {
                 String extant_param_val = prp.getProperty(param_name);
                 if (!param_val.equals(extant_param_val)) {
-                    log.warn("Ignoring param_file key: " + param_name + " value: " + param_val + " in favor of cmd line value: " + extant_param_val);
+                    log.warn("Ignoring param_file key: {} value: {} in favor of cmd line value: {}", param_name, param_val, extant_param_val);
                 }
             } else {
                 prp.setProperty(param_name, param_val);
@@ -195,7 +192,7 @@ public abstract class AbstractTool implements Tool {
     }
 
     protected String getHeader() {
-        StringBuffer buf = new StringBuffer();
+        StringBuilder buf = new StringBuilder();
         buf.append("<div id=\"footer\" style=\"width: 905; height: 35\">\n").append(
                 "<h3 style=\"text-align: left\"><font color=\"#808080\">Report for: ").append(getClass().getName()).append("</font></h3>\n").append("</div>");
         return buf.toString();

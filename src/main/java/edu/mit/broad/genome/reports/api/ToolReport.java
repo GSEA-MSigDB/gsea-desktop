@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2021 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.genome.reports.api;
 
@@ -16,7 +16,8 @@ import edu.mit.broad.genome.utils.ZipUtility;
 import edu.mit.broad.xbench.core.api.Application;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.genepattern.io.ImageUtil;
 
 import xtools.api.Tool;
@@ -54,7 +55,7 @@ import java.util.*;
  */
 // dont extend abstractobject -- easier to impl ourselves here as impl not pob but reports
 public class ToolReport implements Report {
-    private transient static Logger klog = Logger.getLogger(ToolReport.class);
+    private transient static Logger klog = LoggerFactory.getLogger(ToolReport.class);
 
     private static String COMMON_ERROR_PREFIX = "The Tool ran successfully but at least one part of the reports production failed\nwith the following details\nThe reports is INcomplete";
 
@@ -223,12 +224,12 @@ public class ToolReport implements Report {
             FileUtils.moveFile(tmp_zipped_file, zipped_file);
 
         } catch (Throwable t) {
-            klog.error(t);
+            klog.error(t.getMessage(), t);
             try {
                 FileUtils.writeStringToFile(zipped_file, t.getMessage());
             }
             catch (IOException ie) {
-                klog.error(ie);
+                klog.error(ie.getMessage(), ie);
             }
         }
 
@@ -258,13 +259,13 @@ public class ToolReport implements Report {
                 File errorDir = new File(fReportDir.getParentFile(), "error_" + fReportDir.getName());
                 if (!fRptDirMadeExternally) {
                     closeReport(false); // @note added june6 dont add to cache
-                    klog.info("Renaming rpt dir on error to: " + errorDir);
+                    klog.info("Renaming rpt dir on error to: {}", errorDir);
                     boolean renamed = fReportDir.renameTo(errorDir);
                     if (!renamed) {
-                        klog.warn("Could not rename for error to: " + errorDir);
+                        klog.warn("Could not rename for error to: {}", errorDir);
                     }
                 } else {
-                    klog.info("Pseudo Renaming rpt dir on error to: " + errorDir + " (ext made report dir so not renamed)");
+                    klog.info("Pseudo Renaming rpt dir on error to: {} (ext made report dir so not renamed)", errorDir);
                 }
             } else {
                 klog.info("No report dir was made yet (but an error condition was detected)");
@@ -550,7 +551,7 @@ public class ToolReport implements Report {
         final File saveInDir = fReportDir;
         StringBuffer name = new StringBuffer(gmx.getName()).append('.').append(DataFormat.GMX_FORMAT.getExtension());
         File file = createSafeReportFile(name.toString(), saveInDir);
-        klog.debug("saving gmt in: " + file);
+        klog.debug("saving gmt in: {}", file);
         try {
             ParserFactory.save(gmx, file);
             _centralAddPage(new FileWrapperPage(file, gmx.getQuickInfo()));    // @note
@@ -729,7 +730,7 @@ public class ToolReport implements Report {
             } else if (gmf.getDataFormat() == DataFormat.GMX_FORMAT) {
                 return savePage(desc, gm);
             } else {
-                klog.warn("Unkown gm format: " + gmf.getDataFormat());
+                klog.warn("Unkown gm format: {}", gmf.getDataFormat());
                 return savePageGmt(desc, gm);
             }
         } catch (Throwable t) {
@@ -743,7 +744,7 @@ public class ToolReport implements Report {
     public File savePageGmt(final String desc, final GeneSetMatrix gmt) {
         StringBuffer name = new StringBuffer(gmt.getName()).append('.').append(DataFormat.GMT_FORMAT.getExtension());
         File file = createSafeReportFile(name.toString());
-        klog.debug("saving gmt in: " + file);
+        klog.debug("saving gmt in: {}", file);
     
         try {
     
@@ -771,7 +772,7 @@ public class ToolReport implements Report {
     public File savePage(String desc, final GeneSetMatrix gmx, final File saveInDir) {
         StringBuffer name = new StringBuffer(gmx.getName()).append('.').append(DataFormat.GMX_FORMAT.getExtension());
         File file = createSafeReportFile(name.toString(), saveInDir);
-        klog.debug("saving gmt in: " + file);
+        klog.debug("saving gmt in: {}", file);
     
         try {
     
@@ -803,7 +804,7 @@ public class ToolReport implements Report {
         try {
     
             if (!silent) {
-                klog.debug("saving in: " + file);
+                klog.debug("saving in: {}", file);
             }
             
             FileUtils.writeStringToFile(file, content);
@@ -860,7 +861,7 @@ public class ToolReport implements Report {
             }
             StringBuffer err = new StringBuffer("Fatal error making file to save a component of the reports in");
             err.append("\nInstead using a result file: ").append(file.getPath());
-            klog.fatal(err, t);
+            klog.error(err.toString(), t);
         }
 
         return file;
@@ -962,17 +963,9 @@ public class ToolReport implements Report {
             this.flist = new ArrayList<File>();
         }
 
-        private void writeObject(java.io.ObjectOutputStream out) {
-        	if (klog.isDebugEnabled()) {
-        		klog.debug("Ignoring: " + out);
-        	}
-        }
+        private void writeObject(java.io.ObjectOutputStream out) { klog.debug("Ignoring: {}", out); }
 
-        private void readObject(java.io.ObjectInputStream in) {
-        	if (klog.isDebugEnabled()) {
-        		klog.debug("Ignoring: " + in);
-        	}
-        }
+        private void readObject(java.io.ObjectInputStream in) { klog.debug("Ignoring: {}", in); }
 
         void add(Page page, File file) {
             plist.add(page);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.xbench.core.api;
 
@@ -9,7 +9,8 @@ import edu.mit.broad.genome.utils.ClassUtils;
 import edu.mit.broad.xbench.prefs.XPreferencesFactory;
 import edu.mit.broad.xbench.tui.ReportStub;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import xtools.api.Tool;
 
@@ -23,8 +24,7 @@ import java.util.Map;
  * @author Aravind Subramanian
  */
 public class ToolManagerImpl implements ToolManager {
-
-    private static final Logger klog = Logger.getLogger(ToolManagerImpl.class);
+    private static final Logger klog = LoggerFactory.getLogger(ToolManagerImpl.class);
 
     // both for opt and because we dont want to pick up this instances report stub
     private static Map kToolNameReporStubMap;
@@ -105,14 +105,11 @@ public class ToolManagerImpl implements ToolManager {
     private File[] _getReportFiles() {
         final File dir = Application.getVdbManager().getReportsCacheDir();
 
-        if (dir.exists() == false) {
-            klog.warn("Report cache: " + dir + " not found");
+        if (!dir.exists()) {
+            klog.warn("Report cache: {} not found", dir);
             return new File[]{};
         }
 
         return dir.listFiles(DataFormat.RPT_FORMAT.getFilenameFilter());
-        //klog.info("Report cache: " + dir + " and # found: " + files.length);
-        //return files;
     }
-
-} // End class ToolManagerImpl
+}

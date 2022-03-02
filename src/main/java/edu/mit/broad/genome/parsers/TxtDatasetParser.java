@@ -1,11 +1,10 @@
 /*
- * Copyright (c) 2003-2021 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.genome.parsers;
 
 import edu.mit.broad.genome.Constants;
 import edu.mit.broad.genome.NamingConventions;
-import edu.mit.broad.genome.math.Matrix;
 import edu.mit.broad.genome.objects.*;
 
 import java.io.*;
@@ -92,7 +91,7 @@ public class TxtDatasetParser extends AbstractParser {
                 hasDesc = true;
             }
     
-            log.debug("HAS DESC: " + hasDesc);
+            log.debug("HAS DESC: {}", hasDesc);
     
             // At this point, currLine should contain the first data line
             // data line: <row name> <tab> <ex1> <tab> <ex2> <tab>

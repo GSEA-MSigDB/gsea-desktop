@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package xtools.api.param;
 
 import edu.mit.broad.genome.objects.PersistentObject;
@@ -18,11 +18,8 @@ import java.io.File;
  * tagging subclass for pob params
  *
  * @author Aravind Subramanian
- * @version %I%, %G%
  */
-
 abstract class PobParam extends AbstractParam implements ActionListener {
-
     private GComboBoxField cbOptions;
 
     protected PobParam(String name, String nameEnglish, Class type, String desc, Object def_andonly_hint,
@@ -121,6 +118,4 @@ abstract class PobParam extends AbstractParam implements ActionListener {
             return null;
         }
     }
-
-} // End PobParam
-
+}

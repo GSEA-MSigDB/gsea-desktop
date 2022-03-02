@@ -1,11 +1,12 @@
 /*
- * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package xtools.api.param;
 
 import edu.mit.broad.genome.NamingConventions;
 import edu.mit.broad.genome.parsers.AuxUtils;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.util.*;
@@ -15,13 +16,11 @@ import java.util.*;
  * only 1 param of each type added
  *
  * @author Aravind Subramanian
- * @version %I%, %G%
  */
 public class ToolParamSet implements ParamSet {
-
     private final List fReqdParams;
     private final List fOptParams;
-    private final Logger log = Logger.getLogger(ToolParamSet.class);
+    private final Logger log = LoggerFactory.getLogger(ToolParamSet.class);
 
     /**
      * Class constructor
@@ -61,7 +60,6 @@ public class ToolParamSet implements ParamSet {
             throw new IllegalArgumentException("Null param not allowed");
         }
 
-        //log.debug("Adding opt param: " + param.key + " " + param.val);
         checkUniqueness(param);
 
         if (param.isReqd()) {
@@ -116,8 +114,6 @@ public class ToolParamSet implements ParamSet {
      * Overwrites any existing values
      */
     public void fill(final Properties prop) {
-        //TraceUtils.showTrace();
-        //log.debug("Filling ToolParamSet with properties: " + prop);
         for (int i = 0; i < fReqdParams.size(); i++) {
             Param param = (Param) fReqdParams.get(i);
             String val = prop.getProperty(param.getName());
@@ -127,7 +123,6 @@ public class ToolParamSet implements ParamSet {
                 val = val.trim();
             }
 
-            //log.debug(param.getName());
             if ((val != null) && val.equals("")) {
                 setval = null;    // note
             } else if (val != null && val.equalsIgnoreCase("null")) {
@@ -139,8 +134,6 @@ public class ToolParamSet implements ParamSet {
             }
 
             param.setValue(setval);
-
-            //log.debug("For param: " + param.getName() + " set value as: " + param.getValue() + " from specified value: " + val);
         }
 
         // optional ones
@@ -149,7 +142,6 @@ public class ToolParamSet implements ParamSet {
             String val = prop.getProperty(param.getName());
             String setval;
 
-            //log.debug(param.getName() + " " + val);
             if (val != null) {
                 val = val.trim();
             }
@@ -165,8 +157,6 @@ public class ToolParamSet implements ParamSet {
             }
 
             param.setValue(setval);
-
-            //log.debug("For param: " + param.getName() + " value is: " + param.getValue() + " from spec value: " + val + " comp val: " + param.getSelectionComponent().getValue());
         }
 
         // sanity checks
@@ -231,8 +221,6 @@ public class ToolParamSet implements ParamSet {
             }
 
             param.setValue(setval);
-
-            //log.debug("For param: " + param.getName() + " set value as: " + param.getValue() + " from spec value: " + val);
         }
 
         // optional ones
@@ -241,7 +229,6 @@ public class ToolParamSet implements ParamSet {
             String val = prop.getProperty(param.getName());
             String setval;
 
-            //log.debug(param.getName() + " " + val);
             if (val != null) {
                 val = val.trim();
             }
@@ -266,8 +253,6 @@ public class ToolParamSet implements ParamSet {
             }
 
             param.setValue(setval);
-
-            //log.debug("For param: " + param.getName() + " value is: " + param.getValue() + " from spec value: " + val + " comp val: " + param.getSelectionComponent().getValue());
         }
 
         FoundMissingFile fmf = new FoundMissingFile();
@@ -285,7 +270,6 @@ public class ToolParamSet implements ParamSet {
 
         for (int i = 0; i < getNumParams(); i++) {
             final Param param = getParam(i);
-            //log.debug("name=" + param.getName() + " value=" + param.getValue() + " str=" + param.getValueStringRepresentation());
             if (param.isSpecified()) {
                 String s = param.getValueStringRepresentation(true);
                 if (s != null) {
@@ -312,21 +296,10 @@ public class ToolParamSet implements ParamSet {
         for (int i = 0; i < fReqdParams.size(); i++) {
             Param param = (Param) fReqdParams.get(i);
 
-            /* Orig form
-            if ((!param.isSpecified()) && (param.getDefault() == null)) {
-                errors.append('\t').append(((Param) fReqdParams.get(i)).formatForCmdLine());
-                missingParams.add(param);
-            } else {
-                log.debug("reqd param: " + param.getName() + " was specified: " + param.isSpecified() + " with value >" + param.getValue() + "<");
-            }
-            */
-
             // new form
             if (!param.isSpecified()) {
                 errors.append('\t').append(((Param) fReqdParams.get(i)).formatForCmdLine());
                 missingParams.add(param);
-            } else {
-                //log.debug("reqd param: " + param.getName() + " was specified: " + param.isSpecified() + " with value >" + param.getValue() + "<");
             }
 
         }
@@ -344,9 +317,7 @@ public class ToolParamSet implements ParamSet {
         for (int i = 0; i < fReqdParams.size(); i++)
         { // @todo make this actually work (i think its gets confused on Object[]{})
             final Param param = (Param) fReqdParams.get(i);
-            //log.debug(param.getName() + " is set: " + param.isSpecified() + " def: " + param.getDefault());
             if ((!param.isSpecified()) && (param.getDefault() == null)) {
-                //log.debug("FALSE!");
                 return false;
             }
         }
@@ -465,9 +436,6 @@ public class ToolParamSet implements ParamSet {
      */
 
     public String getUsage() {
-
-        // TraceUtils.showTrace();
-
         StringBuffer buf = new StringBuffer("\n######## USAGE ########\n\n");
 
         if (fReqdParams.size() > 0) {
@@ -510,8 +478,6 @@ public class ToolParamSet implements ParamSet {
             throw new IllegalArgumentException("param cannot be null");
         }
 
-        //log.debug("fOptParams: " + fOptParams + " size: " + fOptParams.size());
-        //log.debug("fReqdParams: " + fReqdParams + " size: " + fReqdParams.size());
         if (fOptParams.contains(param)) {
             throw new RuntimeException("Duplicated param in declarations - already have param: "
                     + param + " # params: " + getNumParams()
@@ -532,108 +498,4 @@ public class ToolParamSet implements ParamSet {
         Collections.sort(fReqdParams, new ParamComparator());
         Collections.sort(fOptParams, new ParamComparator());
     }
-
-}    // End ToolParamSet
-
-/**
- * MOVED TO SEPERATE CLASS - DELETE LATER IF FOUND TO BE OK
- *
- * @todo '-' in file paths/names causes the parsing to barf
- *
- * two kinds of keyvals are allowed
- * 1) -cls foo    <-- parameter name "cls" has value foo
- * 2) -tag        <-- parameter name "tag: is TRUE
- * Trouble is that we need to know if tag is a boolean param or not
- * value less specification is only allowed for booleans
- * Other examples
- * -tag false  <-- param tag is Boolean.FALSE
- * -names foo,bar,zok -> param names -> foo, bar, zok (NOT parsed here)
- *
- * @param args
- */
-/*
-public void fill(String[] args) {
-
-    // first recreate the arg line -- its easier to parse
-    StringBuffer buf = new StringBuffer();
-
-    for (int i = 0; i < args.length; i++) {
-        buf.append(args[i]).append(" ");
-    }
-
-    String argline = buf.toString().trim();
-
-    StringTokenizer tok = new StringTokenizer(argline, "-"); // IMP spaces are NOT delimiters at this stage
-
-    Set keyval = new HashSet();
-    while (tok.hasMoreElements()) {
-        String kv = tok.nextToken();
-        keyval.add(kv);
-        //log.debug("found kv: " + kv);
-    }
-
-    // now fill them up
-    Iterator it = keyval.iterator();
-    while (it.hasNext()) {
-        String kv = it.next().toString();
-        tok = new StringTokenizer(kv, " ="); // '=' as a favor to human errors
-        _fillParam(tok, kv);
-    }
-
 }
-
-private void _fillParam(StringTokenizer tok, String origString) {
-    List tokens = ParseUtils.getUniqueTokens(tok);
-
-    // now the trouble is that the second param, sometimes a file name, can have spaces
-    // note that in general there is nothing to prevent the 'value' from having a space
-    // as it doesnt affect the '-' based tokenizing (' ' is NOT a delim that seperates 'key-val' pairs
-    // so as a mechanism to allow space in file names (the most common instance where space occurs in  a key-val)
-
-    String param_name = null;
-    String param_val = null;
-
-    if (tokens.size() == 1) {
-        param_name = tokens.get(0).toString();
-    } else if (tokens.size() == 2) {
-        param_name = tokens.get(0).toString();
-        param_val = tokens.get(1).toString();
-    } else {
-        log.warn("More than 2 tokens for key-value pair >" + origString + "<" + " " + tokens.size());
-        int num = tokens.size();
-        param_name = tokens.get(0).toString();
-
-        // heres the space fix
-        param_val = "";
-        for (int i = 1; i < num; i++) {
-            param_val = param_val + tokens.get(i) + " ";
-        }
-    }
-
-    param_name = param_name.trim();
-    if (param_val != null) {
-        param_val = param_val.trim();
-    }
-
-    //System.out.println("Doing >" + param_name + "< >" + param_val + "<");
-
-    Param p = getParam(param_name);
-    //log.debug("Asked for: " + param_name + " got: " + p);
-    if (p == null) {
-        log.warn("Invalid parameter for xtool >" + param_name + "< THIS PARAMETER WAS IGNORED!!");
-        // dont barf (happens on cmd line sometimes, no point penalizing totally)
-        //throw new IllegalArgumentException("Invalid parameter for xtool: " + param_name);
-    }
-
-    if ((param_val == null) || (param_val.length() == 0)) {
-        if (p instanceof BooleanParam) {
-            param_val = Boolean.TRUE.toString(); // @note
-        }
-    } else if (param_val == null) {
-        throw new IllegalArgumentException("Invalid empty value for parameter: " + param_name);
-    }
-
-    p.setValue(param_val);
-
-}
-*/

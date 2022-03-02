@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.cytoscape;
 
@@ -19,14 +19,14 @@ import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import edu.mit.broad.xbench.core.api.Application;
 import edu.mit.broad.xbench.prefs.XPreferencesFactory;
 
 public class CytoscapeCyrest {
-
-    private static final Logger klog = Logger.getLogger(CytoscapeCyrest.class);
+    private static final Logger klog = LoggerFactory.getLogger(CytoscapeCyrest.class);
 
     // path to the edb directory
     private EnrichmentMapParameters params;
@@ -49,7 +49,7 @@ public class CytoscapeCyrest {
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 
         if (conn.getResponseCode() != 200) {
-            klog.info("cannot connet to cytoscape rest server");
+            klog.error("cannot connect to cytoscape rest server");
             conn.disconnect();
             return false;
         }
@@ -114,12 +114,12 @@ public class CytoscapeCyrest {
 
         CloseableHttpClient httpclient = HttpClients.createDefault();
         HttpGet httpget = new HttpGet(uri);
-        klog.info("Get URL:" + httpget.getURI());
+        klog.info("Get URL: {}", httpget.getURI());
         CloseableHttpResponse response = httpclient.execute(httpget);
 
         HttpEntity entity = response.getEntity();
         StatusLine statusLine = response.getStatusLine();
-        klog.info("status:" + statusLine.getReasonPhrase());
+        klog.info("status: {}", statusLine.getReasonPhrase());
         if (!statusLine.getReasonPhrase().equalsIgnoreCase("ok")) {
             String message = EntityUtils.toString(entity);
             Application.getWindowManager().showMessage("Unable to create Enrichment Map: " + statusLine.getReasonPhrase() + "\n" + message);

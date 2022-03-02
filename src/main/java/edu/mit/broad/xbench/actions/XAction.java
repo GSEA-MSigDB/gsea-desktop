@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.xbench.actions;
 
 import java.util.Objects;
@@ -8,13 +8,13 @@ import java.util.Objects;
 import javax.swing.AbstractAction;
 import javax.swing.Icon;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Base action-pattern class for all xomics actions.
  *
  * @author Aravind Subramanian
- * @version %I%, %G%
  */
 public abstract class XAction extends AbstractAction {
     public static final String ID = "ID";
@@ -45,8 +45,7 @@ public abstract class XAction extends AbstractAction {
         return (Icon)action.getValue(SMALL_ICON);
     }
 
-    protected final Logger log = Logger.getLogger(XAction.class);
-
+    protected final Logger log = LoggerFactory.getLogger(this.getClass());
 
     public XAction(String id, String name, String description) {
         this(id, name, description, null);
@@ -59,4 +58,4 @@ public abstract class XAction extends AbstractAction {
         if (description != null) super.putValue(SHORT_DESCRIPTION, description);
         if (icon != null) super.putValue(SMALL_ICON, icon);
     }
-}    // End XAction
+}

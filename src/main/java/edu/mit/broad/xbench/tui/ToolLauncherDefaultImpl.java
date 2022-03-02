@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.xbench.tui;
 
@@ -11,7 +11,8 @@ import edu.mit.broad.xbench.core.Widget;
 import edu.mit.broad.xbench.core.api.Application;
 import edu.mit.broad.xbench.prefs.XPreferencesFactory;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import xtools.api.Tool;
 import xtools.api.ToolCategory;
@@ -34,13 +35,11 @@ import java.util.WeakHashMap;
  * To be renamed...
  *
  * @author Aravind Subramanian
- * @version %I%, %G%
  */
 public class ToolLauncherDefaultImpl extends JPanel implements ToolLauncher, MouseMotionListener, ToolRunnerControl.DisplayHook {
-
     private String fTitle = "Analysis history";
     private Icon fIcon = ReportViewer.ICON;
-    private static final Logger klog = Logger.getLogger(ToolLauncherDefaultImpl.class);
+    private static final Logger klog = LoggerFactory.getLogger(ToolLauncherDefaultImpl.class);
     private final JSplitPane splitPane = new JSplitPane();
     private ToolSelectorTree fToolSelectorTree;
 
@@ -221,10 +220,6 @@ public class ToolLauncherDefaultImpl extends JPanel implements ToolLauncher, Mou
         initToLastToolRun();
     }
 
-    
-
-    //private JScrollPane sp_for_box;
-
     private static final int LHS_SIZE = 250;
 
     /**
@@ -285,10 +280,6 @@ public class ToolLauncherDefaultImpl extends JPanel implements ToolLauncher, Mou
         checkTable();
     }
 
-    // -------------------------------------------------------------------------------------------- //
-    // ------------------------------------ PRIVATE METHODS -------------------------------------- //
-    // -------------------------------------------------------------------------------------------- //
-
     /**
      * must be safe - dont barf if this isnt possible
      */
@@ -305,7 +296,7 @@ public class ToolLauncherDefaultImpl extends JPanel implements ToolLauncher, Mou
             fToolSelectorTree.selectTool(p);
 
         } catch (Throwable t) {
-            klog.warn(t);
+            klog.warn(t.getMessage(), t);
         }
     }
 
@@ -350,5 +341,4 @@ public class ToolLauncherDefaultImpl extends JPanel implements ToolLauncher, Mou
         splitPane.setRightComponent(infoPanel);
         splitPane.revalidate();
     }
-
-}    // End ToolLauncherTreeImpl
+}

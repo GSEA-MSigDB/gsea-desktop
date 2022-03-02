@@ -1,13 +1,14 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.io;
 
 import java.io.IOException;
 
 import javax.swing.ProgressMonitor;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.enterprisedt.net.ftp.EventAdapter;
 import com.enterprisedt.net.ftp.EventListener;
@@ -16,7 +17,7 @@ import com.enterprisedt.net.ftp.FTPException;
 import edu.mit.broad.xbench.core.api.Application;
 
 public class FtpProgressMonitor extends ProgressMonitor implements EventListener {
-    private static final Logger klog = Logger.getLogger(FtpProgressMonitor.class);
+    private static final Logger klog = LoggerFactory.getLogger(FtpProgressMonitor.class);
 
     // Default handler for EventListener events (other than those we care about)
     private final EventAdapter eventDelegate = new EventAdapter();
@@ -57,10 +58,10 @@ public class FtpProgressMonitor extends ProgressMonitor implements EventListener
                 // Log and suppress this exception. We'll allow the client to
                 // become completely undone in the main workflow and handle it
                 // there.
-                klog.error(ie);
+                klog.error(ie.getMessage(), ie);
             } catch (FTPException fe) {
                 // Ditto.
-                klog.error(fe);
+                klog.error(fe.getMessage(), fe);
             }
         } else {
             int progressPercent = Math.round(100 * count / size);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2020 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.genome.parsers;
 
@@ -465,9 +465,7 @@ public class EdbFolderParser extends AbstractParser {
         }
 
         File file = NamingConventions.createSafeFile(inDir, name);
-        if (file.exists()) {
-            log.warn("Overwriting extant file: " + file);
-        }
+        if (file.exists()) { log.warn("Overwriting extant file: {}", file); }
 
         if (pob instanceof RankedList) {
             ParserFactory.save((RankedList) pob, file);
@@ -494,5 +492,4 @@ public class EdbFolderParser extends AbstractParser {
     private static File _toFile(String attName, Element el, File inDir) {
         return new File(inDir, el.attribute(attName).getValue());
     }
-
-}    // End of class EdbParser
+}

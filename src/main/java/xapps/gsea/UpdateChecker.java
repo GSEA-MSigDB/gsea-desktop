@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ *  Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package xapps.gsea;
 
@@ -13,7 +13,8 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.genepattern.uiutil.UIUtil;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -25,7 +26,7 @@ public class UpdateChecker {
 
     private static final String GSEA_UPDATE_CHECK_URL = GseaWebResources.getGseaBaseURL() + "/gseaUpdate";
 
-    private static final transient Logger klog = Logger.getLogger(UpdateChecker.class);
+    private static final transient Logger klog = LoggerFactory.getLogger(UpdateChecker.class);
 
     private static boolean MAKE_GSEA_UPDATE_CHECK = BooleanUtils.toBoolean(System.getProperty("MAKE_GSEA_UPDATE_CHECK", "true"))
             && XPreferencesFactory.kMakeGseaUpdateCheck.getBoolean();

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2021 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.genome.alg.gsea;
 
@@ -15,14 +15,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Defines a collection of gene sets and their associated scoring scheme (weights)
  * @author Aravind Subramanian, David Eby
  */
 public class GeneSetCohort {
-    private Logger log = Logger.getLogger(GeneSetCohort.class);
+    private Logger log = LoggerFactory.getLogger(GeneSetCohort.class);
 
     private GeneSet[] fGeneSets;
     private THashSet[] fFastSets; // much much faster that gset.ismember!!!
@@ -45,7 +46,7 @@ public class GeneSetCohort {
 		    throw new IllegalArgumentException("Parameter gsets cannot be null");
 		}
 		if (gsets.length == 0) {
-		    log.warn("zero length gsets array: " + gsets.length);
+		    log.warn("zero length gsets array: {}", gsets.length);
 		}
 		
         this.fOrigTable = scoringTable;
@@ -77,9 +78,8 @@ public class GeneSetCohort {
 		    }
 		}
 		
-		
 		if (!atleastonewithits) {
-		    log.info("rl: " + rl.getName() + " \n" + rl.getRankedNames().subList(0, 10));
+		    log.info("rl: {} \n{}", rl.getName(), rl.getRankedNames().subList(0, 10));
 		
 		    TraceUtils.showTrace();
 		    log.warn("No hits in the ranked list to any of the gene sets!");
@@ -149,7 +149,7 @@ public class GeneSetCohort {
     }
 
     public static class Generator {
-        private Logger log = Logger.getLogger(Generator.class);
+        private Logger log = LoggerFactory.getLogger(Generator.class);
         private int geneSetMinSize;
         private int geneSetMaxSize;
         private GeneSetScoringTable origTable;

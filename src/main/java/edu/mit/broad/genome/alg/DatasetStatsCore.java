@@ -1,11 +1,12 @@
 /*
- * Copyright (c) 2003-2021 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.genome.alg;
 
 import edu.mit.broad.genome.math.Vector;
 import edu.mit.broad.genome.objects.*;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import xtools.api.param.BadParamException;
 
 import java.util.*;
@@ -16,7 +17,7 @@ import java.util.*;
  * @author Aravind Subramanian, David Eby
  */
 public class DatasetStatsCore {
-    private Logger log = Logger.getLogger(DatasetStatsCore.class);
+    private Logger log = LoggerFactory.getLogger(DatasetStatsCore.class);
 
     public DatasetStatsCore() { }
 
@@ -129,14 +130,12 @@ public class DatasetStatsCore {
                 stats.stdev0 = Float.NaN;
                 stats.stdev1 = Float.NaN;
                 stats.stdev_all = Float.NaN;
-                log.warn("Omitting row " + (r+1) + " of this dataset with name ' " + rowName
-                        + "' as all the data is missing for one or both of the classes.");
+                log.warn("Omitting row {} of this dataset with name '{}' as all the data is missing for one or both of the classes.", (r+1), rowName);
                 stats.omit = true;
                 foundRowsWithMissingData = true;
             } else {
                 if (vs[0].getSize() < minSampleCount || vs[1].getSize() < minSampleCount) {
-                    log.warn("In row " + (r+1) + " of this dataset with name '" + rowName
-                            + "', one or both of the classes has too few samples to use the chosen metric");
+                    log.warn("In row {} of this dataset with name '{}', one or both of the classes has too few samples to use the chosen metric", (r+1), rowName);
                 }
 
                 stats.score = (float) metric.getScore(profile, template, params);

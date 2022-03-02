@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package org.genepattern.modules;
 
@@ -21,10 +21,9 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.filefilter.FileFileFilter;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
 
 public class AbstractModule {
-
     protected static final Pattern COMMA_PATTERN = Pattern.compile(",");
     protected static final Pattern HASH_PATTERN = Pattern.compile("#");
 
@@ -53,7 +52,7 @@ public class AbstractModule {
     protected static void setParam(String name, String value, Properties paramProps, Logger log) {
         // If the value is missing, don't set the property
         if (StringUtils.isBlank(value)) return;
-        log.info(name + "\t" + value);
+        log.info("{}\t{}", name, value);
         paramProps.setProperty(name, value);
     }
 
@@ -293,6 +292,5 @@ public class AbstractModule {
                 StringUtils.equals("true", collapseParam);
     }
     
-    public AbstractModule() {
-    }
+    public AbstractModule() { }
 }

@@ -1,12 +1,13 @@
 /*
- * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.genome.objects;
 
 import edu.mit.broad.genome.math.*;
 import edu.mit.broad.genome.math.ColorSchemes.ColorScheme;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.awt.*;
 
@@ -15,7 +16,6 @@ import java.awt.*;
  * to its float value.
  *
  * @author Aravind Subramanian
- * @version %I%, %G%
  */
 public interface ColorDataset extends Dataset {
 
@@ -34,9 +34,7 @@ public interface ColorDataset extends Dataset {
     public Color getColor(final int row, final int col);
 
     static class Helper {
-
-        private static final Logger klog = Logger.getLogger(Helper.class);
-
+        private static final Logger klog = LoggerFactory.getLogger(Helper.class);
 
         /**
          * the coloring alg.
@@ -94,8 +92,8 @@ public interface ColorDataset extends Dataset {
 
                     color = colorScheme.getColor(ind);
                 } catch (Exception e) {
-                    klog.error("ColorMatrix: Cval: " + cVal + " Xval: " + x + " Index: " + ind
-                            + " Min: " + min + " Max: " + max + " Mean: " + mean, e);
+                    klog.error("ColorMatrix: Cval: {} Xval: {} Index: {} Min: {} Max: {} Mean: {}", cVal, x, ind, min, max, mean);
+                    klog.error(e.getMessage(), e);
                 }
 
                 return color;
@@ -158,8 +156,8 @@ public interface ColorDataset extends Dataset {
 
                     color = colorScheme.getColor(ind);
                 } catch (Exception e) {
-                    klog.error("ColorMatrix: Cval: " + cVal + " Xval: " + x + " Index: " + ind
-                            + " Min: " + min + " Max: " + max + " Median: " + median, e);
+                    klog.error("ColorMatrix: Cval: {} Xval: {} Index: {} Min: {} Max: {} Median: {}", cVal, x, ind, min, max, median);
+                    klog.error(e.getMessage(), e);
                 }
 
                 return color;
@@ -225,10 +223,9 @@ public interface ColorDataset extends Dataset {
 
                     color = colorScheme.getColor(ind);
                 } catch (Exception e) {
-                    klog.error("ColorMatrix: Cval: " + cVal + " Xval: " + x + " Index: " + ind
-                            + " Min: " + min + " Max: " + max + " Mean: " + mean, e);
+                    klog.error("ColorMatrix: Cval: {} Xval: {} Index: {} Min: {} Max: {} Mean: {}", cVal, x, ind, min, max, mean);
+                    klog.error(e.getMessage(), e);
                 }
-
                 return color;
             } else if (graphMode.IsLog()) {
 
@@ -238,8 +235,5 @@ public interface ColorDataset extends Dataset {
                 throw new IllegalStateException("Unknown GraphMode:" + graphMode);
             }
         }
-
-
     }
-
-}    // End ColorDataset
+}

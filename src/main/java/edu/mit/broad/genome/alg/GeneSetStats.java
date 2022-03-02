@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.alg;
 
 import edu.mit.broad.genome.math.*;
@@ -9,7 +9,8 @@ import edu.mit.broad.genome.objects.*;
 import gnu.trove.TFloatIntHashMap;
 import gnu.trove.TObjectIntHashMap;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
@@ -17,8 +18,7 @@ import java.util.*;
  * @author Aravind Subramanian
  */
 public class GeneSetStats {
-
-    private final Logger log = Logger.getLogger(GeneSetStats.class);
+    private final Logger log = LoggerFactory.getLogger(GeneSetStats.class);
 
     public static TObjectIntHashMap featureFreq(String[] feats) {
     
@@ -46,7 +46,6 @@ public class GeneSetStats {
     // rec = number of unique 2mers / total number of possible 2 mers
     // NOT same as co-occurrence
     public RedStruc calcRedundancy(final GeneSet[] gsets, final boolean do2mersalso) {
-
         RedStruc rs = new RedStruc();
         if (do2mersalso) {
             rs.allFoundTwoMers = new HashSet();
@@ -54,10 +53,7 @@ public class GeneSetStats {
                 int n = gsets[i].getNumMembers();
                 int num = n * (n - 1) / 2;
                 Set s = hashTwoMers(gsets[i]);
-                if (s.size() != num) {
-                    log.warn("Bad: " + s.size() + " " + num);
-                    //throw new IllegalStateException("Bad: " + s.size() + " " + num);
-                }
+                if (s.size() != num) { log.warn("Bad: {} {}", s.size(), num); }
                 rs.allFoundTwoMers.addAll(s);
                 rs.totNumPairsPossible += num;
             }
@@ -140,7 +136,4 @@ public class GeneSetStats {
 
         return new LabelledVector(uniqFeats, v);
     }
-
-
-} // End class GeneSetMatrixStats
-
+}

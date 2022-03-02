@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2021 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package xtools.api.param;
 
@@ -7,7 +7,8 @@ import edu.mit.broad.genome.Constants;
 import edu.mit.broad.genome.JarResources;
 import edu.mit.broad.genome.objects.PersistentObject;
 import edu.mit.broad.genome.utils.ClassUtils;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 
@@ -15,8 +16,8 @@ import javax.swing.*;
  * Object to capture commandline params / params that a Tool accepts/needs
  */
 public abstract class AbstractParam implements Param {
-
-    protected static final Logger klog = Logger.getLogger(AbstractParam.class);
+    // TODO: consolidate to *one* logger
+    protected static final Logger klog = LoggerFactory.getLogger(AbstractParam.class);
 
     protected Logger log;
     private String fName;
@@ -284,7 +285,7 @@ public abstract class AbstractParam implements Param {
         this.fReqd = reqd;
         this.fDefault = def;
         this.fType = type;
-        this.log = Logger.getLogger(this.getClass());
+        this.log = LoggerFactory.getLogger(this.getClass());
     }
 
     public String getName() {

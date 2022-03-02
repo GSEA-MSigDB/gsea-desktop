@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2021 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package xtools.api.param;
 
@@ -219,7 +219,7 @@ public class GeneSetMatrixMultiChooserParam extends AbstractParam {
                 continue;
             }
 
-            log.debug(vals[i].getClass());
+            log.debug("{}", vals[i].getClass());
 
             if (vals[i] instanceof PersistentObject) {
                 String p = ParserFactory.getCache().getSourcePath(vals[i]);
@@ -283,7 +283,7 @@ public class GeneSetMatrixMultiChooserParam extends AbstractParam {
                     ftpList.quit();
                     return ftpList.getModel();
                 } catch (Exception e) {
-                    klog.error(e);
+                    klog.error(e.getMessage(), e);
                     DefaultListModel model = new DefaultListModel();
                     model.addElement("Error listing Broad website");
                     model.addElement(e.getMessage());
