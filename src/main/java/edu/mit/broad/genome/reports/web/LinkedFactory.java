@@ -1,19 +1,18 @@
 /*
- * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.genome.reports.web;
 
 import java.io.File;
 
+import org.apache.commons.lang3.StringUtils;
+
 import edu.mit.broad.genome.Constants;
-import edu.mit.broad.genome.NamingConventions;
 import edu.mit.broad.genome.objects.GeneSet;
 import edu.mit.broad.genome.objects.strucs.Hyperlink;
 import edu.mit.broad.genome.objects.strucs.Linked;
 import edu.mit.broad.genome.reports.DefaultHyperlink;
 import edu.mit.broad.genome.reports.pages.Page;
-
-import xapps.gsea.GseaWebResources;
 
 /**
  * IMP IMP: Al Linked objects here must
@@ -24,13 +23,7 @@ import xapps.gsea.GseaWebResources;
  * Also, DO NOT cache creation
  */
 public class LinkedFactory {
-
-    /**
-     * Privatized class constructor
-     */
-    private LinkedFactory() {
-    }
-
+    private LinkedFactory() { }
 
     public static Linked createLinkedGeneSymbol(String symbol) {
         return new LinkedGeneSymbol(symbol);
@@ -45,7 +38,6 @@ public class LinkedFactory {
     }
 
     public static class SimpleLinkedPage implements Linked {
-
         private String text;
         private String pageName; // @note IMP Dont save the page that doesnt clear memory!!
         private String pageExt; // @note IMP Dont save the page that doesnt clear memory!!
@@ -67,15 +59,12 @@ public class LinkedFactory {
         public Hyperlink[] createAllLinks() {
             return new Hyperlink[]{createDefaultLink()};
         }
-
-    } // End class SimplePageLinked
+    }
 
     /**
-     * Class constructor
      * For a HUGO GeneSymbol
      */
     public static class LinkedGeneSymbol implements Linked {
-
         private String fSymbol;
 
         public LinkedGeneSymbol(final String symbol) {
@@ -102,11 +91,9 @@ public class LinkedFactory {
     }
 
     /**
-     * Class constructor
-     * For a GeneSey
+     * For a GeneSet
      */
     public static class LinkedGeneSet implements Linked {
-
         private String fGeneSetName;
         private String url;
 
@@ -117,16 +104,10 @@ public class LinkedFactory {
 
             this.fGeneSetName = gset.getName(true);
 
-            if (!NamingConventions.isNull(gset.getNameEnglish()) && gset.getNameEnglish().length() > 0) {
-
-                if (gset.getNameEnglish().toLowerCase().startsWith("http")) {
-                    this.url = gset.getNameEnglish();
-                } else {
-                    this.url = Constants.NA;
-                }
-
+            if (StringUtils.isNotBlank(gset.getNameEnglish()) && gset.getNameEnglish().toLowerCase().startsWith("http")) {
+                this.url = gset.getNameEnglish();
             } else {
-                url = GseaWebResources.getGeneSetURL(fGeneSetName); // @todo inspect bad dependency
+                this.url = Constants.NA;
             }
         }
 
@@ -148,7 +129,6 @@ public class LinkedFactory {
      * For an affy probe
      */
     public static class LinkedProbe implements Linked {
-
         private String fProbe;
 
         public LinkedProbe(String probe) {
@@ -178,7 +158,6 @@ public class LinkedFactory {
     }
 
     public static class SimpleLinkedFile implements Linked {
-    
         private String text;
         private String fileName; // @note IMP Dont save the page that doesnt clear memory!!
     
@@ -198,7 +177,5 @@ public class LinkedFactory {
         public Hyperlink[] createAllLinks() {
             return new Hyperlink[]{createDefaultLink()};
         }
-    
-    } // End class SimplePageLinked
-
-} // End class LinkFactory
+    }
+}

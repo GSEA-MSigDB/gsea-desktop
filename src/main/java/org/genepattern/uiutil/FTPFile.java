@@ -1,51 +1,39 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package org.genepattern.uiutil;
 
+import edu.mit.broad.genome.objects.MSigDBVersion;
+
 public class FTPFile {
+    private final String fHost;
+    private final String fDir;
+    private final String fName;
+    private final String toString;
+    private final MSigDBVersion msigDBVersion;
 
-    private String fHost;
-
-    private String fDir;
-
-    private String fName;
-
-    /**
-     * Class constructor
-     *
-     * @param host
-     * @param dir
-     * @param name
-     */
-    public FTPFile(String host, String dir, String name) {
+    public FTPFile(String host, String dir, String name, MSigDBVersion msigDBVersion) {
         this.fHost = host;
         this.fDir = dir;
         this.fName = name;
+        this.toString = fHost + ":/" + fDir + "/" + fName;
+        this.msigDBVersion = msigDBVersion;
     }
 
-    public String toString() {
-        return fHost + ":/" + fDir + "/" + fName;
-    }
+    public String toString() { return toString; }
 
-    public String getPath() {
-        return toString();
-    }
+    public String getPath() { return toString; }
 
-    public String getName() {
-        return fName;
-    }
+    public String getName() { return fName; }
 
+    public MSigDBVersion getMSigDBVersion() { return msigDBVersion; }
+    
     public boolean equals(Object obj) {
         if (obj instanceof FTPFile) {
-            return ((FTPFile) obj).toString().equals(toString());
+            return obj == this || toString.equals(obj.toString());
         }
-
         return false;
     }
 
-    public int hashCode() {
-        return toString().hashCode();
-    }
-
-} // End class FTPFile
+    public int hashCode() { return toString.hashCode(); }
+}

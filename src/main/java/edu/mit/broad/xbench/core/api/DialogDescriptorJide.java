@@ -8,9 +8,6 @@ import com.jidesoft.dialog.ButtonPanel;
 import edu.mit.broad.genome.swing.GuiHelper;
 import edu.mit.broad.xbench.actions.ext.BrowserAction;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import xapps.gsea.GseaWebResources;
 
 import javax.swing.*;
@@ -24,11 +21,9 @@ import java.awt.event.MouseEvent;
 /**
  * has some magic to make jlists double clickable
  *
- * @author Aravind Subramanian
+ * @author Aravind Subramanian, David Eby
  */
 public class DialogDescriptorJide implements DialogDescriptor {
-    private static final Logger klog = LoggerFactory.getLogger(DialogDescriptorJide.class);
-
     private JPanel fMainPanel;
     private int fChoosenOption = -1;
     private boolean fModal = true;
@@ -36,26 +31,25 @@ public class DialogDescriptorJide implements DialogDescriptor {
     private String fTitle;
     private boolean showLicenseButton = false;
     private Action fHelpAction_opt;
+    private Action fInfoAction_opt;
     private JButton bCancel;
     private JButton[] fCustomButtons;
     private boolean fAddCancelButton = true;
+    private boolean fDisplayWider = false;
 
     public DialogDescriptorJide(final String title, final Component inputComp, final Action help_action_opt) {
-        init(help_action_opt);
+        this.fHelpAction_opt = help_action_opt;
         jbInit(title, inputComp);
     }
 
-    public DialogDescriptorJide(final String title, final Component inputComp, final Action help_action_opt, boolean showLicenseButton) {
+    public DialogDescriptorJide(final String title, final Component inputComp, final Action help_action_opt, final Action info_action_opt, boolean showLicenseButton) {
         this.showLicenseButton = showLicenseButton;
-        init(help_action_opt);
+        this.fHelpAction_opt = help_action_opt;
+        this.fInfoAction_opt = info_action_opt;
         jbInit(title, inputComp);
     }
 
     protected DialogDescriptorJide() { }
-
-    private void init(final Action help_action_opt) {
-        this.fHelpAction_opt = help_action_opt;
-    }
 
     // must call if the paramless form of the constructor is used
     protected void jbInit(final String title, final Component inputComp) {
@@ -72,7 +66,7 @@ public class DialogDescriptorJide implements DialogDescriptor {
             botPanel.add(createButtonPanel(), BorderLayout.CENTER);
             botPanel.add(Box.createVerticalStrut(10), BorderLayout.SOUTH); // just for a border
             fMainPanel.add(botPanel, BorderLayout.AFTER_LAST_LINE);
-            fMainPanel.setPreferredSize(DD_SIZE);
+            fMainPanel.setPreferredSize(fDisplayWider ? DD_SIZE_WIDER : DD_SIZE);
         }
     }
 
@@ -112,7 +106,6 @@ public class DialogDescriptorJide implements DialogDescriptor {
      * Simpley closes the dialog and returns void when double clicked (the OK is implied)
      */
     public void enableDoubleClickableJList(final JList jl) {
-
         jl.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent me) {
                 Object objs[] = jl.getSelectedValues();
@@ -131,6 +124,11 @@ public class DialogDescriptorJide implements DialogDescriptor {
         });
     }
 
+    public void setDisplayWider() {
+        fDisplayWider = true;
+        if (fMainPanel != null) { fMainPanel.setPreferredSize(DD_SIZE_WIDER); }
+    }
+    
     public void setButtons(final JButton[] boptions) {
         this.fCustomButtons = boptions;
     }
@@ -167,13 +165,15 @@ public class DialogDescriptorJide implements DialogDescriptor {
             buttonPanel.addButton(bCancel, ButtonPanel.CANCEL_BUTTON);
 
             if (fHelpAction_opt != null) {
-                klog.debug("Making help action button: {}", fHelpAction_opt);
-                fChoosenOption = CANCEL_OPTION;
                 JButton bHelp = new JButton("Help");
                 bHelp.setAction(fHelpAction_opt);
                 buttonPanel.addButton(bHelp, ButtonPanel.HELP_BUTTON);
-            } else {
-                klog.debug("Not making help action button: {}", fHelpAction_opt);
+            }
+
+            if (fInfoAction_opt != null) {
+                JButton bInfo = new JButton("Info");
+                bInfo.setAction(fInfoAction_opt);
+                buttonPanel.addButton(bInfo, ButtonPanel.HELP_BUTTON);
             }
 
             if (showLicenseButton) {
@@ -182,12 +182,6 @@ public class DialogDescriptorJide implements DialogDescriptor {
                         GuiHelper.ICON_HELP16, GseaWebResources.getGseaBaseURL() + "/license_terms_list.jsp"));
                 buttonPanel.addButton(bLicense, ButtonPanel.OTHER_BUTTON);
             }
-
-            bOk.addActionListener(new ActionListener() {
-                public void actionPerformed(ActionEvent e) {
-                    fChoosenOption = OK_OPTION;
-                }
-            });
 
             bOk.addActionListener(new ActionListener() {
                 public void actionPerformed(ActionEvent e) {

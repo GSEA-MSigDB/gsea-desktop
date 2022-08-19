@@ -13,7 +13,7 @@ import javax.swing.*;
 import java.awt.*;
 
 /**
- * @author Aravind Subramanian
+ * @author Aravind Subramanian David Eby
  */
 public abstract class AbstractWindowManager implements WindowManager {
     private JFrame fRootFrame;
@@ -88,8 +88,8 @@ public abstract class AbstractWindowManager implements WindowManager {
         ApplicationDialog.showMessage(title, msg);
     }
 
-    public DialogDescriptor createDialogDescriptor(final String title, final Component comp, final Action help_action_opt, boolean showLicenseButton) {
-        return new DialogDescriptorJide(title, comp, help_action_opt, showLicenseButton);
+    public DialogDescriptor createDialogDescriptor(final String title, final Component comp, final Action help_action_opt, final Action info_action_opt, boolean showLicenseButton) {
+        return new DialogDescriptorJide(title, comp, help_action_opt, info_action_opt, showLicenseButton);
     }
 
     public DialogDescriptor createDialogDescriptor(final String title, final Component comp, final Action help_action_opt) {

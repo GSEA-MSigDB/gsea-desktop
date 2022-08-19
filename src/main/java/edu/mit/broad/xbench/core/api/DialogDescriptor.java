@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.xbench.core.api;
 
 import javax.swing.*;
@@ -9,14 +9,16 @@ import java.awt.*;
 /**
  * has some magic to make jlists double clickable
  *
- * @author Aravind Subramanian
- * @version %I%, %G%
+ * @author Aravind Subramanian, David Eby
  */
+// TODO: collapse type hierarchy here.  There is and will only ever be one implementation 
 public interface DialogDescriptor {
 
     public static Dimension DD_SIZE = new Dimension(550, 400);
 
     public static Dimension DD_SIZE_SMALLER = new Dimension(250, 200);
+
+    public static Dimension DD_SIZE_WIDER = new Dimension(800, 400);
 
     /**
      * class constant for oks
@@ -32,27 +34,9 @@ public interface DialogDescriptor {
 
     public static final Integer CANCELI = new Integer(CANCEL_OPTION);
 
-    /**
-     * Modal does NOT work properly with the show() option
-     * If you need modal behaviour, use the show(dp) option
-     *
-     * @param modal No ok, cancel etc buttons will be displayed
-     *              <p/>
-     *              No ok, cancel etc buttons will be displayed
-     *              <p/>
-     *              No ok, cancel etc buttons will be displayed
-     *              <p/>
-     *              No ok, cancel etc buttons will be displayed
-     *              <p/>
-     *              No ok, cancel etc buttons will be displayed
-     */
-    //public void setModal(boolean modal);
-
-    //public void setOptionType(int type);
-
     public void setOnlyShowCloseOption();
-
-    //public void setPreferredSize();
+    
+    public void setDisplayWider();
 
     /**
      * If modal, a regular jdialog is always used
@@ -77,12 +61,4 @@ public interface DialogDescriptor {
      * Simpley closes the dialog and returns void when double clicked (the OK is implied)
      */
     public void enableDoubleClickableJList(final JList jl);
-}    // End DialogDescriptor
-
-//  public void dispose();
-
-// public void setPreferredSize(Dimension d);
-
-//  public Dimension getSize();
-
-//  public void setPreferredSize(int w, int h);
+}

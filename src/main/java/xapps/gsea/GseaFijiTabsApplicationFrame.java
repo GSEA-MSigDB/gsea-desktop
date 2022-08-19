@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2020 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package xapps.gsea;
 
@@ -84,7 +84,6 @@ import xtools.gsea.GseaPreranked;
 import xtools.munge.CollapseDataset;
 
 public class GseaFijiTabsApplicationFrame extends DefaultDockableHolder implements Application.Handler {
-
     public static final Properties buildProps = JarResources.getBuildInfo();
     
     static {
@@ -429,8 +428,10 @@ public class GseaFijiTabsApplicationFrame extends DefaultDockableHolder implemen
         }));
 
         menuBar.add(createJMenu("Downloads", new Object[]{
-                new BrowserAction("Download chip annotations", "Download array annotation files - useful to annotate GSEA reports",
-                        null, GseaWebResources.getArrayAnnotationsURL()),
+                new BrowserAction("Download Human chip annotations", "Download Human array annotation files - useful to annotate GSEA reports",
+                        null, GseaWebResources.getHumanArrayAnnotationsURL()),
+                new BrowserAction("Download Mouse chip annotations", "Download Mouse array annotation files - useful to annotate GSEA reports",
+                        null, GseaWebResources.getMouseArrayAnnotationsURL()),
                 new BrowserAction("Download example datasets", "Download example datasets for GSEA - expression data, phenotype labels and gene sets files",
                         null, GseaWebResources.getGseaExamplesURL())}));
         

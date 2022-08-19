@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package org.genepattern.uiutil;
 
@@ -7,22 +7,17 @@ import com.enterprisedt.net.ftp.FTPConnectMode;
 import com.enterprisedt.net.ftp.FTPException;
 import com.enterprisedt.net.ftp.FileTransferClient;
 
-import javax.swing.*;
-
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Comparator;
-import java.util.List;
 
-public class FTPList extends JList {
-
+public class FTPList {
     private FileTransferClient ftpClient;
-    private String[] fFileNames;
+    public String host;
 
-    public FTPList(final String host, final String username, final String password, final String dir, final Comparator comp_opt) throws IOException, FTPException, IllegalArgumentException {
-
+    public FTPList(final String host, final String username, final String password) throws IOException, FTPException, IllegalArgumentException {
         ftpClient = new FileTransferClient();
+        this.host = host;
 
         // set remote host
         ftpClient.setRemoteHost(host);
@@ -34,26 +29,17 @@ public class FTPList extends JList {
 
         // set connect mode to Passive
         ftpClient.getAdvancedFTPSettings().setConnectMode(FTPConnectMode.PASV);
-
-        ftpClient.changeDirectory(dir);
-
-        this.fFileNames = ftpClient.directoryNameList();
-
-        DefaultListModel model = new DefaultListModel();
-        if (fFileNames != null) {
-
-            if (comp_opt != null) {
-                List all = Arrays.asList(fFileNames);
-                Collections.sort(all, comp_opt);
-                this.fFileNames = (String[]) all.toArray(new String[all.size()]);
-            }
-            for (int i = 0, length = fFileNames.length; i < length; i++) {
-                model.addElement(new FTPFile(host, dir, fFileNames[i]));
-            }
-        }
-        setModel(model);
     }
-
+    
+    public String[] getDirectoryListing(final String dir, final Comparator comp) throws IOException, FTPException {
+        ftpClient.changeDirectory(dir);
+        String[] fileNames = ftpClient.directoryNameList();
+        if (comp != null && fileNames != null && fileNames.length > 0) {
+            Arrays.parallelSort(fileNames, comp);
+        }
+        return fileNames;
+    }
+    
     public void quit() throws IOException, FTPException {
         ftpClient.disconnect();
     }

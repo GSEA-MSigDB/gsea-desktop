@@ -8,11 +8,10 @@ import edu.mit.broad.genome.swing.fields.GFieldPlusChooser;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 /**
- * @author Aravind Subramanian
+ * @author Aravind Subramanian, David Eby
  */
 public class GeneSetMatrixChooserUI extends JPanel implements GFieldPlusChooser {
     protected JTextField tfEntry = new JTextField(40);
@@ -21,60 +20,17 @@ public class GeneSetMatrixChooserUI extends JPanel implements GFieldPlusChooser 
 
     // needed as otherwise a default one is added and then again one another one is added
     // if the setCustomActionListener is called
-    public GeneSetMatrixChooserUI(final boolean addDefaultActionListener) {
-        if (addDefaultActionListener) {
-            init();
-        } else {
-            jbInit();
-        }
-    }
+    public GeneSetMatrixChooserUI() { jbInit(); }
 
     public void setCustomActionListener(final ActionListener customActionListener) {
         bEntry.addActionListener(customActionListener);
     }
 
-    private void init() {
-
-        jbInit();
-        bEntry.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                Object[] sels = _window().show();
-                format(sels);
-            }
-        });
-    }
-
     private void jbInit() {
-
         this.setLayout(new BorderLayout());
         tfEntry.setEditable(true);
         this.add(tfEntry, BorderLayout.CENTER);
         this.add(bEntry, BorderLayout.EAST);
-    }
-
-    private void format(Object[] sels) {
-
-        if (sels == null) {
-            tfEntry.setText("");
-            return;
-        }
-
-        StringBuffer buf = new StringBuffer();
-
-        for (int i = 0; i < sels.length; i++) {
-            if (sels[i] == null) {
-                //
-            } else {
-
-                buf.append(sels[i].toString().trim());
-
-                if (i != sels.length - 1) {
-                    buf.append(',');
-                }
-            }
-        }
-
-        tfEntry.setText(buf.toString());
     }
 
     public String getText() {
@@ -86,7 +42,7 @@ public class GeneSetMatrixChooserUI extends JPanel implements GFieldPlusChooser 
     }
 
     /**
-     * so that the tf can hbave its events listened to
+     * so that the tf can have its events listened to
      *
      * @return
      */

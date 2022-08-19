@@ -3,35 +3,15 @@
  */
 package xtools.api.param;
 
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-import javax.swing.DefaultListCellRenderer;
-import javax.swing.DefaultListModel;
-import javax.swing.JList;
-import javax.swing.ListModel;
-import javax.swing.ListSelectionModel;
-
-import org.genepattern.uiutil.FTPFile;
-import org.genepattern.uiutil.FTPList;
-
-import edu.mit.broad.genome.alg.ComparatorFactory;
 import edu.mit.broad.genome.objects.PersistentObject;
 import edu.mit.broad.genome.parsers.ParserFactory;
 import edu.mit.broad.genome.swing.fields.GFieldPlusChooser;
 import edu.mit.broad.vdb.VdbRuntimeResources;
 import edu.mit.broad.vdb.chip.Chip;
-import edu.mit.broad.xbench.core.ObjectBindery;
-import edu.mit.broad.xbench.prefs.XPreferencesFactory;
-import xapps.gsea.GseaWebResources;
-import xtools.api.ui.NamedModel;
 
-/**
- * @author Aravind Subramanian, David Eby
- */
 public class ChipOptParam extends AbstractParam {
     private WChipChooserUI fChooser;
 
@@ -54,10 +34,7 @@ public class ChipOptParam extends AbstractParam {
 
         StringBuilder buf = new StringBuilder();
         for (int i = 0; i < vals.length; i++) {
-
-            if (vals[i] == null) {
-                continue;
-            }
+            if (vals[i] == null) { continue; }
 
             log.debug("{}", vals[i].getClass());
 
@@ -82,7 +59,6 @@ public class ChipOptParam extends AbstractParam {
     // (model is the datasets etc)
     private static class MyPobActionListener implements ActionListener {
         private WChipChooserUI fChooser;
-        private ChipListRenderer rend = new ChipListRenderer();
 
         public MyPobActionListener() { }
 
@@ -92,108 +68,14 @@ public class ChipOptParam extends AbstractParam {
             this.fChooser = chooser;
         }
 
-        private ListModel createFTPModel() {
-            if (! XPreferencesFactory.kOnlineMode.getBoolean()) {
-                DefaultListModel model = new DefaultListModel();
-                model.addElement("Offline mode");
-                model.addElement("Change this in Menu=>Preferences");
-                model.addElement("Use 'Load Data' to access local CHIP files.");
-                model.addElement("Choose chips from other tabs");
-                // Bit of a hack: disable special CHIP rendering since none are loaded.
-                rend.setSkipRenderCheck(true);
-                return model;
-            } else {
-                try {
-                    FTPList ftpList;
-                    ftpList = new FTPList(GseaWebResources.getGseaFTPServer(),
-                                          GseaWebResources.getGseaFTPServerUserName(),
-                                          GseaWebResources.getGseaFTPServerPassword(),
-                                          GseaWebResources.getGseaFTPServerChipDir(),
-                                          new ComparatorFactory.ChipNameComparator());
-                    ftpList.quit();
-                    return ftpList.getModel();
-                } catch (Exception e) {
-                    klog.error(e.getMessage(), e);
-                    DefaultListModel model = new DefaultListModel();
-                    model.addElement("Error listing Broad website");
-                    model.addElement(e.getMessage());
-                    model.addElement("Use 'Load Data' to access local CHIP files.");
-                    model.addElement("Choose chips from other tabs");
-                    // Ditto.  It's more important here since the error message can (and does) contain
-                    // Strings that match on the rendering code.
-                    rend.setSkipRenderCheck(true);
-                    return model;
-                }
-            }
-        }
-
         public void actionPerformed(ActionEvent e) {
-            if (fChooser == null) {
-                return;
+            if (fChooser == null) { return; }
+
+            final String[] selectedPaths = fChooser.getJListWindow().showDirectlyWithModels();
+            if ((selectedPaths != null) && (selectedPaths.length > 0)) {
+                // TODO: push refactoring into ChooserHelper
+                fChooser.setText(ChooserHelper.formatPob(selectedPaths));
             }
-
-            NamedModel[] models;
-            final NamedModel chipsFromFTPModel = new NamedModel("Chips (from website)", createFTPModel());
-
-            models = new NamedModel[] {
-                            chipsFromFTPModel,
-                            new NamedModel("Chips (local .chip)", ObjectBindery.getModel(Chip.class))
-                    };
-
-            final Object[] sels = fChooser.getJListWindow().showDirectlyWithModels(models, ListSelectionModel.SINGLE_SELECTION, rend);
-
-            if ((sels != null) && (sels.length > 0)) {
-                String[] paths = new String[sels.length];
-                for (int i = 0; i < sels.length; i++) {
-                    if (sels[i] instanceof FTPFile) {
-                        paths[i] = ((FTPFile) sels[i]).getPath();
-                    } else {
-                        paths[i] = ParserFactory.getCache().getSourcePath(sels[i]);
-                    }
-                }
-
-                String str = ChooserHelper.formatPob(sels);
-                fChooser.setText(str);
-            }
-        }
-    }
-
-    static class ChipListRenderer extends DefaultListCellRenderer {
-        private boolean skipRenderCheck = false;
-
-        public void setSkipRenderCheck(boolean skipRenderCheck) {
-            this.skipRenderCheck = skipRenderCheck;
-        }
-
-        public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-            super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-
-            // order is important
-            if (value == null) {
-                return this;
-            }
-
-            String str;
-            if (value instanceof FTPFile) {
-                str = ((FTPFile) value).getName();
-                this.setText(str);
-            } else {
-                str = value.toString();
-            }
-
-            if (!isSelected && !skipRenderCheck) {
-                setForeground(Color.BLACK);
-                setIcon(null);
-            }
-
-            if (!skipRenderCheck && str.contains(ComparatorFactory.ChipNameComparator.getHighestVersionId())) {
-                Font font = this.getFont();
-                String fontName = font.getFontName();
-                int fontSize = font.getSize();
-                this.setFont(new Font(fontName, Font.BOLD, fontSize));
-            }
-            
-            return this;
         }
     }
 

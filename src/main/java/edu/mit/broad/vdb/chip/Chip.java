@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2020 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.vdb.chip;
 
@@ -15,16 +15,16 @@ import org.apache.commons.lang3.StringUtils;
 import edu.mit.broad.genome.NamingConventions;
 import edu.mit.broad.genome.objects.AbstractObject;
 import edu.mit.broad.genome.objects.GeneSet;
+import edu.mit.broad.genome.objects.MSigDBVersion;
 import edu.mit.broad.genome.parsers.ParserFactory;
 import edu.mit.broad.vdb.meg.Gene;
 
 /**
  * Capture a Chip object while enabling lazy loading of chip data
- * <p/>
+ *
  * Probe -> unique sequence feature used to measure a gene
  */
 public class Chip extends AbstractObject {
-
     /**
      * @note IMP lazily loaded, at times
      */
@@ -44,8 +44,9 @@ public class Chip extends AbstractObject {
     private Map<String, Set<String>> fSymbolProbeNameSetMap;
     private String fSourcePath;
 
+    private MSigDBVersion msigDBVersion = null;
+    
     public Chip(final String chipName, final String sourcePath) {
-
         // @note dont do common init routine yet -> we're in skeletonmode
         super.initialize(chipName);
 
@@ -111,12 +112,17 @@ public class Chip extends AbstractObject {
             log.error(t.getMessage(), t);
             return "";
         }
+    }
 
+    public MSigDBVersion getMsigDBVersion() {
+        return msigDBVersion;
+    }
+
+    public void setMsigDBVersion(MSigDBVersion msigDBVersion) {
+        this.msigDBVersion = msigDBVersion;
     }
 
     private void initHere(final String chipName, final String sourcePath, final Probe[] probes) {
-        //TraceUtils.showTrace();
-    
         if (!isInited()) {
             super.initialize(chipName); // double init barfs
         }
@@ -201,7 +207,6 @@ public class Chip extends AbstractObject {
     }
 
     private void initProbeProbeMap() throws Exception {
-    
         if (this.fProbeNameProbeMap == null) {
             readDeepData();
             this.fProbeNameProbeMap = new HashMap<String, Probe>();

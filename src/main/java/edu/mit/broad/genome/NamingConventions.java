@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.genome;
 
@@ -20,14 +20,12 @@ import edu.mit.broad.genome.parsers.DataFormat;
 
 /**
  * Class NamingConventions
- * <p/>
- * Rules for object / default etc naming conventions are all captured here.
+ * 
+ * Some rules for object / default etc naming conventions are captured here.
  *
- * @author Aravind Subramanian
- * @version %I%, %G%
+ * @author Aravind Subramanian, David Eby
  */
 public class NamingConventions {
-
     private static int kObjectCounter = 1;
 
     private static final int MAX_FILE_LEN_ALLOWED = 100;
@@ -65,7 +63,6 @@ public class NamingConventions {
     }
 
     public static String titleize(String title) {
-
         if (isNull(title)) {
             return Constants.NULL;
         } else {
@@ -108,7 +105,6 @@ public class NamingConventions {
 
     // TODO: possibly use Commons IO FilenameUtils.  We're doing some extra sophisticated stuff here, though, so it may not be valid.
     public static String removeExtension(final String fileName) {
-
         if (fileName == null) {
             throw new IllegalArgumentException("Param fileName cannot be null");
         }
@@ -194,7 +190,6 @@ public class NamingConventions {
     }
 
     public static Object[] parseReportTimestampFromName(final String rptname) {
-
         StringTokenizer tok = new StringTokenizer(rptname, ".");
         if (tok.countTokens() != 4) {
             throw new IllegalArgumentException("Invalid rpt name format: " + rptname + " got tokens #: " + tok.countTokens());
@@ -208,14 +203,9 @@ public class NamingConventions {
 
     /**
      * Convention:
-     * <p/>
      * orig_name.short_desc_tag.ts.ext
-     * <p/>
-     * short_desc_tag can be null
      *
-     * @param short_desc_tag
-     * @param pob
-     * @return
+     * short_desc_tag can be null
      */
     public static String generateName(final PersistentObject pob, final String short_desc_tag, final boolean ultraUniquenessSafe) {
 
@@ -228,7 +218,6 @@ public class NamingConventions {
     }
 
     public static String generateName(final Dataset ds, final Template t, final boolean stripExtensions) {
-
         StringBuffer buf = new StringBuffer();
 
         if (stripExtensions) {
@@ -243,7 +232,6 @@ public class NamingConventions {
     }
 
     public static String generateName(final Dataset ds, final GeneSet gset, final boolean stripExtensions) {
-
         StringBuffer buf = new StringBuffer();
 
         if (stripExtensions) {
@@ -267,7 +255,6 @@ public class NamingConventions {
 
     // orig_name.short_desc_tag.ts_or_counter.ext
     private static String _generateName(final String origname, final String short_desc_tag, final String ext, final boolean ultraUniquenessSafe) {
-
         StringBuffer buf = new StringBuffer();
 
         if (origname != null) {
@@ -321,7 +308,6 @@ public class NamingConventions {
      * @return extension of the file (or <code>""</code> if it had none)
      */
     public static String getExtension(final String f) {
-
         String ext;
         int pos;
 
@@ -361,7 +347,6 @@ public class NamingConventions {
         return getExtension(f.getName());
     }
 
-
     /**
      * Gets the extension of a specified file name. The extension is
      * everything after the last dot.  Files created with excel may
@@ -384,14 +369,12 @@ public class NamingConventions {
      * @return extension of the file (or <code>""</code> if it had none)
      */
     public static String getExtensionLiberal(final String f) {
-
         String ext, ext2;
         int pos, pos2;
 
         pos = f.lastIndexOf(".");
 
         if (pos == -1) {
-            //log.warn("No extension found - returning \"\" file=" + f);
             ext = "";
         } else {
 
@@ -421,4 +404,7 @@ public class NamingConventions {
         return ext;
     }
 
-}    // End NamingConventions
+    public static String extractVersionFromFileName(String fileName, String extension) {
+        return fileName.substring(fileName.lastIndexOf("v"), fileName.lastIndexOf(extension));
+    }
+}

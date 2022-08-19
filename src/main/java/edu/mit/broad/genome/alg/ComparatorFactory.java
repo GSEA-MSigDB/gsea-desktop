@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.genome.alg;
 
@@ -7,8 +7,10 @@ import java.util.Comparator;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
+import org.genepattern.uiutil.FTPFile;
 
 import edu.mit.broad.genome.math.Order;
+import edu.mit.broad.genome.objects.MSigDBVersion;
 import edu.mit.broad.genome.objects.PersistentObject;
 import edu.mit.broad.genome.objects.ScoredDataset;
 import edu.mit.broad.genome.objects.esmatrix.db.EnrichmentResult;
@@ -16,7 +18,7 @@ import edu.mit.broad.genome.objects.esmatrix.db.EnrichmentResult;
 /**
  * Collection of useful comparators
  *
- * @author Aravind Subramanian
+ * @author Aravind Subramanian, David Eby
  */
 public class ComparatorFactory {
 
@@ -160,46 +162,57 @@ public class ComparatorFactory {
     };
     
     public static class ChipNameComparator implements Comparator<String> {
+        // Used to track highest version seen by this instance.  Use a fake lowest-possible version
+        // for the initial comparison.
+        private String highestVersionId;
+        private DefaultArtifactVersion highestVersion = new DefaultArtifactVersion("v0.0");
+        private final String preferredPrefix;
 
-        /* private static member used to track highest seen version */
-        private static String highestVersionId;
-        private static DefaultArtifactVersion highestVersion;
+        public String getHighestVersionId() { return highestVersionId; }
 
-        public static String getHighestVersionId() {
-            return highestVersionId;
-        }
+        public ChipNameComparator() { this.preferredPrefix = null; }
 
+        public ChipNameComparator(String preferredPrefix) { this.preferredPrefix = preferredPrefix; }
+        
         /**
          * Return -1 if o1 is less than o2, 0 if they're equal, +1 if o1 is greater than o2.
          */
         public int compare(String s1, String s2) {
-            
             String versionId1 = s1.substring(s1.lastIndexOf("v"), s1.lastIndexOf(".chip"));
             String versionId2 = s2.substring(s2.lastIndexOf("v"), s2.lastIndexOf(".chip"));
             
             DefaultArtifactVersion version1 = new DefaultArtifactVersion(versionId1);
             DefaultArtifactVersion version2 = new DefaultArtifactVersion(versionId2);
 
-            /* want to keep track of highest version seen */
-            if (highestVersion == null) {
-                if (version1.compareTo(version2) < 0) {
-                    highestVersion = version2;
-                    highestVersionId = versionId2;
+            if (!version1.equals(version2)) {
+                int compareTo = version2.compareTo(version1);
+                if (compareTo < 0) {
+                    if (highestVersion.compareTo(version1) < 0) {
+                        highestVersion = version1;
+                        highestVersionId = versionId1;
+                    }
+                } else {
+                    if (highestVersion.compareTo(version2) < 0) {
+                        highestVersion = version2;
+                        highestVersionId = versionId2;
+                    }
                 }
-                else {
-                    highestVersion = version1;
-                    highestVersionId = versionId1;
-                }
-            }
-            else {
-                if (highestVersion.compareTo(version2) < 0) {
-                    highestVersion = version2;
-                    highestVersionId = versionId2;
-                }
+                return compareTo;
             }
 
-            if (!version1.equals(version2)) {
-                return version2.compareTo(version1);
+            if (highestVersion.compareTo(version1) < 0) {
+                // Doesn't matter which we use since they are equal
+                highestVersion = version1;
+                highestVersionId = versionId1;
+            }
+            
+            // Optional preferredPrefix check.  Items starting with the preferredPrefix
+            // get sorted above the others.
+            if (preferredPrefix != null) {
+                final boolean s1HasPP = s1.startsWith(preferredPrefix);
+                final boolean s2HasPP = s2.startsWith(preferredPrefix);
+                if (s1HasPP && !s2HasPP) { return -1; }
+                if (!s1HasPP && s2HasPP) { return 1; }
             }
 
             // now just string comparison
@@ -209,5 +222,70 @@ public class ComparatorFactory {
         public boolean equals(Object o2) {
             return false;
         }
+    }
+    
+    public static class FTPFileByVersionComparator implements Comparator<FTPFile> {
+        // Used to track highest version seen by this instance.  Use a fake lowest-possible version
+        // for the initial comparison.
+        private String highestVersionId;
+        private DefaultArtifactVersion highestVersion = new DefaultArtifactVersion("v0.0");
+        private final String preferredPrefix;
+
+        public String getHighestVersionId() { return highestVersionId; }
+
+        public FTPFileByVersionComparator() { this.preferredPrefix = null; }
+
+        public FTPFileByVersionComparator(String preferredPrefix) { this.preferredPrefix = preferredPrefix; }
+        
+        /**
+         * Return -1 if o1 is less than o2, 0 if they're equal, +1 if o1 is greater than o2.
+         */
+        public int compare(FTPFile ftpFile1, FTPFile ftpFile2) {
+            MSigDBVersion msigDBVersion1 = ftpFile1.getMSigDBVersion();
+            MSigDBVersion msigDBVersion2 = ftpFile2.getMSigDBVersion();
+            if (msigDBVersion1 == null) { return (msigDBVersion2 == null) ? 0 : -1; }
+            if (msigDBVersion2 == null) { return 1; }
+            
+            DefaultArtifactVersion version1 = msigDBVersion1.getArtifactVersion();
+            DefaultArtifactVersion version2 = msigDBVersion2.getArtifactVersion();
+
+            if (!version1.equals(version2)) {
+                int compareTo = version2.compareTo(version1);
+                if (compareTo < 0) {
+                    if (highestVersion.compareTo(version1) < 0) {
+                        highestVersion = version1;
+                        highestVersionId = msigDBVersion1.getVersionString();
+                    }
+                } else {
+                    if (highestVersion.compareTo(version2) < 0) {
+                        highestVersion = version2;
+                        highestVersionId = msigDBVersion2.getVersionString();
+                    }
+                }
+                return compareTo;
+            }
+
+            if (highestVersion.compareTo(version1) < 0) {
+                // Doesn't matter which we use since they are equal
+                highestVersion = version1;
+                highestVersionId = msigDBVersion1.getVersionString();
+            }
+            
+            // Optional preferredPrefix check.  Items starting with the preferredPrefix
+            // get sorted above the others.
+            String s1 = ftpFile1.getName();
+            String s2 = ftpFile2.getName();
+            if (preferredPrefix != null) {
+                final boolean s1HasPP = s1.startsWith(preferredPrefix);
+                final boolean s2HasPP = s2.startsWith(preferredPrefix);
+                if (s1HasPP && !s2HasPP) { return -1; }
+                if (!s1HasPP && s2HasPP) { return 1; }
+            }
+
+            // now just string comparison
+            return s1.compareTo(s2);
+        }
+
+        public boolean equals(Object o2) { return false; }
     }
 }
