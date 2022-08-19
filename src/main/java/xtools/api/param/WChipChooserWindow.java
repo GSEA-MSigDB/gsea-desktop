@@ -17,7 +17,7 @@ import edu.mit.broad.xbench.core.api.Application;
 import edu.mit.broad.xbench.core.api.DialogDescriptor;
 import edu.mit.broad.xbench.prefs.XPreferencesFactory;
 import xapps.gsea.GseaWebResources;
-
+import xtools.api.ui.FTPFileListCellRenderer;
 
 import org.apache.commons.lang3.StringUtils;
 import org.genepattern.uiutil.FTPFile;
@@ -62,8 +62,8 @@ public class WChipChooserWindow {
         DefaultListCellRenderer defaultRenderer = new DefaultListCellRenderer();
         DefaultListModel<FTPFile> humanFtpFileModel = new DefaultListModel<FTPFile>();
         DefaultListModel<FTPFile> mouseFtpFileModel = new DefaultListModel<FTPFile>();
-        final JList<FTPFile> humanFTPFileList = new JList<FTPFile>(humanFtpFileModel);
-        final JList<FTPFile> mouseFTPFileList = new JList<FTPFile>(mouseFtpFileModel);
+        final JList<FTPFile> humanFTPFileJList = new JList<FTPFile>(humanFtpFileModel);
+        final JList<FTPFile> mouseFTPFileJList = new JList<FTPFile>(mouseFtpFileModel);
         if (! XPreferencesFactory.kOnlineMode.getBoolean()) {
             // TODO: switch away from JList. Prob disabled TextArea
             DefaultListModel<String> offlineMsgModel = createOfflineMessageModel();
@@ -78,14 +78,14 @@ public class WChipChooserWindow {
                 ftpList = new FTPList(GseaWebResources.getGseaFTPServer(),
                         GseaWebResources.getGseaFTPServerUserName(), GseaWebResources.getGseaFTPServerPassword());
                 try {
-                    FTPFile[] humanFTPFiles = retreiveFTPFiles(ftpList, MSigDBSpecies.Human, GseaWebResources.getGseaFTPServerChipDir("Human"));
-                    populateFTPModel(humanFTPFiles, humanFTPFileList, humanFtpFileModel, new ComparatorFactory.FTPFileByVersionComparator());
-                    tabbedPane.addTab("Human Collection Chips (MSigDB)", new JScrollPane(humanFTPFileList));
-                    desc.enableDoubleClickableJList(humanFTPFileList);
-                    FTPFile[] mouseFTPFiles = retreiveFTPFiles(ftpList, MSigDBSpecies.Mouse, GseaWebResources.getGseaFTPServerChipDir("Mouse"));
-                    populateFTPModel(mouseFTPFiles, mouseFTPFileList, mouseFtpFileModel, new ComparatorFactory.FTPFileByVersionComparator("Mouse"));
-                    tabbedPane.addTab("Mouse Collection Chips (MSigDB)", new JScrollPane(mouseFTPFileList));
-                    desc.enableDoubleClickableJList(mouseFTPFileList);
+                    FTPFile[] humanFTPFiles = retrieveFTPFiles(ftpList, MSigDBSpecies.Human, GseaWebResources.getGseaFTPServerChipDir("Human"));
+                    populateFTPModel(humanFTPFiles, humanFTPFileJList, humanFtpFileModel, new ComparatorFactory.FTPFileByVersionComparator());
+                    tabbedPane.addTab("Human Collection Chips (MSigDB)", new JScrollPane(humanFTPFileJList));
+                    desc.enableDoubleClickableJList(humanFTPFileJList);
+                    FTPFile[] mouseFTPFiles = retrieveFTPFiles(ftpList, MSigDBSpecies.Mouse, GseaWebResources.getGseaFTPServerChipDir("Mouse"));
+                    populateFTPModel(mouseFTPFiles, mouseFTPFileJList, mouseFtpFileModel, new ComparatorFactory.FTPFileByVersionComparator("Mouse"));
+                    tabbedPane.addTab("Mouse Collection Chips (MSigDB)", new JScrollPane(mouseFTPFileJList));
+                    desc.enableDoubleClickableJList(mouseFTPFileJList);
                 } finally {
                     if (ftpList != null) { ftpList.quit(); }
                 }
@@ -101,17 +101,17 @@ public class WChipChooserWindow {
         }
 
         // TODO: strong typing, should be JList<Chip> (or POB) but need to verify and make changes elsewhere
-        final JList localModelList = new JList(ObjectBindery.getModel(Chip.class));
-        localModelList.setCellRenderer(defaultRenderer);
-        localModelList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        tabbedPane.addTab("Local Chips", new JScrollPane(localModelList));
-        desc.enableDoubleClickableJList(localModelList);
+        final JList localChipJList = new JList(ObjectBindery.getModel(Chip.class));
+        localChipJList.setCellRenderer(defaultRenderer);
+        localChipJList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        tabbedPane.addTab("Local Chips", new JScrollPane(localChipJList));
+        desc.enableDoubleClickableJList(localChipJList);
 
         BooleanSupplier validator = () -> {
-            boolean haveHuman = !humanFTPFileList.isSelectionEmpty();
-            boolean noMouse = mouseFTPFileList.isSelectionEmpty();
-            if (haveHuman) { return noMouse && localModelList.isSelectionEmpty(); }
-            if (!noMouse) { return localModelList.isSelectionEmpty(); }
+            boolean haveHuman = !humanFTPFileJList.isSelectionEmpty();
+            boolean noMouse = mouseFTPFileJList.isSelectionEmpty();
+            if (haveHuman) { return noMouse && localChipJList.isSelectionEmpty(); }
+            if (!noMouse) { return localChipJList.isSelectionEmpty(); }
             return true;
         };
 
@@ -126,22 +126,21 @@ public class WChipChooserWindow {
                 klog.debug("Invalid selection");
             }
             
-            
-            FTPFile selected = humanFTPFileList.getSelectedValue();
+            FTPFile selected = humanFTPFileJList.getSelectedValue();
             if (selected != null) { return new String[]{ selected.getPath() }; }
 
-            selected = mouseFTPFileList.getSelectedValue();
+            selected = mouseFTPFileJList.getSelectedValue();
             if (selected != null) { return new String[]{ selected.getPath() }; }
             
-            // TODO: always Chip, or refactored to String
-            Object selectedObj = localModelList.getSelectedValue();
+            // TODO: always Chip/POB, or refactored to String
+            Object selectedObj = localChipJList.getSelectedValue();
             if (selectedObj != null) { return new String[]{ ParserFactory.getCache().getSourcePath(selectedObj) }; }
 
             return new String[] {};
         }
     }
 
-    private FTPFile[] retreiveFTPFiles(FTPList ftpList, MSigDBSpecies species, String ftpDir) throws Exception {
+    private FTPFile[] retrieveFTPFiles(FTPList ftpList, MSigDBSpecies species, String ftpDir) throws Exception {
         String[] ftpFileNames = ftpList.getDirectoryListing(ftpDir, null);
         FTPFile[] ftpFiles = new FTPFile[ftpFileNames.length];
         for (int i = 0; i < ftpFileNames.length; i++) {
@@ -158,28 +157,8 @@ public class WChipChooserWindow {
         for (int i = 0; i < ftpFiles.length; i++) {
             ftpFileModel.addElement(ftpFiles[i]);
         }
-        ftpFileList.setCellRenderer(new ChipFTPListRenderer(ftpFileComp.getHighestVersionId()));
+        ftpFileList.setCellRenderer(new FTPFileListCellRenderer(ftpFileComp.getHighestVersionId()));
         ftpFileList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    }
-    
-    private JList<FTPFile> populateFTPModel(FTPList ftpList, MSigDBSpecies species,
-            String ftpDir, ComparatorFactory.FTPFileByVersionComparator ftpFileComp) throws Exception {
-        DefaultListModel<FTPFile> fileModel = new DefaultListModel<FTPFile>();
-        String[] ftpFileNames = ftpList.getDirectoryListing(ftpDir, null);
-        FTPFile[] ftpFiles = new FTPFile[ftpFileNames.length];
-        for (int i = 0; i < ftpFileNames.length; i++) {
-            String ftpFileName = ftpFileNames[i];
-            String versionId = NamingConventions.extractVersionFromFileName(ftpFileName, ".chip");
-            ftpFiles[i] = new FTPFile(ftpList.host, ftpDir, ftpFileName, new MSigDBVersion(species, versionId));
-        }
-        Arrays.parallelSort(ftpFiles, ftpFileComp);
-        for (int i = 0; i < ftpFiles.length; i++) {
-            fileModel.addElement(ftpFiles[i]);
-        }
-        JList<FTPFile> fileList = new JList<FTPFile>(fileModel);
-        fileList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        fileList.setCellRenderer(new ChipFTPListRenderer(ftpFileComp.getHighestVersionId()));
-        return fileList;
     }
 
     private DefaultListModel<String> createErrorMessageModel(Exception ex) {

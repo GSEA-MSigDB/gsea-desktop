@@ -73,8 +73,7 @@ public class ChipOptParam extends AbstractParam {
 
             final String[] selectedPaths = fChooser.getJListWindow().showDirectlyWithModels();
             if ((selectedPaths != null) && (selectedPaths.length > 0)) {
-                // TODO: push refactoring into ChooserHelper
-                fChooser.setText(ChooserHelper.formatPob(selectedPaths));
+                fChooser.setText(String.join(",", selectedPaths));
             }
         }
     }

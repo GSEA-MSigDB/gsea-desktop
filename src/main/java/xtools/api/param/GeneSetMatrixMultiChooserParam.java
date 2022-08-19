@@ -12,7 +12,6 @@ import edu.mit.broad.vdb.chip.Chip;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
-import org.genepattern.uiutil.FTPFile;
 
 import xapps.gsea.GseaWebResources;
 import xtools.api.ui.GeneSetMatrixChooserUI;
@@ -244,10 +243,9 @@ public class GeneSetMatrixMultiChooserParam extends AbstractParam {
         public void actionPerformed(ActionEvent e) {
             if (fChooser == null) { return; }
 
-            final Object[] sels = fChooser.getJListWindow().showDirectlyWithModels();
-            if ((sels != null) && (sels.length >  0)) {
-                // TODO: push refactoring into ChooserHelper
-                fChooser.setText(ChooserHelper.formatPob(sels));
+            final String[] selectedPaths = fChooser.getJListWindow().showDirectlyWithModels();
+            if ((selectedPaths != null) && (selectedPaths.length >  0)) {
+                fChooser.setText(String.join(",", selectedPaths));
             }
         }
     }
