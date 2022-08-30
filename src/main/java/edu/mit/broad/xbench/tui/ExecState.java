@@ -9,12 +9,13 @@ import java.awt.*;
 
 /**
  * Object encapsulating Tool's execution state -- name and color
- *
+ * 
  * @author Aravind Subramanian, David Eby
  */
 class ExecState {
     public static final ExecState PAUSED = new ExecState("Paused", Color.ORANGE);
     public static final ExecState KILLED = new ExecState("Killed", Color.MAGENTA);
+    public static final ExecState CANCELED = new ExecState("Canceled", GuiHelper.COLOR_DARK_BROWN);
 
     public static final ExecState WAITING = new ExecState("Waiting", Color.GRAY);
     public static final ExecState RUNNING = new ExecState("Running", Color.BLUE);

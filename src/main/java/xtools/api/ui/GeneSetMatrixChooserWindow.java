@@ -134,19 +134,30 @@ public class GeneSetMatrixChooserWindow {
             selectedItems.addAll(localGeneSetJList.getSelectedValuesList());
             selectedItems.addAll(localMatrixSubsetsJList.getSelectedValuesList());
             if (selectedItems.isEmpty()) { return true; }
-            // If *all* versions found are unknown then we give no warning
-            boolean allUnknown = false;
-            if (StringUtils.isBlank(taGenes.getText())) { return false; }
-            else { allUnknown = true; }
 
             MSigDBVersion first = selectedItems.remove(0).getMSigDBVersion();
-            allUnknown |= first.isUnknownVersion();
+
+            // If *all* versions found are unknown then we give no warning.  OTF is considered unknown.
+            // We also give a warning if any of the recognized versions don't match.
+            boolean allUnknown = first.isUnknownVersion();
+            boolean allKnown = !first.isUnknownVersion();
+            allUnknown &= StringUtils.isNotBlank(taGenes.getText());
+            allKnown &= StringUtils.isBlank(taGenes.getText());
+
             for (Versioned item : selectedItems) {
                 MSigDBVersion currVer = item.getMSigDBVersion();
-                allUnknown |= currVer.isUnknownVersion();
-                if (!allUnknown && !first.equals(currVer)) { return false; }
+                if (!currVer.isUnknownVersion()) {
+                    if (!first.equals(currVer)) { return false; }
+                    allUnknown = false;
+                    allKnown &= true;
+                } else {
+                    allUnknown &= true;
+                    allKnown = false;
+                }
             }
-            return true;
+
+            // The check passes at this point if either all are unknown or all are known
+            return allUnknown || allKnown;
         };
         Supplier<Errors> warningMsgBuilder = () -> {
             Errors warnings = new Errors("Mixed MSigDB versions detected");

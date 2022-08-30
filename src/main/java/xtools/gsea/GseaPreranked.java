@@ -85,6 +85,8 @@ public class GseaPreranked extends AbstractGseaTool {
             throw new IllegalArgumentException("The chip and the ranked list did not match");
         }
 
+        GeneSet[] origGeneSets = fGeneSetMatrixParam.getGeneSetMatrixCombo().getGeneSets();
+        ToolHelper.validateMixedVersionAndSpecies(origGeneSets, fChipParam.getChip(), fReport, log);
         final CollapsedDetails.Ranked cd = getRankedList(fullRl);
 
         // Note that we MUST set the altDelim on the fGeneSetMatrixParam if it's present.  This MUST happen
@@ -94,7 +96,6 @@ public class GseaPreranked extends AbstractGseaTool {
             fGeneSetMatrixParam.setAlternateDelimiter(fAltDelimParam.getValue().toString());
         }
 
-        GeneSet[] origGeneSets = fGeneSetMatrixParam.getGeneSetMatrixCombo().getGeneSets();
         execute_one(cd, origGeneSets);
 
         if (fMakeZippedReportParam.isTrue()) {

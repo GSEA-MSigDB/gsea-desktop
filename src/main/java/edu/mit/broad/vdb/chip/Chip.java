@@ -180,6 +180,7 @@ public class Chip extends AbstractObject implements Versioned {
         // Path based lazy reading
         try {
             Chip chip = ParserFactory.readChip(fSourcePath);
+            this.setMSigDBVersion(chip.msigDBVersion);
             initHere(chip.getName(), fSourcePath, chip.fProbes); // this is the magix
         } catch (Throwable t) {
             t.printStackTrace();

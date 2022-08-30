@@ -55,9 +55,7 @@ public abstract class AbstractGeneSetMatrix extends AbstractObject implements Ge
 
         errors.barfIfNotEmptyRuntime();
         
-        // Preemptively create an Unknown version since we don't know it yet (and may never).  This can be
-        // changed by a subsequent call to setMSigDBVersion() when/if we do learn the version.
-        setMSigDBVersion(MSigDBVersion.createUnknownTrackingVersion(name));
+        if (msigDBVersion == null) { setMSigDBVersion(MSigDBVersion.createUnknownTrackingVersion(name)); }
     }
 
     public MSigDBVersion getMSigDBVersion() {

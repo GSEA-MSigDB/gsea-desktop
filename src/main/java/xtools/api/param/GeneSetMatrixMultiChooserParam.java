@@ -134,15 +134,23 @@ public class GeneSetMatrixMultiChooserParam extends AbstractParam {
     class GeneSetsStruc {
         GeneSet[] gsets;
         String name;
+        MSigDBVersion assumedVersion;
 
         GeneSetsStruc(final String name, final GeneSet[] gsets) {
             this.gsets = gsets;
             this.name = name;
+            // We set the assumed version the same as the first gene set; later steps will
+            // validate all are the same.  An Unknown Version will be used if there is none.  
+            if (gsets != null && gsets.length > 0 && gsets[0].getMSigDBVersion() != null) {
+                assumedVersion = gsets[0].getMSigDBVersion();
+            } else {
+                assumedVersion = MSigDBVersion.createUnknownTrackingVersion(name);
+            }
         }
 
         GeneSetMatrix toGm() {
             // Always remove the Aux native gene set names
-            return new DefaultGeneSetMatrix(name, gsets, true);
+            return new DefaultGeneSetMatrix(name, gsets, assumedVersion, true);
         }
     }
 
@@ -182,7 +190,7 @@ public class GeneSetMatrixMultiChooserParam extends AbstractParam {
             }
         }
 
-        return new GeneSetsStruc(name, (GeneSet[]) gsets.toArray(new GeneSet[gsets.size()]));
+        return new GeneSetsStruc(name, gsets.toArray(new GeneSet[gsets.size()]));
     }
 
     private String[] _parse(final String s) {

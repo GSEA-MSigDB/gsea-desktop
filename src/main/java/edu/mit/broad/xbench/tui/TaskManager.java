@@ -15,6 +15,7 @@ import gnu.trove.TIntObjectHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import xtools.api.CanceledException;
 import xtools.api.Tool;
 import xtools.api.param.ParamSet;
 
@@ -398,6 +399,8 @@ public class TaskManager {
                 } else {
                     this.state = ExecState.SUCCESS_WARN;
                 }
+            } catch (CanceledException ce) {
+                this.state = ExecState.CANCELED;
             } catch (Throwable t) {
                 this.state = ExecState.EXEC_ERROR;
                 this.throwable = t;
@@ -478,11 +481,12 @@ public class TaskManager {
 
             if (trunnable.state == ExecState.WAITING) {
                 Application.getWindowManager().showMessage("Waiting for: " + trunnable.tool.getClass().getName());
+            } else if (trunnable.state == ExecState.CANCELED) {
+                Application.getWindowManager().showMessage("This job was canceled by the user");
             } else if (trunnable.state == ExecState.PARAM_ERROR) {
                 kInstance.updateTable();
                 Application.getWindowManager().showError("One or more parameter(s) were not specified",
                         trunnable.throwable);
-
             } else if (trunnable.state == ExecState.EXEC_ERROR) {
                 kInstance.updateTable();
                 Application.getWindowManager().showError("Tool execution error", trunnable.throwable);

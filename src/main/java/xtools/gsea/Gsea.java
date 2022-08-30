@@ -13,7 +13,6 @@ import edu.mit.broad.genome.objects.strucs.CollapsedDetails;
 import edu.mit.broad.genome.parsers.GctParser;
 import edu.mit.broad.genome.reports.api.ReportIndexState;
 import edu.mit.broad.vdb.chip.Chip;
-import edu.mit.broad.xbench.core.api.Application;
 import xtools.api.AbstractTool;
 import xtools.api.param.*;
 
@@ -150,32 +149,7 @@ public class Gsea extends AbstractGsea2Tool {
 
         final GeneSet[] origGeneSets = fGeneSetMatrixParam.getGeneSetMatrixCombo().getGeneSets();
         
-        Chip chip = fChipParam.getChip();
-        if (!ToolHelper.checkNonMixedSpecies(chip, origGeneSets)) {
-            String msg = (chip == null) ?
-                    "Selected chip file is not compatible with the selected gene set database species" :
-                    "GSEA does not support simultaneous selection of both human and mouse MSigDB collections";
-            log.error(msg);
-            throw new IllegalArgumentException(msg);
-        } else if (!ToolHelper.checkNonMixedVersions(chip, origGeneSets)) {
-            if (chip == null) {
-                // No GUI warning here, since a GUI user will have already been prompted by the Gene Set chooser
-                String msgShort = "Mixed MSigDB versions detected";
-                String msgFull = "Selecting collections from multiple MSigDB versions may result in omitted genes and is not recommended.";
-                log.warn(msgShort);
-                log.warn(msgFull);
-                fReport.addWarning(msgShort + ". " + msgFull);
-            } else {
-                String msgShort = "Multiple species selected";
-                String msgFull = "The selected chip file does not match the version of the MSigDB collection selected. Some gene identifiers may not be mapped";
-                
-                boolean confirm = Application.getWindowManager().showConfirm(msgShort, msgFull);
-                if (!confirm) { return; }
-                log.warn(msgShort);
-                log.warn(msgFull);
-                fReport.addWarning(msgShort + ". " + msgFull);
-            }
-        }
+        ToolHelper.validateMixedVersionAndSpecies(origGeneSets, fChipParam.getChip(), fReport, log);
         
         Dataset ds = fDatasetParam.getDataset(fChipParam);
 

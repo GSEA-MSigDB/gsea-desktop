@@ -98,7 +98,7 @@ public class GeneSet extends AbstractObject implements PersistentObject, Version
 
         // sort it
         Collections.sort(members, new ComparatorFactory.ScoredDatasetScoreComparator(sds));
-
+        if (gset.msigDBVersion != null) { this.msigDBVersion = gset.msigDBVersion; }
         this.init(gset.getName() + ".orderedby." + sds.getName(), gset.getNameEnglish(), members, false);
     }
 
@@ -221,6 +221,8 @@ public class GeneSet extends AbstractObject implements PersistentObject, Version
 
         GeneSet fset = new GeneSet();
         fset.initialize(newName, getNameEnglish()); // this sets the new name
+        if (this.msigDBVersion != null) { fset.msigDBVersion = this.msigDBVersion; }
+        else { fset.msigDBVersion = MSigDBVersion.createUnknownTrackingVersion(newName); }
 
         // the vars are all shallow
         fset.fMembers = this.fMembers; // @note not duplicated
