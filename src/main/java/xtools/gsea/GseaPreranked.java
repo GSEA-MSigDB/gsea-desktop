@@ -94,7 +94,7 @@ public class GseaPreranked extends AbstractGseaTool {
             fGeneSetMatrixParam.setAlternateDelimiter(fAltDelimParam.getValue().toString());
         }
 
-        GeneSet[] origGeneSets = fGeneSetMatrixParam.getGeneSetMatrixCombo(true).getGeneSets();
+        GeneSet[] origGeneSets = fGeneSetMatrixParam.getGeneSetMatrixCombo().getGeneSets();
         execute_one(cd, origGeneSets);
 
         if (fMakeZippedReportParam.isTrue()) {

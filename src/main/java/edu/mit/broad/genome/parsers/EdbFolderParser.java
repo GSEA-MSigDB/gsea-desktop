@@ -30,8 +30,7 @@ import java.util.*;
  * Called a "folder" parser because works / makes a folder
  */
 public class EdbFolderParser extends AbstractParser {
-
-    // cant have tab (would jave been nice as easier to use in excel as when read _in_
+    // cant have tab (would have been nice as easier to use in excel as when read _in_
     // the dom library seems to convert tabs into spaces
     private static final char DELIM = ' ';
 
@@ -310,7 +309,7 @@ public class EdbFolderParser extends AbstractParser {
                     names.add(name);
                 }
             }
-            final GeneSetMatrix gm = new DefaultGeneSetMatrix("gene_sets", gsets);
+            final GeneSetMatrix gm = new DefaultGeneSetMatrix("gene_sets", gsets, null);
             struc.gmFile = NamingConventions.createSafeFile(saveInThisDir, gm.getName() + ".gmt");
             ParserFactory.saveGmt(gm, struc.gmFile, false);
         } else {

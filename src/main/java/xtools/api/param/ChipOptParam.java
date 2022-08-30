@@ -25,7 +25,7 @@ public class ChipOptParam extends AbstractParam {
     
     public Chip getChip() throws Exception {
         Object val = getValue();
-        if (val == null) return null;
+        if (val == null) { return null; }
         return VdbRuntimeResources.getChip(val.toString());
     }
 

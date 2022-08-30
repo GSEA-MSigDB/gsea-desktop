@@ -3,6 +3,8 @@
  */
 package xapps.gsea;
 
+import edu.mit.broad.genome.objects.MSigDBSpecies;
+
 /**
  * @author Aravind Subramanian, David Eby
  */
@@ -35,14 +37,20 @@ public class GseaWebResources {
         return GSEA_FTP_SERVER_PASSWORD;
     }
     
-    public static String getGseaFTPServerChipDir(String targetSpecies) {
-        if ("human".equalsIgnoreCase(targetSpecies)) { return GSEA_FTP_SERVER_HUMAN_CHIPFILES_DIR; }
-        return GSEA_FTP_SERVER_MOUSE_CHIPFILES_DIR;
+    public static String getGseaFTPServerChipDir(MSigDBSpecies targetSpecies) {
+        switch (targetSpecies) {
+          case Human: return GSEA_FTP_SERVER_HUMAN_CHIPFILES_DIR;
+          case Mouse: return GSEA_FTP_SERVER_MOUSE_CHIPFILES_DIR;
+          default: throw new IllegalArgumentException("No FTP directory for " + targetSpecies.name());
+        }
     }
 
-    public static String getGseaFTPServerGeneSetsDir(String targetSpecies) {
-        if ("human".equalsIgnoreCase(targetSpecies)) { return GSEA_FTP_SERVER_HUMAN_GENESETS_DIR; }
-        return GSEA_FTP_SERVER_MOUSE_GENESETS_DIR;
+    public static String getGseaFTPServerGeneSetsDir(MSigDBSpecies  targetSpecies) {
+        switch (targetSpecies) {
+        case Human: return GSEA_FTP_SERVER_HUMAN_GENESETS_DIR;
+        case Mouse: return GSEA_FTP_SERVER_MOUSE_GENESETS_DIR;
+        default: throw new IllegalArgumentException("No FTP directory for " + targetSpecies.name());
+        }
     }
 
     public static String getGseaBaseURL() {
@@ -70,11 +78,11 @@ public class GseaWebResources {
     }
 
     public static String getHumanArrayAnnotationsURL() {
-        return "https://data.broadinstitute.org/gsea-msigdb/msigdb/annotations_versioned/";
+        return "https://data.broadinstitute.org/gsea-msigdb/msigdb/annotations/human/";
     }
 
     public static String getMouseArrayAnnotationsURL() {
-        return "https://data.broadinstitute.org/gsea-msigdb/msigdb/annotations_versioned/";
+        return "https://data.broadinstitute.org/gsea-msigdb/msigdb/annotations/mouse/";
     }
 
     public static String getGseaExamplesURL() {

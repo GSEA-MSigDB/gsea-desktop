@@ -1,36 +1,33 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.objects;
 
 import edu.mit.broad.genome.Errors;
 import edu.mit.broad.genome.parsers.AuxUtils;
-import gnu.trove.THashSet;
 
 import java.util.*;
 
 /**
- * @author Aravind Subramanian
+ * @author Aravind Subramanian, David Eby
  */
+// TODO: collapse class hierarchy.  There is and will only ever be one impl.
 public abstract class AbstractGeneSetMatrix extends AbstractObject implements GeneSetMatrix {
+    private List<GeneSet> fGeneSets;
 
-    /**
-     * Each member is a GeneSet
-     */
-    private List fGeneSets;
+    private Set<String> fGeneSetNames_nonaux = null;
 
-    private Set fGeneSetNames_nonaux = null;
+    private MSigDBVersion msigDBVersion = null;
 
     /**
      * Subclasses must call initMatrix
      */
-    protected AbstractGeneSetMatrix() {
-    }
+    protected AbstractGeneSetMatrix() { }
 
     // common init routine
     // subclasses MUST call
     // gset names MUST all be UNIQUE - this IS checked here
-    // @BNOTE ADDED JAN 27 2006 geset names are case INsensitive
+    // @BNOTE ADDED JAN 27 2006 gset names are case INsensitive
     protected void initMatrix(final String name, final GeneSet[] gsets) {
         super.initialize(name);
 
@@ -38,10 +35,10 @@ public abstract class AbstractGeneSetMatrix extends AbstractObject implements Ge
             throw new IllegalArgumentException("Param gsets cannot be null");
         }
 
-        Set names = new HashSet();
+        Set<String> names = new HashSet<String>();
         Errors errors = new Errors();
 
-        this.fGeneSets = new ArrayList(gsets.length);
+        this.fGeneSets = new ArrayList<GeneSet>(gsets.length);
         for (int i = 0; i < gsets.length; i++) {
             if (gsets[i] == null) {
                 throw new IllegalArgumentException("Null GeneSet not allowed at index: " + i + " total len: " + gsets.length);
@@ -54,18 +51,34 @@ public abstract class AbstractGeneSetMatrix extends AbstractObject implements Ge
             }
 
             fGeneSets.add(gsets[i]);
-
         }
 
         errors.barfIfNotEmptyRuntime();
+        
+        // Preemptively create an Unknown version since we don't know it yet (and may never).  This can be
+        // changed by a subsequent call to setMSigDBVersion() when/if we do learn the version.
+        setMSigDBVersion(MSigDBVersion.createUnknownTrackingVersion(name));
+    }
+
+    public MSigDBVersion getMSigDBVersion() {
+        return msigDBVersion;
+    }
+
+    public void setMSigDBVersion(MSigDBVersion msigDBVersion) {
+        this.msigDBVersion = msigDBVersion;
+        
+        // Tag the GeneSets with the same version info
+        if (fGeneSets == null || msigDBVersion == null) { return; }
+        for (GeneSet geneSet : fGeneSets) {
+            geneSet.setMSigDBVersion(msigDBVersion);
+        }
     }
 
     public boolean containsSet(final String gsetName) {
         if (fGeneSetNames_nonaux == null) {
             // init it
-            this.fGeneSetNames_nonaux = new THashSet();
+            this.fGeneSetNames_nonaux = new HashSet<String>();
             for (int i = 0; i < getNumGeneSets(); i++) {
-                //log.debug("Adding: " + getGeneSet(i).getName());
                 fGeneSetNames_nonaux.add(AuxUtils.getAuxNameOnlyNoHash(getGeneSet(i).getName()));
             }
         }
@@ -96,11 +109,10 @@ public abstract class AbstractGeneSetMatrix extends AbstractObject implements Ge
         return (GeneSet) fGeneSets.get(i);
     }
 
-    private Map fNameGeneSetMap; // lazily filled
+    private Map<String, GeneSet> fNameGeneSetMap; // lazily filled
 
     // case IN sensitive query
     public GeneSet getGeneSet(final String gsetnameF) {
-
         // @todo fix me hack to overcome the errors cause by using a File sep char in gset names
         // @see edbparser
         String gsetname = gsetnameF.replace('|', '/');
@@ -109,7 +121,7 @@ public abstract class AbstractGeneSetMatrix extends AbstractObject implements Ge
         gsetname = gsetname.toUpperCase();
 
         if (fNameGeneSetMap == null) {
-            fNameGeneSetMap = new HashMap(getNumGeneSets());
+            fNameGeneSetMap = new HashMap<String, GeneSet>(getNumGeneSets());
             for (int i = 0; i < getNumGeneSets(); i++) {
                 GeneSet gset = getGeneSet(i);
                 fNameGeneSetMap.put(gset.getName().toUpperCase(), gset); // already guranteed unique names
@@ -165,9 +177,9 @@ public abstract class AbstractGeneSetMatrix extends AbstractObject implements Ge
         if (obj == null) {
             StringBuffer buf = new StringBuffer("In GeneSetMatrix: " + getName() + " no GeneSet found with name: " + gsetname);
             buf.append("\nAvailable GeneSets are: \n");
-            for (Iterator it = fNameGeneSetMap.keySet().iterator(); it.hasNext();) {
+            for (Iterator<String> it = fNameGeneSetMap.keySet().iterator(); it.hasNext();) {
                 Object key = it.next();
-                buf.append(key.toString()).append('\n');
+                buf.append(key).append('\n');
             }
 
             buf.append("Also tried looking for gset: ").append(tryharder);
@@ -190,7 +202,7 @@ public abstract class AbstractGeneSetMatrix extends AbstractObject implements Ge
         return (GeneSet[]) fGeneSets.toArray(new GeneSet[fGeneSets.size()]);
     }
 
-    public List getGeneSetsL() {
+    public List<GeneSet> getGeneSetsL() {
         return Collections.unmodifiableList(fGeneSets);
     }
 
@@ -225,5 +237,4 @@ public abstract class AbstractGeneSetMatrix extends AbstractObject implements Ge
     public String getGeneSetName(int g) {
         return getGeneSet(g).getName();
     }
-
-} // End class AbstractGeneSetMatrix
+}

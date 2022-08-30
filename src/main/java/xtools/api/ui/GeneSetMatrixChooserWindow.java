@@ -3,19 +3,19 @@
  */
 package xtools.api.ui;
 
+import edu.mit.broad.genome.Errors;
 import edu.mit.broad.genome.JarResources;
-import edu.mit.broad.genome.NamingConventions;
 import edu.mit.broad.genome.alg.ComparatorFactory;
 import edu.mit.broad.genome.objects.GeneSet;
 import edu.mit.broad.genome.objects.GeneSetMatrix;
 import edu.mit.broad.genome.objects.MSigDBSpecies;
 import edu.mit.broad.genome.objects.MSigDBVersion;
 import edu.mit.broad.genome.objects.PersistentObject;
+import edu.mit.broad.genome.objects.Versioned;
 import edu.mit.broad.genome.parsers.DataFormat;
 import edu.mit.broad.genome.parsers.ParseUtils;
 import edu.mit.broad.genome.parsers.ParserFactory;
 import edu.mit.broad.genome.swing.GuiHelper;
-import edu.mit.broad.xbench.RendererFactory2;
 import edu.mit.broad.xbench.actions.ext.BrowserAction;
 import edu.mit.broad.xbench.core.ObjectBindery;
 import edu.mit.broad.xbench.core.api.Application;
@@ -29,20 +29,22 @@ import org.genepattern.uiutil.FTPList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import xtools.api.param.ChooserHelper;
 import xtools.api.param.Param;
+import xtools.api.param.Validator;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
-import java.awt.Font;
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
+import java.util.function.BooleanSupplier;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 import javax.swing.Action;
 import javax.swing.BorderFactory;
 import javax.swing.DefaultListCellRenderer;
-import javax.swing.DefaultListModel;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -68,62 +70,53 @@ public class GeneSetMatrixChooserWindow {
                 GuiHelper.ICON_HELP16, GseaWebResources.getGseaBaseURL() + "/msigdb/");
         DialogDescriptor desc = Application.getWindowManager().createDialogDescriptor("Select a gene set", wrapper, helpAction, infoAction, true);
 
-        DefaultListModel<FTPFile> humanFtpFileModel = new DefaultListModel<FTPFile>();
-        DefaultListModel<FTPFile> mouseFtpFileModel = new DefaultListModel<FTPFile>();
-        final JList<FTPFile> humanFTPFileJList = new JList<FTPFile>(humanFtpFileModel);
-        final JList<FTPFile> mouseFTPFileJList = new JList<FTPFile>(mouseFtpFileModel);
-        if (!XPreferencesFactory.kOnlineMode.getBoolean()) {
-            // TODO: switch away from JList. Prob disabled TextArea 
-            DefaultListModel<String> offlineMsgModel = createOfflineMessageModel();
-            JList<String> offlineMsgList = new JList<String>(offlineMsgModel);
-            offlineMsgList.setCellRenderer(new DefaultListCellRenderer());
-            offlineMsgList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-            tabbedPane.addTab("Human Collection (MSigDB)", new JScrollPane(offlineMsgList));
-            tabbedPane.addTab("Mouse Collection (MSigDB)", new JScrollPane(offlineMsgList));
-        } else {
+        final JList<FTPFile> humanFTPFileJList = new JList<FTPFile>();
+        final JList<FTPFile> mouseFTPFileJList = new JList<FTPFile>();
+        if (XPreferencesFactory.kOnlineMode.getBoolean()) {
             FTPList ftpList = null;
             try {
                 ftpList = new FTPList(GseaWebResources.getGseaFTPServer(),
                         GseaWebResources.getGseaFTPServerUserName(), GseaWebResources.getGseaFTPServerPassword());
                 try {
-                    FTPFile[] humanFTPFiles = retrieveFTPFiles(ftpList, MSigDBSpecies.Human, GseaWebResources.getGseaFTPServerGeneSetsDir("Human"));
-                    populateFTPModel(humanFTPFiles, humanFTPFileJList, humanFtpFileModel, new ComparatorFactory.FTPFileByVersionComparator("h"));
+                    FTPFile[] humanFTPFiles = ChooserHelper.retrieveFTPFiles(ftpList, ".symbols.gmt",
+                            MSigDBSpecies.Human, GseaWebResources.getGseaFTPServerGeneSetsDir(MSigDBSpecies.Human));
+                    FTPFile[] mouseFTPFiles = ChooserHelper.retrieveFTPFiles(ftpList, ".symbols.gmt",
+                            MSigDBSpecies.Mouse, GseaWebResources.getGseaFTPServerGeneSetsDir(MSigDBSpecies.Mouse));
+                    ChooserHelper.populateFTPModel(humanFTPFiles, humanFTPFileJList, desc,
+                            new ComparatorFactory.FTPFileByVersionComparator("h"), ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+                    ChooserHelper.populateFTPModel(mouseFTPFiles, mouseFTPFileJList, desc,
+                            new ComparatorFactory.FTPFileByVersionComparator("mh"), ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
                     tabbedPane.addTab("Human Collection (MSigDB)", new JScrollPane(humanFTPFileJList));
-                    desc.enableDoubleClickableJList(humanFTPFileJList);
-                    FTPFile[] mouseFTPFiles = retrieveFTPFiles(ftpList, MSigDBSpecies.Mouse, GseaWebResources.getGseaFTPServerGeneSetsDir("Mouse"));
-                    populateFTPModel(mouseFTPFiles, mouseFTPFileJList, mouseFtpFileModel, new ComparatorFactory.FTPFileByVersionComparator("mh"));
                     tabbedPane.addTab("Mouse Collection (MSigDB)", new JScrollPane(mouseFTPFileJList));
-                    desc.enableDoubleClickableJList(mouseFTPFileJList);
                 } finally {
                     if (ftpList != null) { ftpList.quit(); }
                 }
             } catch (Exception ex) {
-                // TODO: switch away from JList. Prob disabled TextArea 
-                DefaultListModel<String> errorMsgModel = createErrorMessageModel(ex);
-                JList<String> errorMsgList = new JList<String>(errorMsgModel);
-                errorMsgList.setCellRenderer(new DefaultListCellRenderer());
-                errorMsgList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-                tabbedPane.addTab("Human Collection (MSigDB)", new JScrollPane(errorMsgList));
-                tabbedPane.addTab("Mouse Collection (MSigDB)", new JScrollPane(errorMsgList));
+                klog.error(ex.getMessage(), ex);
+                tabbedPane.addTab("Human Collection (MSigDB)", new JScrollPane(ChooserHelper.createErrorMessageDisplay(ex)));
+                tabbedPane.addTab("Mouse Collection (MSigDB)", new JScrollPane(ChooserHelper.createErrorMessageDisplay(ex)));
             }
+        } else {
+            tabbedPane.addTab("Human Collection (MSigDB)", new JScrollPane(ChooserHelper.createOfflineMessageDisplay()));
+            tabbedPane.addTab("Mouse Collection (MSigDB)", new JScrollPane(ChooserHelper.createOfflineMessageDisplay()));
         }
 
         // TODO: strong typing, should be JList<GeneSetMatrix> (or POB) but need to verify and make changes elsewhere
         // Likewise for the next two.
         DefaultListCellRenderer defaultRenderer = new GeneSetMatrixChooserWindow.NonFTPGeneSetsRenderer();
-        final JList localGeneMatrixJList = new JList(ObjectBindery.getModel(GeneSetMatrix.class));
-        localGeneMatrixJList.setCellRenderer(defaultRenderer);
-        localGeneMatrixJList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-        tabbedPane.addTab("Local GMX/GMT", new JScrollPane(localGeneMatrixJList));
-        desc.enableDoubleClickableJList(localGeneMatrixJList);
+        final JList<GeneSetMatrix> localGeneSetMatrixJList = new JList<GeneSetMatrix>(ObjectBindery.getModel(GeneSetMatrix.class));
+        localGeneSetMatrixJList.setCellRenderer(defaultRenderer);
+        localGeneSetMatrixJList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+        tabbedPane.addTab("Local GMX/GMT", new JScrollPane(localGeneSetMatrixJList));
+        desc.enableDoubleClickableJList(localGeneSetMatrixJList);
 
-        final JList localGeneSetJList = new JList(ObjectBindery.getModel(GeneSet.class));
+        final JList<GeneSet> localGeneSetJList = new JList<GeneSet>(ObjectBindery.getModel(GeneSet.class));
         localGeneSetJList.setCellRenderer(defaultRenderer);
         localGeneSetJList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         tabbedPane.addTab("Local GRP Gene sets", new JScrollPane(localGeneSetJList));
         desc.enableDoubleClickableJList(localGeneSetJList);
         
-        final JList localMatrixSubsetsJList = new JList(ObjectBindery.getHackAuxGeneSetsBoxModel());
+        final JList<GeneSet> localMatrixSubsetsJList = new JList<GeneSet>(ObjectBindery.getHackAuxGeneSetsBoxModel());
         localMatrixSubsetsJList.setCellRenderer(defaultRenderer);
         localMatrixSubsetsJList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         tabbedPane.addTab("Subsets", new JScrollPane(localMatrixSubsetsJList));
@@ -133,6 +126,67 @@ public class GeneSetMatrixChooserWindow {
         taGenes.setText(""); // @note
         taGenes.setBorder(BorderFactory.createTitledBorder("Make an 'on-the-fly' gene set: Enter features below, one per line"));
         tabbedPane.addTab("Text entry", new JScrollPane(taGenes));
+        
+        BooleanSupplier warningChecker = () -> {
+            List<Versioned> selectedItems = new ArrayList<Versioned>(humanFTPFileJList.getSelectedValuesList());
+            selectedItems.addAll(mouseFTPFileJList.getSelectedValuesList());
+            selectedItems.addAll(localGeneSetMatrixJList.getSelectedValuesList());
+            selectedItems.addAll(localGeneSetJList.getSelectedValuesList());
+            selectedItems.addAll(localMatrixSubsetsJList.getSelectedValuesList());
+            if (selectedItems.isEmpty()) { return true; }
+            // If *all* versions found are unknown then we give no warning
+            boolean allUnknown = false;
+            if (StringUtils.isBlank(taGenes.getText())) { return false; }
+            else { allUnknown = true; }
+
+            MSigDBVersion first = selectedItems.remove(0).getMSigDBVersion();
+            allUnknown |= first.isUnknownVersion();
+            for (Versioned item : selectedItems) {
+                MSigDBVersion currVer = item.getMSigDBVersion();
+                allUnknown |= currVer.isUnknownVersion();
+                if (!allUnknown && !first.equals(currVer)) { return false; }
+            }
+            return true;
+        };
+        Supplier<Errors> warningMsgBuilder = () -> {
+            Errors warnings = new Errors("Mixed MSigDB versions detected");
+            warnings.add("Selecting collections from multiple MSigDB versions");
+            warnings.add("may result in omitted genes and is not recommended.\n");
+            warnings.add("NOTE: another tab may have a selection.\n");
+            warnings.add("Click Cancel to change the selection or OK to keep it.");
+            return warnings;
+        };
+        Validator warningValidator = new Validator(warningChecker, warningMsgBuilder);
+        desc.setWarningValidator(warningValidator);
+        
+        BooleanSupplier errorChecker = () -> {
+            List<Versioned> selectedItems = new ArrayList<Versioned>(humanFTPFileJList.getSelectedValuesList());
+            selectedItems.addAll(mouseFTPFileJList.getSelectedValuesList());
+            selectedItems.addAll(localGeneSetMatrixJList.getSelectedValuesList());
+            selectedItems.addAll(localGeneSetJList.getSelectedValuesList());
+            selectedItems.addAll(localMatrixSubsetsJList.getSelectedValuesList());
+            
+            // We ignore all items with Unknown species for the purpose of this check.
+            // Note that this is also why we don't bother with the on-the-fly gene set.
+            selectedItems.removeIf(new Predicate<Versioned>() {
+                public boolean test(Versioned item) { return item.getMSigDBVersion().isUnknownVersion(); }
+            });
+            if (selectedItems.isEmpty()) { return true; }
+
+            MSigDBVersion first = selectedItems.remove(0).getMSigDBVersion();
+            for (Versioned item : selectedItems) {
+                if (first.getMsigDBSpecies() != item.getMSigDBVersion().getMsigDBSpecies()) { return false; }
+            }
+            return true;
+        };
+        Supplier<Errors> errorMsgBuilder = () -> {
+            Errors errors = new Errors("Multiple species selected");
+            errors.add("Multiple species selections are not allowed.");
+            errors.add("Is there a selection on another tab?");
+            return errors;
+        };
+        Validator errorValidator = new Validator(errorChecker, errorMsgBuilder);
+        desc.setErrorValidator(errorValidator);
 
         desc.setDisplayWider();
         int res = desc.show();
@@ -146,19 +200,19 @@ public class GeneSetMatrixChooserWindow {
             for (FTPFile ftpFile : mouseFTPFileJList.getSelectedValuesList()) { 
                 allValues.add(ftpFile.getPath());
             }
-            for (Object thing : localGeneMatrixJList.getSelectedValuesList()) {
-                allValues.add(formatUnknownListObject(thing));
+            for (GeneSetMatrix geneSetMatrix : localGeneSetMatrixJList.getSelectedValuesList()) {
+                allValues.add(ParserFactory.getCache().getSourcePath(geneSetMatrix));
             }
-            for (Object thing : localGeneSetJList.getSelectedValuesList()) {
-                allValues.add(formatUnknownListObject(thing));
+            for (GeneSet geneSet : localGeneSetJList.getSelectedValuesList()) {
+                allValues.add(ParserFactory.getCache().getSourcePath(geneSet));
             }
-            for (Object thing : localMatrixSubsetsJList.getSelectedValuesList()) {
-                allValues.add(formatUnknownListObject(thing));
+            for (GeneSet geneSet : localMatrixSubsetsJList.getSelectedValuesList()) {
+                allValues.add(ParserFactory.getCache().getSourcePath(geneSet));
             }
 
             // add text area stuff as a GRP gene set
             String onTheFlyText = taGenes.getText();
-            if (onTheFlyText != null) {
+            if (StringUtils.isNotBlank(onTheFlyText)) {
                 String[] onTheFlyGenes = ParseUtils.string2strings(onTheFlyText, "\t\n"); // we want things synched
                 if (onTheFlyGenes.length != 0) {
                     GeneSet gset = new GeneSet("from_text_entry_", onTheFlyGenes);
@@ -172,54 +226,6 @@ public class GeneSetMatrixChooserWindow {
             }
             return allValues.toArray(new String[allValues.size()]);
         }
-    }
-
-    private String formatUnknownListObject(Object thing) {
-        if (thing instanceof PersistentObject) {
-            return ParserFactory.getCache().getSourcePath(thing);
-        } else {
-            return thing.toString();
-        }
-    }
-    
-    private FTPFile[] retrieveFTPFiles(FTPList ftpList, MSigDBSpecies species, String ftpDir) throws Exception {
-        String[] ftpFileNames = ftpList.getDirectoryListing(ftpDir, null);
-        FTPFile[] ftpFiles = new FTPFile[ftpFileNames.length];
-        for (int i = 0; i < ftpFileNames.length; i++) {
-            String ftpFileName = ftpFileNames[i];
-            String versionId = NamingConventions.extractVersionFromFileName(ftpFileName, ".symbols.gmt");
-            ftpFiles[i] = new FTPFile(ftpList.host, ftpDir, ftpFileName, new MSigDBVersion(species, versionId));
-        }
-        return ftpFiles;
-    }
-
-    private void populateFTPModel(FTPFile[] ftpFiles, JList<FTPFile> ftpFileList, DefaultListModel<FTPFile> ftpFileModel,
-            ComparatorFactory.FTPFileByVersionComparator ftpFileComp) throws Exception {
-        Arrays.parallelSort(ftpFiles, ftpFileComp);
-        for (int i = 0; i < ftpFiles.length; i++) {
-            ftpFileModel.addElement(ftpFiles[i]);
-        }
-        ftpFileList.setCellRenderer(new FTPFileListCellRenderer(ftpFileComp.getHighestVersionId()));
-        ftpFileList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    }
-
-    private DefaultListModel<String> createErrorMessageModel(Exception ex) {
-        klog.error(ex.getMessage(), ex);
-        DefaultListModel<String> model = new DefaultListModel<String>();
-        model.addElement("Error listing Broad website");
-        model.addElement(ex.getMessage());
-        model.addElement("Use 'Load Data' to access local files.");
-        model.addElement("Choose gene sets from other tabs.");
-        return model;
-    }
-
-    private DefaultListModel<String> createOfflineMessageModel() {
-        DefaultListModel<String> model = new DefaultListModel<String>();
-        model.addElement("Offline mode");
-        model.addElement("Change this in Menu=>Preferences");
-        model.addElement("Use 'Load Data' to access local files.");
-        model.addElement("Choose gene sets from other tabs");
-        return model;
     }
 
     public static class NonFTPGeneSetsRenderer extends DefaultListCellRenderer {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2021 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package xtools.chip2chip;
 
@@ -157,7 +157,7 @@ public class Chip2Chip extends AbstractTool {
             fGeneSetMatrixParam.setAlternateDelimiter(fAltDelimParam.getValue().toString());
         }
 
-        final GeneSetMatrix gm = fGeneSetMatrixParam.getGeneSetMatrixCombo(true);
+        final GeneSetMatrix gm = fGeneSetMatrixParam.getGeneSetMatrixCombo();
         final Chip2ChipMapper mapper = new Chip2ChipMapper(fChipTargetParam.getChip());
 
         doMapping(mapper, gm, fShowEtiology.isTrue(), fGmFormatParam, fReport);

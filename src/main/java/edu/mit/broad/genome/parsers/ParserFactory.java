@@ -497,18 +497,7 @@ public class ParserFactory implements Constants {
 
 
     public static Chip readChip(String sourcePath) throws Exception {
-        InputStream inputStream = createInputStream(sourcePath);
-        Chip chip = readChip(sourcePath, inputStream, true);
-        if (inputStream instanceof FtpResultInputStream) {
-            // Create a version object and assign it to the Chip.  We can only safely track
-            // the version of files that we know have been downloaded in the session, at least for now.
-            String versionStr = NamingConventions.extractVersionFromFileName(sourcePath, ".chip");
-            // We make an assumption here that any non-Mouse Chip from the FTP site is Human.
-            // This is valid for now
-            MSigDBSpecies msigDBSpecies = (versionStr.contains("Mm")) ? MSigDBSpecies.Mouse : MSigDBSpecies.Human;
-            chip.setMsigDBVersion(new MSigDBVersion(msigDBSpecies, versionStr));
-        }
-        return chip;
+        return readChip(sourcePath, createInputStream(sourcePath), true);
     }
 
     private static Chip readChip(String path, InputStream is, boolean useCache) throws Exception {

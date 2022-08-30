@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.objects;
 
 import java.util.List;
@@ -9,13 +9,15 @@ import java.util.Set;
 /**
  * Essentially a collection of (probably related) GeneSets
  * In additin has colors and icons and names
- * <p/>
+ *
  * Lightweigth container for a bunch of genesets -- geneset data is not duplicated
  *
- * @author Aravind Subramanian
- * @version %I%, %G%
+ * @author Aravind Subramanian, David Eby
  */
-public interface GeneSetMatrix extends PersistentObject {
+public interface GeneSetMatrix extends PersistentObject, Versioned {
+    public MSigDBVersion getMSigDBVersion();
+
+    public void setMSigDBVersion(MSigDBVersion msigDBVersion);
 
     public boolean containsSet(final String gsetName);
 
@@ -40,7 +42,7 @@ public interface GeneSetMatrix extends PersistentObject {
      */
     public GeneSet[] getGeneSets();
 
-    public List getGeneSetsL();
+    public List<GeneSet> getGeneSetsL();
 
     /**
      * The number of members in the biggest GeneSet.
@@ -62,5 +64,4 @@ public interface GeneSetMatrix extends PersistentObject {
     public Set getAllMemberNamesOnlyOnceS();
 
     public String getGeneSetName(final int i);
-
-} // End interface GeneSetMatrix
+}

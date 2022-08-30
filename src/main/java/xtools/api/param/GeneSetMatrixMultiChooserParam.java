@@ -12,6 +12,8 @@ import edu.mit.broad.vdb.chip.Chip;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import xapps.gsea.GseaWebResources;
 import xtools.api.ui.GeneSetMatrixChooserUI;
@@ -26,6 +28,8 @@ import java.util.List;
  * @author Aravind Subramanian, David Eby
  */
 public class GeneSetMatrixMultiChooserParam extends AbstractParam {
+    private static final Logger klog = LoggerFactory.getLogger(GeneSetMatrixMultiChooserParam.class);
+    
     private MyPobActionListener fAl;
     private GeneSetMatrixChooserUI fChooser;
 
@@ -40,8 +44,8 @@ public class GeneSetMatrixMultiChooserParam extends AbstractParam {
         super(name, nameEnglish, GeneSetMatrix[].class, desc, new GeneSetMatrix[]{}, new GeneSetMatrix[]{}, reqd);
     }
 
-    public GeneSetMatrix getGeneSetMatrixCombo(final boolean removeNativeGmNames) throws Exception {
-        return _getGeneSets().toGm(removeNativeGmNames);
+    public GeneSetMatrix getGeneSetMatrixCombo() throws Exception {
+        return _getGeneSets().toGm();
     }
     
     /**
@@ -67,10 +71,6 @@ public class GeneSetMatrixMultiChooserParam extends AbstractParam {
     private Object[] _getObjects() throws Exception {
         Object val = getValue();
         Object[] objs;
-
-        // cant get a ftp file object because it has to be a string in the object chooser text area
-        // log.debug("value = " + val + " class: " + val.getClass());
-
         if (val instanceof String) {
             String[] paths = _parse(val.toString());
             objs = new Object[paths.length];
@@ -109,6 +109,20 @@ public class GeneSetMatrixMultiChooserParam extends AbstractParam {
         } else {
             objs = new Object[]{val};
         }
+        
+        // Log any with unknown versions.  Their versionStrings are based on the path, so this is 
+        // informative enough for the user
+        for (Object object : objs) {
+            if (object instanceof Versioned) {
+                MSigDBVersion version = ((Versioned)object).getMSigDBVersion();
+                if (version.isUnknownVersion()) {
+                    String versionString = version.getVersionString();
+                    int cutPoint = versionString.lastIndexOf("-unknown-");
+                    if (cutPoint > 0) { versionString = versionString.substring(cutPoint); }
+                    log.info("Using file '{}' with unknown version", versionString);
+                }
+            }
+        }
 
         return objs;
     }
@@ -126,8 +140,9 @@ public class GeneSetMatrixMultiChooserParam extends AbstractParam {
             this.name = name;
         }
 
-        GeneSetMatrix toGm(boolean removeNativeGmNames) {
-            return new DefaultGeneSetMatrix(name, gsets, removeNativeGmNames);
+        GeneSetMatrix toGm() {
+            // Always remove the Aux native gene set names
+            return new DefaultGeneSetMatrix(name, gsets, true);
         }
     }
 
@@ -155,7 +170,6 @@ public class GeneSetMatrixMultiChooserParam extends AbstractParam {
         String name = _getName(objs);
         for (int i = 0; i < objs.length; i++) {
             if (objs[i] instanceof GeneSetMatrix) {
-                // TODO: fix type safety of GeneSetMatrix.getGeneSetsL().  Should return List<GeneSet>
                 gsets.addAll(((GeneSetMatrix) objs[i]).getGeneSetsL());
             } else if (objs[i] instanceof GeneSet) {
                 gsets.add((GeneSet)objs[i]);
@@ -191,30 +205,20 @@ public class GeneSetMatrixMultiChooserParam extends AbstractParam {
 
     // override base class method to do for both pobs and strings
     private String format(final Object[] vals) {
-        if (vals == null) {
-            return "";
-        }
+        if (vals == null) { return ""; }
 
         StringBuffer buf = new StringBuffer();
         for (int i = 0; i < vals.length; i++) {
-            if (vals[i] == null) {
-                continue;
-            }
-
+            if (vals[i] == null) { continue; }
             log.debug("{}", vals[i].getClass());
 
             if (vals[i] instanceof PersistentObject) {
-                String p = ParserFactory.getCache().getSourcePath(vals[i]);
-                buf.append(p);
+                buf.append(ParserFactory.getCache().getSourcePath(vals[i]));
             } else {
                 buf.append(vals[i].toString().trim());
             }
-
-            if (i != vals.length - 1) {
-                buf.append(delimiter);
-            }
+            if (i != vals.length - 1) { buf.append(delimiter); }
         }
-
         return buf.toString();
     }
 
@@ -223,7 +227,6 @@ public class GeneSetMatrixMultiChooserParam extends AbstractParam {
             this.fAl = new MyPobActionListener();
             fAl.setChooser(fChooser);
         }
-
         return fAl;
     }
 
@@ -236,9 +239,7 @@ public class GeneSetMatrixMultiChooserParam extends AbstractParam {
 
         // cant have this in the class constructor as the action list needs to
         // be instantiated before the chooser object is made
-        public void setChooser(GeneSetMatrixChooserUI chooser) {
-            this.fChooser = chooser;
-        }
+        public void setChooser(GeneSetMatrixChooserUI chooser) { this.fChooser = chooser; }
 
         public void actionPerformed(ActionEvent e) {
             if (fChooser == null) { return; }

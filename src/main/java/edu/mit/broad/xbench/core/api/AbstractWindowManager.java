@@ -6,6 +6,8 @@ package edu.mit.broad.xbench.core.api;
 import edu.mit.broad.genome.Errors;
 import edu.mit.broad.xbench.core.ApplicationDialog;
 import edu.mit.broad.xbench.core.WrappedComponent;
+import xtools.api.param.Validator;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -88,7 +90,8 @@ public abstract class AbstractWindowManager implements WindowManager {
         ApplicationDialog.showMessage(title, msg);
     }
 
-    public DialogDescriptor createDialogDescriptor(final String title, final Component comp, final Action help_action_opt, final Action info_action_opt, boolean showLicenseButton) {
+    public DialogDescriptor createDialogDescriptor(final String title, final Component comp,
+            final Action help_action_opt, final Action info_action_opt, boolean showLicenseButton) {
         return new DialogDescriptorJide(title, comp, help_action_opt, info_action_opt, showLicenseButton);
     }
 

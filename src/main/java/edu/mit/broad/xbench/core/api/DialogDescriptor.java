@@ -4,6 +4,9 @@
 package edu.mit.broad.xbench.core.api;
 
 import javax.swing.*;
+
+import xtools.api.param.Validator;
+
 import java.awt.*;
 
 /**
@@ -37,6 +40,10 @@ public interface DialogDescriptor {
     public void setOnlyShowCloseOption();
     
     public void setDisplayWider();
+
+    public void setWarningValidator(Validator warningValidator);
+    
+    public void setErrorValidator(Validator errorValidator);
 
     /**
      * If modal, a regular jdialog is always used

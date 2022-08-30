@@ -5,12 +5,18 @@ package edu.mit.broad.xbench.core.api;
 
 import com.jidesoft.dialog.ButtonPanel;
 
+import edu.mit.broad.genome.Errors;
 import edu.mit.broad.genome.swing.GuiHelper;
 import edu.mit.broad.xbench.actions.ext.BrowserAction;
 
 import xapps.gsea.GseaWebResources;
+import xtools.api.param.Validator;
 
 import javax.swing.*;
+
+import org.apache.commons.lang3.SystemUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -24,6 +30,7 @@ import java.awt.event.MouseEvent;
  * @author Aravind Subramanian, David Eby
  */
 public class DialogDescriptorJide implements DialogDescriptor {
+    private static final Logger klog = LoggerFactory.getLogger(DialogDescriptorJide.class);
     private JPanel fMainPanel;
     private int fChoosenOption = -1;
     private boolean fModal = true;
@@ -36,13 +43,16 @@ public class DialogDescriptorJide implements DialogDescriptor {
     private JButton[] fCustomButtons;
     private boolean fAddCancelButton = true;
     private boolean fDisplayWider = false;
+    private Validator warningValidator = null; 
+    private Validator errorValidator = null;
 
     public DialogDescriptorJide(final String title, final Component inputComp, final Action help_action_opt) {
         this.fHelpAction_opt = help_action_opt;
         jbInit(title, inputComp);
     }
 
-    public DialogDescriptorJide(final String title, final Component inputComp, final Action help_action_opt, final Action info_action_opt, boolean showLicenseButton) {
+    public DialogDescriptorJide(final String title, final Component inputComp, final Action help_action_opt,
+            final Action info_action_opt, boolean showLicenseButton) {
         this.showLicenseButton = showLicenseButton;
         this.fHelpAction_opt = help_action_opt;
         this.fInfoAction_opt = info_action_opt;
@@ -103,15 +113,13 @@ public class DialogDescriptorJide implements DialogDescriptor {
      * only makes sense if the specified jlist is a component that is
      * displayed in the dialog descriptor window
      * Double click / enter on the jlist == a OK button click
-     * Simpley closes the dialog and returns void when double clicked (the OK is implied)
+     * Simply closes the dialog and returns void when double clicked (the OK is implied)
      */
+    // TODO: examine JList type safety
     public void enableDoubleClickableJList(final JList jl) {
         jl.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent me) {
-                Object objs[] = jl.getSelectedValues();
-                if (objs == null) {
-                    return;
-                }
+                if (jl.isSelectionEmpty()) { return; }
 
                 if (me.getClickCount() == 2) {
                     me.consume();
@@ -127,6 +135,14 @@ public class DialogDescriptorJide implements DialogDescriptor {
     public void setDisplayWider() {
         fDisplayWider = true;
         if (fMainPanel != null) { fMainPanel.setPreferredSize(DD_SIZE_WIDER); }
+    }
+    
+    public void setWarningValidator(Validator warningValidator) {
+        this.warningValidator = warningValidator;
+    }
+    
+    public void setErrorValidator(Validator errorValidator) {
+        this.errorValidator = errorValidator;
     }
     
     public void setButtons(final JButton[] boptions) {
@@ -185,6 +201,32 @@ public class DialogDescriptorJide implements DialogDescriptor {
 
             bOk.addActionListener(new ActionListener() {
                 public void actionPerformed(ActionEvent e) {
+                    if (errorValidator != null && !errorValidator.isValid()) {
+                        Errors errors = errorValidator.buildValidationFailedErrors();
+                        klog.error(errors.getName());
+                        String errorMsg = "";
+                        String sep = "";
+                        for (String err : errors.getErrorsAsStrings()) {
+                            errorMsg += sep + err;
+                            sep = SystemUtils.LINE_SEPARATOR;
+                        }
+                        Application.getWindowManager().showMessage(errors.getName(), errorMsg);
+                        return;
+                    } else if (warningValidator != null && !warningValidator.isValid()) {
+                        Errors warnings = warningValidator.buildValidationFailedErrors();
+                        String warningMsg = "";
+                        String sep = "";
+                        for (String w : warnings.getErrorsAsStrings()) {
+                            warningMsg += sep + w;
+                            sep = SystemUtils.LINE_SEPARATOR;
+                        }
+                        
+                        boolean confirm = Application.getWindowManager().showConfirm(warnings.getName(), warningMsg);
+                        if (!confirm) { return; }
+                        klog.warn(warnings.getName());
+                    }
+                    
+                    
                     fChoosenOption = OK_OPTION;
                     fDialog.setVisible(false);
                     fDialog.dispose();

@@ -20,10 +20,9 @@ import java.util.*;
  * <p/>
  * There should be no duplicate members
  *
- * @author Aravind Subramanian
+ * @author Aravind Subramanian, David Eby
  */
-public class GeneSet extends AbstractObject implements PersistentObject {
-
+public class GeneSet extends AbstractObject implements PersistentObject, Versioned {
     /**
      * Each member is a String (not using a Set as we want to be able to do an
      * indexOf
@@ -34,8 +33,9 @@ public class GeneSet extends AbstractObject implements PersistentObject {
     // For fast membership tests
     private Set<String> fMembersSet;
     
-    private GeneSet() {
-    }
+    private MSigDBVersion msigDBVersion = null;
+
+    private GeneSet() { }
 
     /**
      * Class Constructor.
@@ -55,6 +55,13 @@ public class GeneSet extends AbstractObject implements PersistentObject {
      */
     // @TODO Confirm whether the collection can be typed as <String>
     public GeneSet(final String name, final String nameEnglish, final List members, final boolean checkForDuplicates) {
+        init(name, nameEnglish, members, checkForDuplicates);
+    }
+
+    // As above, but with an explicit Version provided.
+    // TODO: deeper refactoring around this field (and more).
+    public GeneSet(final String name, final String nameEnglish, final List members, final boolean checkForDuplicates, MSigDBVersion msigDBVersion) {
+        setMSigDBVersion(msigDBVersion);
         init(name, nameEnglish, members, checkForDuplicates);
     }
 
@@ -144,16 +151,15 @@ public class GeneSet extends AbstractObject implements PersistentObject {
             }
         }
 
+        if (msigDBVersion == null) { setMSigDBVersion(MSigDBVersion.createUnknownTrackingVersion(name)); }
     }
 
     // @maint IMP see duplicated init method above
-    // Prob should just call the other init with Arrays.asList(members)
+    // Prob should just call the other init with Arrays.asList(members) or vice versa
     private void init(final String name, final String nameEnglish, final String[] members, final boolean checkForDuplicates) {
         super.initialize(name, nameEnglish);
 
-        if (members == null) {
-            throw new NullPointerException("Members param cant be null");
-        }
+        if (members == null) { throw new NullPointerException("Members param cant be null"); }
 
         this.fMembers = new ArrayList<String>(members.length); // make safe copy
         this.fMembersSet = new HashSet<String>();
@@ -175,7 +181,8 @@ public class GeneSet extends AbstractObject implements PersistentObject {
                 fMembersSet.add(members[i]);
             }
         }
-
+        
+        if (msigDBVersion == null) { setMSigDBVersion(MSigDBVersion.createUnknownTrackingVersion(name)); }
     }
 
     public GeneSet cloneDeep(final Dataset qualify) {
@@ -285,5 +292,13 @@ public class GeneSet extends AbstractObject implements PersistentObject {
         }
     
         return ntrue;
+    }
+
+    public MSigDBVersion getMSigDBVersion() {
+        return msigDBVersion;
+    }
+
+    public void setMSigDBVersion(MSigDBVersion msigDBVersion) {
+        this.msigDBVersion = msigDBVersion;
     }
 }

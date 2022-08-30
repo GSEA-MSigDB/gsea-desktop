@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.objects;
 
 import edu.mit.broad.genome.parsers.AuxUtils;
@@ -9,32 +9,17 @@ import java.util.*;
 
 /**
  * Essentially a collection of (probably related) GeneSet
- * In additin has colors and icons and names
- * <p/>
- * Lightweigth container for a bucng of gsets -- gset data is not duplicated
+ * In addition has colors and icons and names
+ * 
+ * Lightweight container for a bunch of gsets -- gset data is not duplicated
  *
- * @author Aravind Subramanian
- * @version %I%, %G%
+ * @author Aravind Subramanian, David Eby
  */
 public class DefaultGeneSetMatrix extends AbstractGeneSetMatrix {
-
-    /**
-     * Class Constructor.
-     * gsets specified are used directly without cloning any data
-     * <p/>
-     * gset names must be unique
-     */
     public DefaultGeneSetMatrix(final String name, final GeneSet[] gsets) {
         initMatrix(name, gsets);
     }
 
-    /**
-     * Class constructor
-     *
-     * @param name
-     * @param gsets
-     * @param removeAuxStuff
-     */
     public DefaultGeneSetMatrix(final String name, final GeneSet[] gsets, final boolean removeAuxStuff) {
         if (removeAuxStuff) {
             GeneSet[] cgsets = new GeneSet[gsets.length];
@@ -47,14 +32,8 @@ public class DefaultGeneSetMatrix extends AbstractGeneSetMatrix {
         }
     }
 
-    /**
-     * Class constructor
-     *
-     * @param name
-     * @param gsets
-     */
-    public DefaultGeneSetMatrix(final String name, final List gsets) {
+    public DefaultGeneSetMatrix(final String name, final List gsets, final MSigDBVersion mSigDBVersion) {
+        setMSigDBVersion(mSigDBVersion);
         initMatrix(name, (GeneSet[]) gsets.toArray(new GeneSet[gsets.size()]));
     }
-
-}    // End DefaultGeneSetMatrix
+}

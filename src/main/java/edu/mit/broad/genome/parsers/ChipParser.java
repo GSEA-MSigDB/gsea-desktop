@@ -4,6 +4,10 @@
 package edu.mit.broad.genome.parsers;
 
 import edu.mit.broad.genome.Constants;
+import edu.mit.broad.genome.NamingConventions;
+import edu.mit.broad.genome.io.FtpResultInputStream;
+import edu.mit.broad.genome.objects.MSigDBSpecies;
+import edu.mit.broad.genome.objects.MSigDBVersion;
 import edu.mit.broad.genome.objects.PersistentObject;
 import edu.mit.broad.vdb.chip.*;
 import edu.mit.broad.vdb.meg.Gene;
@@ -75,9 +79,20 @@ public class ChipParser extends AbstractParser {
 
     public List parse(String sourcepath, InputStream is) throws Exception {
         startImport(sourcepath);
+        MSigDBVersion msigDBVersion;
+        if (is instanceof FtpResultInputStream) {
+            // Create a version object and assign it to the GeneSetMatrix.  We can only safely track
+            // the version of files that we know have been downloaded in the session, at least for now.
+            String versionStr = NamingConventions.extractVersionFromFileName(sourcepath, ".chip");
+            // We make an assumption here that any non-Mouse GMT from the FTP site is Human.
+            // This is valid for now
+            MSigDBSpecies msigDBSpecies = (versionStr.contains("Mm")) ? MSigDBSpecies.Mouse : MSigDBSpecies.Human;
+            msigDBVersion = new MSigDBVersion(msigDBSpecies, versionStr);
+        } else {
+            msigDBVersion = MSigDBVersion.createUnknownTrackingVersion(sourcepath);
+        }
 
-        BufferedReader bin = new BufferedReader(new InputStreamReader(is));
-        try {
+        try (BufferedReader bin = new BufferedReader(new InputStreamReader(is))) {
             String currLine = nextLine(bin);
     
             List colHeaders = ParseUtils.string2stringsList(currLine, "\t");
@@ -113,15 +128,13 @@ public class ChipParser extends AbstractParser {
     
             final Probe[] probes = probesList.toArray(new Probe[probesList.size()]);
             String chipName = FilenameUtils.getName(sourcepath);
-            final Chip chip = new Chip(chipName, sourcepath, probes);
+            final Chip chip = new Chip(chipName, sourcepath, probes, msigDBVersion);
             log.info("Parsed from dotchip : {}", probes.length);
             if (!duplicates.isEmpty()) { log.debug("There were duplicate probes: {}\n{}\n{}", duplicates.size(), duplicates, chipName); }
 
             return unmodlist(chip);
-        }
-        finally {
+        } finally {
             doneImport();
-            bin.close();
         }
     }
 }

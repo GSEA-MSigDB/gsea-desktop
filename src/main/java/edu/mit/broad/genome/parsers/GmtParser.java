@@ -1,9 +1,11 @@
 /*
- * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.genome.parsers;
 
 import edu.mit.broad.genome.Constants;
+import edu.mit.broad.genome.NamingConventions;
+import edu.mit.broad.genome.io.FtpResultInputStream;
 import edu.mit.broad.genome.objects.*;
 
 import java.io.*;
@@ -30,54 +32,34 @@ import java.util.StringTokenizer;
  * <pre>
  * <br>
  *
- * @author Aravind Subramanian
- * @version %I%, %G%
+ * @author Aravind Subramanian, David Eby
  */
 public class GmtParser extends AbstractParser {
-
-    /**
-     * Class Constructor.
-     */
-    public GmtParser() {
-        super(GeneSetMatrix.class);
-    }
+    public GmtParser() { super(GeneSetMatrix.class); }
 
     /**
      * Only accepts GeneSetMatrix
      */
     public void export(PersistentObject gmpob, File file) throws Exception {
+        try (final PrintWriter pw = startExport(gmpob, file)) {
+            final GeneSetMatrix gm = (GeneSetMatrix) gmpob;
 
-        final PrintWriter pw = startExport(gmpob, file);
+            for (int i = 0; i < gm.getNumGeneSets(); i++) {
+                GeneSet gset = gm.getGeneSet(i);
+                StringBuilder buf = new StringBuilder(gset.getName()).append('\t');
+                String ne = gset.getNameEnglish();
+                if (isNullorNa(ne)) { ne = Constants.NA; }
+                buf.append(ne).append('\t');
 
-        final GeneSetMatrix gm = (GeneSetMatrix) gmpob;
-
-        for (int i = 0; i < gm.getNumGeneSets(); i++) {
-            GeneSet gset = gm.getGeneSet(i);
-
-            StringBuffer buf = new StringBuffer(gset.getName()).append('\t');
-
-            String ne = gset.getNameEnglish();
-            if (isNullorNa(ne)) {
-                ne = Constants.NA;
-            }
-
-            buf.append(ne).append('\t');
-
-            for (int f = 0; f < gset.getNumMembers(); f++) {
-                buf.append(gset.getMember(f));
-
-                if (f < gset.getNumMembers() - 1) {
-                    buf.append('\t');
+                for (int f = 0; f < gset.getNumMembers(); f++) {
+                    buf.append(gset.getMember(f));
+                    if (f < gset.getNumMembers() - 1) { buf.append('\t'); }
                 }
+                buf.append('\n');
+                pw.print(buf.toString());
             }
-
-            buf.append('\n');
-            pw.print(buf.toString());
+            doneExport();
         }
-
-        pw.close();
-
-        doneExport();
     }
 
     /**
@@ -87,56 +69,56 @@ public class GmtParser extends AbstractParser {
      * third line onwards gene names data -- need NOT be equal number of cols
      */
     public List parse(String sourcepath, InputStream is) throws Exception {
-
         startImport(sourcepath);
-
-        final BufferedReader bin = new BufferedReader(new InputStreamReader(is));
-        String currLine = nextLine(bin);
-
-        int row = 0;
-        final List gsets = new ArrayList();
-
-        while (currLine != null) {
-            StringTokenizer tok = new StringTokenizer(currLine, "\t"); // dont split on whitespace??
-            int cnt = tok.countTokens();
-
-            if (cnt <= 1) {
-                throw new ParserException("Empty gene line: " + currLine + " at row: " + row);
-            }
-
-            // TODO: is it really necessary to force Gene Set names to uppercase?
-            String gsetName = tok.nextToken().trim().toUpperCase(); // @note the UC'ing
-
-            String gsetname_english = tok.nextToken().trim();
-
-            List geneNames = new ArrayList();
-
-            while (tok.hasMoreTokens()) {
-                String geneName = tok.nextToken().trim();
-
-                if (isNull(geneName)) {
-                    continue;    // dont really expect, but for consistency
-                } else {
-                    geneNames.add(geneName);
-                }
-            }
-
-            //@note convention
-            String fname = sourcepath.concat("#").concat(gsetName);
-            GeneSet gset = new GeneSet(fname, gsetname_english, geneNames, true);
-
-            gsets.add(gset);
-
-            row++;
-
-            currLine = nextLine(bin);
+        MSigDBVersion msigDBVersion;
+        if (is instanceof FtpResultInputStream) {
+            // Create a version object and assign it to the GeneSetMatrix.  We can only safely track
+            // the version of files that we know have been downloaded in the session, at least for now.
+            String versionStr = NamingConventions.extractVersionFromFileName(sourcepath, ".symbols.gmt");
+            // We make an assumption here that any non-Mouse GMT from the FTP site is Human.
+            // This is valid for now
+            MSigDBSpecies msigDBSpecies = (versionStr.contains("Mm")) ? MSigDBSpecies.Mouse : MSigDBSpecies.Human;
+            msigDBVersion = new MSigDBVersion(msigDBSpecies, versionStr);
+        } else {
+            msigDBVersion = MSigDBVersion.createUnknownTrackingVersion(sourcepath);
         }
 
-        bin.close();
-        doneImport();
+        try (final BufferedReader bin = new BufferedReader(new InputStreamReader(is))) {
+            String currLine = nextLine(bin);
 
-        return unmodlist(new DefaultGeneSetMatrix(sourcepath, gsets));
+            int row = 0;
+            final List<GeneSet> gsets = new ArrayList<GeneSet>();
 
-    }                                // End parse()
+            while (currLine != null) {
+                StringTokenizer tok = new StringTokenizer(currLine, "\t"); // dont split on whitespace??
+                int cnt = tok.countTokens();
+                if (cnt <= 1) { throw new ParserException("Empty gene line: " + currLine + " at row: " + row); }
 
-}    // End GmtParser
+                // TODO: is it really necessary to force Gene Set names to uppercase?
+                String gsetName = tok.nextToken().trim().toUpperCase(); // @note the UC'ing
+                String gsetname_english = tok.nextToken().trim();
+                List<String> geneNames = new ArrayList<String>();
+
+                while (tok.hasMoreTokens()) {
+                    String geneName = tok.nextToken().trim();
+
+                    // dont really expect null, but for consistency
+                    if (!isNull(geneName)) { geneNames.add(geneName); }
+                }
+
+                //@note convention
+                String fname = sourcepath.concat("#").concat(gsetName);
+                GeneSet gset = new GeneSet(fname, gsetname_english, geneNames, true, msigDBVersion);
+
+                gsets.add(gset);
+                row++;
+                currLine = nextLine(bin);
+            }
+
+            DefaultGeneSetMatrix geneSetMatrix = new DefaultGeneSetMatrix(sourcepath, gsets, msigDBVersion);
+            return unmodlist(geneSetMatrix);
+        } finally {
+            doneImport();
+        }
+    }
+}

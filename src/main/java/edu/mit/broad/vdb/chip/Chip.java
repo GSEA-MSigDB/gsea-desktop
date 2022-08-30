@@ -16,6 +16,7 @@ import edu.mit.broad.genome.NamingConventions;
 import edu.mit.broad.genome.objects.AbstractObject;
 import edu.mit.broad.genome.objects.GeneSet;
 import edu.mit.broad.genome.objects.MSigDBVersion;
+import edu.mit.broad.genome.objects.Versioned;
 import edu.mit.broad.genome.parsers.ParserFactory;
 import edu.mit.broad.vdb.meg.Gene;
 
@@ -24,7 +25,7 @@ import edu.mit.broad.vdb.meg.Gene;
  *
  * Probe -> unique sequence feature used to measure a gene
  */
-public class Chip extends AbstractObject {
+public class Chip extends AbstractObject implements Versioned {
     /**
      * @note IMP lazily loaded, at times
      */
@@ -55,9 +56,14 @@ public class Chip extends AbstractObject {
         }
 
         this.fSourcePath = sourcePath;
+        
+        // Preemptively create an Unknown version since we don't know it yet (and may never).  This can be
+        // changed by a subsequent call to setMSigDBVersion() when/if we do learn the version.
+        setMSigDBVersion(MSigDBVersion.createUnknownTrackingVersion(chipName));
     }
 
-    public Chip(final String chipName, final String sourcePath, final Probe[] probes) {
+    public Chip(final String chipName, final String sourcePath, final Probe[] probes, MSigDBVersion msigDBVersion) {
+        setMSigDBVersion(msigDBVersion);
         initHere(chipName, sourcePath, probes);
 
         // dont allow normal data init'ing as thats already done
@@ -114,11 +120,11 @@ public class Chip extends AbstractObject {
         }
     }
 
-    public MSigDBVersion getMsigDBVersion() {
+    public MSigDBVersion getMSigDBVersion() {
         return msigDBVersion;
     }
 
-    public void setMsigDBVersion(MSigDBVersion msigDBVersion) {
+    public void setMSigDBVersion(MSigDBVersion msigDBVersion) {
         this.msigDBVersion = msigDBVersion;
     }
 

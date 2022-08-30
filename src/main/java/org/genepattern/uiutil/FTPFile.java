@@ -4,8 +4,9 @@
 package org.genepattern.uiutil;
 
 import edu.mit.broad.genome.objects.MSigDBVersion;
+import edu.mit.broad.genome.objects.Versioned;
 
-public class FTPFile {
+public class FTPFile implements Versioned {
     private final String fHost;
     private final String fDir;
     private final String fName;
@@ -27,6 +28,8 @@ public class FTPFile {
     public String getName() { return fName; }
 
     public MSigDBVersion getMSigDBVersion() { return msigDBVersion; }
+
+    public void setMSigDBVersion(MSigDBVersion msigDBVersion) { throw new UnsupportedOperationException("Version cannot be changed"); }
     
     public boolean equals(Object obj) {
         if (obj instanceof FTPFile) {

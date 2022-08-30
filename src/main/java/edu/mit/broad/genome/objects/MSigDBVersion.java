@@ -4,11 +4,22 @@
 package edu.mit.broad.genome.objects;
 
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 
 public class MSigDBVersion {
+    private static AtomicInteger unknownTrackingCounter = new AtomicInteger(0);
+    
+    public static MSigDBVersion createUnknownTrackingVersion(String id) {
+        String trackingString = id + "-unknown-" + unknownTrackingCounter.incrementAndGet();
+        return new MSigDBVersion(MSigDBSpecies.Unknown, trackingString) {
+            @Override
+            public boolean isUnknownVersion() { return true; }
+        };
+    }
+    
     private final MSigDBSpecies msigDBSpecies;
     private final String versionString;
     private final DefaultArtifactVersion artifactVersion;
@@ -27,6 +38,8 @@ public class MSigDBVersion {
     public String getVersionString() { return versionString; }
 
     public DefaultArtifactVersion getArtifactVersion() { return artifactVersion; }
+
+    public boolean isUnknownVersion() { return false; }
     
     @Override
     public int hashCode() {

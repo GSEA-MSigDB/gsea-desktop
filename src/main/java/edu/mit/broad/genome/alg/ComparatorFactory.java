@@ -21,26 +21,26 @@ import edu.mit.broad.genome.objects.esmatrix.db.EnrichmentResult;
  * @author Aravind Subramanian, David Eby
  */
 public class ComparatorFactory {
-
-    private ComparatorFactory() {
-    }
+    private ComparatorFactory() { }
 
     public static class EnrichmentResultByNESComparator implements Comparator<EnrichmentResult> {
-
         Order fOrder;
+        final int byOrderLess;
+        final int byOrderMore;
 
         public EnrichmentResultByNESComparator(final Order order) {
             this.fOrder = order;
+            byOrderLess = fOrder.isAscending() ? -1 : +1;
+            byOrderMore = fOrder.isAscending() ? +1 : -1;
         }
 
         public int compare(final EnrichmentResult result1, final EnrichmentResult result2) {
-
             if ((result1 == null) && (result2 == null)) {
-                return 0;     // cant compare
+                return 0;
             } else if (result1 == null) {
-                return fOrder.isAscending() ? -1 : +1;    // null is always least
+                return byOrderLess;    // null is always least
             } else if (result2 == null) {
-                return fOrder.isAscending() ? +1 : -1;    // null is always least
+                return byOrderMore;    // null is always least
             }
 
             final float nes1 = result1.getScore().getNES();
@@ -58,65 +58,41 @@ public class ComparatorFactory {
             // as they will all be flagged and handled in the same way, but for the sake of
             // a stable / repeatable ordering we will use:
             //     NaN > +Infinity > -Infinity
-            // NOTE: I am holding off making these changes right now so that we can test the
-            // other changes already in the works.
-            if (Float.isNaN(nes1) && Float.isNaN(nes2)) {
+            final boolean isNaN1 = Float.isNaN(nes1);
+            final boolean isNaN2 = Float.isNaN(nes2);
+            if (isNaN1 && isNaN2) {
                 return 0;
-            } else if (Float.isNaN(nes1)) {
-                return fOrder.isAscending() ? -1 : +1;
-            } else if (Float.isNaN(nes2)) {
-                return fOrder.isAscending() ? +1 : -1;
+            } else if (isNaN1) {
+                return byOrderLess;
+            } else if (isNaN2) {
+                return byOrderMore;
             }
 
-            if (fOrder.isAscending()) {
-                if (nes1 < nes2) {
-                    return -1;
-                } else if (nes1 > nes2) {
-                    return +1;
-                } else {
-                    return 0;
-                }
-
-            } else {
-                if (nes1 < nes2) {
-                    return +1;
-                } else if (nes1 > nes2) {
-                    return -1;
-                } else {
-                    return 0;
-                }
+            if (nes1 == nes2) {
+                return 0;
+            } else if (nes1 < nes2) {
+                return byOrderLess;
             }
-
+            return byOrderMore;
         }
 
-        /**
-         * Return true if this equals o2.
-         */
         public boolean equals(Object o2) {
             return false;
         }
-    }    // End class EnrichmentResultComparator
-
+    }
 
     public static class PobComparator implements Comparator<PersistentObject> {
-
         public int compare(PersistentObject pob1, PersistentObject pob2) {
-
             return pob1.getName().compareTo(pob2.getName());
         }
 
-        /**
-         * Return true if this equals o2.
-         */
         public boolean equals(Object o2) {
             return false;
         }
     }
 
     public static class FileExtComparator implements Comparator<String> {
-
         public int compare(String pn1, String pn2) {
-
             String ext1 = FilenameUtils.getExtension(pn1);
             String ext2 = FilenameUtils.getExtension(pn2);
 
@@ -160,69 +136,6 @@ public class ComparatorFactory {
             return o1.getName().compareTo(o2.getName());
         }
     };
-    
-    public static class ChipNameComparator implements Comparator<String> {
-        // Used to track highest version seen by this instance.  Use a fake lowest-possible version
-        // for the initial comparison.
-        private String highestVersionId;
-        private DefaultArtifactVersion highestVersion = new DefaultArtifactVersion("v0.0");
-        private final String preferredPrefix;
-
-        public String getHighestVersionId() { return highestVersionId; }
-
-        public ChipNameComparator() { this.preferredPrefix = null; }
-
-        public ChipNameComparator(String preferredPrefix) { this.preferredPrefix = preferredPrefix; }
-        
-        /**
-         * Return -1 if o1 is less than o2, 0 if they're equal, +1 if o1 is greater than o2.
-         */
-        public int compare(String s1, String s2) {
-            String versionId1 = s1.substring(s1.lastIndexOf("v"), s1.lastIndexOf(".chip"));
-            String versionId2 = s2.substring(s2.lastIndexOf("v"), s2.lastIndexOf(".chip"));
-            
-            DefaultArtifactVersion version1 = new DefaultArtifactVersion(versionId1);
-            DefaultArtifactVersion version2 = new DefaultArtifactVersion(versionId2);
-
-            if (!version1.equals(version2)) {
-                int compareTo = version2.compareTo(version1);
-                if (compareTo < 0) {
-                    if (highestVersion.compareTo(version1) < 0) {
-                        highestVersion = version1;
-                        highestVersionId = versionId1;
-                    }
-                } else {
-                    if (highestVersion.compareTo(version2) < 0) {
-                        highestVersion = version2;
-                        highestVersionId = versionId2;
-                    }
-                }
-                return compareTo;
-            }
-
-            if (highestVersion.compareTo(version1) < 0) {
-                // Doesn't matter which we use since they are equal
-                highestVersion = version1;
-                highestVersionId = versionId1;
-            }
-            
-            // Optional preferredPrefix check.  Items starting with the preferredPrefix
-            // get sorted above the others.
-            if (preferredPrefix != null) {
-                final boolean s1HasPP = s1.startsWith(preferredPrefix);
-                final boolean s2HasPP = s2.startsWith(preferredPrefix);
-                if (s1HasPP && !s2HasPP) { return -1; }
-                if (!s1HasPP && s2HasPP) { return 1; }
-            }
-
-            // now just string comparison
-            return s1.compareTo(s2);
-        }
-
-        public boolean equals(Object o2) {
-            return false;
-        }
-    }
     
     public static class FTPFileByVersionComparator implements Comparator<FTPFile> {
         // Used to track highest version seen by this instance.  Use a fake lowest-possible version
