@@ -163,8 +163,9 @@ public class GeneSetMatrixChooserWindow {
             Errors warnings = new Errors("Mixed MSigDB versions detected");
             warnings.add("Selecting collections from multiple MSigDB versions");
             warnings.add("may result in omitted genes and is not recommended.\n");
-            warnings.add("NOTE: another tab may have a selection.\n");
-            warnings.add("Click Cancel to change the selection or OK to keep it.");
+            warnings.add("NOTE: another tab may have a selection.");
+            warnings.add(ChooserHelper.DESELECT_INSTRUCTIONS);
+            warnings.add("\nClick Cancel to change the selection or OK to keep it.");
             return warnings;
         };
         Validator warningValidator = new Validator(warningChecker, warningMsgBuilder);
@@ -192,8 +193,9 @@ public class GeneSetMatrixChooserWindow {
         };
         Supplier<Errors> errorMsgBuilder = () -> {
             Errors errors = new Errors("Multiple species selected");
-            errors.add("Multiple species selections are not allowed.");
+            errors.add("Multiple species selections are not allowed.\n");
             errors.add("Is there a selection on another tab?");
+            errors.add(ChooserHelper.DESELECT_INSTRUCTIONS);
             return errors;
         };
         Validator errorValidator = new Validator(errorChecker, errorMsgBuilder);

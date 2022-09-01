@@ -38,7 +38,7 @@ import javax.swing.ListSelectionModel;
  */
 public class WChipChooserWindow {
     private static final Logger klog = LoggerFactory.getLogger(WChipChooserWindow.class);
-
+    
     public WChipChooserWindow() { }
 
     public String[] showDirectlyWithModels() {
@@ -97,8 +97,9 @@ public class WChipChooserWindow {
         };
         Supplier<Errors> errorMsgBuilder = () -> {
             Errors errors = new Errors("Multiple CHIPs selected");
-            errors.add("Multiple CHIP selections are not allowed.");
+            errors.add("Multiple CHIP selections are not allowed.\n");
             errors.add("Is there a selection on another tab?");
+            errors.add(ChooserHelper.DESELECT_INSTRUCTIONS);
             return errors;
         };
         Validator errorValidator = new Validator(errorChecker, errorMsgBuilder);

@@ -123,6 +123,7 @@ public class DialogDescriptorJide implements DialogDescriptor {
 
                 if (me.getClickCount() == 2) {
                     me.consume();
+                    if (!performValidationBeforeOK()) { return; }
                     fChoosenOption = OK_OPTION;
                     if (fDialog != null) {
                         fDialog.dispose();    // this somehow auto calls the show method in joptionpane
@@ -153,6 +154,34 @@ public class DialogDescriptorJide implements DialogDescriptor {
         this.fCustomButtons = new JButton[]{};
         bCancel.setText("Close");
         this.fAddCancelButton = true;
+    }
+
+    private boolean performValidationBeforeOK() {
+        if (errorValidator != null && !errorValidator.isValid()) {
+            Errors errors = errorValidator.buildValidationFailedErrors();
+            klog.error(errors.getName());
+            String errorMsg = "";
+            String sep = "";
+            for (String err : errors.getErrorsAsStrings()) {
+                errorMsg += sep + err;
+                sep = SystemUtils.LINE_SEPARATOR;
+            }
+            Application.getWindowManager().showMessage(errors.getName(), errorMsg);
+            return false;
+        } else if (warningValidator != null && !warningValidator.isValid()) {
+            Errors warnings = warningValidator.buildValidationFailedErrors();
+            String warningMsg = "";
+            String sep = "";
+            for (String w : warnings.getErrorsAsStrings()) {
+                warningMsg += sep + w;
+                sep = SystemUtils.LINE_SEPARATOR;
+            }
+            
+            boolean confirm = Application.getWindowManager().showConfirm(warnings.getName(), warningMsg);
+            if (!confirm) { return false; }
+            klog.warn(warnings.getName());
+        }
+        return true;
     }
 
     private JButton bOk;
@@ -201,31 +230,7 @@ public class DialogDescriptorJide implements DialogDescriptor {
 
             bOk.addActionListener(new ActionListener() {
                 public void actionPerformed(ActionEvent e) {
-                    if (errorValidator != null && !errorValidator.isValid()) {
-                        Errors errors = errorValidator.buildValidationFailedErrors();
-                        klog.error(errors.getName());
-                        String errorMsg = "";
-                        String sep = "";
-                        for (String err : errors.getErrorsAsStrings()) {
-                            errorMsg += sep + err;
-                            sep = SystemUtils.LINE_SEPARATOR;
-                        }
-                        Application.getWindowManager().showMessage(errors.getName(), errorMsg);
-                        return;
-                    } else if (warningValidator != null && !warningValidator.isValid()) {
-                        Errors warnings = warningValidator.buildValidationFailedErrors();
-                        String warningMsg = "";
-                        String sep = "";
-                        for (String w : warnings.getErrorsAsStrings()) {
-                            warningMsg += sep + w;
-                            sep = SystemUtils.LINE_SEPARATOR;
-                        }
-                        
-                        boolean confirm = Application.getWindowManager().showConfirm(warnings.getName(), warningMsg);
-                        if (!confirm) { return; }
-                        klog.warn(warnings.getName());
-                    }
-                    
+                    if (!performValidationBeforeOK()) { return; }
                     
                     fChoosenOption = OK_OPTION;
                     fDialog.setVisible(false);

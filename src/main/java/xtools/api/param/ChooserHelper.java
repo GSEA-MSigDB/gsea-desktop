@@ -49,6 +49,10 @@ public class ChooserHelper {
         desc.enableDoubleClickableJList(ftpFileList);
     }
 
+    public static String DESELECT_INSTRUCTIONS = (SystemUtils.IS_OS_MAC) ?
+            "Use command-click to select/deselect items." :
+            "Use control-click to select/deselect items.";
+    
     public static JTextArea createOfflineMessageDisplay() {
         String message = "Offline mode" + SystemUtils.LINE_SEPARATOR +
           "Change this in Menu=>Preferences" + SystemUtils.LINE_SEPARATOR +
@@ -62,8 +66,10 @@ public class ChooserHelper {
     }
 
     public static JTextArea createErrorMessageDisplay(Exception e) {
-        String message = "Error listing Broad website" + SystemUtils.LINE_SEPARATOR +
-          e.getMessage() + SystemUtils.LINE_SEPARATOR +
+        String message = "Error listing MSigDB files:" + SystemUtils.LINE_SEPARATOR +
+          e.getMessage() + SystemUtils.LINE_SEPARATOR + SystemUtils.LINE_SEPARATOR +
+          "This might be due to your network's firewall rules." + SystemUtils.LINE_SEPARATOR +
+          "MSigDB files can be manually downloaded from www.gsea-msigdb.org/gsea/downloads.jsp" + SystemUtils.LINE_SEPARATOR + SystemUtils.LINE_SEPARATOR +
           "Use 'Load Data' to access local files." + SystemUtils.LINE_SEPARATOR +
           "Choose gene sets from other tabs.";
         JTextArea errorMsgDisplay = new JTextArea();
