@@ -65,7 +65,7 @@ public class ToolHelper {
         if (geneSets == null || geneSets.length == 0) { throw new IllegalArgumentException("One or more gene sets must be specified"); }
 
         // Force the Chip to fully load if it is not already
-        chip.getNumProbes();
+        if (chip != null) { chip.getNumProbes(); }
         
         // Remove all the Unknown Version sets as they will not be part of the Species comparison.
         List<GeneSet> geneSetsList = new ArrayList<GeneSet>(Arrays.asList(geneSets));

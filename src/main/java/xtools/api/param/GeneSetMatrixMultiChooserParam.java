@@ -12,8 +12,6 @@ import edu.mit.broad.vdb.chip.Chip;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import xapps.gsea.GseaWebResources;
 import xtools.api.ui.GeneSetMatrixChooserUI;
@@ -28,8 +26,6 @@ import java.util.List;
  * @author Aravind Subramanian, David Eby
  */
 public class GeneSetMatrixMultiChooserParam extends AbstractParam {
-    private static final Logger klog = LoggerFactory.getLogger(GeneSetMatrixMultiChooserParam.class);
-    
     private MyPobActionListener fAl;
     private GeneSetMatrixChooserUI fChooser;
 
@@ -116,6 +112,7 @@ public class GeneSetMatrixMultiChooserParam extends AbstractParam {
             if (object instanceof Versioned) {
                 MSigDBVersion version = ((Versioned)object).getMSigDBVersion();
                 if (version.isUnknownVersion()) {
+                    // Trim off the "-unknown-" suffix
                     String versionString = version.getVersionString();
                     int cutPoint = versionString.lastIndexOf("-unknown-");
                     if (cutPoint > 0) { versionString = versionString.substring(cutPoint); }
@@ -208,7 +205,7 @@ public class GeneSetMatrixMultiChooserParam extends AbstractParam {
             }
         }
 
-        return (String[]) use.toArray(new String[use.size()]);
+        return use.toArray(new String[use.size()]);
     }
 
     // override base class method to do for both pobs and strings
@@ -232,8 +229,7 @@ public class GeneSetMatrixMultiChooserParam extends AbstractParam {
 
     private ActionListener getActionListener() {
         if (fAl == null) {
-            this.fAl = new MyPobActionListener();
-            fAl.setChooser(fChooser);
+            this.fAl = new MyPobActionListener(this);
         }
         return fAl;
     }
@@ -241,20 +237,18 @@ public class GeneSetMatrixMultiChooserParam extends AbstractParam {
     public boolean isFileBased() { return true; }
 
     private static class MyPobActionListener implements ActionListener {
-        private GeneSetMatrixChooserUI fChooser;
+        GeneSetMatrixMultiChooserParam ownerParam;
 
-        public MyPobActionListener() {}
-
-        // cant have this in the class constructor as the action list needs to
-        // be instantiated before the chooser object is made
-        public void setChooser(GeneSetMatrixChooserUI chooser) { this.fChooser = chooser; }
+        public MyPobActionListener(GeneSetMatrixMultiChooserParam ownerParam) {
+            this.ownerParam = ownerParam;
+        }
 
         public void actionPerformed(ActionEvent e) {
-            if (fChooser == null) { return; }
+            if (ownerParam.fChooser == null) { return; }
 
-            final String[] selectedPaths = fChooser.getJListWindow().showDirectlyWithModels();
+            final String[] selectedPaths = ownerParam.fChooser.getJListWindow().showDirectlyWithModels();
             if ((selectedPaths != null) && (selectedPaths.length >  0)) {
-                fChooser.setText(String.join(",", selectedPaths));
+                ownerParam.fChooser.setText(String.join(ownerParam.delimiter, selectedPaths));
             }
         }
     }

@@ -137,11 +137,11 @@ public class GeneSetMatrixChooserWindow {
 
             MSigDBVersion first = selectedItems.remove(0).getMSigDBVersion();
 
-            // If *all* versions found are unknown then we give no warning.  OTF is considered unknown.
-            // We also give a warning if any of the recognized versions don't match.
+            // We also give a warning if any of the recognized versions don't match. If *all* versions
+            // found are unknown then we give no warning.  OTF is considered unknown but we don't 
+            // need to include it in the allUnknown check since it's optional.  
             boolean allUnknown = first.isUnknownVersion();
             boolean allKnown = !first.isUnknownVersion();
-            allUnknown &= StringUtils.isNotBlank(taGenes.getText());
             allKnown &= StringUtils.isBlank(taGenes.getText());
 
             for (Versioned item : selectedItems) {

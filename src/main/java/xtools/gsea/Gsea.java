@@ -147,6 +147,13 @@ public class Gsea extends AbstractGsea2Tool {
             }
         }
 
+        // Note that we MUST set the altDelim on the fGeneSetMatrixParam if it's present.  This MUST happen
+        // before extracting the param value or it will be parsed incorrectly.  Unfortunately, these params
+        // don't give any other good way to specify param dependencies except via code.
+        if (fAltDelimParam.isSpecified() && StringUtils.isNotBlank(fAltDelimParam.getValue().toString())) {
+            fGeneSetMatrixParam.setAlternateDelimiter(fAltDelimParam.getValue().toString());
+        }
+
         final GeneSet[] origGeneSets = fGeneSetMatrixParam.getGeneSetMatrixCombo().getGeneSets();
         
         ToolHelper.validateMixedVersionAndSpecies(origGeneSets, fChipParam.getChip(), fReport, log);
@@ -155,13 +162,6 @@ public class Gsea extends AbstractGsea2Tool {
 
         final Dataset fullDs = uniquize(ds);
         final CollapsedDetails.Data cd = getDataset(fullDs);
-
-        // Note that we MUST set the altDelim on the fGeneSetMatrixParam if it's present.  This MUST happen
-        // before extracting the param value or it will be parsed incorrectly.  Unfortunately, these params
-        // don't give any other good way to specify param dependencies except via code.
-        if (fAltDelimParam.isSpecified() && StringUtils.isNotBlank(fAltDelimParam.getValue().toString())) {
-            fGeneSetMatrixParam.setAlternateDelimiter(fAltDelimParam.getValue().toString());
-        }
 
         execute_one_with_reporting(cd, template, origGeneSets, fShowDetailsForTopXSetsParam.getIValue(), 
                 (fMakeZippedReportParam.isSpecified() && fMakeZippedReportParam.isTrue()), (fMakeGeneSetReportsParam.isSpecified() && fMakeGeneSetReportsParam.isTrue()), 

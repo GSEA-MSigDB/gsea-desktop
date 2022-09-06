@@ -70,7 +70,7 @@ public class ChooserHelper {
           e.getMessage() + SystemUtils.LINE_SEPARATOR + SystemUtils.LINE_SEPARATOR +
           "This might be due to your network's firewall rules." + SystemUtils.LINE_SEPARATOR +
           "MSigDB files can be manually downloaded from www.gsea-msigdb.org/gsea/downloads.jsp" + SystemUtils.LINE_SEPARATOR + SystemUtils.LINE_SEPARATOR +
-          "Use 'Load Data' to access local files." + SystemUtils.LINE_SEPARATOR +
+          "Use 'Load Data' to provide access to local files." + SystemUtils.LINE_SEPARATOR +
           "Choose gene sets from other tabs.";
         JTextArea errorMsgDisplay = new JTextArea();
         errorMsgDisplay.setText(message);
