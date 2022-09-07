@@ -11,6 +11,7 @@ import java.util.function.Predicate;
 
 import org.slf4j.Logger;
 
+import edu.mit.broad.genome.NotImplementedException;
 import edu.mit.broad.genome.objects.GeneSet;
 import edu.mit.broad.genome.objects.MSigDBVersion;
 import edu.mit.broad.genome.objects.Versioned;
@@ -111,7 +112,7 @@ public class ToolHelper {
                 try {
                     boolean confirm = Application.getWindowManager().showConfirm(msgShort, String.join("\n", msgPt1, msgPt2));
                     if (!confirm) { throw new CanceledException(); }
-                } catch (HeadlessException he) {
+                } catch (NotImplementedException | HeadlessException ex) {
                     // Swallow this; we're not running in the GUI, so we just add warnings to the log.
                 }
                 log.warn(msgShort);

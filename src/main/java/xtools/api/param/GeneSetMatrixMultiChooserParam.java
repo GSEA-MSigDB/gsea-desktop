@@ -115,7 +115,7 @@ public class GeneSetMatrixMultiChooserParam extends AbstractParam {
                     // Trim off the "-unknown-" suffix
                     String versionString = version.getVersionString();
                     int cutPoint = versionString.lastIndexOf("-unknown-");
-                    if (cutPoint > 0) { versionString = versionString.substring(cutPoint); }
+                    if (cutPoint > 0) { versionString = versionString.substring(0, cutPoint); }
                     log.info("Using file '{}' with unknown version", versionString);
                 }
             }
