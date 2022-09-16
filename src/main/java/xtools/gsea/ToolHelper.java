@@ -73,17 +73,18 @@ public class ToolHelper {
         geneSetsList.removeIf(new Predicate<Versioned>() {
             public boolean test(Versioned item) { return item.getMSigDBVersion().isUnknownVersion(); }
         });
-        // If all the geneSets had an Unknown version, then the check passes only if the Chip also had
-        // an Unknown Version (or there was no chip at all).
-        if (geneSetsList.isEmpty()) {  return chip == null || chip.getMSigDBVersion().isUnknownVersion(); }
+        // If all the geneSets had an Unknown version, then we return as valid since they have no
+        // bearing on validity.
+        if (geneSetsList.isEmpty()) {  return true; }
         
         MSigDBVersion first = geneSetsList.remove(0).getMSigDBVersion();
         for (Versioned item : geneSetsList) {
             if (first.getMsigDBSpecies() != item.getMSigDBVersion().getMsigDBSpecies()) { return false; }
         }
-        if (chip == null) { return true; }
 
-        // At this point, all the Gene Sets Species are known and match, so we just check against the Chip.
+        // At this point, all the Gene Sets Species are known and match, so we just check against the Chip
+        // or return as valid if there is no Chip.
+        if (chip == null) { return true; }
         MSigDBVersion chipVersion = chip.getMSigDBVersion();
         return !chipVersion.isUnknownVersion() && first.getMsigDBSpecies() == chipVersion.getMsigDBSpecies();
     }
