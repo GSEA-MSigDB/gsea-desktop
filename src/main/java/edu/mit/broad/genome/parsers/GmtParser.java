@@ -5,13 +5,14 @@ package edu.mit.broad.genome.parsers;
 
 import edu.mit.broad.genome.Constants;
 import edu.mit.broad.genome.NamingConventions;
-import edu.mit.broad.genome.io.FtpResultInputStream;
 import edu.mit.broad.genome.objects.*;
 
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
+
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * Parses a file in GeneSetMatrix format to produce a single GeneSetMatrix object and several
@@ -71,18 +72,21 @@ public class GmtParser extends AbstractParser {
     public List parse(String sourcepath, InputStream is) throws Exception {
         startImport(sourcepath);
         MSigDBVersion msigDBVersion;
-        if (is instanceof FtpResultInputStream) {
+        String pathLC = sourcepath.toLowerCase();
+        if (StringUtils.containsAny(pathLC, "ftp.broadinstitute.org", "data.broadinstitute.org",
+                "data.gsea-msigdb.org", "datasets.genepattern.org")) {
             // Create a version object and assign it to the GeneSetMatrix.  We can only safely track
             // the version of files that we know have been downloaded in the session, at least for now.
             String versionStr = NamingConventions.extractVersionFromFileName(sourcepath, ".symbols.gmt");
-            // We make an assumption here that any non-Mouse GMT from the FTP site is Human.
-            // This is valid for now
+            // We make an assumption here that any non-Mouse GMT from the our servers is Human.
+            // This is valid for now.
             MSigDBSpecies msigDBSpecies = (versionStr.contains("Mm")) ? MSigDBSpecies.Mouse : MSigDBSpecies.Human;
             msigDBVersion = new MSigDBVersion(msigDBSpecies, versionStr);
         } else {
             msigDBVersion = MSigDBVersion.createUnknownTrackingVersion(sourcepath);
         }
 
+        String fileName = new File(sourcepath).getName();
         try (final BufferedReader bin = new BufferedReader(new InputStreamReader(is))) {
             String currLine = nextLine(bin);
 
@@ -107,7 +111,7 @@ public class GmtParser extends AbstractParser {
                 }
 
                 //@note convention
-                String fname = sourcepath.concat("#").concat(gsetName);
+                String fname = fileName.concat("#").concat(gsetName);
                 GeneSet gset = new GeneSet(fname, gsetname_english, geneNames, true, msigDBVersion);
 
                 gsets.add(gset);
@@ -115,7 +119,7 @@ public class GmtParser extends AbstractParser {
                 currLine = nextLine(bin);
             }
 
-            DefaultGeneSetMatrix geneSetMatrix = new DefaultGeneSetMatrix(sourcepath, gsets, msigDBVersion);
+            DefaultGeneSetMatrix geneSetMatrix = new DefaultGeneSetMatrix(fileName, gsets, msigDBVersion);
             return unmodlist(geneSetMatrix);
         } finally {
             doneImport();

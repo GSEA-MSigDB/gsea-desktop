@@ -1,0 +1,4 @@
+FROM genepattern/docker-openjdk_11\:0.1
+RUN set -o pipefail && mkdir -p /opt/gsea && \
+    wget -O /tmp/GSEA_snapshot.zip https://data.broadinstitute.org/gsea-msigdb/gsea/software/snapshot/GSEA_snapshot.zip && \
+    unzip -d /opt/gsea /tmp/GSEA_snapshot.zip && rm -f /tmp/GSEA_snapshot.zip

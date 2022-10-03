@@ -75,7 +75,7 @@ public class ToolHelper {
         });
         // If all the geneSets had an Unknown version, then we return as valid since they have no
         // bearing on validity.
-        if (geneSetsList.isEmpty()) {  return true; }
+        if (geneSetsList.isEmpty()) { return true; }
         
         MSigDBVersion first = geneSetsList.remove(0).getMSigDBVersion();
         for (Versioned item : geneSetsList) {
@@ -83,10 +83,10 @@ public class ToolHelper {
         }
 
         // At this point, all the Gene Sets Species are known and match, so we just check against the Chip
-        // or return as valid if there is no Chip.
+        // or return as valid if there is no Chip or one with an unknown version.
         if (chip == null) { return true; }
         MSigDBVersion chipVersion = chip.getMSigDBVersion();
-        return !chipVersion.isUnknownVersion() && first.getMsigDBSpecies() == chipVersion.getMsigDBSpecies();
+        return chipVersion.isUnknownVersion() || first.getMsigDBSpecies() == chipVersion.getMsigDBSpecies();
     }
 
     public static void validateMixedVersionAndSpecies(final GeneSet[] origGeneSets, Chip chip, ToolReport toolReport, Logger log)

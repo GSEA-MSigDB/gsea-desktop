@@ -712,8 +712,7 @@ public class ParserFactory implements Constants {
         }
 
         Parser parser = new GmtParser();
-        //parser.setCheckForDuplicates(checkForDuplicates);
-        GeneSetMatrix gmx = (GeneSetMatrix) parser.parse(path_name, is).get(0);
+        GeneSetMatrix gmx = (GeneSetMatrix) parser.parse(path, is).get(0);
 
         _getCache().add(path, gmx, GeneSetMatrix.class);
 

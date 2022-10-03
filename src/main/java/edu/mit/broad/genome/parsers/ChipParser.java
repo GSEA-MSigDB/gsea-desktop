@@ -5,7 +5,6 @@ package edu.mit.broad.genome.parsers;
 
 import edu.mit.broad.genome.Constants;
 import edu.mit.broad.genome.NamingConventions;
-import edu.mit.broad.genome.io.FtpResultInputStream;
 import edu.mit.broad.genome.objects.MSigDBSpecies;
 import edu.mit.broad.genome.objects.MSigDBVersion;
 import edu.mit.broad.genome.objects.PersistentObject;
@@ -80,7 +79,9 @@ public class ChipParser extends AbstractParser {
     public List parse(String sourcepath, InputStream is) throws Exception {
         startImport(sourcepath);
         MSigDBVersion msigDBVersion;
-        if (is instanceof FtpResultInputStream) {
+        String pathLC = sourcepath.toLowerCase();
+        if (StringUtils.containsAny(pathLC, "ftp.broadinstitute.org", "data.broadinstitute.org",
+                "data.gsea-msigdb.org", "datasets.genepattern.org")) {
             // Create a version object and assign it to the GeneSetMatrix.  We can only safely track
             // the version of files that we know have been downloaded in the session, at least for now.
             String versionStr = NamingConventions.extractVersionFromFileName(sourcepath, ".chip");
