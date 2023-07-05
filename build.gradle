@@ -1,22 +1,10 @@
-// Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents 
+// Copyright (c) 2003-2023 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents 
 // of the University of California. All rights reserved.
 apply plugin: 'java'
 import org.apache.tools.ant.filters.ReplaceTokens
 
 ext.moduleName = 'org.gsea_msigdb.gsea'
 ext.mainClassName = 'xapps.gsea.GSEA'
-
-// Put the Java 11 build into a special dir to avoid accidental collisions.
-// Despite this, it is recommended that Java 8 vs. 11 builds be run in different locations.
-buildDir = 'build_java11'
-
-sourceSets {
-    main {
-        java {
-            srcDirs = ['src/main/java', 'src/main/java11']
-        }
-    }
-}
 
 configurations {
     jidePatchModuleLibs
@@ -28,13 +16,8 @@ dependencies {
 }
 
 task wrapper(type: Wrapper) {
-    gradleVersion = '4.10.2'
+    gradleVersion = '8.2'
 }
-
-// Gradle bug prevents us from generating Java 11 bytecode: https://github.com/gradle/gradle/issues/5120
-// Workaround is to target Java 10 for now.
-sourceCompatibility = 10
-targetCompatibility = 10
 
 processResources {
     // Set the current timestamp for release builds; pass in a blank property to enable (i.e. -Ptimestamp="" at CLI)
@@ -109,7 +92,7 @@ task createLinuxDistZip(type: Zip, dependsOn: createDist) {
     archiveName = createLinuxDistZip.baseName + "_${version}.zip"
     destinationDir = file("${buildDir}/distZip")
     if (!jdkBundleLinux.equals("")) {
-        with copySpec { from jdkBundleLinux into "jdk-11" }
+        with copySpec { from jdkBundleLinux into "jdk-17" }
     }
     from ("${buildDir}/GSEA-dist") {
         exclude "*.bat"
@@ -127,7 +110,7 @@ task createMacDistZip(type: Zip, dependsOn: createDist) {
     archiveName = createMacDistZip.baseName + "_${version}.zip"
     destinationDir = file("${buildDir}/distZip")
     if (!jdkBundleMac.equals("")) {
-        with copySpec { from jdkBundleMac into "jdk-11" }
+        with copySpec { from jdkBundleMac into "jdk-17" }
     }
     from ("${buildDir}/GSEA-dist") {
         exclude "*.bat"
@@ -142,7 +125,7 @@ task createMacDistZip(type: Zip, dependsOn: createDist) {
 
 task createMacAppDist(type: Copy, dependsOn: createDist) {
     if (!jdkBundleMac.equals("")) {
-        with copySpec { from jdkBundleMac into "GSEA_${version}.app/Contents/jdk-11" }
+        with copySpec { from jdkBundleMac into "GSEA_${version}.app/Contents/jdk-17" }
     }
     with copySpec {
         from ("scripts/mac.app") {
@@ -197,7 +180,7 @@ task createMacAppDistZip(type: Zip, dependsOn: createMacAppDist) {
 
 task createWinDist(type: Copy, dependsOn: createDist) {
     if (!jdkBundleWindows.equals("")) {
-        with copySpec { from jdkBundleWindows into "GSEA_${version}/jdk-11" }
+        with copySpec { from jdkBundleWindows into "GSEA_${version}/jdk-17" }
     }
     with copySpec {
         from("${buildDir}/GSEA-dist") {
