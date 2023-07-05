@@ -59,10 +59,12 @@ compileJava {
 
 task createDist(type: Copy, dependsOn: jar)  {
     from ("src/main/resources/edu/mit/broad/genome/resources/icon_64x64.png")
-    from ('scripts/java11') {
+    from ('scripts') {
         include 'gsea*'
         include 'logging.properties'
         include 'readme.txt'
+        exclude 'mac.app'
+        exclude 'nsis'
     }
     with copySpec {
         from ("${buildDir}/libs")
@@ -135,13 +137,13 @@ task createMacAppDist(type: Copy, dependsOn: createDist) {
         into "GSEA_${version}.app"
     }
     with copySpec {
-        from ("scripts/java11/Info.plist.template")
+        from ("scripts/Info.plist.template")
         filter (ReplaceTokens, tokens: [ VERSION: version ])
         rename "Info.plist.template", "Info.plist"
         into "GSEA_${version}.app/Contents"
     }
     with copySpec {
-        from ("scripts/java11/GSEA_mac.app_launcher")
+        from ("scripts/GSEA_mac.app_launcher")
         rename "GSEA_mac.app_launcher", "GSEA"
         into "GSEA_${version}.app/Contents/MacOS"
     }
