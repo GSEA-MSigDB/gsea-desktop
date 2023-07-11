@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2023 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package xtools.api.param;
 
@@ -524,7 +524,7 @@ public abstract class AbstractParam implements Param {
         Integer[] fl = new Integer[ints.length];
 
         for (int i = 0; i < ints.length; i++) {
-            fl[i] = new Integer(ints[i]);
+            fl[i] = ints[i];
         }
 
         return fl;

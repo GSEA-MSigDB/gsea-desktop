@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2023 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.genome.models;
 
@@ -46,7 +46,7 @@ public class NumberedProxyModel extends AbstractTableModel {
         }
 
         if (col == 0) {
-            return new Integer(row + 1 - fStartNumberingFromRowIndex).toString();
+            return Integer.toString(row + 1 - fStartNumberingFromRowIndex);
         } else {
             return fRealModel.getValueAt(row, col - 1);
         }

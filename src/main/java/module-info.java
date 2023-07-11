@@ -94,7 +94,7 @@ module org.gsea_msigdb.gsea {
     requires httpclient;
     requires httpcore;
     requires java.datatransfer;
-    requires java.desktop;
+    requires transitive java.desktop;
     requires java.logging;
     requires java.prefs;
     requires java.xml;
@@ -106,6 +106,8 @@ module org.gsea_msigdb.gsea {
     requires json.simple;
     requires looks;
     requires maven.artifact;
+    requires org.slf4j;
+    requires org.slf4j.jul;
     requires SGLayout;
     requires trove;
     requires ujmp.complete;

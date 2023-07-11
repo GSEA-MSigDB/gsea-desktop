@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2023 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.objects;
 
 import java.util.HashMap;
@@ -12,7 +12,6 @@ import java.util.Set;
  * @author Aravind Subramanian
  */
 public class PreTemplateImpl extends AbstractPreTemplate {
-
     private Pair[] fPairs;
     private Map fSampleNamePairMap;
 
@@ -101,12 +100,11 @@ public class PreTemplateImpl extends AbstractPreTemplate {
     }
 
     public static interface Pair {
-
         public String getSampleName();
 
         public Object getValue();
 
-    } // End interface Pair
+    }
 
     public static class StringPair implements Pair {
         String sampleName;
@@ -124,8 +122,7 @@ public class PreTemplateImpl extends AbstractPreTemplate {
         public Object getValue() {
             return className;
         }
-
-    } // End class StringPair
+    }
 
     public static class NumPair implements Pair {
         String sampleName;
@@ -141,10 +138,7 @@ public class PreTemplateImpl extends AbstractPreTemplate {
         }
 
         public Object getValue() {
-            return new Float(classValue);
+            return classValue;
         }
-
-    } // End class NumPair
-
-
+    }
 }

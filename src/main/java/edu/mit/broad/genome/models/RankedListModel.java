@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2023 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.models;
 
 import edu.mit.broad.genome.objects.RankedList;
@@ -11,10 +11,8 @@ import javax.swing.table.AbstractTableModel;
  * An implementation of AbstractTableModel for FSet.
  *
  * @author Aravind Subramanian
- * @version %I%, %G%
  */
 public class RankedListModel extends AbstractTableModel {
-
     /**
      * The underlying object being modell'ed
      */
@@ -57,9 +55,9 @@ public class RankedListModel extends AbstractTableModel {
         if (col == 0) {
             return fRankedList.getRankName(row);
         } else if (col == 1) {
-            return new Integer(row + 1);
+            return row + 1;
         } else {
-            return new Float(fRankedList.getScore(row));
+            return fRankedList.getScore(row);
         }
     }
 
@@ -87,4 +85,4 @@ public class RankedListModel extends AbstractTableModel {
     public boolean isCellEditable(int row, int col) {
         return false;
     }
-}    // End FSetModel
+}

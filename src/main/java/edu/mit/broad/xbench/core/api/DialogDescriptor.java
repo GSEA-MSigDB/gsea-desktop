@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2023 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.xbench.core.api;
 
@@ -33,9 +33,9 @@ public interface DialogDescriptor {
      */
     public static final int CANCEL_OPTION = 2;
 
-    public static final Integer OKI = new Integer(OK_OPTION);
+    public static final Integer OKI = OK_OPTION;
 
-    public static final Integer CANCELI = new Integer(CANCEL_OPTION);
+    public static final Integer CANCELI = CANCEL_OPTION;
 
     public void setOnlyShowCloseOption();
     

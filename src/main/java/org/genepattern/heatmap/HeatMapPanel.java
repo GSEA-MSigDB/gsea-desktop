@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2023 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package org.genepattern.heatmap;
 
 import org.genepattern.data.expr.IExpressionData;
@@ -374,8 +374,7 @@ public class HeatMapPanel extends JPanel {
     public void setRowSize(int elementHeight) {
         this.rowSize = elementHeight;
         pixelConverter.rowSize = rowSize;
-        firePropertyChange("rowSize", new Integer(elementHeight), new Integer(
-                rowSize));
+        firePropertyChange("rowSize", elementHeight, rowSize);
     }
 
     public int getColumnSize() {
@@ -385,8 +384,7 @@ public class HeatMapPanel extends JPanel {
     public void setColumnSize(int elementWidth) {
         this.columnSize = elementWidth;
         pixelConverter.columnSize = columnSize;
-        firePropertyChange("columnSize", new Integer(elementWidth),
-                new Integer(columnSize));
+        firePropertyChange("columnSize", elementWidth, columnSize);
     }
 
     public boolean isDrawGrid() {
@@ -425,5 +423,4 @@ public class HeatMapPanel extends JPanel {
     public void setUpperTriangular(boolean upperTriangular) {
         this.upperTriangular = upperTriangular;
     }
-
 }

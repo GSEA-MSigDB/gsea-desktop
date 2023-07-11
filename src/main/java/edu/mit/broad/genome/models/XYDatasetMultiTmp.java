@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2018 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2023 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.models;
 
 import edu.mit.broad.genome.MismatchedSizeException;
@@ -71,12 +71,12 @@ public class XYDatasetMultiTmp implements XYDataset {
 
     public double getYValue(int series, int item) {
         XYVector xy = fXYVectors[series];
-        return new Float(xy.y.getElement(item)).doubleValue();
+        return xy.y.getElement(item);
     }
 
     public double getXValue(int series, int item) {
         XYVector xy = fXYVectors[series];
-        return new Float(xy.x.getElement(item)).doubleValue();
+        return xy.x.getElement(item);
     }
 
     public int getSeriesCount() {
@@ -109,6 +109,4 @@ public class XYDatasetMultiTmp implements XYDataset {
     public DomainOrder getDomainOrder() {
         return DomainOrder.NONE;
     }
-
-} // End class ProxyDatasetMultiTmp
-
+}

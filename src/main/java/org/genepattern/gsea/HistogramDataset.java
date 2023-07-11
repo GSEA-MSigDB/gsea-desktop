@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2023 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package org.genepattern.gsea;
 
 import org.jfree.data.xy.XYSeriesCollection;
@@ -21,6 +21,6 @@ class HistogramDataset extends XYSeriesCollection {
 
     public Number getEndX(int series, int item) {
         Number n = getX(series, item);
-        return new Double(n.doubleValue() + binWidth);
+        return n.doubleValue() + binWidth;
     }
 }

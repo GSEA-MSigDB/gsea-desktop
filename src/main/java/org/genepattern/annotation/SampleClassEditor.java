@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2023 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package org.genepattern.annotation;
 
 import org.genepattern.uiutil.CenteredDialog;
@@ -16,23 +16,14 @@ import java.util.List;
 import java.util.Vector;
 
 public class SampleClassEditor extends CenteredDialog {
-
     private JComboBox classComboBox = new JComboBox();
-
     private JPanel colorPanel;
-
     private JButton deleteButton = new JButton("Delete");
-
     private javax.swing.JList list = new javax.swing.JList();
-
     private JScrollPane scrollPane = new JScrollPane(list);
-
     private Container featureListContainer;
-
     private JComboBox groupsComboBox;
-
     private SparseClassVector classVector;
-
     private SetAnnotatorModel model;
 
     public SampleClassEditor(final Frame parent, SetAnnotatorModel model,
@@ -52,7 +43,7 @@ public class SampleClassEditor extends CenteredDialog {
                     setMembers(selectedClass.classNumber);
                 } else {
                     colorPanel.setBackground(Color.BLACK);
-                    setMembers(new Integer(-1));
+                    setMembers(-1);
                 }
             }
         });
@@ -77,7 +68,6 @@ public class SampleClassEditor extends CenteredDialog {
                     if (groupsComboBox.getItemCount() > 0) {
                         groupsComboBox.setSelectedIndex(0);
                     }
-
                 }
             }
         });
@@ -87,10 +77,8 @@ public class SampleClassEditor extends CenteredDialog {
         groupsComboBox = new JComboBox();
         List classGroups = classVector.getClassGroups();
         if (classGroups == null || classGroups.size() == 0) {
-            UIUtil
-                    .showMessageDialog(
-                            parent,
-                            "No sample annotations loaded.\nLoad sample annotations by clicking Open Cls File on the File menu.");
+            UIUtil.showMessageDialog(parent,
+                    "No sample annotations loaded.\nLoad sample annotations by clicking Open Cls File on the File menu.");
             return;
         }
         for (int i = 0; i < classGroups.size(); i++) {
@@ -157,7 +145,6 @@ public class SampleClassEditor extends CenteredDialog {
         featureListContainer.add(temp, BorderLayout.NORTH);
         featureListContainer.add(scrollPane, BorderLayout.CENTER);
         setContentPane(featureListContainer);
-        // setResizable(false);
         pack();
         setVisible(true);
     }
@@ -174,7 +161,6 @@ public class SampleClassEditor extends CenteredDialog {
 
     private static class MyClass {
         String className;
-
         Integer classNumber;
 
         public MyClass(String className, Integer classNumber) {
@@ -189,9 +175,7 @@ public class SampleClassEditor extends CenteredDialog {
 
     static class ClassGroup {
         List group;
-
         String name;
-
         SparseClassVector classVector;
 
         public ClassGroup(List group, SparseClassVector classVector) {

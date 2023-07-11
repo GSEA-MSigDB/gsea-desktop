@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2023 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package org.genepattern.data.matrix;
 
 import java.util.ArrayList;
@@ -14,12 +14,9 @@ import java.util.Map;
  * @author Joshua Gould
  */
 public class ClassVector {
-    Map classNumber2IndicesMap;
-
+    Map<Integer, List<Integer>> classNumber2IndicesMap = new HashMap<>();
     int[] assignments;
-
-    Map classNumber2LabelMap;
-
+    Map<Integer, String> classNumber2LabelMap = new HashMap<>();
     int classCount;
 
     /**
@@ -31,29 +28,24 @@ public class ClassVector {
      */
     public ClassVector(String[] x, String[] classes) {
         this.assignments = new int[x.length];
-        this.classNumber2IndicesMap = new HashMap();
-        this.classNumber2LabelMap = new HashMap();
         int maxClassNumber = classes.length;
-        Map className2ClassNumberMap = new HashMap();
+        Map<String, Integer> className2ClassNumberMap = new HashMap<>();
         for (int i = 0; i < classes.length; i++) {
-            Integer classNumberInteger = new Integer(i);
-            className2ClassNumberMap.put(classes[i], classNumberInteger);
-            classNumber2IndicesMap.put(classNumberInteger, new ArrayList());
-            classNumber2LabelMap.put(classNumberInteger, classes[i]);
+            className2ClassNumberMap.put(classes[i], i);
+            classNumber2IndicesMap.put(i, new ArrayList<Integer>());
+            classNumber2LabelMap.put(i, classes[i]);
         }
         for (int i = 0; i < x.length; i++) {
-            Integer classNumberInteger = (Integer) className2ClassNumberMap
-                    .get(x[i]);
+            Integer classNumberInteger = className2ClassNumberMap.get(x[i]);
             if (classNumberInteger == null) {
-                classNumberInteger = new Integer(maxClassNumber++);
+                classNumberInteger = maxClassNumber++;
                 className2ClassNumberMap.put(x[i], classNumberInteger);
-                classNumber2IndicesMap.put(classNumberInteger, new ArrayList());
+                classNumber2IndicesMap.put(classNumberInteger, new ArrayList<Integer>());
                 classNumber2LabelMap.put(classNumberInteger, x[i]);
             }
-            assignments[i] = classNumberInteger.intValue();
-            List indices = (List) this.classNumber2IndicesMap
-                    .get(classNumberInteger);
-            indices.add(new Integer(i));
+            assignments[i] = classNumberInteger;
+            List<Integer> indices = this.classNumber2IndicesMap.get(classNumberInteger);
+            indices.add(i);
         }
         this.classCount = maxClassNumber;
     }
@@ -68,7 +60,7 @@ public class ClassVector {
     }
 
     public String toString() {
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         for (int i = 0, length = assignments.length; i < length; i++) {
             if (i > 0) {
                 sb.append(" ");
@@ -96,7 +88,7 @@ public class ClassVector {
      * @return The class name.
      */
     public String getClassName(int classNumber) {
-        return (String) classNumber2LabelMap.get(new Integer(classNumber));
+        return classNumber2LabelMap.get(classNumber);
     }
 
     /**
@@ -108,5 +100,4 @@ public class ClassVector {
     public int getAssignment(int index) {
         return assignments[index];
     }
-
 }

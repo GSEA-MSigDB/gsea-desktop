@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2023 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.swing.fields;
 
 import javax.swing.*;
@@ -11,29 +11,17 @@ import java.text.NumberFormat;
  * in Java 1.4 or latter.
  *
  * @author kohm
- * @version %I%, %G%
  * @see FormatTextTest
  * @see javax.swing.JFormattedTextField
  */
 public class GIntegerField extends JTextField implements GFieldPlusChooser {
-
-    /**
-     * number formatter
-     */
     private final NumberFormat integerFormatter;
 
-    /**
-     * constructor
-     */
     public GIntegerField(final int value, final int columns) {
         this(value, columns, NumberFormat.getNumberInstance());
     }
 
-    /**
-     * constructor
-     */
     public GIntegerField(final int value, final int columns, final NumberFormat format) {
-
         super(new ChangeValidatedDocument(format), null, columns);
 
         integerFormatter = format;
@@ -41,7 +29,6 @@ public class GIntegerField extends JTextField implements GFieldPlusChooser {
         format.setParseIntegerOnly(true);
         setInt(value);
     }
-
 
     public void setInt(int value) {
         super.setText(integerFormatter.format(value));
@@ -51,7 +38,6 @@ public class GIntegerField extends JTextField implements GFieldPlusChooser {
      * overriden now will throw number format exeption if text s not a number
      */
     public void setText(String text) {
-
         if ((text != null) && (text.length() > 0)) {
             final int value = Integer.parseInt(text);
 
@@ -65,12 +51,11 @@ public class GIntegerField extends JTextField implements GFieldPlusChooser {
      * @return The user specified Integer
      */
     public Object getValue() {
-
         try {
             if (this.getText() == null) {
                 return null;
             } else {
-                return new Integer(this.getText());
+                return Integer.valueOf(this.getText());
             }
         } catch (Throwable t) {
             return null;
@@ -81,12 +66,11 @@ public class GIntegerField extends JTextField implements GFieldPlusChooser {
         Integer i;
 
         if (obj == null) {
-            i = new Integer(Integer.MIN_VALUE); // better than exceptioning out
+            i = Integer.MIN_VALUE; // better than exceptioning out
         } else if (obj instanceof Float) {
             i = (Integer) obj;
         } else {
-            i = new Integer(obj.toString());
-
+            i = Integer.valueOf(obj.toString());
         }
 
         this.setText(i.toString());
@@ -95,6 +79,4 @@ public class GIntegerField extends JTextField implements GFieldPlusChooser {
     public JComponent getComponent() {
         return this;
     }
-
-
-}    // End IntegerTextField
+}

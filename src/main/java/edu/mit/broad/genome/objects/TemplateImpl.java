@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2023 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.genome.objects;
 
@@ -33,7 +33,6 @@ import org.apache.commons.lang3.StringUtils;
  * @author Aravind Subramanian (extensively re-engineered)
  */
 public class TemplateImpl extends AbstractTemplate {
-
     /**
      * IMP IMP IMP IMP
      * <p/>
@@ -109,7 +108,6 @@ public class TemplateImpl extends AbstractTemplate {
      * deep clones this Template
      */
     public Template cloneDeep(final String newName) {
-
         final TemplateImpl newt = new TemplateImpl(newName);
         newt.fImmutable = false; // IMP notice - we do this as often the cloned template is used in a diff way
         newt.fContinuous = this.fContinuous;
@@ -168,7 +166,6 @@ public class TemplateImpl extends AbstractTemplate {
     }
 
     protected void setAux(final boolean aux) {
-
         // sanity checks
         if (aux) {
             if (!StringUtils.contains(getName(), "#")) {
@@ -184,7 +181,6 @@ public class TemplateImpl extends AbstractTemplate {
     }
 
     public boolean isAux() {
-
         if (getName().indexOf('#') != -1) {
             return true;
         }
@@ -227,7 +223,6 @@ public class TemplateImpl extends AbstractTemplate {
      * Add specified Template.Item to this Template
      */
     protected void add(final Template.Item aItem) {
-
         if (aItem == null) {
             throw new IllegalArgumentException("Param aItem cannot be null");
         }
@@ -283,7 +278,6 @@ public class TemplateImpl extends AbstractTemplate {
     }
 
     protected ArrayList runChecksInit() {
-
         if (this.fClasses == null) {
             throw new RuntimeException("Cannot call method as Template has no associated Template.Class's");
         }
@@ -297,7 +291,7 @@ public class TemplateImpl extends AbstractTemplate {
 
         for (int i = 0; i < getNumItems(); i++) {
             Template.Item item = (Template.Item) fItems.get(i);
-            Integer primPos = new Integer(item.getProfilePosition());
+            Integer primPos = item.getProfilePosition();
             //log.debug("item = " + item);
             if (ual.contains(primPos)) {
                 throw new RuntimeException("ProfilePosition has been reused! Position = " + primPos
@@ -329,9 +323,7 @@ public class TemplateImpl extends AbstractTemplate {
         return unique_item_ids_ordered_by_profile_pos;
     }
 
-
     protected void runChecksPost() {
-
         Set classNames = new HashSet();
         // check: final (after adding items): Obvious error such as 2 classes and items swapped names
         for (int c = 0; c < fClasses.size(); c++) {
@@ -356,11 +348,9 @@ public class TemplateImpl extends AbstractTemplate {
                 }
             }
         }
-
     }
 
     protected void assignItems2ClassInOrder() {
-
         // Check3: ensure that class-item assignment has not already been done
         for (int i = 0; i < fClasses.size(); i++) {
             if (getClass(i).getSize() != 0) {
@@ -390,7 +380,6 @@ public class TemplateImpl extends AbstractTemplate {
         }
 
         runChecksPost();
-
     }
 
     /**
@@ -443,7 +432,6 @@ public class TemplateImpl extends AbstractTemplate {
     }
 
     private void checkImmutable() {
-
         if (fImmutable) {
             throw new ImmutedException();
         }
@@ -456,7 +444,6 @@ public class TemplateImpl extends AbstractTemplate {
      * Modifier methods are private/protected
      */
     public static class ClassImpl implements Template.Class {
-
         /**
          * The name of this Template class
          */
@@ -467,9 +454,6 @@ public class TemplateImpl extends AbstractTemplate {
          */
         protected ArrayList fItems;
 
-        /**
-         * Classs constructor
-         */
         public ClassImpl(final String className) {
             this.fName = className;
             fItems = new ArrayList();
@@ -511,7 +495,6 @@ public class TemplateImpl extends AbstractTemplate {
         }
 
         public String getMembershipInfo() {
-
             StringBuffer buf = new StringBuffer("Class: ").append(this.getName()).append('\n');
             buf.append("Members: \t");
 
@@ -541,17 +524,14 @@ public class TemplateImpl extends AbstractTemplate {
             }
             this.fItems.add(item);
         }
-
-    }    // End Template.Class
+    }
 
     /**
      * Class Item
      *
      * @author Aravind Subramanian
-     * @version %I%, %G%
      */
     public static class ItemImpl implements Template.Item {
-
         /**
          * Identifier for this Item
          */
@@ -561,13 +541,8 @@ public class TemplateImpl extends AbstractTemplate {
          * Position of this item in the Template vector
          * As a debugging aid, magic marker of -999 means its not been initialized
          */
-
         protected int fProfilePos = -999;
 
-
-        /**
-         * Class Constructor.
-         */
         private ItemImpl(final String id, final int profilePos) {
             init(id, profilePos);
         }
@@ -614,8 +589,7 @@ public class TemplateImpl extends AbstractTemplate {
 
             return false;
         }
-
-    }    // End Item
+    }
 
     private static final Color DEFAULT_CLASS0_COLOR = Color.LIGHT_GRAY;
     private static final Color DEFAULT_CLASS1_COLOR = Color.ORANGE;
@@ -662,16 +636,11 @@ public class TemplateImpl extends AbstractTemplate {
             for (int i = 0; i < c1.getSize(); i++) {
                 fItemProfilePosColorScheme.put(c1.getItem(i).getProfilePosition(), DEFAULT_CLASS1_COLOR);
             }
-
-            //log.debug("## doing 2 class color fill: " + c0.getSize() + " " + c1.getSize());
-
         } else {
-            //log.debug("## doing multi class color fill: " + getNumClasses());
             // first try using standard colors, before generating random ones
             Color[] colors = ColorUtils.pickRandomColors(getNumClasses(), DEFAULT_COLORS);
             for (int c = 0; c < getNumClasses(); c++) {
                 Class cl = getClass(c);
-                //log.debug("class: " + cl.getName() + " " + cl.getSize());
                 for (int i = 0; i < cl.getSize(); i++) {
                     fItemProfilePosColorScheme.put(cl.getItem(i).getProfilePosition(), colors[c]);
                 }

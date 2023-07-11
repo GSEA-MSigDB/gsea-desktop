@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2023 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.objects;
 
 import edu.mit.broad.genome.math.Matrix;
@@ -27,13 +27,10 @@ import java.util.List;
  * But it would be wierd if a pairwise comparison matrix were available as a bpog option.
  *
  * @author Aravind Subramanian
- * @version %I%, %G%
  */
 
 // intentionally differntiate this from a dataset
-
 public class Dataframe extends AbstractObject implements IDataframe {
-
     private Matrix fMatrix;
     private List fRowNames;
     private List fColNames;
@@ -57,7 +54,6 @@ public class Dataframe extends AbstractObject implements IDataframe {
      */
     public Dataframe(final String name, final Matrix matrix, final List rowNames, final List colNames,
                      final boolean shareMatrix, final boolean shareRowNames, final boolean shareColNames) {
-
         if (matrix == null) {
             throw new IllegalArgumentException("Param matrix cant be null");
         }
@@ -93,7 +89,6 @@ public class Dataframe extends AbstractObject implements IDataframe {
         }
 
         init(name, dmatrix, drowNames, dcolNames);
-
     }
 
     /**
@@ -102,7 +97,6 @@ public class Dataframe extends AbstractObject implements IDataframe {
      * already duplicated data.
      */
     private void init(String dsname, Matrix matrix, List rowNames, List colNames) {
-
         super.initialize(dsname);
 
         if (matrix == null) {
@@ -130,7 +124,7 @@ public class Dataframe extends AbstractObject implements IDataframe {
         this.fMatrix = matrix;
         fMatrix.setImmutable();    // IMP notice.
         this.fRowNames = Collections.unmodifiableList(rowNames);
-        ;
+
         this.fColNames = Collections.unmodifiableList(colNames);
         ;
     }
@@ -140,7 +134,7 @@ public class Dataframe extends AbstractObject implements IDataframe {
     }
 
     public Object getElementObj(int rown, int coln) {
-        return new Float(fMatrix.getElement(rown, coln));
+        return fMatrix.getElement(rown, coln);
     }
 
     public String getRowName(int rown) {
@@ -163,5 +157,4 @@ public class Dataframe extends AbstractObject implements IDataframe {
         StringBuffer buf = new StringBuffer().append(getNumRow()).append('x').append(getNumCol());
         return buf.toString();
     }
-
-}    // End Dataframe
+}

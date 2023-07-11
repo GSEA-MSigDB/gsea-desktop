@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2023 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.xbench.core;
 
 import edu.mit.broad.genome.io.PobTransferable;
@@ -27,10 +27,8 @@ import java.awt.datatransfer.Transferable;
  * This is NOT a drag receiver
  *
  * @author Aravind Subramanian
- * @version %I%, %G%
  */
 public class JObjectsList extends JList implements DndSource {
-
     private JObjectsList fInstance;
     private Object[] fObjects;
 
@@ -42,7 +40,6 @@ public class JObjectsList extends JList implements DndSource {
      * @param objects
      */
     public JObjectsList(Object[] objects) {
-
         if (objects == null) {
             throw new IllegalArgumentException("Param objects cannot be null");
         }
@@ -75,10 +72,7 @@ public class JObjectsList extends JList implements DndSource {
      * @return
      */
     public Transferable getTransferable() {
-
-        //log.debug("getTransferable(): " );
-        Object[] objs = fInstance.getSelectedValues();
-
+        Object[] objs = fInstance.getSelectedValuesList().toArray();
         return new PobTransferable(objs);
     }
 
@@ -87,9 +81,7 @@ public class JObjectsList extends JList implements DndSource {
     }
 
     public static void displayInWindow(final String title, final Icon icon, final JObjectsList jol) {
-
         SimpleWindow wd = new SimpleWindow(title, icon, new JScrollPane(jol));
-
         wd.open();
     }
-}    // End JObjectsList
+}

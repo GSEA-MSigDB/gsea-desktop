@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2020 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2023 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package org.genepattern.annotation;
 
@@ -154,7 +154,7 @@ public class SetAnnotator {
                 for (int j = 0; j < cv.getClassCount(); j++) {
                     int index = j + classNumberCounter;
                     group.add(index);
-                    classVector.setClass(new Integer(index), cv.getClassName(j), getNextClassColor(index));
+                    classVector.setClass(index, cv.getClassName(j), getNextClassColor(index));
                 }
                 classVector.addClassGroup(group, f.getName());
 

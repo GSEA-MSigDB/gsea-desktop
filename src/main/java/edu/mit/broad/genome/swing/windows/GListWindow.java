@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2023 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.genome.swing.windows;
 
@@ -105,7 +105,7 @@ public class GListWindow {
         if (res == DialogDescriptor.CANCEL_OPTION) {
             return null;
         } else {
-            return jlOptions.getSelectedValues();    // @note value*s*
+            return jlOptions.getSelectedValuesList().toArray();    // @note value*s*
         }
 
     }

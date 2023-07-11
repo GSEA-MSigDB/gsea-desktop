@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2021 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2023 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package xtools.api.param;
 
@@ -15,19 +15,18 @@ import java.awt.event.ActionListener;
  * @author Aravind Subramanian, David Eby
  */
 public class IntegerParam extends AbstractParam implements ActionListener {
-
     private GComboBoxField cbOptions;
 
     public IntegerParam(final String name, final String englishName, final String desc, int def_andonly_hint, boolean reqd) {
-        super(name, englishName, Integer.class, desc, new Integer(def_andonly_hint), reqd);
+        super(name, englishName, Integer.class, desc, def_andonly_hint, reqd);
     }
 
     public IntegerParam(String name, String englishName, String desc, int def_andonly_hint, boolean reqd, Param.Type type) {
-        super(name, englishName, Integer.class, desc, new Integer(def_andonly_hint), reqd, type);
+        super(name, englishName, Integer.class, desc, def_andonly_hint, reqd, type);
     }
 
     public IntegerParam(String name, String englishName, String desc, int def, int[] hintsanddef, boolean reqd) {
-        super(name, englishName, Integer.class, desc, new Integer(def), toInts(hintsanddef), reqd);
+        super(name, englishName, Integer.class, desc, def, toInts(hintsanddef), reqd);
     }
 
     public boolean isFileBased() {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2023 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.xbench.xchoosers;
 
@@ -42,23 +42,14 @@ import java.util.List;
  * -
  */
 public class TemplateChooserUI {
-
     protected JComboBox cbTemplates;
-
     private Logger log = LoggerFactory.getLogger(TemplateChooserUI.class);
-
     private boolean fIsMultiAllowed;
-
     private TemplateMode fMode;
-
     private JList jlOptions;
-
     private int fSelectionMode;
-
     private JPanel chooserPanel;
-
     private boolean fComboTemplateSourceMode;
-
     private TemplateCreatorWidgets.OnTheFlyFromSampleNames otf;
     private TemplateCreatorWidgets.GenePhenotype gtf;
 
@@ -256,7 +247,7 @@ public class TemplateChooserUI {
 
             TemplateSelection sel;
 
-            Object[] objs = jlOptions.getSelectedValues();
+            Object[] objs = jlOptions.getSelectedValuesList().toArray();
             if (fComboTemplateSourceMode) {
                 sel = new TemplateSelectionMultiSource();
                 for (int i = 0; i < objs.length; i++) {

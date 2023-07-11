@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2023 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.genome.parsers;
 
@@ -10,7 +10,6 @@ import edu.mit.broad.genome.reports.api.Report;
 import edu.mit.broad.genome.swing.ProxyComboBoxModel;
 import edu.mit.broad.genome.swing.ProxyTreeModel;
 
-import org.jfree.util.Log;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -268,7 +267,7 @@ public class ObjectCache {
             PersistentObject pob = (PersistentObject) onode.getUserObject();
             String extant = getSourcePath(pob);
             if ((extant != null) && (extant.equals(path)) && (pob.getName().equals(newpob.getName()))) { // replace the old object with this one
-                toremove.add(new Integer(i));
+                toremove.add(i);
             }
         }
 
