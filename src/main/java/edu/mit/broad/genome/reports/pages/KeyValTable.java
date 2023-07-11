@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2023 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.reports.pages;
 
 import edu.mit.broad.genome.Printf;
@@ -15,14 +15,9 @@ import org.apache.ecs.html.*;
  * For example a header table with a several simple lines = values
  */
 public class KeyValTable {
-
     private org.apache.ecs.html.Table fTable;
-
     private int fFloatFormatPrecision;
 
-    /**
-     * Class constructor
-     */
     public KeyValTable() {
         this.fTable = new org.apache.ecs.html.Table(0);
         fTable.setCols(2); // always
@@ -50,7 +45,7 @@ public class KeyValTable {
         if (fFloatFormatPrecision != -1) {
             obj = Printf.format(val, fFloatFormatPrecision);
         } else {
-            obj = new Float(val);
+            obj = val;
         }
 
         _addRow(key, obj);
@@ -63,5 +58,4 @@ public class KeyValTable {
         tr.addElement(HtmlFormat._td(val));
         fTable.addElement(tr);
     }
-
-} // End inner class Table
+}

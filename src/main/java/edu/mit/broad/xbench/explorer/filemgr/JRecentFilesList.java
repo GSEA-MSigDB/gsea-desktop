@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2023 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.xbench.explorer.filemgr;
 
@@ -109,8 +109,7 @@ public class JRecentFilesList extends JList implements DndSource, FilesSelectabl
     }
 
     public Transferable getTransferable() {
-
-        Object[] objs = fInstance.getSelectedValues();
+        Object[] objs = fInstance.getSelectedValuesList().toArray();
 
         if ((objs == null) || (objs.length == 0)) {
             return new FileTransferable(new File[]{});
@@ -130,7 +129,6 @@ public class JRecentFilesList extends JList implements DndSource, FilesSelectabl
     }
 
     class ListCellRenderer extends DefaultListCellRenderer {
-
         public ListCellRenderer() {
             // IMP to NOT place this piece of code in the popupmenu checker - that causes
             // the widget to launch twice
@@ -187,12 +185,11 @@ public class JRecentFilesList extends JList implements DndSource, FilesSelectabl
      * Popup displayer
      */
     class MyPopupMouseListener extends GPopupChecker {
-
         protected void maybeShowPopup(MouseEvent e) {
 
             if (e.isPopupTrigger()) {
 
-                Object[] sel = fInstance.getSelectedValues();
+                Object[] sel = fInstance.getSelectedValuesList().toArray();
 
                 if (sel == null) {
                     return;
@@ -246,7 +243,6 @@ public class JRecentFilesList extends JList implements DndSource, FilesSelectabl
     }
 
     class PurgeAllFilesPathAction extends AbstractAction {
-
         PurgeAllFilesPathAction() {
 
             this.putValue(Action.NAME, "Purge All Files");
@@ -269,7 +265,6 @@ public class JRecentFilesList extends JList implements DndSource, FilesSelectabl
     }
 
     static class PurgeSelectedFilesAction extends AbstractAction {
-
         File[] files;
 
         PurgeSelectedFilesAction(File file) {
@@ -301,7 +296,6 @@ public class JRecentFilesList extends JList implements DndSource, FilesSelectabl
     }
 
     static class ImportFilesAction extends AbstractAction {
-
         File[] files;
 
         ImportFilesAction(File[] files) {

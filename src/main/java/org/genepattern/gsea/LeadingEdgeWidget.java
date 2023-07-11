@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2021 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2023 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package org.genepattern.gsea;
 
@@ -38,7 +38,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 
 import static java.lang.System.exit;
 import static java.lang.System.setProperty;
@@ -48,41 +47,25 @@ import static java.lang.System.setProperty;
  * @author Aravind Subramanian
  */
 public class LeadingEdgeWidget implements Widget {
-
     private static final Icon ICON = JarResources.getIcon("Lev16_b.gif");
-
     private EnrichmentDb edb;
-
     private JideTabbedPane tabbedPane;
 
-    /**
-     * counts how many times analysis was run
-     */
+    // counts how many times analysis was run
     private static int runs = 0;
-
     private ViewAndSearchComponent viewAndSearchComponent;
-
     private JLabel positiveLabel;
-
     private JLabel negativeLabel;
-
     private JPanel phenotypePanel;
 
-    /**
-     * whether viewer is running in GenePattern
-     */
+    // whether viewer is running in GenePattern
     private boolean runningInGenePattern;
-
     private JFileChooser htmlReportDirChooser;
 
-    /**
-     * index in table of gene set
-     */
+    // index in table of gene set
     private final static int GENE_SET_INDEX = 0;
 
-    /**
-     * index in table of score
-     */
+    // index in table of score
     private final static int SCORE_INDEX = 2;
 
     static {
@@ -91,7 +74,6 @@ public class LeadingEdgeWidget implements Widget {
     }
 
     public LeadingEdgeWidget(EnrichmentDb edb) {
-
         if (edb == null) {
             throw new IllegalArgumentException("Param edb cannot be null");
         }
@@ -108,7 +90,6 @@ public class LeadingEdgeWidget implements Widget {
     }
 
     public LeadingEdgeWidget(JideTabbedPane tabbedPane, EnrichmentDb edb) {
-
         if (edb == null) {
             throw new IllegalArgumentException("Param edb cannot be null");
         }
@@ -142,7 +123,6 @@ public class LeadingEdgeWidget implements Widget {
     }
 
     private void init(EnrichmentDb edb) {
-
         positiveLabel = new JLabel(" ");
         positiveLabel.setForeground(Color.RED);
 
@@ -281,35 +261,32 @@ public class LeadingEdgeWidget implements Widget {
                 case 0:
                     return gset.getName(true);
                 case 1:
-                    return new Integer(gset.getNumMembers());
+                    return gset.getNumMembers();
                 case 2:
-                    return new Float(score.getES());
+                    return score.getES();
                 case 3:
-                    return new Float(score.getNES());
+                    return score.getNES();
                 case 4:
-                    return new Float(score.getNP());
+                    return score.getNP();
                 case 5:
-                    return new Float(score.getFDR());
+                    return score.getFDR();
                 case 6:
-                    return new Float(score.getFWER());
+                    return score.getFWER();
                 case 7:
-                    return new Integer(enrichmentResults[rowIndex].getSignal().getRankAtMax());
+                    return enrichmentResults[rowIndex].getSignal().getRankAtMax();
                 case 8:
                     return EnrichmentReports.getLeadingEdge(enrichmentResults[rowIndex]);
             }
             return null;
-
         }
     }
 
-    /**
+    /*
      * GramTableCellRenderer for table headers. Headers in bold font -- looks
      * like excel headers.
      */
     private class ESRenderer extends DefaultTableCellRenderer {
-
         private int nameColumnIndex;
-
         private int scoreColumnIndex;
 
         public ESRenderer(int nameColumnIndex, int scoreColumnIndex) {

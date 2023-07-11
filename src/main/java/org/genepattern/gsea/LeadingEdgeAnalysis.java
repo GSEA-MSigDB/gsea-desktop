@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2023 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package org.genepattern.gsea;
 
@@ -206,8 +206,7 @@ public class LeadingEdgeAnalysis {
         if (parent == null) return;
 
         mainComponent = new JPanel();
-        UIManager.getDefaults().put("JideSplitPane.dividerSize",
-                new Integer(9));
+        UIManager.getDefaults().put("JideSplitPane.dividerSize", 9);
 
         DefaultDockingManager manager = new DefaultDockingManager(null,
                 mainComponent) {

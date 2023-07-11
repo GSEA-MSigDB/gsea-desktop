@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2018 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2023 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.models;
 
 import edu.mit.broad.genome.NotImplementedException;
@@ -42,30 +42,23 @@ public class XYDatasetProxy2 implements XYDataset {
         this.fXValues = new ArrayList();
         this.fYValues = new ArrayList();
 
-        //System.out.println("vector size: " + v.getSize());
-
         for (int i = 0; i < v.getSize(); i++) {
             float val = v.getElement(i);
-            //System.out.println(">> " + val);
 
-            fXValues.add(new Integer(i));
+            fXValues.add(i);
             if (!flatYAxis) {
-                fYValues.add(new Float(val));
+                fYValues.add(val);
             }
             // add an x whose value is same as x but y is 0 // @note this is the magic
             if (val != 0) {
-                //klog.debug("Hit at x: " + i);
-                fXValues.add(new Integer(i));
+                fXValues.add(i);
                 if (!flatYAxis) {
-                    fYValues.add(new Float(0));
+                    fYValues.add(0);
                 }
             }
         }
 
         this.fSeriesName = seriesname;
-
-        // required
-        //super.setSeriesNames(new String[]{seriesname});
     }
 
     public int indexOf(Comparable comparable) {
@@ -133,6 +126,4 @@ public class XYDatasetProxy2 implements XYDataset {
     public Number getY(int i, int i1) {
         throw new NotImplementedException();
     }
-
-} // End class XYDatasetProxy2
-
+}

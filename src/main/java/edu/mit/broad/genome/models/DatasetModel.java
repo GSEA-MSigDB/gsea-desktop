@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2023 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.models;
 
 import edu.mit.broad.genome.objects.Dataset;
@@ -21,10 +21,8 @@ import javax.swing.table.AbstractTableModel;
  * constructed its #rows and # columns is set. (the contents can change though)
  *
  * @author Aravind Subramanian
- * @version %I%, %G%
  */
 public class DatasetModel extends AbstractTableModel {
-
     private Dataset fDataset;
 
     /**
@@ -64,7 +62,7 @@ public class DatasetModel extends AbstractTableModel {
         if (col == 0) {
             return fDataset.getRowName(row);
         } else {
-            return new Float(fDataset.getElement(row, col - 1));
+            return fDataset.getElement(row, col - 1);
         }
     }
 
@@ -85,4 +83,4 @@ public class DatasetModel extends AbstractTableModel {
     public boolean isCellEditable(int row, int col) {
         return false;
     }
-}    // End DatasetModel
+}

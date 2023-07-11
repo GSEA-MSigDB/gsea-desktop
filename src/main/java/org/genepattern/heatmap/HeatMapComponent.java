@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2020 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2023 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package org.genepattern.heatmap;
 
@@ -179,10 +179,10 @@ public class HeatMapComponent extends JComponent {
             gridSizeSlider.setPaintLabels(true);
             Hashtable<Integer, JLabel> labels = new Hashtable<Integer, JLabel>();
 
-            labels.put(new Integer(2), new JLabel("" + 2, JLabel.CENTER));
-            labels.put(new Integer(10), new JLabel("" + 10, JLabel.CENTER));
-            labels.put(new Integer(20), new JLabel("" + 20, JLabel.CENTER));
-            labels.put(new Integer(30), new JLabel("" + 30, JLabel.CENTER));
+            labels.put(2, new JLabel("2", JLabel.CENTER));
+            labels.put(10, new JLabel("10", JLabel.CENTER));
+            labels.put(20, new JLabel("20", JLabel.CENTER));
+            labels.put(30, new JLabel("30", JLabel.CENTER));
 
             gridSizeSlider.setLabelTable(labels);
             gridSizeSlider.addChangeListener(cl);
@@ -190,7 +190,6 @@ public class HeatMapComponent extends JComponent {
             ActionListener l = new ActionListener() {
                 public void actionPerformed(ActionEvent e) {
                     if (e.getSource() == gridSizeTextField) {
-
                         try {
                             int value = Integer.parseInt(gridSizeTextField
                                     .getText());

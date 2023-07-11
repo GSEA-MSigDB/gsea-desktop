@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2023 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package org.genepattern.data.expr;
 
 import java.util.ArrayList;
@@ -10,10 +10,8 @@ import java.util.HashMap;
  * @author Joshua Gould
  */
 public class MetaData {
-    private HashMap metaDataName2Depth;
-
-    private ArrayList metaDataList;
-
+    private HashMap<String, Integer> metaDataName2Depth;
+    private ArrayList<String[]> metaDataList;
     private int capacity;
 
     /**
@@ -23,8 +21,8 @@ public class MetaData {
      */
     public MetaData(int capacity) {
         this.capacity = capacity;
-        metaDataList = new ArrayList();
-        metaDataName2Depth = new HashMap();
+        metaDataList = new ArrayList<>();
+        metaDataName2Depth = new HashMap<>();
     }
 
     /**
@@ -36,9 +34,8 @@ public class MetaData {
      */
     public MetaData slice(int[] indices) {
         MetaData slicedMetaData = new MetaData(indices.length);
-        slicedMetaData.metaDataName2Depth = (HashMap) this.metaDataName2Depth
-                .clone();
-        slicedMetaData.metaDataList = new ArrayList();
+        slicedMetaData.metaDataName2Depth = (HashMap<String, Integer>) this.metaDataName2Depth.clone();
+        slicedMetaData.metaDataList = new ArrayList<String[]>();
         for (int i = 0, size = this.metaDataList.size(); i < size; i++) {
             String[] obj = (String[]) this.metaDataList.get(i);
             String[] copy = new String[indices.length];
@@ -81,20 +78,19 @@ public class MetaData {
      * @return index in metaDataList list
      */
     protected int getDepth(String name) {
-        Integer depth = (Integer) metaDataName2Depth.get(name);
-        int _depth;
+        Integer depth = metaDataName2Depth.get(name);
         if (depth == null) {
-            depth = new Integer(metaDataList.size());
-            _depth = depth.intValue();
+            depth = metaDataList.size();
+            final int _depth = depth;
             for (int i = metaDataList.size(); i <= _depth; i++) {
                 metaDataList.add(new String[capacity]);
             }
             metaDataList.set(_depth, new String[capacity]);
             metaDataName2Depth.put(name, depth);
+            return _depth;
         } else {
-            _depth = depth.intValue();
+            return depth;
         }
-        return _depth;
     }
 
     /**
@@ -102,6 +98,6 @@ public class MetaData {
      * @return the array for the given name
      */
     protected String[] getArray(String name) {
-        return (String[]) metaDataList.get(getDepth(name));
+        return metaDataList.get(getDepth(name));
     }
 }

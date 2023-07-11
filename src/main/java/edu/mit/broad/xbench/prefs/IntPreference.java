@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2023 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.xbench.prefs;
 
 import edu.mit.broad.genome.swing.fields.GFieldPlusChooser;
@@ -20,15 +20,15 @@ public class IntPreference extends AbstractPreference {
      * @param def
      */
     protected IntPreference(String name, String desc, int def, boolean isDebug, boolean needsRestart) {
-        super(name, desc, new Integer(def), isDebug, needsRestart);
+        super(name, desc, def, isDebug, needsRestart);
     }
 
     public Object getValue() {
-        return new Integer(kPrefs.getInt(getName(), ((Integer) getDefault()).intValue()));
+        return kPrefs.getInt(getName(), ((Integer) getDefault()));
     }
 
     public int getInt() {
-        return ((Integer) getValue()).intValue();
+        return ((Integer) getValue());
     }
 
     public GFieldPlusChooser getSelectionComponent() {
@@ -58,5 +58,4 @@ public class IntPreference extends AbstractPreference {
             super._setValueOfPref2SelectionComponentValue(fField.getValue());
         }
     }
-
-} // End IntPreference
+}

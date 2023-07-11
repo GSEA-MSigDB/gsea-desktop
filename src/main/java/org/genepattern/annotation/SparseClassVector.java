@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2023 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package org.genepattern.annotation;
 
 import java.awt.*;
@@ -14,19 +14,19 @@ public class SparseClassVector {
 
     Map classNumber2NameMap = new HashMap();
 
-    Map group2GroupName = new HashMap();
+    Map<List, String> group2GroupName = new HashMap<>();
 
-    List listeners = new ArrayList();
+    List<SparseClassVectorListener> listeners = new ArrayList<>();
 
-    List groups = new ArrayList();
+    List<List> groups = new ArrayList<>();
 
     public void slice(int[] order) {
-        Map temp = new HashMap();
+        Map<Integer, List> temp = new HashMap<>();
         for (Iterator keys = row2AssignmentMap.keySet().iterator(); keys
                 .hasNext();) {
             Integer row = (Integer) keys.next();
             List classNumbers = (List) row2AssignmentMap.get(row);
-            temp.put(new Integer(order[row.intValue()]), classNumbers);
+            temp.put(order[row.intValue()], classNumbers);
         }
         row2AssignmentMap = temp;
     }
@@ -37,8 +37,7 @@ public class SparseClassVector {
 
     public void notifyListeners() {
         for (int i = 0; i < listeners.size(); i++) {
-            SparseClassVectorListener listener = (SparseClassVectorListener) listeners
-                    .get(i);
+            SparseClassVectorListener listener = listeners.get(i);
             listener.classChanged();
         }
     }
@@ -67,7 +66,7 @@ public class SparseClassVector {
     }
 
     public List getClassNumbers(int index) {
-        return (List) row2AssignmentMap.get(new Integer(index));
+        return (List) row2AssignmentMap.get(index);
     }
 
     public Color getColor(Integer i) {
@@ -78,12 +77,12 @@ public class SparseClassVector {
         return (String) classNumber2NameMap.get(i);
     }
 
-    public List getClassGroups() {
+    public List<List> getClassGroups() {
         return groups;
     }
 
     public String getClassGroupName(List group) {
-        return (String) group2GroupName.get(group);
+        return group2GroupName.get(group);
     }
 
     /**
@@ -104,16 +103,16 @@ public class SparseClassVector {
     }
 
     public void addClass(int index, Integer classNumber) {
-        List assignments = (List) row2AssignmentMap.get(new Integer(index));
+        List assignments = (List) row2AssignmentMap.get(index);
         if (assignments == null) {
             assignments = new ArrayList();
-            row2AssignmentMap.put(new Integer(index), assignments);
+            row2AssignmentMap.put(index, assignments);
         }
         assignments.add(classNumber);
     }
 
     public void removeClass(int index, Integer classNumber) {
-        List assignments = (List) row2AssignmentMap.get(new Integer(index));
+        List assignments = (List) row2AssignmentMap.get(index);
         assignments.remove(classNumber);
     }
 

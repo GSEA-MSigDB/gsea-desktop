@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2023 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.xbench.tui;
 
@@ -253,7 +253,7 @@ public class TaskManager {
             ToolRunnable trunnable = (ToolRunnable) fToolRunnables.get(row);
 
             if (col == COL_NUM) {
-                return new Integer(row + 1);
+                return row + 1;
             } else if (col == COL_NAME) {
                 JButton but;
                 if (fRowToolButtonMap.get(row) == null) {

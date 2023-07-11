@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2023 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package org.genepattern.io.expr.cls;
 
 import java.io.BufferedReader;
@@ -91,7 +91,7 @@ public class ClsParser {
         if (hasClassNames(classifierLine)) {
             names = readClassNamesLine(classifierLine);
             for (int i = 0, length = names.length; i < length; i++) {
-                classNumber2NameMap.put(new Integer(i), names[i]);
+                classNumber2NameMap.put(i, names[i]);
             }
             dataLine = reader.readLine();
             assignments = processData(dataLine, classNumber2NameMap);
@@ -99,8 +99,8 @@ public class ClsParser {
             // data
             names = new String[numClasses];
             for (int i = 0; i < numClasses; i++) {
-                names[i] = "" + i;
-                classNumber2NameMap.put(new Integer(i), "" + i);
+                names[i] = Integer.toString(i);
+                classNumber2NameMap.put(i, names[i]);
             }
             dataLine = classifierLine;
             assignments = processData(dataLine, classNumber2NameMap);
@@ -220,8 +220,7 @@ public class ClsParser {
                                     + " All data for this file must be in the range 0-"
                                     + (numClasses - 1) + ".");
                 }
-                String name = (String) classNumber2ClassNameMap
-                        .get(new Integer(classNumber));
+                String name = (String) classNumber2ClassNameMap.get(classNumber);
                 assignments[i] = name;
             }
 
@@ -236,8 +235,3 @@ public class ClsParser {
         this.handler = handler;
     }
 }
-
-/*
- * public FileMetaData getFileMetaData(InputStream in) throws IOException {
- * return new InnerParser(in).getFileMetaData(); }
- */

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2023 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.genome.reports;
 
@@ -35,7 +35,7 @@ public class RichDataframe extends AbstractObject implements IDataframe {
     // holds the real un-rich data
     private IDataframe fIdf;
 
-    // Hoilds meta format data = formatting that is DATAFRaME-WIDE
+    // Holds meta format data = formatting that is DATAFRaME-WIDE
     private MetaData fMetaData;
 
     // not always available
@@ -171,9 +171,8 @@ public class RichDataframe extends AbstractObject implements IDataframe {
 
         public Object adjustPrecision(final Object val, final int coln) {
             if (val != null && val.toString().length() > 0 && !gotNfe && val != null && fColIndexFloatPrecisionMap != null && fColIndexFloatPrecisionMap.containsKey(coln)) {
-
                 try {
-                    Float f = new Float(val.toString());
+                    Float f = Float.valueOf(val.toString());
                     int precision = fColIndexFloatPrecisionMap.get(coln);
                     return Printf.format(f.floatValue(), precision);
                 } catch (Throwable t) {
@@ -186,7 +185,5 @@ public class RichDataframe extends AbstractObject implements IDataframe {
 
             return val; // no adjustment
         }
-
     }
-
-} // End class RichDataframe
+}
