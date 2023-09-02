@@ -1,4 +1,7 @@
-FROM genepattern/docker-openjdk_11\:0.1
-RUN set -o pipefail && mkdir -p /opt/gsea && \
-    wget -O /tmp/GSEA_4.3.2.zip https://data.broadinstitute.org/gsea-msigdb/gsea/software/desktop/4.3/GSEA_4.3.2.zip && \
-    unzip -d /opt/gsea /tmp/GSEA_4.3.2.zip && rm -f /tmp/GSEA_4.3.2.zip
+FROM eclipse-temurin:17
+ARG release_number=4.3.2
+ARG release_series=4.3
+RUN mkdir -p /opt/gsea && \
+    curl -o /tmp/GSEA_${release_number}.zip https://data.broadinstitute.org/gsea-msigdb/gsea/software/${release_series}/GSEA_${release_number}.zip && \
+    cd /opt && jar xf /tmp/GSEA_${release_number}.zip && mv GSEA_${release_number} gsea && rm -f /tmp/GSEA_${release_number}.zip && \
+    chmod u+x /opt/gsea/gsea-cli.sh

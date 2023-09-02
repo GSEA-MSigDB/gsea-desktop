@@ -6,7 +6,11 @@ package xtools.api.param;
 import edu.mit.broad.genome.Constants;
 import edu.mit.broad.genome.JarResources;
 import edu.mit.broad.genome.objects.PersistentObject;
+import edu.mit.broad.genome.swing.GuiHelper;
 import edu.mit.broad.genome.utils.ClassUtils;
+import edu.mit.broad.xbench.actions.ext.BrowserAction;
+import xapps.gsea.GseaWebResources;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -293,7 +297,8 @@ public abstract class AbstractParam implements Param {
     }
 
     protected Action createHelpAction() {
-        return JarResources.createHelpAction(getName());
+        return new BrowserAction("GSEA documentation", "Online documentation of the GSEA algorithm and software",
+                GuiHelper.ICON_HELP16, GseaWebResources.getGseaHelpURL());
     }
 
     public Param.Type getType() {

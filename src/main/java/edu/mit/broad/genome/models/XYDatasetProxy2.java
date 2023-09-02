@@ -18,8 +18,8 @@ import java.util.List;
  */
 public class XYDatasetProxy2 implements XYDataset {
 
-    private final List fXValues;
-    private final List fYValues;
+    private final List<Integer> fXValues;
+    private final List<Float> fYValues;
 
     private final String fSeriesName;
     private DatasetGroup fGroup;
@@ -39,8 +39,8 @@ public class XYDatasetProxy2 implements XYDataset {
      */
     public XYDatasetProxy2(final Vector v, final String seriesname, final boolean flatYAxis) {
         this.fFlatYAxis = flatYAxis;
-        this.fXValues = new ArrayList();
-        this.fYValues = new ArrayList();
+        this.fXValues = new ArrayList<>();
+        this.fYValues = new ArrayList<>();
 
         for (int i = 0; i < v.getSize(); i++) {
             float val = v.getElement(i);
@@ -53,7 +53,7 @@ public class XYDatasetProxy2 implements XYDataset {
             if (val != 0) {
                 fXValues.add(i);
                 if (!flatYAxis) {
-                    fYValues.add(0);
+                    fYValues.add(0.0f);
                 }
             }
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2023 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package xtools.api.param;
 
@@ -46,7 +46,7 @@ public class WChipChooserWindow {
         JPanel wrapper = new JPanel(new BorderLayout()); // @note needed else the input widget comes up real small in the dd
         wrapper.add(tabbedPane, BorderLayout.CENTER);
         
-        Action helpAction = JarResources.createHelpAction(Param.CHIP);
+        Action helpAction = JarResources.createDataFormatAction("#chip");
         Action infoAction = new BrowserAction("MSigDB Chips", "MSigDB Chips Info",
                 GuiHelper.ICON_HELP16, GseaWebResources.getGseaChipInfoHelpURL());
         DialogDescriptor desc = Application.getWindowManager().createDialogDescriptor("Select a chip", wrapper, helpAction, infoAction, false);

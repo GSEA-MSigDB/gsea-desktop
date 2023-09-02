@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2023 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.genome;
 
@@ -149,13 +149,8 @@ public class JarResources {
         return JarResources.class.getResource(PKG_RESOURCE + filename);
     }
 
-    public static String getHelpURL(String keyName) {
-        keyName = keyName.replace('.', '_');
-        return GseaWebResources.getGseaBaseURL() + "/doc/GSEAUserGuideFrame.html?" + keyName;
-    }
-
     public static String getWikiErrorURL(String errName) {
-        return GseaWebResources.getGseaBaseURL() + "/wiki/index.php/" + errName;
+        return GseaWebResources.getGseaHelpURL() + "GSEA_User_Guide/#error-" + errName;
     }
 
     public static JButton createHelpButton(final String keyName) {
@@ -167,14 +162,22 @@ public class JarResources {
         }
     }
 
-    public static Action createHelpAction(final String keyName) {
-        String urle = getHelpURL(keyName);
-        if (urle == null || urle.length() == 0) {
-            urle = "Help broken for key: " + keyName;
-            klog.warn(urle);
-        }
+    public static Action createDataFormatAction(final String dfAnchor) {
+        final String url = GseaWebResources.getGseaDataFormatsHelpURL() + dfAnchor;
 
-        final String url = urle;
+        return new AbstractAction("Help", getIcon("Help16_v2.gif")) {
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    Desktop.getDesktop().browse((new URL(url)).toURI());
+                } catch (Throwable t) {
+                    Application.getWindowManager().showError(url + ": unable to launch web browser", t);
+                }
+            }
+        };
+    }
+
+    public static Action createHelpAction(final String ugAnchor) {
+        final String url = GseaWebResources.getGseaHelpURL() + "GSEA/GSEA_User_Guide/" + ugAnchor;
 
         return new AbstractAction("Help", getIcon("Help16_v2.gif")) {
             public void actionPerformed(ActionEvent e) {
@@ -199,7 +202,7 @@ public class JarResources {
         return new AbstractAction("Help for error " + se.getErrorCode(), getIcon("Help16_v2.gif")) {
             public void actionPerformed(ActionEvent e) {
                 try {
-                    Desktop.getDesktop().browse((new URL(url)).toURI());
+                    Desktop.getDesktop().browse(java.net.URI.create(url));
                 } catch (Throwable t) {
                     Application.getWindowManager().showError("Unable to launch web browser for " + url, t);
                 }
