@@ -1,14 +1,11 @@
-/*******************************************************************************
- * Copyright (c) 2003-2018 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2023 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.viewers;
 
 import au.com.pegasustech.demos.layout.SCLayout;
 
-import com.jidesoft.grid.SortableTable;
-
 import edu.mit.broad.genome.JarResources;
-import edu.mit.broad.genome.StandardException;
 import edu.mit.broad.genome.reports.api.Report;
 import edu.mit.broad.genome.swing.GuiHelper;
 import edu.mit.broad.xbench.core.JObjectsList;
@@ -18,17 +15,21 @@ import edu.mit.broad.xbench.tui.TaskManager;
 import edu.mit.broad.xbench.tui.ToolRunnerControl;
 import xtools.api.Tool;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JLabel;
+import javax.swing.JMenuBar;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.SwingWorker;
 import javax.swing.table.AbstractTableModel;
 
-import org.genepattern.io.ImageUtil;
-import org.genepattern.uiutil.UIUtil;
-
-import java.awt.*;
+import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Date;
-import java.util.Enumeration;
 import java.util.Properties;
 
 /**
@@ -45,10 +46,8 @@ import java.util.Properties;
  * 2) tool launched in the super ToolLauncher
  *
  * @author Aravind Subramanian
- * @version %I%, %G%
  */
 public class ReportViewer extends AbstractViewer {
-
     public static final String NAME = "ReportViewer";
     public static final Icon ICON = JarResources.getIcon("past_analysis16.gif");
     private final Report fReport;
@@ -59,14 +58,8 @@ public class ReportViewer extends AbstractViewer {
 
     private static final String[] COL_HEADERS = new String[]{"Parameter name", "Parameter value"};
 
-    /**
-     * Class constructor
-     *
-     * @param rpt
-     */
     public ReportViewer(final Report rpt) {
         super(NAME, ICON, rpt);
-
         this.fReport = rpt;
         this.fParams = fReport.getParametersUsed();
         jbInit();
@@ -86,41 +79,30 @@ public class ReportViewer extends AbstractViewer {
 
         JLabel label = new JLabel(buf.toString());
         this.add(label);
-
         this.add(createParamPanel(fReport.getName()));
 
         JObjectsList jol = new JObjectsList(fReport.getFilesProduced());
         jol.setBorder(GuiHelper.createTitledBorderForComponent("Files produced as part of this analysis (double-click to view)"));
         this.add(new JScrollPane(jol));
         this.revalidate();
-
-
     }
 
     private JPanel createParamPanel(final String rptName) {
         JPanel panel = new JPanel();
         panel.setLayout(new BorderLayout());
-
-        //JTable table = new JTable(new Model());
-        SortableTable table = new SortableTable(new Model()); // @note changed for jide
-
+        JTable table = new JTable(new Model());
         table.setColumnSelectionAllowed(true);
         table.setRowSelectionAllowed(true);
 
-        //table.getTableHeader().setDefaultRenderer(new RendererFactory2.BoldHeaderRenderer());
         table.getTableHeader().setReorderingAllowed(false);
         setColumnSize(75, 0, table, false);
 
         panel.add(new JScrollPane(table), BorderLayout.CENTER);
 
         JPanel cp = new JPanel();
-
         final JCheckBox cxLoad = new JCheckBox("Load data", true);
         cxLoad.setToolTipText("Follow files specified in params and load their data");
         cp.add(cxLoad);
-
-        // this parses stuff right away - dont want that
-        //SingleToolLauncherAction a = new SingleToolLauncherAction(tool, tool.getParamSet());
 
         JButton bRelaunch = new JButton("Show in ToolRunner", SingleToolLauncher.ICON);
         bRelaunch.addActionListener(new ActionListener() {
@@ -136,17 +118,14 @@ public class ReportViewer extends AbstractViewer {
                             Thread t = new Thread(runnable);
                             t.setPriority(Thread.MIN_PRIORITY);
                             t.start();
-
                         } catch (Throwable t) {
                             Application.getWindowManager().showError(t);
                         }
-
                         return null;
                     }
                 };
                 worker.execute();
             }
-
         });
 
         cp.add(bRelaunch);
@@ -160,26 +139,11 @@ public class ReportViewer extends AbstractViewer {
         return EMPTY_MENU_BAR;
     }
 
-    /**
-     * @author Aravind Subramanian
-     * @version %I%, %G%
-     */
     private class Model extends AbstractTableModel {
-
         private final String[] keys;
 
         private Model() {
-            keys = new String[fParams.size()];
-
-            int cnt = 0;
-            Enumeration en = fParams.keys();
-            while (en.hasMoreElements()) {
-                keys[cnt++] = en.nextElement().toString();
-                //log.debug("added: " + keys[cnt-1]);
-            }
-
-            //log.debug("Number of rows = " + keys.length);
-
+            keys = fParams.stringPropertyNames().toArray(new String[0]);
         }
 
         public int getRowCount() {
@@ -205,6 +169,6 @@ public class ReportViewer extends AbstractViewer {
                 return fParams.getProperty(keys[row]);
             }
         }
-    }    // End Model
+    }
+}
 
-}        // End ReportViewer

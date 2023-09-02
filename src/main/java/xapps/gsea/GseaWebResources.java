@@ -62,7 +62,8 @@ public class GseaWebResources {
     }
 
     public static String getGseaHelpURL() {
-        return "https://docs.gsea-msigdb.org/";
+        return "http://127.0.0.1:8001/";
+        //return "https://docs.gsea-msigdb.org/";
     }
 
     public static String getGseaContactURL() {
