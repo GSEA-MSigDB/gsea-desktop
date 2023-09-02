@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2023 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package xtools.api.ui;
 
@@ -30,7 +30,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import xtools.api.param.ChooserHelper;
-import xtools.api.param.Param;
 import xtools.api.param.Validator;
 
 import java.awt.BorderLayout;
@@ -65,7 +64,7 @@ public class GeneSetMatrixChooserWindow {
         JPanel wrapper = new JPanel(new BorderLayout()); // @note needed else the input widget comes up real small in the dd
         wrapper.add(tabbedPane, BorderLayout.CENTER);
 
-        Action helpAction = JarResources.createHelpAction(Param.GMX);
+        Action helpAction = JarResources.createDataFormatAction("#gmx");
         Action infoAction = new BrowserAction("MSigDB Collections", "MSigDB Collections Info",
                 GuiHelper.ICON_HELP16, GseaWebResources.getGseaBaseURL() + "/msigdb/");
         DialogDescriptor desc = Application.getWindowManager().createDialogDescriptor("Select a gene set", wrapper, helpAction, infoAction, true);

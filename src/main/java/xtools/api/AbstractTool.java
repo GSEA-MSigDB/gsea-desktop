@@ -1,10 +1,9 @@
 /*
- * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2023 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package xtools.api;
 
 import edu.mit.broad.genome.Conf;
-import edu.mit.broad.genome.JarResources;
 import edu.mit.broad.genome.objects.*;
 import edu.mit.broad.genome.parsers.ParseUtils;
 import edu.mit.broad.genome.reports.api.Report;
@@ -27,6 +26,7 @@ import org.apache.ecs.html.UL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import xapps.gsea.GseaWebResources;
 import xapps.gsea.UpdateChecker;
 import xtools.api.param.*;
 
@@ -79,7 +79,7 @@ public abstract class AbstractTool implements Tool {
     }
 
     public String getHelpURL() {
-        return JarResources.getHelpURL(getClass().getName());
+        return GseaWebResources.getGseaHelpURL();
     }
 
     public PrintStream getOutputStream() {

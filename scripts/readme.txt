@@ -4,16 +4,15 @@ GSEA Binary Distribution
 
 Prerequisites:
 
-Java 11 (http://openjdk.java.net).  This is bundled with our distributions.
-Not compatible with Java 8, 9, 10.
+Java 17 (http://openjdk.java.net).  This is bundled with our distributions.
+Not compatible with earlier versions of Java and untested with newer versions of Java.
 
 
 Instructions:
 
 1. Download and unzip the distribution file to a directory of your choice.
 
-2. Note that the Java command line has become more complex with Java 11 compared to
-Java 8.  You can start GSEA with one of the following scripts; this is the recommended 
+2. You can start GSEA with one of the following scripts; this is the recommended 
 way to launch.  Some of these may not be present depending on the distribution you
 downloaded.  You might have to make the script executable (chmod a+x gsea.sh).
 

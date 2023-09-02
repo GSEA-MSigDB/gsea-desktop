@@ -149,7 +149,7 @@ public class TemplateChooserUI {
                 if (otf == null) {
                     otf = new TemplateCreatorWidgets.OnTheFlyFromSampleNames();
                 }
-                DialogDescriptor dd = Application.getWindowManager().createDialogDescriptor("On-the-fly phenotype by sample names", otf, JarResources.createHelpAction("on_the_fly_phenotype"));
+                DialogDescriptor dd = Application.getWindowManager().createDialogDescriptor("On-the-fly phenotype by sample names", otf, JarResources.createHelpAction("#Phenotype-Select-Window"));
                 dd.setOnlyShowCloseOption();
                 dd.show();
             }
@@ -162,7 +162,7 @@ public class TemplateChooserUI {
                 if (gtf == null) {
                     gtf = new TemplateCreatorWidgets.GenePhenotype();
                 }
-                DialogDescriptor dd = Application.getWindowManager().createDialogDescriptor("Use a gene as the phenotype", gtf, JarResources.createHelpAction("gene_profile_phenotype"));
+                DialogDescriptor dd = Application.getWindowManager().createDialogDescriptor("Use a gene as the phenotype", gtf, JarResources.createHelpAction("#Phenotype-Select-Window"));
                 dd.setOnlyShowCloseOption();
                 dd.show();
             }
@@ -237,7 +237,8 @@ public class TemplateChooserUI {
             text = "Select one or more phenotype(s)";
         }
 
-        DialogDescriptor desc = Application.getWindowManager().createDialogDescriptor(text, comp, JarResources.createHelpAction("cls"));
+        Action helpAction = JarResources.createDataFormatAction("#cls");
+        DialogDescriptor desc = Application.getWindowManager().createDialogDescriptor(text, comp, helpAction);
         desc.enableDoubleClickableJList(jlOptions);
         int res = desc.show();
 

@@ -1,12 +1,17 @@
 /*
- * Copyright (c) 2003-2020 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2023 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package xapps.gsea;
 
 import com.jgoodies.forms.builder.PanelBuilder;
 import com.jgoodies.forms.layout.CellConstraints;
 import com.jgoodies.forms.layout.FormLayout;
-import com.jidesoft.dialog.*;
+import com.jidesoft.dialog.AbstractDialogPage;
+import com.jidesoft.dialog.BannerPanel;
+import com.jidesoft.dialog.ButtonNames;
+import com.jidesoft.dialog.ButtonPanel;
+import com.jidesoft.dialog.MultiplePageDialog;
+import com.jidesoft.dialog.PageList;
 import com.jidesoft.swing.PartialLineBorder;
 import edu.mit.broad.genome.JarResources;
 import edu.mit.broad.xbench.core.api.Application;
@@ -80,7 +85,7 @@ public class GseaPreferencesDialog extends MultiplePageDialog {
 
         //but.setText("Close");
 
-        buttonPanel.addButton(JarResources.createHelpButton("gsea_preferences_widget"), ButtonNames.HELP);
+        buttonPanel.addButton(JarResources.createHelpButton("#Prefs-Window"), ButtonNames.HELP);
         setDefaultCancelAction(cancelAction);
         setDefaultAction(okAction);
         return buttonPanel;
