@@ -155,8 +155,8 @@ public class LeadingEdgeWidget implements Widget {
         };
 
         viewAndSearchComponent = new ViewAndSearchComponent(
-                "Run leading edge analysis", new int[]{GENE_SET_INDEX},
-                runListener, reportListener, true, phenotypePanel);
+                "Run leading edge analysis", runListener,
+                reportListener);
 
         viewAndSearchComponent.setTableModel(createTableModel());
         viewAndSearchComponent.getTable().setDefaultRenderer(String.class,
