@@ -3,11 +3,9 @@
  */
 package org.genepattern.gsea;
 
-import com.jidesoft.dialog.ButtonNames;
 import com.jidesoft.dialog.ButtonPanel;
-import com.jidesoft.grid.SortableTable;
-import com.jidesoft.grid.SortableTableModel;
-import com.jidesoft.swing.JideScrollPane;
+//import com.jidesoft.grid.SortableTable;
+//import com.jidesoft.grid.SortableTableModel;
 
 import edu.mit.broad.genome.JarResources;
 import edu.mit.broad.genome.swing.GuiHelper;
@@ -21,6 +19,11 @@ import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.TableModel;
+
+import org.jfree.ui.SortButtonRenderer;
+import org.jfree.ui.SortableTable;
+import org.jfree.ui.SortableTableHeaderListener;
+import org.jfree.ui.SortableTableModel;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
@@ -37,12 +40,9 @@ public class ViewAndSearchComponent extends JPanel {
     private SortableTable sortableTable;
     private ControlPanel controlPanel;
 
-    public void setTableModel(final TableModel tableModel) {
-        this.sortableTable.setModel(new SortableTableModel(tableModel));
-    }
-
-    public ViewAndSearchComponent(String runBtnText, ActionListener runListener, ActionListener reportListener) {
-        this.sortableTable = new SortableTable() {
+    public ViewAndSearchComponent(String runBtnText, final SortableTableModel tableModel, 
+            ActionListener runListener, ActionListener reportListener) {
+        this.sortableTable = new SortableTable(tableModel) {
             public String getToolTipText(MouseEvent event) {
                 String tip = null;
                 Point p = event.getPoint();
@@ -60,12 +60,12 @@ public class ViewAndSearchComponent extends JPanel {
                 return tip;
             }
         };
-
-        sortableTable.setShowSortOrderNumber(false);
+        
+//        sortableTable.setShowSortOrderNumber(false);
         sortableTable.getSelectionModel().setSelectionMode(
                 ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
-        JideScrollPane scrollPane = new JideScrollPane(sortableTable,
+        JScrollPane scrollPane = new JScrollPane(sortableTable,
                 JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
                 JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 
@@ -85,7 +85,7 @@ public class ViewAndSearchComponent extends JPanel {
                 final ActionListener reportListener, final SortableTable table) {
             setBorder(BorderFactory.createEmptyBorder(5, 10, 20, 10));
             JButton bHelp = JarResources.createHelpButton("post_hoc");
-            addButton(bHelp, ButtonNames.HELP);
+            addButton(bHelp, "Help");
             label = new JLabel("For " + table.getSelectedRows().length
                     + " selected gene sets: ");
             table.getSelectionModel().addListSelectionListener(

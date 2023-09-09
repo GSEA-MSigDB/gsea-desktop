@@ -98,7 +98,7 @@ module org.gsea_msigdb.gsea {
     requires java.logging;
     requires java.prefs;
     requires java.xml;
-    requires jcommon;
+    requires transitive jcommon;
     requires jdk.xml.dom;
     requires jfreechart;
     requires jgoodies.uif.lite;
