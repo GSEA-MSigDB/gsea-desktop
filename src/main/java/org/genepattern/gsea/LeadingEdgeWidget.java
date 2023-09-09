@@ -6,7 +6,6 @@ package org.genepattern.gsea;
 import com.jidesoft.swing.JideTabbedPane;
 
 import edu.mit.broad.genome.JarResources;
-import edu.mit.broad.genome.math.XMath;
 import edu.mit.broad.genome.objects.GeneSet;
 import edu.mit.broad.genome.objects.esmatrix.db.EnrichmentDb;
 import edu.mit.broad.genome.objects.esmatrix.db.EnrichmentResult;
@@ -23,21 +22,31 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
 import org.genepattern.menu.PlotAction;
 import org.genepattern.uiutil.UIUtil;
+import org.jfree.ui.SortableTableModel;
 
 import xtools.api.XToolsApplication;
 import xtools.api.param.ToolParamSet;
 import xtools.gsea.LeadingEdgeTool;
 
-import javax.swing.*;
-import javax.swing.table.AbstractTableModel;
-import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.TableModel;
-
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Cursor;
+import java.awt.Frame;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.Comparator;
+
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JFileChooser;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JMenuBar;
+import javax.swing.JPanel;
+import javax.swing.SwingWorker;
+import javax.swing.UIManager;
 
 import static java.lang.System.exit;
 import static java.lang.System.setProperty;
@@ -64,9 +73,6 @@ public class LeadingEdgeWidget implements Widget {
 
     // index in table of gene set
     private final static int GENE_SET_INDEX = 0;
-
-    // index in table of score
-    private final static int SCORE_INDEX = 2;
 
     static {
         // don't show accelerators in menus
@@ -154,13 +160,8 @@ public class LeadingEdgeWidget implements Widget {
             }
         };
 
-        viewAndSearchComponent = new ViewAndSearchComponent(
-                "Run leading edge analysis", runListener,
-                reportListener);
-
-        viewAndSearchComponent.setTableModel(createTableModel());
-        viewAndSearchComponent.getTable().setDefaultRenderer(String.class,
-                new ESRenderer(GENE_SET_INDEX, SCORE_INDEX));
+        viewAndSearchComponent = new ViewAndSearchComponent("Run leading edge analysis", createTableModel(),
+                runListener, reportListener);
     }
 
     private void buildHtmlReport() {
@@ -220,22 +221,122 @@ public class LeadingEdgeWidget implements Widget {
         tabbedPane.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
     }
 
-    private TableModel createTableModel() {
+    private SortableTableModel createTableModel() {
         return new MyTableModel(LeadingEdgeAnalysis.getAllResultsFromEdb(edb));
     }
 
-    private static class MyTableModel extends AbstractTableModel {
+    private static class MyTableModel extends SortableTableModel {
         private String[] columnNames = {"Gene Set", "Size", "ES", "NES", "NOM p-val",
                 "FDR q-val", "FWER p-val", "Rank at Max", "Leading Edge"};
-
         private Class[] columnClasses = {String.class, Integer.class, Float.class,
                 Float.class, Float.class, Float.class, Float.class,
                 Integer.class, String.class};
+        private Comparator<EnrichmentResult> BY_GS_NAME = new Comparator<EnrichmentResult>() {
+            public int compare(EnrichmentResult result1, EnrichmentResult result2) {
+                if (result1 == null) return result2 == null ? 0 : -1;
+                if (result2 == null) return 1;
+                return result1.getGeneSetName().compareTo(result2.getGeneSetName());
+            }
+        };
+        private Comparator<EnrichmentResult> BY_GS_MEMBERS = new Comparator<EnrichmentResult>() {
+            public int compare(EnrichmentResult result1, EnrichmentResult result2) {
+                if (result1 == null) return result2 == null ? 0 : -1;
+                if (result2 == null) return 1;
+                return result1.getGeneSet().getNumMembers() - result2.getGeneSet().getNumMembers();
+            }
+        };
+        private Comparator<EnrichmentResult> BY_ES = new Comparator<EnrichmentResult>() {
+            public int compare(EnrichmentResult result1, EnrichmentResult result2) {
+                if (result1 == null) return result2 == null ? 0 : -1;
+                if (result2 == null) return 1;
+                return Float.compare(result1.getScore().getES(), result2.getScore().getES());
+            }
+        };
+        private Comparator<EnrichmentResult> BY_NES = new Comparator<EnrichmentResult>() {
+            public int compare(EnrichmentResult result1, EnrichmentResult result2) {
+                if (result1 == null) return result2 == null ? 0 : -1;
+                if (result2 == null) return 1;
+                return Float.compare(result1.getScore().getNES(), result2.getScore().getNES());
+            }
+        };
+        private Comparator<EnrichmentResult> BY_NP = new Comparator<EnrichmentResult>() {
+            public int compare(EnrichmentResult result1, EnrichmentResult result2) {
+                if (result1 == null) return result2 == null ? 0 : -1;
+                if (result2 == null) return 1;
+                return Float.compare(result1.getScore().getNP(), result2.getScore().getNP());
+            }
+        };
+        private Comparator<EnrichmentResult> BY_FDR = new Comparator<EnrichmentResult>() {
+            public int compare(EnrichmentResult result1, EnrichmentResult result2) {
+                if (result1 == null) return result2 == null ? 0 : -1;
+                if (result2 == null) return 1;
+                return Float.compare(result1.getScore().getFDR(), result2.getScore().getFDR());
+            }
+        };
+        private Comparator<EnrichmentResult> BY_FWER = new Comparator<EnrichmentResult>() {
+            public int compare(EnrichmentResult result1, EnrichmentResult result2) {
+                if (result1 == null) return result2 == null ? 0 : -1;
+                if (result2 == null) return 1;
+                return Float.compare(result1.getScore().getFWER(), result2.getScore().getFWER());
+            }
+        };
+        private Comparator<EnrichmentResult> BY_RANK_AT_MAX = new Comparator<EnrichmentResult>() {
+            public int compare(EnrichmentResult result1, EnrichmentResult result2) {
+                if (result1 == null) return result2 == null ? 0 : -1;
+                if (result2 == null) return 1;
+                return result1.getSignal().getRankAtMax() - result2.getSignal().getRankAtMax();
+            }
+        };
+        private Comparator<EnrichmentResult> BY_LEADING_EDGE = new Comparator<EnrichmentResult>() {
+            public int compare(EnrichmentResult result1, EnrichmentResult result2) {
+                if (result1 == null) return result2 == null ? 0 : -1;
+                if (result2 == null) return 1;
+                return EnrichmentReports.getLeadingEdge(result1).compareTo(EnrichmentReports.getLeadingEdge(result2));
+            }
+        };
 
         private EnrichmentResult[] enrichmentResults;
+        private EnrichmentResult[] sortedResults;
 
         public MyTableModel(EnrichmentResult[] enrichmentResults) {
             this.enrichmentResults = enrichmentResults;
+            this.sortedResults = enrichmentResults;
+        }
+
+        @Override
+        public boolean isSortable(int column) {
+            return true;
+        }
+
+        @Override
+        public void sortByColumn(int column, boolean ascending) {
+            super.sortByColumn(column, ascending);
+            Arrays.parallelSort(sortedResults, comparatorByColumn(column, ascending));
+        }
+
+        public Comparator<EnrichmentResult> comparatorByColumn(int column, boolean ascending) {
+            switch (column) {
+            case 0:
+                return ascending ? BY_GS_NAME : BY_GS_NAME.reversed();
+            case 1:
+                return ascending ? BY_GS_MEMBERS : BY_GS_MEMBERS.reversed();
+            case 2:
+                return ascending ? BY_ES : BY_ES.reversed();
+            case 3:
+                return ascending ? BY_NES : BY_NES.reversed();
+            case 4:
+                return ascending ? BY_NP : BY_NP.reversed();
+            case 5:
+                return ascending ? BY_FDR : BY_FDR.reversed();
+            case 6:
+                return ascending ? BY_FWER : BY_FWER.reversed();
+            case 7:
+                return ascending ? BY_RANK_AT_MAX : BY_RANK_AT_MAX.reversed();
+            case 8:
+                return ascending ? BY_LEADING_EDGE : BY_LEADING_EDGE.reversed();
+            default:
+                return ascending ? BY_GS_NAME : BY_GS_NAME.reversed();
+            }
         }
 
         public int getRowCount() {
@@ -255,8 +356,8 @@ public class LeadingEdgeWidget implements Widget {
         }
 
         public Object getValueAt(int rowIndex, int columnIndex) {
-            GeneSet gset = enrichmentResults[rowIndex].getGeneSet();
-            EnrichmentScore score = enrichmentResults[rowIndex].getScore();
+            GeneSet gset = sortedResults[rowIndex].getGeneSet();
+            EnrichmentScore score = sortedResults[rowIndex].getScore();
             switch (columnIndex) {
                 case 0:
                     return gset.getName(true);
@@ -273,48 +374,11 @@ public class LeadingEdgeWidget implements Widget {
                 case 6:
                     return score.getFWER();
                 case 7:
-                    return enrichmentResults[rowIndex].getSignal().getRankAtMax();
+                    return sortedResults[rowIndex].getSignal().getRankAtMax();
                 case 8:
-                    return EnrichmentReports.getLeadingEdge(enrichmentResults[rowIndex]);
+                    return EnrichmentReports.getLeadingEdge(sortedResults[rowIndex]);
             }
             return null;
-        }
-    }
-
-    /*
-     * GramTableCellRenderer for table headers. Headers in bold font -- looks
-     * like excel headers.
-     */
-    private class ESRenderer extends DefaultTableCellRenderer {
-        private int nameColumnIndex;
-        private int scoreColumnIndex;
-
-        public ESRenderer(int nameColumnIndex, int scoreColumnIndex) {
-            this.nameColumnIndex = nameColumnIndex;
-            this.scoreColumnIndex = scoreColumnIndex;
-        }
-
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, 
-                boolean hasFocus, int row, int col) {
-            row = viewAndSearchComponent.getTable().getActualRowAt(row);
-
-            super.getTableCellRendererComponent(table, value, isSelected,
-                    hasFocus, row, col);
-
-            if (col == nameColumnIndex) {
-                float es = ((Float) table.getValueAt(row, scoreColumnIndex))
-                        .floatValue();
-                if (XMath.isPositive(es)) {
-                    this.setForeground(Color.RED);
-                } else {
-                    this.setForeground(Color.BLUE);
-                }
-                if (value != null) this.setText(value.toString());
-            } else {
-                this.setForeground(Color.BLACK);
-            }
-
-            return this;
         }
     }
 
