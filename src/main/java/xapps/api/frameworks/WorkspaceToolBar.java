@@ -1,16 +1,21 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2023 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package xapps.api.frameworks;
 
-import com.jidesoft.swing.JideButton;
 import edu.mit.broad.genome.swing.image.IconCustomSized;
 
-import javax.swing.*;
-import java.awt.*;
+import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.net.URL;
+
+import javax.swing.Action;
+import javax.swing.Icon;
+import javax.swing.JButton;
+import javax.swing.JToolBar;
+import javax.swing.SwingConstants;
 
 /**
  * A JToolBar with nice big icons appropriate for a workspaces toolbar
@@ -43,30 +48,17 @@ public class WorkspaceToolBar extends JToolBar {
     }
 
     public void add(URL iconURL, String name, final Action action, int width, int height, Font font, boolean alignFontToTheRight) {
-        Icon icon = null;
-        if (iconURL != null) {
-            icon = new IconCustomSized(iconURL, 32, 32);
-        }
-
-        add(icon, name, action, width, height, font, alignFontToTheRight);
-    }
-
-
-    public void add(Icon icon, String name, final Action action, int width, int height, Font font, boolean alignFontToTheRight) {
-        final JideButton but = new JideButton(name, icon);
-        but.setButtonStyle(JideButton.TOOLBAR_STYLE);
+        Icon icon = (iconURL != null) ? new IconCustomSized(iconURL, 32, 32) : null;
+        JButton but = new JButton(name, icon);
         but.setRolloverEnabled(true);
 
         if (alignFontToTheRight) {
             but.setHorizontalTextPosition(SwingConstants.RIGHT);
             but.setVerticalTextPosition(SwingConstants.CENTER);
-            //but.setAlignmentY(JToolBar.CENTER_ALIGNMENT);
             but.setAlignmentX(JToolBar.LEFT_ALIGNMENT);
         }
 
-        if (font != null) {
-            but.setFont(font);
-        }
+        if (font != null) { but.setFont(font); }
 
         Dimension d = new Dimension(width, height);
         but.setSize(d);
@@ -80,5 +72,4 @@ public class WorkspaceToolBar extends JToolBar {
 
         super.add(but);
     }
-
-} // End WorkspaceToolBar
+}
