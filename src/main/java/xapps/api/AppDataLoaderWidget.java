@@ -32,8 +32,6 @@ import javax.swing.JSplitPane;
 import javax.swing.JTextArea;
 import javax.swing.SwingWorker;
 
-import com.jidesoft.swing.JideButton;
-
 import au.com.pegasustech.demos.layout.SRLayout;
 import edu.mit.broad.genome.JarResources;
 import edu.mit.broad.genome.parsers.AuxUtils;
@@ -69,7 +67,6 @@ public class AppDataLoaderWidget extends GseaSimpleInternalFrame implements Widg
 
     private JComponent previousFilesPanel;
     private JSplitPane split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
-
     private AppDataLoaderWidget fInstance = this;
 
     public AppDataLoaderWidget() {
@@ -97,14 +94,12 @@ public class AppDataLoaderWidget extends GseaSimpleInternalFrame implements Widg
     }
 
     private JPanel createLoadPanel() {
-        JideButton bBrowse = new JideButton(new FileOpenAction());
+        JButton bBrowse = new JButton(new FileOpenAction());
         bBrowse.setRolloverEnabled(true);
-        bBrowse.setButtonStyle(JideButton.TOOLBAR_STYLE);
         bBrowse.setBorder(BorderFactory.createTitledBorder("Method 1:"));
 
-        JideButton bLoadLast = new JideButton(new LoadLastAnalysisFilesAction());
+        JButton bLoadLast = new JButton(new LoadLastAnalysisFilesAction());
         bLoadLast.setRolloverEnabled(true);
-        bLoadLast.setButtonStyle(JideButton.TOOLBAR_STYLE);
         bLoadLast.setBorder(BorderFactory.createTitledBorder("Method 2:"));
 
         JLabel label = new JLabel("<html>\n" +
@@ -136,7 +131,6 @@ public class AppDataLoaderWidget extends GseaSimpleInternalFrame implements Widg
                 GseaWebResources.getGseaDataFormatsHelpURL()));
 
         JPanel panel = new JPanel(new SRLayout(3, 10));
-
         JPanel pan = new JPanel(new GridBagLayout());
         GridBagConstraints gbc1 = new GridBagConstraints();
         gbc1.gridx = 0;

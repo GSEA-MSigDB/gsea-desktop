@@ -24,7 +24,9 @@ import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
+import javax.swing.BoxLayout;
 import javax.swing.Icon;
+import javax.swing.JButton;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
@@ -50,7 +52,6 @@ import com.jgoodies.looks.Options;
 import com.jidesoft.docking.DefaultDockableHolder;
 import com.jidesoft.docking.DefaultDockingManager;
 import com.jidesoft.docking.DockingManager;
-import com.jidesoft.swing.JideButton;
 
 import edu.mit.broad.cytoscape.action.EnrichmentMapInputPanelAction;
 import edu.mit.broad.genome.Conf;
@@ -168,8 +169,6 @@ public class GseaFijiTabsApplicationFrame extends DefaultDockableHolder implemen
 
         fFrame.getDockingManager().setInitSplitPriority(DefaultDockingManager.SPLIT_SOUTH_NORTH_EAST_WEST);
 
-        // -------------------------------------------------------------------------------------------- //
-
         this.fWindowManager = new MyWindowManagerImplJideTabbedPane();
 
         this.fStatusBarAppender = SystemConsole.createStatusBarAppender("StatusBar");
@@ -188,7 +187,7 @@ public class GseaFijiTabsApplicationFrame extends DefaultDockableHolder implemen
             buildInfo += ", " + buildTS;
         }
         AboutPanel aboutPanel = new AboutPanel("Gene Set Enrichment Analysis (GSEA) v" + buildProps.getProperty("build.version"), 
-                "Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, ",
+                "Copyright (c) 2003-2023 Broad Institute, Inc., Massachusetts Institute of Technology, ",
                 "and Regents of the University of California.  All rights reserved.", 
                 buildInfo);
         JOptionPane.showMessageDialog(fFrame, aboutPanel, "About GSEA", JOptionPane.PLAIN_MESSAGE);
@@ -378,13 +377,13 @@ public class GseaFijiTabsApplicationFrame extends DefaultDockableHolder implemen
 
         leftPanel.add(sp, BorderLayout.CENTER);
 
-        JideButton but = new JideButton("Show results folder");
+        JButton but = new JButton("Show results folder");
         but.setAction(new ShowDefaultOutputDirAction("Show results folder"));
         but.setRolloverEnabled(true);
-        but.setBorderPainted(false);
-        but.setButtonStyle(JideButton.HYPERLINK_STYLE);
-        leftPanel.add(but, BorderLayout.SOUTH);
-
+        JPanel showResButPanel = new JPanel();
+        BoxLayout layout = new BoxLayout(showResButPanel, BoxLayout.X_AXIS);
+        showResButPanel.add(but);
+        leftPanel.add(showResButPanel, BorderLayout.SOUTH);
         return leftPanel;
     }
 
