@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2020 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2023 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package xapps.api;
 
@@ -28,11 +28,11 @@ import javax.swing.JLabel;
 import javax.swing.JMenuBar;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JSplitPane;
 import javax.swing.JTextArea;
 import javax.swing.SwingWorker;
 
 import com.jidesoft.swing.JideButton;
-import com.jidesoft.swing.JideSplitPane;
 
 import au.com.pegasustech.demos.layout.SRLayout;
 import edu.mit.broad.genome.JarResources;
@@ -64,11 +64,11 @@ import xtools.gsea.Gsea;
  * @author Aravind Subramanian
  */
 public class AppDataLoaderWidget extends GseaSimpleInternalFrame implements Widget {
-
     public static final String TITLE = "Load data";
     public static final Icon ICON = JarResources.getIcon("LocalFileExplorerWidget_16_v2.jpg");
 
     private JComponent previousFilesPanel;
+    private JSplitPane split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
 
     private AppDataLoaderWidget fInstance = this;
 
@@ -80,11 +80,6 @@ public class AppDataLoaderWidget extends GseaSimpleInternalFrame implements Widg
 
         this.previousFilesPanel = JRecentFilesList.createComponent("<html><body><b>Recently used files</b> <br> " +
                 "(double click to load, right click for more options)</body></html>");
-
-
-        JideSplitPane split = new JideSplitPane(JideSplitPane.HORIZONTAL_SPLIT);
-        split.setInitiallyEven(true);
-        split.setShowGripper(true);
         split.add(previousFilesPanel);
 
         ObjectTree tree = new ObjectTree();
@@ -93,17 +88,15 @@ public class AppDataLoaderWidget extends GseaSimpleInternalFrame implements Widg
                 "(objects already loaded & ready for use, right click for more options)</body></html>");
         sif.add(new JScrollPane(tree), BorderLayout.CENTER);
         split.add(sif);
-        split.setInitiallyEven(true);
-        split.setProportionalLayout(true);
-
 
         this.add(loadPanel, BorderLayout.CENTER);
         split.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
         this.add(split, BorderLayout.SOUTH);
+        split.setResizeWeight(0.5d);
+        split.setDividerLocation(0.5d);
     }
 
     private JPanel createLoadPanel() {
-
         JideButton bBrowse = new JideButton(new FileOpenAction());
         bBrowse.setRolloverEnabled(true);
         bBrowse.setButtonStyle(JideButton.TOOLBAR_STYLE);
@@ -224,7 +217,7 @@ public class AppDataLoaderWidget extends GseaSimpleInternalFrame implements Widg
         panel.add(bp, BorderLayout.SOUTH);
         return panel;
     }
-
+    
     static class MyTextArea extends JTextArea implements DndTarget {
         private List<File> fFiles;
 

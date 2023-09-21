@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2023 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package xapps.gsea;
 
@@ -10,6 +10,7 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.HeadlessException;
 import java.awt.Image;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -34,6 +35,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
+import javax.swing.JSplitPane;
 import javax.swing.JTable;
 import javax.swing.JToolBar;
 import javax.swing.WindowConstants;
@@ -49,8 +51,6 @@ import com.jidesoft.docking.DefaultDockableHolder;
 import com.jidesoft.docking.DefaultDockingManager;
 import com.jidesoft.docking.DockingManager;
 import com.jidesoft.swing.JideButton;
-import com.jidesoft.swing.JideSplitPane;
-import com.jidesoft.swing.JideSwingUtilities;
 
 import edu.mit.broad.cytoscape.action.EnrichmentMapInputPanelAction;
 import edu.mit.broad.genome.Conf;
@@ -207,8 +207,6 @@ public class GseaFijiTabsApplicationFrame extends DefaultDockableHolder implemen
         }
     }
 
-    // private Runnable fRunnable;
-
     private AppToolLauncherAction fGseaTool_launcher;
     private AppDataLoaderAction fAppDataLoaderAction;
     private Gsea fGseaTool;
@@ -222,16 +220,11 @@ public class GseaFijiTabsApplicationFrame extends DefaultDockableHolder implemen
     }
 
     private void jbInit() {
-
         fFrame.getContentPane().setLayout(new BorderLayout());
 
-        JideSplitPane split = new JideSplitPane();
-
+        JSplitPane split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
         split.add(createToolBar());
-
-        split.setShowGripper(true);
         split.setContinuousLayout(false);
-
         split.add(fWindowManager.getTabbedPane());
 
         fWindowManager.openWindow(createStartupPanel());
@@ -251,7 +244,6 @@ public class GseaFijiTabsApplicationFrame extends DefaultDockableHolder implemen
     }
 
     private JComponent createToolBar() {
-
         WorkspaceToolBar tb1 = new WorkspaceToolBar(JToolBar.VERTICAL);
 
         tb1.setFloatable(false);
@@ -288,7 +280,6 @@ public class GseaFijiTabsApplicationFrame extends DefaultDockableHolder implemen
         tb1.add(Box.createVerticalStrut(struth));
         
         WorkspaceToolBar tb2 = new WorkspaceToolBar(JToolBar.VERTICAL);
-
         tb2.setFloatable(false);
         tb2.setBorder(BorderFactory.createTitledBorder("Tools"));
         
@@ -327,8 +318,7 @@ public class GseaFijiTabsApplicationFrame extends DefaultDockableHolder implemen
         tb.add(tb2);
         tb.add(tb3);
 
-        JideSplitPane pane = new JideSplitPane(JideSplitPane.VERTICAL_SPLIT);
-        pane.setShowGripper(true);
+        JSplitPane pane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
         pane.add(tb);
         pane.add(createProcessForToolBar());
 
@@ -336,11 +326,9 @@ public class GseaFijiTabsApplicationFrame extends DefaultDockableHolder implemen
     }
 
     private WrappedComponent createStartupPanel() {
-
         final JScrollPane sp = new JScrollPane(new ImageComponent(JarResources.getImage("intro_screen.jpg"), false));
 
         return new WrappedComponent() {
-
             public JComponent getWrappedComponent() {
                 return sp;
             }
@@ -356,7 +344,6 @@ public class GseaFijiTabsApplicationFrame extends DefaultDockableHolder implemen
     }
 
     private JComponent createProcessForToolBar() {
-
         TaskManager tm = TaskManager.getInstance();
         final JTable taskTable = tm.createTable();
         tm.setOnClickShowResultsInBrowserOnly(true); // @note
@@ -373,10 +360,8 @@ public class GseaFijiTabsApplicationFrame extends DefaultDockableHolder implemen
             }
 
             public void mouseExited(MouseEvent e) {
-
                 leftPanel.setCursor(Cursor.getDefaultCursor());
             }
-
         });
 
         taskTable.addMouseListener(new MouseAdapter() {
@@ -411,9 +396,7 @@ public class GseaFijiTabsApplicationFrame extends DefaultDockableHolder implemen
      * @maint if new actions are added -> need to review to see if they should also
      * be added to the menu bar.
      */
-
     private JMenuBar createMenuBar() {
-
         JMenuBar menuBar = new JMenuBar();
 
         // @note JGOODIES SUGGESTIONS
@@ -469,7 +452,6 @@ public class GseaFijiTabsApplicationFrame extends DefaultDockableHolder implemen
     }
     
     class ClearFileHistoryAction extends XAction {
-
         public ClearFileHistoryAction() {
             super("ClearAction", "Clear recent file history", "Clear recent file history (from the 'Load Data' panel)");
         }
@@ -483,7 +465,7 @@ public class GseaFijiTabsApplicationFrame extends DefaultDockableHolder implemen
                 }
             }
         }
-    }    // End inner class ExitAction
+    }
 
     /**
      * @param name
@@ -541,16 +523,12 @@ public class GseaFijiTabsApplicationFrame extends DefaultDockableHolder implemen
      * For gsea preferences
      */
     class GseaPreferencesAction extends AbstractAction {
-
         private JCheckBoxMenuItem fAsk;
         private JCheckBoxMenuItem fOnline;
         private JCheckBoxMenuItem fMedian;
         private JCheckBoxMenuItem fFix;
         private JCheckBoxMenuItem fBiased;
 
-        /**
-         * Class constructor
-         */
         public GseaPreferencesAction() {
             this.putValue(Action.NAME, getName());
             this.putValue(Action.SMALL_ICON, getAssociatedIcon());
@@ -569,7 +547,8 @@ public class GseaFijiTabsApplicationFrame extends DefaultDockableHolder implemen
 
             GseaPreferencesDialog opt = new GseaPreferencesDialog(fFrame, "Preferences");
             opt.pack();
-            JideSwingUtilities.globalCenterWindow(opt);
+            Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+            opt.setLocation((screenSize.width - getWidth()) / 2, (screenSize.height - getHeight()) / 2);
             opt.setVisible(true);
 
             // @note hack to get the menu in synch with the prefs. Lazy to make a listener scheme
@@ -593,11 +572,9 @@ public class GseaFijiTabsApplicationFrame extends DefaultDockableHolder implemen
         public String getDescription() {
             return "View and modify application wide preferences";
         }
-
     }
 
     class MyWindowManagerImplJideTabbedPane extends WindowManagerImplJideTabbedPane {
-
         MyWindowManagerImplJideTabbedPane() {
             super(fFrame);
         }
@@ -610,8 +587,7 @@ public class GseaFijiTabsApplicationFrame extends DefaultDockableHolder implemen
         public boolean runDefaultAction(final Object obj) {
             return GseaActionRegistry.getInstance().runDefaultAction(obj);
         }
-
-    } // End class MyWindowManagerImplJideTabbedPane
+    }
 
     class MyExitAction extends XAction {
         public MyExitAction() {
@@ -621,12 +597,11 @@ public class GseaFijiTabsApplicationFrame extends DefaultDockableHolder implemen
         public void actionPerformed(final ActionEvent evt) {
             exitApplication();
         }
-    }    // End inner class ExitAction
+    }
 
     private static final VdbManager fVdbmanager = new VdbManagerForGsea(RPT_CACHE_BUILD_DATE);
 
     private ToolManagerImpl fToolManager;
-
     private FileManager fFileManager;
 
     public String getName() {
@@ -634,7 +609,6 @@ public class GseaFijiTabsApplicationFrame extends DefaultDockableHolder implemen
     }
 
     public ToolManager getToolManager() {
-
         if (fToolManager == null) {
             this.fToolManager = new ToolManagerImpl();
         }

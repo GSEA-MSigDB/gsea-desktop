@@ -4,8 +4,6 @@
 package org.genepattern.gsea;
 
 import com.jidesoft.dialog.ButtonPanel;
-//import com.jidesoft.grid.SortableTable;
-//import com.jidesoft.grid.SortableTableModel;
 
 import edu.mit.broad.genome.JarResources;
 import edu.mit.broad.genome.swing.GuiHelper;
@@ -18,11 +16,8 @@ import javax.swing.JScrollPane;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import javax.swing.table.TableModel;
 
-import org.jfree.ui.SortButtonRenderer;
 import org.jfree.ui.SortableTable;
-import org.jfree.ui.SortableTableHeaderListener;
 import org.jfree.ui.SortableTableModel;
 
 import java.awt.BorderLayout;

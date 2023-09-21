@@ -28,15 +28,7 @@ public class GListWindow {
      */
     private JComponent fNorthComponent;
 
-    /**
-     * Class Constructor.
-     */
     public GListWindow(final Action help_action_opt) {
-        init(help_action_opt);
-    }
-
-    private void init(final Action help_action_opt) {
-
         this.fHelp_action_opt = help_action_opt;
     }
 
@@ -69,19 +61,13 @@ public class GListWindow {
      * @return value selected or null is user cancelled
      */
     private Object[] _show(final Object[] selectedOnes) {
-
         // carefull with rebuild / reset the model here -> that ruins the selection policy
         jlOptions.setModel(fModel);
         jlOptions.setSelectionMode(fSelectionMode);
 
         GuiHelper.List2.setSelected(selectedOnes, jlOptions, fModel);
 
-        return _just_show();
-    }
-
-    // just the showing part, abs no setting data
-    private Object[] _just_show() {
-
+        // just the showing part, abs no setting data
         String text = "Select an option";
 
         if (fSelectionMode == ListSelectionModel.MULTIPLE_INTERVAL_SELECTION) {

@@ -3,18 +3,20 @@
  */
 package org.genepattern.gsea;
 
-import com.jidesoft.docking.DefaultDockingManager;
-import com.jidesoft.docking.DockContext;
-import com.jidesoft.docking.DockableFrame;
-import com.jidesoft.icons.JideIconsFactory;
-
 import edu.mit.broad.genome.alg.ComparatorFactory;
 import edu.mit.broad.genome.alg.GeneSetStats;
 import edu.mit.broad.genome.alg.gsea.PValueCalculator;
 import edu.mit.broad.genome.alg.gsea.PValueCalculatorImpls;
 import edu.mit.broad.genome.math.Matrix;
 import edu.mit.broad.genome.math.Order;
-import edu.mit.broad.genome.objects.*;
+import edu.mit.broad.genome.objects.BitSetDataset;
+import edu.mit.broad.genome.objects.Dataset;
+import edu.mit.broad.genome.objects.DefaultDataset;
+import edu.mit.broad.genome.objects.DefaultGeneSetMatrix;
+import edu.mit.broad.genome.objects.GPWrappers;
+import edu.mit.broad.genome.objects.GeneSet;
+import edu.mit.broad.genome.objects.GeneSetMatrix;
+import edu.mit.broad.genome.objects.RankedList;
 import edu.mit.broad.genome.objects.esmatrix.db.EnrichmentDb;
 import edu.mit.broad.genome.objects.esmatrix.db.EnrichmentResult;
 import gnu.trove.TFloatIntHashMap;
@@ -26,19 +28,33 @@ import org.genepattern.menu.jfree.JFreeMenuBar;
 import org.jfree.chart.ChartMouseEvent;
 import org.jfree.chart.ChartMouseListener;
 
-import javax.swing.*;
-
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Frame;
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
+
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JSplitPane;
+import javax.swing.JTabbedPane;
+import javax.swing.UIManager;
 
 /**
  * @author jgould
  */
 public class LeadingEdgeAnalysis {
-    public static final LeadingEdgeAnalysis runAnalysis(EnrichmentDb edb, String[] gsetNames,
-                                                        Frame parentFrame) {
+    public static final LeadingEdgeAnalysis runAnalysis(EnrichmentDb edb,
+            String[] gsetNames, JTabbedPane tabbedPane) {
+        Frame parentFrame = (tabbedPane == null) ? null : 
+            (Frame)tabbedPane.getTopLevelAncestor();
+        
+        Dimension containerDim = (tabbedPane == null) ? null :
+            new Dimension(tabbedPane.getWidth(), tabbedPane.getHeight());
+        
         final GeneSet[] gsets = new GeneSet[gsetNames.length];
         for (int r = 0; r < gsetNames.length; r++) {
             EnrichmentResult result = edb.getResultForGeneSet(gsetNames[r]);
@@ -47,7 +63,7 @@ public class LeadingEdgeAnalysis {
         final GeneSetMatrix lev_gmx = new DefaultGeneSetMatrix(
                 "leading_edge_matrix_for_" + edb.getName(), gsets);
         LeadingEdgeAnalysis analysis = new LeadingEdgeAnalysis(lev_gmx, edb
-                .getRankedList(), parentFrame);
+                .getRankedList(), parentFrame, containerDim);
         analysis.setResultDirectory(edb.getEdbDir());
         return analysis;
     }
@@ -104,8 +120,8 @@ public class LeadingEdgeAnalysis {
         leadingEdgePanel.setResultDirectory(file);
     }
 
-    public LeadingEdgeAnalysis(final GeneSetMatrix lev_gmx,
-                               RankedList rankedList, final Frame parent) {
+    public LeadingEdgeAnalysis(final GeneSetMatrix lev_gmx, RankedList rankedList,
+            final Frame parent, Dimension containerDim) {
         final GeneSet[] gsets = lev_gmx.getGeneSets();
         final Dataset lev_ds = new BitSetDataset(lev_gmx).toDataset();
     
@@ -206,70 +222,60 @@ public class LeadingEdgeAnalysis {
         if (parent == null) return;
 
         mainComponent = new JPanel();
+        JSplitPane topBottomSplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
+        JSplitPane leftRightTopSplit = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
+        JSplitPane leftRightBotSplit = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
+        
+        topBottomSplit.add(leftRightTopSplit);
+        topBottomSplit.add(leftRightBotSplit);
+        topBottomSplit.setResizeWeight(0.5d);
+        leftRightTopSplit.setResizeWeight(0.5d);
+        leftRightBotSplit.setResizeWeight(0.5d);
+        mainComponent.add(topBottomSplit);
+        
         UIManager.getDefaults().put("JideSplitPane.dividerSize", 9);
+        int width = containerDim.width;
+        int height = containerDim.height;
+        mainComponent.setPreferredSize(containerDim);
 
-        DefaultDockingManager manager = new DefaultDockingManager(null,
-                mainComponent) {
-            public void activateFrame(String key) {
-                super.activateFrame(key);
-            }
-        };
-
-        manager.setInitSplitPriority(DefaultDockingManager.SPLIT_EAST_WEST_SOUTH_NORTH);
-        manager.setShowWorkspace(false);
-
-        manager.setRearrangable(false);
-        manager.setAutohidable(false);
-        manager.setFloatable(false);
-        manager.setShowTitleBar(false);
-        manager.getWorkspace().setAcceptDockableFrame(false);
-        manager.setProportionalSplits(true);
-
-        manager.beginLoadLayoutData();
-        int width = parent.getWidth();
-        int height = parent.getHeight();
-
-        DockableFrame f = new DockableFrame(LEADING_EDGE_MATRIX_KEY,
-                JideIconsFactory.getImageIcon(JideIconsFactory.DockableFrame.FRAME1));
-        f.getContentPane().add(leadingEdgeSP);
-        f.setInitIndex(0);
-        f.setInitSide(DockContext.DOCK_SIDE_NORTH);
+        JPanel f = new JPanel(new BorderLayout());
+        f.setToolTipText(LEADING_EDGE_MATRIX_KEY);
+        f.add(leadingEdgePanel.getMenuBar(), BorderLayout.PAGE_START);
+        f.add(leadingEdgeSP, BorderLayout.CENTER);
         f.setPreferredSize(new Dimension(width / 2, height / 2));
-
-        f.setJMenuBar(leadingEdgePanel.getMenuBar());
-        manager.addFrame(f);
-
-        f = new DockableFrame(GENE_SET_SIMILARITY_MATRIX_KEY,
-                JideIconsFactory.getImageIcon(JideIconsFactory.DockableFrame.FRAME1));
-        f.getContentPane().add(geneSetSP);
-        f.setInitIndex(1);
-        f.setInitSide(DockContext.DOCK_SIDE_NORTH);
+        leftRightTopSplit.add(f);
+        f.setVisible(true);
+        
+        f = new JPanel(new BorderLayout());
+        f.setToolTipText(GENE_SET_SIMILARITY_MATRIX_KEY);
+        f.add(geneSetSimilarityPanel.getMenuBar(), BorderLayout.PAGE_START);
+        f.add(geneSetSP, BorderLayout.CENTER);
         f.setPreferredSize(new Dimension(width / 2, height / 2));
-        f.setJMenuBar(geneSetSimilarityPanel.getMenuBar());
-        manager.addFrame(f);
+        leftRightTopSplit.add(f);
+        f.setVisible(true);
 
-        f = new DockableFrame(GENE_HISTOGRAM_KEY, JideIconsFactory
-                .getImageIcon(JideIconsFactory.DockableFrame.FRAME1));
-        f.getContentPane().add(new JScrollPane(geneHistogram));
-        f.setInitIndex(0);
-        f.setInitSide(DockContext.DOCK_SIDE_SOUTH);
-        f.setPreferredSize(new Dimension(width / 2, height / 2));
+        f = new JPanel(new BorderLayout());
+        f.setToolTipText(GENE_HISTOGRAM_KEY);
         JFreeMenuBar menuBar = new JFreeMenuBar(geneHistogram
                 .getChartPanel(), parent);
-        f.setJMenuBar(menuBar);
-        manager.addFrame(f);
-
-        f = new DockableFrame(JACCARD_HISTOGRAM_KEY, JideIconsFactory
-                .getImageIcon(JideIconsFactory.DockableFrame.FRAME1));
-        f.getContentPane().add(new JScrollPane(jaccardHistogram));
-        f.setInitIndex(1);
-        f.setInitSide(DockContext.DOCK_SIDE_SOUTH);
+        f.add(menuBar, BorderLayout.PAGE_START);
+        f.add(new JScrollPane(geneHistogram), BorderLayout.CENTER);
         f.setPreferredSize(new Dimension(width / 2, height / 2));
-        menuBar = new JFreeMenuBar(jaccardHistogram.getChartPanel(), parent);
-        f.setJMenuBar(menuBar);
-        manager.addFrame(f);
+        leftRightBotSplit.add(f);
+        f.setVisible(true);
 
-        manager.loadLayoutData();
+        f = new JPanel(new BorderLayout());
+        f.setToolTipText(JACCARD_HISTOGRAM_KEY);
+        menuBar = new JFreeMenuBar(jaccardHistogram.getChartPanel(), parent);
+        f.add(menuBar, BorderLayout.PAGE_START);
+        f.add(new JScrollPane(jaccardHistogram), BorderLayout.CENTER);
+        f.setPreferredSize(new Dimension(width / 2, height / 2));
+        leftRightBotSplit.add(f);
+        f.setVisible(true);
+
+        topBottomSplit.setDividerLocation(0.5d);
+        leftRightTopSplit.setDividerLocation(0.5d);
+        leftRightBotSplit.setDividerLocation(0.5d);
     }
 
     public Component getComponent() {

@@ -5,7 +5,6 @@ package xapps.gsea;
 
 import com.jgoodies.forms.builder.PanelBuilder;
 import com.jgoodies.forms.layout.CellConstraints;
-import com.jidesoft.swing.JideTabbedPane;
 
 import edu.mit.broad.genome.JarResources;
 import edu.mit.broad.genome.objects.esmatrix.db.EnrichmentDb;
@@ -22,29 +21,32 @@ import xtools.api.param.DirParam;
 import xtools.api.param.Param;
 import xtools.api.param.ReportCacheChooserParam;
 
-import javax.swing.*;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Cursor;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+
+import javax.swing.Icon;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JMenuBar;
+import javax.swing.JPanel;
+import javax.swing.JTabbedPane;
+import javax.swing.SwingWorker;
 
 /**
  * @author Aravind Subramanian
  */
 public class LeadingEdgeReportViewer extends AbstractViewer {
-
     public static final String NAME = "LeadingEdgeReportWidget";
-
     public static final Icon ICON = JarResources.getIcon("Lev16_b.gif");
 
     private ReportCacheChooserParam fReportParam;
-
     private DirParam fDirParam;
-
     private File curr_gseaResultDir;
-
     private JComponent fFiller;
-
     private LeadingEdgeReportViewer fInstance = this;
 
     public LeadingEdgeReportViewer() {
@@ -52,7 +54,7 @@ public class LeadingEdgeReportViewer extends AbstractViewer {
         jbInit();
     }
 
-    private JideTabbedPane sharedTabbedPane;
+    private JTabbedPane sharedTabbedPane;
 
     private void jbInit() {
         JButton bBuild = new JButton("Load GSEA Results");
@@ -82,11 +84,7 @@ public class LeadingEdgeReportViewer extends AbstractViewer {
                                 boolean first = false;
                                 if (sharedTabbedPane == null) {
                                     first = true;
-                                    sharedTabbedPane = new JideTabbedPane();
-                                    sharedTabbedPane.setHideOneTab(true);
-                                    sharedTabbedPane.setTabEditingAllowed(true);
-                                    sharedTabbedPane.setShowCloseButtonOnTab(true);
-
+                                    sharedTabbedPane = new JTabbedPane();
                                 }
 
                                 LeadingEdgeWidget josh_widget = new LeadingEdgeWidget(sharedTabbedPane, edb);
@@ -95,7 +93,6 @@ public class LeadingEdgeReportViewer extends AbstractViewer {
                                 if (first) {
                                     fInstance.remove(fFiller);
                                     fInstance.add(sharedTabbedPane, BorderLayout.CENTER);
-                                    //sharedTabbedPane.setTabClosableAt(0, false);
                                 }
 
                                 fInstance.revalidate();
@@ -152,11 +149,8 @@ public class LeadingEdgeReportViewer extends AbstractViewer {
         this.fFiller = GuiHelper.createWaitingPlaceholder();
         this.add(fFiller, BorderLayout.CENTER);
 
-        //this.add(createControlPanel(), BorderLayout.SOUTH);
-
         this.revalidate();
     }
-
 
     private static StringBuffer _createColStr() {
         return new StringBuffer("220dlu,      4dlu,        200dlu,   4dlu,  4dlu"); // columns

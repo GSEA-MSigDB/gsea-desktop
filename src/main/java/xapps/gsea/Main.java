@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2023 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package xapps.gsea;
 
@@ -7,19 +7,18 @@ import com.jgoodies.looks.LookUtils;
 import com.jgoodies.looks.Options;
 import com.jgoodies.looks.plastic.PlasticXPLookAndFeel;
 import com.jgoodies.looks.plastic.theme.ExperienceBlue;
-import com.jidesoft.comparator.ObjectComparatorManager;
-import com.jidesoft.swing.SplashScreen;
 
 import edu.mit.broad.genome.JarResources;
 import edu.mit.broad.xbench.ComparatorFactory2;
+
+import javax.swing.ToolTipManager;
+import javax.swing.UIManager;
 
 import org.apache.commons.lang3.SystemUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
 import org.broad.gsea.ui.DesktopIntegration;
-
-import javax.swing.*;
 
 /**
  * Main class of GSEA application
@@ -50,37 +49,20 @@ public class Main {
         }
     }
 
-    /**
-     * Class Constructor.
-     */
     public Main() {
-
-        super();
-
         setLnF();
-
-        ImageIcon splash = JarResources.getImageIcon("gsea_splash.png");
-        SplashScreen.create(splash);
-        SplashScreen.show();
 
         // start up the application
         final GseaFijiTabsApplicationFrame frame = new GseaFijiTabsApplicationFrame();
 
-	try {
-	    frame.init_bg_while_splashing();
-	} catch (Throwable t) {
-	    System.out.println("Error while initializing .., things may not work");
-	    t.printStackTrace();
-	}
-
-	SplashScreen.hide();
+    	try {
+    	    frame.init_bg_while_splashing();
+    	} catch (Throwable t) {
+    	    System.out.println("Error while initializing .., things may not work");
+    	    t.printStackTrace();
+    	}
 
         frame.makeVisible(true);
-
-        // A global object that can register comparator with a type and a ComparatorContext.
-        ObjectComparatorManager.registerComparator(Integer.class, new ComparatorFactory2.IntegerComparator());
-        ObjectComparatorManager.registerComparator(Float.class, new ComparatorFactory2.FloatComparator());
-
     }
 
     /**
@@ -89,7 +71,6 @@ public class Main {
      * @param args Ignored
      */
     public static void main(final String[] args) {
-
         try {
             new Main();
         } catch (Throwable e) {
@@ -99,7 +80,6 @@ public class Main {
     }
 
     public void setLnF() {
-    
         try {
             // Set the look and feel early
             // Java Web Start
@@ -110,32 +90,17 @@ public class Main {
                 if (!SystemUtils.IS_OS_MAC_OSX) {
                     PlasticXPLookAndFeel.setMyCurrentTheme(new ExperienceBlue());
                     UIManager.setLookAndFeel(new com.jgoodies.looks.plastic.PlasticXPLookAndFeel());
-                    //UIManager.setLookAndFeel(new com.jgoodies.looks.));
-                    //PlasticLookAndFeel.setMyCurrentTheme(new Silver());
-                    //UIManager.setLookAndFeel(new com.jgoodies.looks.plastic.PlasticLookAndFeel());
-    
                 }
     
             } catch (Throwable t) {
                 t.printStackTrace();
             }
-            //UIManager.setLookAndFeel("com.jgoodies.looks.plastic.PlasticXPLookAndFeel");
-            //UIManager.setLookAndFeel("com.jgoodies.looks.plastic.Plastic3DLookAndFeel");
-            //UIManager.setLookAndFeel("com.jgoodies.looks.plastic.ExtWindowsLookAndFeel");
-            // PlasticXPLookAndFeel.setMyCurrentTheme(new DarkStar());
-            //PlasticXPLookAndFeel.setMyCurrentTheme(new DesertBlue());
-    
-            // Some UI tweaks thanks to jgoodies suggestions
-            // You can force the JGoodies looks and the 1.4 versions of the
-            // // Sun looks to use system fonts using a String key, or JGoodies constant:
             UIManager.put("Application.useSystemFontSettings", Boolean.TRUE);
             UIManager.put(Options.USE_SYSTEM_FONTS_APP_KEY, Boolean.TRUE);
     
             // In Microsoft environments that use Tahoma as dialog font, you can
             // tweak the choosen font sizes by setting optional JGoodies font size hints. The global hints can be overriden by look-specific hints:
             Options.setUseSystemFonts(true);
-            // @note api deprecated jgoodies 2.0 feb 2006
-            //setGlobalFontSizeHints(FontSizeHints.MIXED);
     
             // Dont know if the font stuff actualy did anything!!
     
@@ -156,11 +121,8 @@ public class Main {
     
             // make tooltips persist for a wee bit longer than the default
             ToolTipManager.sharedInstance().setDismissDelay(15 * 1000);
-    
-    
         } catch (Exception e) {
             e.printStackTrace();
         }
-    
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2023 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.cytoscape.view;
 
@@ -15,11 +15,11 @@ import javax.swing.JLabel;
 import javax.swing.JMenuBar;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JTabbedPane;
 import javax.swing.SwingWorker;
 
 import com.jgoodies.forms.builder.PanelBuilder;
 import com.jgoodies.forms.layout.CellConstraints;
-import com.jidesoft.swing.JideTabbedPane;
 
 import edu.mit.broad.genome.JarResources;
 import edu.mit.broad.genome.swing.GuiHelper;
@@ -55,7 +55,7 @@ public class EnrichmentMapInputPanel extends AbstractViewer {
         jbInit();
     }
 
-    private JideTabbedPane sharedTabbedPane;
+    private JTabbedPane sharedTabbedPane;
 
     private void jbInit() {
         JPanel buttons = new JPanel();
@@ -96,16 +96,10 @@ public class EnrichmentMapInputPanel extends AbstractViewer {
 
                                 String[] datasets = current_results.split(",");
 
-                                // curr_edb = edb;
-
                                 boolean first = false;
                                 if (sharedTabbedPane == null) {
                                     first = true;
-                                    sharedTabbedPane = new JideTabbedPane();
-                                    sharedTabbedPane.setHideOneTab(true);
-                                    sharedTabbedPane.setTabEditingAllowed(true);
-                                    sharedTabbedPane.setShowCloseButtonOnTab(true);
-
+                                    sharedTabbedPane = new JTabbedPane();
                                 }
                                 // add this analysis to tab
                                 try {
@@ -120,7 +114,6 @@ public class EnrichmentMapInputPanel extends AbstractViewer {
                                 if (first) {
                                     fInstance.remove(fFiller);
                                     fInstance.add(sharedTabbedPane, BorderLayout.CENTER);
-                                    // sharedTabbedPane.setTabClosableAt(0, false);
                                 }
 
                                 fInstance.revalidate();
@@ -143,7 +136,6 @@ public class EnrichmentMapInputPanel extends AbstractViewer {
                 "[ OR ] Locate a GSEA report folder from the file system", false);
         final Param[] params = new Param[] { fReportParam, fDirParam };
 
-        // -------------------------------------------------------------------------------------------- //
         StringBuffer colStr = _createColStr();
         StringBuffer rowStr = _createRowStr(params);
 
@@ -176,16 +168,12 @@ public class EnrichmentMapInputPanel extends AbstractViewer {
         builder.add(buttons, cc.xy(3, rowcnt));
 
         final JPanel paramPanel = builder.getPanel();
-        // -------------------------------------------------------------------------------------------- //
 
         this.setLayout(new BorderLayout(10, 10));
         this.add(paramPanel, BorderLayout.NORTH);
 
         this.fFiller = GuiHelper.createWaitingPlaceholder();
         this.add(fFiller, BorderLayout.CENTER);
-
-        // this.add(createControlPanel(), BorderLayout.SOUTH);
-
         this.revalidate();
     }
 
@@ -208,5 +196,4 @@ public class EnrichmentMapInputPanel extends AbstractViewer {
     public JMenuBar getJMenuBar() {
         return EMPTY_MENU_BAR;
     }
-
 }
