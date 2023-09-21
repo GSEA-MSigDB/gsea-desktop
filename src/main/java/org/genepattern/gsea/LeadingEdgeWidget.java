@@ -3,8 +3,6 @@
  */
 package org.genepattern.gsea;
 
-import com.jidesoft.swing.JideTabbedPane;
-
 import edu.mit.broad.genome.JarResources;
 import edu.mit.broad.genome.objects.GeneSet;
 import edu.mit.broad.genome.objects.esmatrix.db.EnrichmentDb;
@@ -30,7 +28,6 @@ import xtools.gsea.LeadingEdgeTool;
 
 import java.awt.Color;
 import java.awt.Cursor;
-import java.awt.Frame;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
@@ -45,6 +42,7 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenuBar;
 import javax.swing.JPanel;
+import javax.swing.JTabbedPane;
 import javax.swing.SwingWorker;
 import javax.swing.UIManager;
 
@@ -58,7 +56,7 @@ import static java.lang.System.setProperty;
 public class LeadingEdgeWidget implements Widget {
     private static final Icon ICON = JarResources.getIcon("Lev16_b.gif");
     private EnrichmentDb edb;
-    private JideTabbedPane tabbedPane;
+    private JTabbedPane tabbedPane;
 
     // counts how many times analysis was run
     private static int runs = 0;
@@ -85,17 +83,13 @@ public class LeadingEdgeWidget implements Widget {
         }
 
         runningInGenePattern = true;
-        tabbedPane = new JideTabbedPane();
-        tabbedPane.setHideOneTab(true);
-        tabbedPane.setTabEditingAllowed(true);
-        tabbedPane.setShowCloseButtonOnTab(true);
+        tabbedPane = new JTabbedPane();
         this.edb = edb;
         init(edb);
         tabbedPane.addTab("GSEA Results", viewAndSearchComponent);
-        tabbedPane.setTabClosableAt(0, false);
     }
 
-    public LeadingEdgeWidget(JideTabbedPane tabbedPane, EnrichmentDb edb) {
+    public LeadingEdgeWidget(JTabbedPane tabbedPane, EnrichmentDb edb) {
         if (edb == null) {
             throw new IllegalArgumentException("Param edb cannot be null");
         }
@@ -392,7 +386,7 @@ public class LeadingEdgeWidget implements Widget {
                     try {
                     return LeadingEdgeAnalysis.runAnalysis(edb, 
                             viewAndSearchComponent.getSelectedColumnArray(GENE_SET_INDEX), 
-                            (Frame) tabbedPane.getTopLevelAncestor());
+                            tabbedPane);
                     }
                     catch (Throwable t) {
                         t.printStackTrace();

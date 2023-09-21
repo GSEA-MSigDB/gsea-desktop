@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2023 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.genome.swing.fields;
 
 import edu.mit.broad.genome.swing.GuiHelper;
@@ -18,7 +18,6 @@ import java.util.StringTokenizer;
  * the JTextField</p>
  *
  * @author Aravind Subramanian
- * @version %I%, %G%
  * @note diff from a chooser in that the input field is a Text area and not a list (ie chooser)
  */
 public class GStringsInputFieldPlusChooser extends JPanel implements GFieldPlusChooser {
@@ -29,52 +28,22 @@ public class GStringsInputFieldPlusChooser extends JPanel implements GFieldPlusC
 
     private static final String PARSE_DELIMS = ",\t\n";// dont parse on spaces
 
-    /**
-     * Class Constructor.
-     *
-     * @param options
-     */
     public GStringsInputFieldPlusChooser(String text) {
-
         this.fWindow = new GTextAreaWindow(text);
-
-        init();
-    }
-
-    public GStringsInputFieldPlusChooser() {
-
-        this.fWindow = new GTextAreaWindow();
-
-        init();
-    }
-
-    private void init() {
-
-        jbInit();
-        bEntry.addActionListener(new ActionListener() {
-
-            public void actionPerformed(ActionEvent e) {
-
-                String text = fWindow.show();
-
-                if (text != null) {
-                    format(text);
-                }
-            }
-        });
-    }
-
-    private void jbInit() {
-
         this.setLayout(new BorderLayout());
         tfEntry.setEditable(true);
         this.add(tfEntry, BorderLayout.CENTER);
         this.add(bEntry, BorderLayout.EAST);
+        bEntry.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                String text = fWindow.show();
+                if (text != null) { format(text); }
+            }
+        });
     }
 
     private void format(String text) {
-        StringBuffer buf = new StringBuffer();
-
+        StringBuilder buf = new StringBuilder();
         StringTokenizer tok = new StringTokenizer(text, PARSE_DELIMS);
 
         while (tok.hasMoreTokens()) {
@@ -93,7 +62,7 @@ public class GStringsInputFieldPlusChooser extends JPanel implements GFieldPlusC
     }
 
     /**
-     * so that the tf can hbave its events listened to
+     * so that the tf can have its events listened to
      *
      * @return
      */
@@ -116,5 +85,4 @@ public class GStringsInputFieldPlusChooser extends JPanel implements GFieldPlusC
             this.setText(obj.toString());
         }
     }
-
-}    // End GStringsInputFieldPlusChooser
+}
