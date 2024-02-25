@@ -96,13 +96,12 @@ module org.gsea_msigdb.gsea {
     requires java.datatransfer;
     requires transitive java.desktop;
     requires java.logging;
-    requires java.prefs;
+    requires transitive java.prefs;
     requires java.xml;
     requires transitive jcommon;
     requires jdk.xml.dom;
     requires jfreechart;
     requires jgoodies.uif.lite;
-    requires jide.common;
     requires json.simple;
     requires looks;
     requires maven.artifact;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2023 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2024 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package org.genepattern.heatmap;
 
@@ -7,7 +7,6 @@ import com.jgoodies.forms.layout.CellConstraints;
 import com.jgoodies.forms.layout.CellConstraints.Alignment;
 import com.jgoodies.forms.layout.FormLayout;
 import com.jgoodies.forms.layout.RowSpec;
-import com.jidesoft.plaf.xerto.VerticalLabelUI;
 
 import edu.mit.broad.xbench.core.api.Application;
 
@@ -32,8 +31,11 @@ import org.genepattern.table.GPTable;
 import org.genepattern.uiutil.CenteredDialog;
 import org.genepattern.uiutil.UIUtil;
 
+import javax.accessibility.Accessible;
 import javax.swing.*;
 import javax.swing.event.*;
+import javax.swing.plaf.LabelUI;
+import javax.swing.plaf.basic.BasicLabelUI;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
 
@@ -41,6 +43,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
+import java.awt.geom.AffineTransform;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
@@ -586,15 +589,44 @@ public class HeatMapComponent extends JComponent {
                 layoutSampleTableColumn(c, heatMapPanel.getColumnSize());
             }
         };
-        VerticalLabelUI renderer = new VerticalLabelUI(false) {
+        JLabel renderer = ((JLabel) sampleTable.getDefaultRenderer(String.class));
+        LabelUI rendererUI = new BasicLabelUI() {
+            // Inspired by Xerto VerticalLabelUI but tailored for our use
+            @Override
+            public void paint(Graphics g, JComponent c) {
+                JLabel l = (JLabel)c;
+                String t = l.getText();
+                if (t != null) {
+                    FontMetrics fm = g.getFontMetrics();
+                    Insets viewInsets = c.getInsets();
+                    Rectangle viewRect = new Rectangle(viewInsets.left, viewInsets.top,
+                            c.getHeight() - (viewInsets.bottom + viewInsets.top), 
+                            c.getWidth() - (viewInsets.right + viewInsets.left));
+                    Rectangle textRect = new Rectangle(0, 0, 0, 0);
+                    Rectangle iconRect = new Rectangle(0, 0, 0, 0);
+                    String cl = layoutCL(l, fm, t, l.getIcon(), viewRect, iconRect, textRect);
+                    
+                    Graphics2D g2d = (Graphics2D)g;
+                    AffineTransform xform = g2d.getTransform();
+                    g2d.rotate(-Math.PI / 2);
+                    g2d.translate(-c.getHeight(), 0);
+                    paintEnabledText(l, g2d, cl, textRect.x, fm.getAscent()+ textRect.y);
+                    g2d.setTransform(xform);
+                }
+            }
+
+            @Override
+            public Dimension getPreferredSize(JComponent arg0) {
+                return new Dimension(arg0.getHeight(), arg0.getWidth());
+            }
+            
+            @Override
             public void installUI(JComponent c) {
                 super.installUI(c);
-                c.setBackground(UIManager.getDefaults().getColor("Table.background"));
-            } 
+                c.setBackground(sampleTable.getBackground());
+            }
         };
-        
-        ((JLabel) sampleTable.getDefaultRenderer(String.class))
-        .setUI(renderer);
+        renderer.setUI(rendererUI);
 
         sampleTable.setRowSelectionAllowed(false);
         sampleTable.setModel(sampleTableModel);

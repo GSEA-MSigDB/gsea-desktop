@@ -6,17 +6,12 @@ import org.apache.tools.ant.filters.ReplaceTokens
 ext.moduleName = 'org.gsea_msigdb.gsea'
 ext.mainClassName = 'xapps.gsea.GSEA'
 
-configurations {
-    jidePatchModuleLibs
-}
-
 repositories {
-    flatDir { dirs 'modules', 'lib' }
+    flatDir { dirs 'modules' }
 }
 
 dependencies {
     implementation fileTree(dir: 'modules', include: '*.jar')
-    jidePatchModuleLibs fileTree(dir: 'lib', include: '*.jar')
 }
 
 tasks.withType(JavaCompile) {
@@ -52,11 +47,7 @@ compileJava {
     inputs.property("moduleName", moduleName)
     doFirst {
         options.compilerArgs = [
-            '--module-path', classpath.asPath,
-            '--patch-module=jide.common=' + configurations.jidePatchModuleLibs.asPath,
-            "--add-exports=jide.common/com.jidesoft.grid=${moduleName}",
-            "--add-exports=jide.common/com.jidesoft.docking=${moduleName}",
-            "--add-exports=jide.common/com.jidesoft.status=${moduleName}"
+            '--module-path', classpath.asPath
         ]
         classpath = files()
     }
@@ -75,9 +66,6 @@ task createDist(type: Copy, dependsOn: jar)  {
         from ("${buildDir}/libs")
         from ("modules")
         into "modules"
-    }
-    with copySpec {
-        from ("lib") into "lib"
     }
     into "${buildDir}/GSEA-dist"
 }
@@ -163,10 +151,6 @@ task createMacAppDist(type: Copy, dependsOn: createDist) {
     with copySpec {
         from ("${buildDir}/GSEA-dist/modules") include '*.jar'
         into "GSEA_${version}.app/Contents/Java/modules"
-    }
-    with copySpec {
-        from ("${buildDir}/GSEA-dist/lib") include '*.jar'
-        into "GSEA_${version}.app/Contents/Java/lib"
     }
     into "${buildDir}/GSEA-MacApp-dist"
 

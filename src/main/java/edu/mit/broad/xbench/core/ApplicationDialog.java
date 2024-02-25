@@ -1,12 +1,11 @@
 /*
- * Copyright (c) 2003-2021 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2024 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.xbench.core;
 
 import edu.mit.broad.genome.Errors;
 import edu.mit.broad.xbench.core.api.Application;
 import edu.mit.broad.xbench.core.api.DialogDescriptor;
-import edu.mit.broad.xbench.core.api.DialogDescriptorJide;
 
 import javax.swing.*;
 
@@ -25,8 +24,6 @@ import java.awt.*;
  * Uses JOptionPane internally, but adds some xomics candy.
  * plus has some magic to make jlists double clickable
  * <p/>
- * IMP: much of the code is borrowed from DialogDescriptor
- * <p/>
  * Advantage in parcelling this off into a class is that we redecue client codes
  * usage of Application.
  *
@@ -35,9 +32,8 @@ import java.awt.*;
  * Having no parent component (or the JOptionPane.getRootFrame() one) causes
  * a modal issue wherein a GUI with the model window showing if minimized
  * appears to hang (the CTRL-DELETE-OPTION / GeneCluster bug that Keith noticed)
- * @see DialogDescriptor
  */
-public class ApplicationDialog extends DialogDescriptorJide {
+public class ApplicationDialog extends DialogDescriptor {
     public ApplicationDialog(final String title, final Component comp) {
         super(title, comp, null);
     }
@@ -112,6 +108,6 @@ public class ApplicationDialog extends DialogDescriptorJide {
 
     public static boolean showConfirm(final String title, String msg) {
         int res = JOptionPane.showConfirmDialog(Application.getWindowManager().getRootFrame(), msg, title, JOptionPane.OK_CANCEL_OPTION);
-        return res == ApplicationDialog.OK_OPTION;
+        return res == DialogDescriptor.OK_OPTION;
     }
 }

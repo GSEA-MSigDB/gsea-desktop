@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2023 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.genome.reports;
 
@@ -29,6 +29,7 @@ import edu.mit.broad.xbench.heatmap.GramImagerImpl;
 import gnu.trove.TIntFloatHashMap;
 import gnu.trove.TIntIntHashMap;
 import gnu.trove.TIntObjectHashMap;
+import xapps.gsea.GseaWebResources;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.ecs.StringElement;
@@ -314,7 +315,7 @@ public class EnrichmentReports {
         div.addElement(h4);
         UL ul = new UL();
 
-        StringElement line7 = HtmlFormat.Links.hyper("Guide to", "https://www.gsea-msigdb.org/gsea/doc/GSEAUserGuideFrame.html?_Interpreting_GSEA_Results", "interpret results");
+        StringElement line7 = HtmlFormat.Links.hyper("Guide to", GseaWebResources.getGseaHelpURL() + "GSEA/GSEA_User_Guide/#interpreting-gsea-results", "interpret results");
 
         final int numPosScores = edb.getNumScores(true);
 		if (numPosScores > 0) {

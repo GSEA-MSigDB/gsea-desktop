@@ -1,68 +1,58 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2024 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.xbench.core;
 
-import com.jidesoft.dialog.ButtonPanel;
-import com.jidesoft.dialog.StandardDialog;
-import com.jidesoft.dialog.StandardDialogPane;
-import com.jidesoft.swing.JideBoxLayout;
-import edu.mit.broad.genome.*;
 import xtools.api.param.MissingReqdParamException;
 
-import javax.swing.*;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.FlowLayout;
+import java.awt.Frame;
+import java.awt.HeadlessException;
+import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-public class ErrorWidgetJide2 extends StandardDialog {
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.BorderFactory;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JDialog;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
+import javax.swing.SwingConstants;
 
+import edu.mit.broad.genome.Errors;
+import edu.mit.broad.genome.JarResources;
+import edu.mit.broad.genome.StandardException;
+import edu.mit.broad.genome.TraceUtils;
+
+public class ErrorWidgetJide2 extends JDialog {
     private JComponent _detailsPanel;
-
     private Throwable[] fErrors;
-
     private String fError_msg;
 
-    /**
-     * Class constructor
-     *
-     * @param parent
-     * @param title
-     * @param t_opt
-     * @param error_msg_opt
-     * @throws HeadlessException
-     */
-    public ErrorWidgetJide2(final Frame parent,
-                            final String title,
-                            final Throwable t_opt,
-                            final String error_msg_opt) throws HeadlessException {
+    public ErrorWidgetJide2(final Frame parent, final String title, final Throwable t_opt,
+            final String error_msg_opt) throws HeadlessException {
         super(parent, _title(title));
 
         Throwable[] tss = null;
-        if (t_opt != null) {
-            tss = new Throwable[]{t_opt};
-        }
+        if (t_opt != null) { tss = new Throwable[]{t_opt}; }
 
         init(title, tss, error_msg_opt);
     }
 
-    /**
-     * Class constructor
-     *
-     * @param parent
-     * @param errors
-     * @throws HeadlessException
-     */
-    public ErrorWidgetJide2(final Frame parent,
-                            final Errors errors) throws HeadlessException {
+    public ErrorWidgetJide2(final Frame parent, final Errors errors) throws HeadlessException {
         super(parent, _title(errors.getName()));
         init(errors.getName(), errors.getErrors(), errors.getErrors(false));
     }
 
-    public ErrorWidgetJide2(final Frame parent,
-                            final String errMsg) throws HeadlessException {
+    public ErrorWidgetJide2(final Frame parent, final String errMsg) throws HeadlessException {
         super(parent, _title(errMsg));
         init(errMsg, null, errMsg);
     }
@@ -77,15 +67,8 @@ public class ErrorWidgetJide2 extends StandardDialog {
         }
     }
 
-    // Lots of logix about how errors are displayed is in here
-    private void init(final String title,
-                      final Throwable[] t_opt,
-                      String error_msg_opt) {
-
-        //log.debug(">> title: " + title);
-        //log.debug(">> t_opt: " + t_opt);
-        //log.debug(">> error_msg: " + error_msg_opt);
-
+    // Lots of logic about how errors are displayed is in here
+    private void init(final String title, final Throwable[] t_opt, String error_msg_opt) {
         boolean dontTruncate = false;
 
         if (error_msg_opt == null && t_opt != null && t_opt.length > 0 && t_opt[0] != null) {
@@ -100,24 +83,27 @@ public class ErrorWidgetJide2 extends StandardDialog {
                 error_msg_opt = ((MissingReqdParamException) tc).getMessageLongInHtml();
                 dontTruncate = true;
             }
-
         }
 
-        if (error_msg_opt != null && error_msg_opt.length() > 80 && !dontTruncate) {
-            this.fError_msg = error_msg_opt.substring(0, 80) + " ...";
+        if (error_msg_opt != null && error_msg_opt.length() > 110 && !dontTruncate) {
+            this.fError_msg = error_msg_opt.substring(0, 110) + " ...";
         } else {
             this.fError_msg = error_msg_opt;
         }
 
         this.fErrors = t_opt;
+        
+        this.setModal(true);
+        this.setLayout(new BorderLayout());
+        add(createContentPanel(), BorderLayout.NORTH);
+        add(createButtonPanel(), BorderLayout.CENTER);
+        _detailsPanel = createDetailsPanel();
+        add(_detailsPanel, BorderLayout.SOUTH);
+        _detailsPanel.setVisible(false);
+        this.setAlwaysOnTop(true);
     }
-
-    public JComponent createBannerPanel() {
-        return null;
-    }
-
+    
     public JComponent createDetailsPanel() {
-
         final JTextArea textArea = new JTextArea();
         textArea.setColumns(80);
         textArea.setRows(20);
@@ -152,7 +138,6 @@ public class ErrorWidgetJide2 extends StandardDialog {
             }
         });
 
-
         JPanel panel = new JPanel(new BorderLayout(6, 6));
         panel.add(new JScrollPane(textArea), BorderLayout.CENTER);
         panel.add(butPanel, BorderLayout.SOUTH);
@@ -160,24 +145,6 @@ public class ErrorWidgetJide2 extends StandardDialog {
         label.setLabelFor(textArea);
         panel.setBorder(BorderFactory.createEmptyBorder(0, 10, 10, 10));
         return panel;
-    }
-
-    protected StandardDialogPane createStandardDialogPane() {
-        return new DefaultStandardDialogPane() {
-            protected void layoutComponents(Component bannerPanel, Component contentPanel, ButtonPanel buttonPanel) {
-                setLayout(new JideBoxLayout(this, BoxLayout.Y_AXIS));
-                if (bannerPanel != null) {
-                    add(bannerPanel);
-                }
-                if (contentPanel != null) {
-                    add(contentPanel);
-                }
-                add(buttonPanel, JideBoxLayout.FIX);
-                _detailsPanel = createDetailsPanel();
-                add(_detailsPanel, JideBoxLayout.VARY);
-                _detailsPanel.setVisible(false);
-            }
-        };
     }
 
     public JComponent createContentPanel() {
@@ -198,23 +165,23 @@ public class ErrorWidgetJide2 extends StandardDialog {
         return panel;
     }
 
-    public ButtonPanel createButtonPanel() {
-        ButtonPanel buttonPanel = new ButtonPanel();
+    public JPanel createButtonPanel() {
+        JPanel buttonPanel = new JPanel(new BorderLayout());
+        JPanel closeDetailPanel = new JPanel(new FlowLayout());
         JButton closeButton = new JButton();
         JButton detailButton = new JButton();
         detailButton.setMnemonic('D');
-        closeButton.setName(OK);
-        buttonPanel.addButton(closeButton, ButtonPanel.AFFIRMATIVE_BUTTON);
-        buttonPanel.addButton(detailButton, ButtonPanel.OTHER_BUTTON);
+        closeButton.setName("OK");
+        closeDetailPanel.add(closeButton);
+        closeDetailPanel.add(detailButton);
+        buttonPanel.add(closeDetailPanel, BorderLayout.EAST);
 
         closeButton.setAction(new AbstractAction("Close") {
             public void actionPerformed(ActionEvent e) {
-                setDialogResult(RESULT_AFFIRMED);
                 setVisible(false);
                 dispose();
             }
         });
-
 
         if (fErrors != null) {
             Action help_action = null;
@@ -227,11 +194,10 @@ public class ErrorWidgetJide2 extends StandardDialog {
             if (help_action != null) {
                 JButton helpButton = new JButton("Help");
                 helpButton.setAction(help_action);
-                buttonPanel.addButton(helpButton, ButtonPanel.HELP_BUTTON);
+                buttonPanel.add(helpButton, BorderLayout.WEST);
             }
-
         }
-
+        
         detailButton.setAction(new AbstractAction("Details >>") {
             public void actionPerformed(ActionEvent e) {
                 if (_detailsPanel.isVisible()) {
@@ -246,11 +212,8 @@ public class ErrorWidgetJide2 extends StandardDialog {
             }
         });
 
-        setDefaultCancelAction(closeButton.getAction());
-        setDefaultAction(closeButton.getAction());
         getRootPane().setDefaultButton(closeButton);
         buttonPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        //buttonPanel.setSizeContraint(ButtonPanel.NO_LESS_THAN); // since the checkbox is quite wide, we don't want all of them have the same size.
         return buttonPanel;
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2023 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2024 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package xapps.gsea;
 
@@ -62,8 +62,7 @@ public class GseaWebResources {
     }
 
     public static String getGseaHelpURL() {
-        return "http://127.0.0.1:8001/";
-        //return "https://docs.gsea-msigdb.org/";
+        return "https://docs.gsea-msigdb.org/";
     }
 
     public static String getGseaContactURL() {
@@ -75,7 +74,7 @@ public class GseaWebResources {
     }
 
    public static String getGseaChipInfoHelpURL() {
-        return getGseaHelpURL() + "GSEA/GSEA_User_Guide/#appendix-b-chip-file-selection-help";
+        return getGseaHelpURL() + "GSEA/GSEA_User_Guide/#appendix-b";
     }
 
     public static String getHumanArrayAnnotationsURL() {

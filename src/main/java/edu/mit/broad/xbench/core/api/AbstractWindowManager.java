@@ -1,12 +1,11 @@
 /*
- * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2024 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.xbench.core.api;
 
 import edu.mit.broad.genome.Errors;
 import edu.mit.broad.xbench.core.ApplicationDialog;
 import edu.mit.broad.xbench.core.WrappedComponent;
-import xtools.api.param.Validator;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,7 +26,6 @@ public abstract class AbstractWindowManager implements WindowManager {
             throw new IllegalArgumentException("Param rootFrame cannot be null");
         }
         this.fRootFrame = rootFrame;
-
     }
 
     public Dimension getExpectedWindowSize() {
@@ -40,7 +38,6 @@ public abstract class AbstractWindowManager implements WindowManager {
     }
 
     public JFrame getRootFrame() {
-        //klog.debug("Getting root frame: " + fRootFrame + " " + fRootFrame.getName());
         return fRootFrame;
     }
 
@@ -60,14 +57,6 @@ public abstract class AbstractWindowManager implements WindowManager {
 
     public void showError(final Throwable t) {
         showError("Error", t);
-    }
-
-    public void showError(final String msg,
-                          final Throwable t,
-                          final JButton[] customRemedyOptions) {
-        klog.error(msg);
-        ApplicationDialog.showError(msg, t);
-        klog.debug("TO DO the customRemedyOptions: {}", customRemedyOptions.toString());
     }
 
     public boolean showConfirm(final String msg) {
@@ -92,14 +81,14 @@ public abstract class AbstractWindowManager implements WindowManager {
 
     public DialogDescriptor createDialogDescriptor(final String title, final Component comp,
             final Action help_action_opt, final Action info_action_opt, boolean showLicenseButton) {
-        return new DialogDescriptorJide(title, comp, help_action_opt, info_action_opt, showLicenseButton);
+        return new DialogDescriptor(title, comp, help_action_opt, info_action_opt, showLicenseButton);
     }
 
     public DialogDescriptor createDialogDescriptor(final String title, final Component comp, final Action help_action_opt) {
-        return new DialogDescriptorJide(title, comp, help_action_opt);
+        return new DialogDescriptor(title, comp, help_action_opt);
     }
 
     public DialogDescriptor createDialogDescriptor(final String title, final Component comp) {
-        return new DialogDescriptorJide(title, comp, null);
+        return new DialogDescriptor(title, comp, null);
     }
 }

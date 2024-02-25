@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2023 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2024 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package xapps.gsea;
 
@@ -9,7 +9,6 @@ import com.jgoodies.looks.plastic.PlasticXPLookAndFeel;
 import com.jgoodies.looks.plastic.theme.ExperienceBlue;
 
 import edu.mit.broad.genome.JarResources;
-import edu.mit.broad.xbench.ComparatorFactory2;
 
 import javax.swing.ToolTipManager;
 import javax.swing.UIManager;
@@ -36,11 +35,6 @@ public class Main {
      * is needed.
      */
     static {
-        // Tell Jide we are valid
-        com.jidesoft.utils.Lm.verifyLicense("Broad Institute of MIT and Harvard",
-                "Gene set  enrichment analysis java desktop application",
-                "YSjBO6OJfF9WbavzI73Jt1HgDI4x9L21");
-
         DesktopIntegration.verifyJavaPlatform();
         DesktopIntegration.setDockIcon(JarResources.getImage("icon_64x64.png"));
         
@@ -62,7 +56,7 @@ public class Main {
     	    t.printStackTrace();
     	}
 
-        frame.makeVisible(true);
+        frame.makeVisible();
     }
 
     /**

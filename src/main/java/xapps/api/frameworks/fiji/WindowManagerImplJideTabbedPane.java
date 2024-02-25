@@ -1,55 +1,33 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2024 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package xapps.api.frameworks.fiji;
 
-import com.jidesoft.swing.JideTabbedPane;
+import java.awt.Component;
+import java.awt.Font;
+
+import javax.swing.JFrame;
+import javax.swing.JPopupMenu;
+import javax.swing.JTabbedPane;
+
 import edu.mit.broad.xbench.core.WrappedComponent;
 import edu.mit.broad.xbench.core.api.AbstractWindowManager;
-
-import javax.swing.*;
-import java.awt.*;
 
 /**
  * @author Aravind Subramanian
  */
 public class WindowManagerImplJideTabbedPane extends AbstractWindowManager {
+    private JTabbedPane fTabbedPane;
 
-    private JideTabbedPane fTabbedPane;
-
-    /**
-     * Class constructor
-     *
-     * @param frame
-     * @param tp
-     */
     public WindowManagerImplJideTabbedPane(final JFrame frame) {
         super(frame);
-
-        fTabbedPane = new JideTabbedPane(JideTabbedPane.TOP);
-        fTabbedPane.setTabEditingAllowed(false);
-        //fTabbedPane.setBoxStyleTab(true);
-        fTabbedPane.setShowCloseButton(true);
-        fTabbedPane.setShowCloseButtonOnTab(true);
-        fTabbedPane.setShowGripper(true); // just a decorator no action
-        fTabbedPane.setShowIconsOnTab(true);
-        fTabbedPane.setShowTabButtons(true);
-
-
-        fTabbedPane.setFont(FONT_DEFAULT_PLAIN);
-        fTabbedPane.setSelectedTabFont(FONT_DEFAULT_BOLD);
-
+        fTabbedPane = new JTabbedPane(JTabbedPane.TOP);
+        fTabbedPane.setFont(new Font("Helvetica", Font.PLAIN, 14));
     }
 
-    public static final Font FONT_DEFAULT_PLAIN = new Font("Helvetica",
-            Font.PLAIN, 14);
-    public static final Font FONT_DEFAULT_BOLD = new Font("Helvetica",
-            Font.BOLD, 14);
-
-    public JideTabbedPane getTabbedPane() {
+    public JTabbedPane getTabbedPane() {
         return fTabbedPane;
     }
-
 
     private int getTabIndex(WrappedComponent wc) {
         for (int i = 0; i < fTabbedPane.getTabCount(); i++) {
@@ -75,10 +53,6 @@ public class WindowManagerImplJideTabbedPane extends AbstractWindowManager {
         return new JideWindow(wc.getAssociatedTitle(), wc.getWrappedComponent());
     }
 
-    // -------------------------------------------------------------------------------------------- //
-    // ---------------------------------- ACTION RELATED ------------------------------------ //
-    // -------------------------------------------------------------------------------------------- //
-
     public JPopupMenu createPopupMenu(final Object obj) {
         return null;
     }
@@ -86,5 +60,4 @@ public class WindowManagerImplJideTabbedPane extends AbstractWindowManager {
     public boolean runDefaultAction(final Object obj) {
         return false;
     }
-
-} // End class WindowManagerImpl
+}
