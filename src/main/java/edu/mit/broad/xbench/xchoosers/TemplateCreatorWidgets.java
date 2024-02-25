@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2024 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.xbench.xchoosers;
 
@@ -17,6 +17,8 @@ import edu.mit.broad.xbench.searchers.GeneSearchList;
 
 import javax.swing.*;
 
+import org.apache.commons.lang3.StringUtils;
+
 import au.com.pegasustech.demos.layout.SRLayout;
 
 import java.awt.*;
@@ -28,20 +30,15 @@ import java.io.File;
  * @author Aravind Subramanian
  */
 public class TemplateCreatorWidgets {
-
     public static class OnTheFlyFromSampleNames extends JPanel {
-
         private JTextArea taClassA;
         private JTextField tfClassA;
         private JTextArea taClassB;
         private JTextField tfClassB;
-
         private JComboBox cbDataset;
-
         private Template createdTemplate;
 
         public OnTheFlyFromSampleNames() {
-
             JPanel pan = new JPanel(new SRLayout(2, 15));
 
             JPanel sub_a = new JPanel(new BorderLayout());
@@ -88,9 +85,7 @@ public class TemplateCreatorWidgets {
         }
 
         private void createTemplate() {
-
             try {
-
                 // Preliminary checks
                 if (taClassA.getText().trim().length() == 0) {
                     Application.getWindowManager().showMessage("No sample names specified in class A");
@@ -121,7 +116,6 @@ public class TemplateCreatorWidgets {
                 // OK, lets go for it
 
                 File out = Application.getVdbManager().getDefaultOutputDir();
-
                 String classAName = tfClassA.getText();
                 String classBName = tfClassB.getText();
 
@@ -153,22 +147,12 @@ public class TemplateCreatorWidgets {
      * @author Aravind Subramanian
      */
     public static class GenePhenotype extends JPanel {
-
         private GeneSearchList geneSearch;
-
-        private JComboBox cbDataset;
-
+        private JComboBox<Dataset> cbDataset;
         private Template createdTemplate;
 
-        /**
-         * Class constructor
-         */
         public GenePhenotype() {
-
             this.geneSearch = new GeneSearchList();
-            geneSearch.getJList().setVisibleRowCount(50);
-            geneSearch.getJList().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-
             this.setLayout(new BorderLayout(10, 10));
             this.add(geneSearch.getComponent(), BorderLayout.CENTER);
 
@@ -181,14 +165,14 @@ public class TemplateCreatorWidgets {
             });
             val.add(bValidate, BorderLayout.EAST);
 
-            cbDataset = new JComboBox();
+            cbDataset = new JComboBox<>();
             cbDataset.setBorder(BorderFactory.createTitledBorder("Dataset"));
             GuiHelper.safeSelect(cbDataset);
             cbDataset.addActionListener(new ActionListener() {
                 public void actionPerformed(ActionEvent e) {
-                    Object obj = cbDataset.getSelectedItem();
-                    if (obj != null) {
-                        geneSearch.setFeatures(((Dataset) obj).getRowNames());
+                    Dataset ds = cbDataset.getModel().getElementAt(cbDataset.getSelectedIndex());
+                    if (ds != null) {
+                        geneSearch.setFeatures(ds.getRowNames());
                     }
                 }
             });
@@ -200,24 +184,26 @@ public class TemplateCreatorWidgets {
         }
 
         private void createTemplate() {
-
             try {
                 // Preliminary checks
-                Object selectedItem = geneSearch.getJList().getSelectedValue();
-                if (selectedItem == null) {
+                String selectedItem = geneSearch.getChosenFeature();
+                if (StringUtils.isBlank(selectedItem)) {
                     Application.getWindowManager().showMessage("First select a gene, then apply");
                     return;
                 }
+                if (!geneSearch.isChosenFeatureInList()) {
+                    Application.getWindowManager().showMessage("Chosen gene is not in the feature list");
+                    return;
+                }
 
-                Object obj = cbDataset.getSelectedItem();
-                if (obj == null) {
+                Dataset ds = cbDataset.getModel().getElementAt(cbDataset.getSelectedIndex());
+                if (ds == null) {
                     Application.getWindowManager().showMessage("No dataset available. First import a dataset and then apply this phenotype");
                     return;
                 }
 
                 // OK, go for it
                 File out = Application.getVdbManager().getDefaultOutputDir();
-                Dataset ds = (Dataset) obj;
                 String geneName = selectedItem.toString();
                 String tn = geneName + "_profile_in_" + ds.getName() + ".cls";
                 File file = NamingConventions.createSafeFile(out, tn);
@@ -229,11 +215,6 @@ public class TemplateCreatorWidgets {
             } catch (Throwable t) {
                 Application.getWindowManager().showError("Trouble making template", t);
             }
-
         }
-
-
-    } // End class GenePhenotype
-
-
-} // End class TemplateCreators
+    }
+}

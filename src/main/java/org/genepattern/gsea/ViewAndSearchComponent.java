@@ -3,8 +3,6 @@
  */
 package org.genepattern.gsea;
 
-import com.jidesoft.dialog.ButtonPanel;
-
 import edu.mit.broad.genome.JarResources;
 import edu.mit.broad.genome.swing.GuiHelper;
 
@@ -22,6 +20,9 @@ import org.jfree.ui.SortableTableModel;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
+import java.awt.FlowLayout;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.Point;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
@@ -56,7 +57,6 @@ public class ViewAndSearchComponent extends JPanel {
             }
         };
         
-//        sortableTable.setShowSortOrderNumber(false);
         sortableTable.getSelectionModel().setSelectionMode(
                 ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
@@ -70,7 +70,7 @@ public class ViewAndSearchComponent extends JPanel {
         this.add(controlPanel, BorderLayout.SOUTH);
     }
 
-    static class ControlPanel extends ButtonPanel {
+    static class ControlPanel extends JPanel {
         private JButton bLeadingEdge;
         private JButton buildhtmlReportBtn;
         private TableSelectionListener tableSelectionListener;
@@ -78,9 +78,28 @@ public class ViewAndSearchComponent extends JPanel {
 
         public ControlPanel(String runBtnText, final ActionListener runListener,
                 final ActionListener reportListener, final SortableTable table) {
+            setLayout(new GridBagLayout());
             setBorder(BorderFactory.createEmptyBorder(5, 10, 20, 10));
-            JButton bHelp = JarResources.createHelpButton("post_hoc");
-            addButton(bHelp, "Help");
+            JButton bHelp = JarResources.createHelpButton("Interpret-Leading-Edge");
+            GridBagConstraints gbc1 = new GridBagConstraints();
+            gbc1.gridheight = 1;
+            gbc1.gridwidth = 4;
+            gbc1.gridx = 0;
+            gbc1.gridy = 0;
+            gbc1.weightx = 0.25;
+            gbc1.fill = GridBagConstraints.NONE;
+            gbc1.anchor = GridBagConstraints.WEST;
+            add(bHelp, gbc1);
+            JPanel subPanel = new JPanel(new FlowLayout());
+            GridBagConstraints gbc2 = new GridBagConstraints();
+            gbc2.gridheight = 1;
+            gbc2.gridwidth = 4;
+            gbc2.gridx = 3;
+            gbc2.gridy = 0;
+            gbc2.fill = GridBagConstraints.NONE;
+            gbc2.anchor = GridBagConstraints.EAST;
+            gbc2.weightx = 0.25;
+            add(subPanel, gbc2);
             label = new JLabel("For " + table.getSelectedRows().length
                     + " selected gene sets: ");
             table.getSelectionModel().addListSelectionListener(
@@ -91,7 +110,7 @@ public class ViewAndSearchComponent extends JPanel {
                                     + " selected gene sets: ");
                         }
                     });
-            add(label);
+            subPanel.add(label);
 
             bLeadingEdge = new JButton(runBtnText, GuiHelper.ICON_START16);
             bLeadingEdge.addActionListener(runListener);
@@ -100,14 +119,14 @@ public class ViewAndSearchComponent extends JPanel {
             table.getSelectionModel().addListSelectionListener(
                     tableSelectionListener);
             tableSelectionListener.addComponent(bLeadingEdge);
-            add(bLeadingEdge);
+            subPanel.add(bLeadingEdge);
 
             buildhtmlReportBtn = new JButton("Build HTML Report",
                     GuiHelper.ICON_START16);
             buildhtmlReportBtn.addActionListener(reportListener);
             buildhtmlReportBtn.setEnabled(false);
             tableSelectionListener.addComponent(buildhtmlReportBtn);
-            add(buildhtmlReportBtn);
+            subPanel.add(buildhtmlReportBtn);
         }
     }
 

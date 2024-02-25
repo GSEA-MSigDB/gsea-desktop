@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2024 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.xbench.core.api;
 
@@ -29,10 +29,6 @@ public interface WindowManager {
     public void showError(final Errors errors) throws HeadlessException;
 
     public void showError(final String msg, final Throwable t) throws HeadlessException;
-
-    public void showError(final String msg,
-                          final Throwable t,
-                          final JButton[] customRemedyOptions) throws HeadlessException;
 
     public boolean showConfirm(final String msg) throws HeadlessException;
 

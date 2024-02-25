@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2023 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2024 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package xapps.gsea;
 
@@ -29,6 +29,7 @@ import javax.swing.Icon;
 import javax.swing.JButton;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComponent;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
@@ -49,9 +50,6 @@ import org.jfree.ui.about.AboutPanel;
 
 import com.jgoodies.looks.HeaderStyle;
 import com.jgoodies.looks.Options;
-import com.jidesoft.docking.DefaultDockableHolder;
-import com.jidesoft.docking.DefaultDockingManager;
-import com.jidesoft.docking.DockingManager;
 
 import edu.mit.broad.cytoscape.action.EnrichmentMapInputPanelAction;
 import edu.mit.broad.genome.Conf;
@@ -84,7 +82,7 @@ import xtools.gsea.Gsea;
 import xtools.gsea.GseaPreranked;
 import xtools.munge.CollapseDataset;
 
-public class GseaFijiTabsApplicationFrame extends DefaultDockableHolder implements Application.Handler {
+public class GseaFijiTabsApplicationFrame extends JFrame implements Application.Handler {
     public static final Properties buildProps = JarResources.getBuildInfo();
     
     static {
@@ -116,6 +114,8 @@ public class GseaFijiTabsApplicationFrame extends DefaultDockableHolder implemen
     private static final Icon PREF_ICON = JarResources.getIcon("Preferences16.gif");
 
     // @note IMP IMP: this is the name under which docking prefs etc are stored
+    // TODO: remove this, but first figure out if we can extract these for our
+    // own use.
     public static final String PROFILE_NAME = "gsea";
 
     private StatusBarAppender fStatusBarAppender;
@@ -126,11 +126,6 @@ public class GseaFijiTabsApplicationFrame extends DefaultDockableHolder implemen
 
     private MyWindowManagerImplJideTabbedPane fWindowManager;
     
-    /**
-     * Class constructor
-     *
-     * @throws HeadlessException
-     */
     public GseaFijiTabsApplicationFrame() {
         super(USER_VISIBLE_FRAME_TITLE);
 
@@ -157,25 +152,9 @@ public class GseaFijiTabsApplicationFrame extends DefaultDockableHolder implemen
         }
 
         fFrame.addWindowListener(fWindowListener);
-
-        // Set the profile key
-        fFrame.getDockingManager().setProfileKey(PROFILE_NAME);
-
-        // Uses light-weight outline. There are several options here.
-        fFrame.getDockingManager().setOutlineMode(DockingManager.PARTIAL_OUTLINE_MODE);
-
-        // Now let's start to addFrame()
-        fFrame.getDockingManager().beginLoadLayoutData();
-
-        fFrame.getDockingManager().setInitSplitPriority(DefaultDockingManager.SPLIT_SOUTH_NORTH_EAST_WEST);
-
         this.fWindowManager = new MyWindowManagerImplJideTabbedPane();
-
         this.fStatusBarAppender = SystemConsole.createStatusBarAppender("StatusBar");
-
         Application.registerHandler(this);
-
-        // add menu bar
         fFrame.setJMenuBar(createMenuBar());
         jbInit();
     }
@@ -187,23 +166,42 @@ public class GseaFijiTabsApplicationFrame extends DefaultDockableHolder implemen
             buildInfo += ", " + buildTS;
         }
         AboutPanel aboutPanel = new AboutPanel("Gene Set Enrichment Analysis (GSEA) v" + buildProps.getProperty("build.version"), 
-                "Copyright (c) 2003-2023 Broad Institute, Inc., Massachusetts Institute of Technology, ",
+                "Copyright (c) 2003-2024 Broad Institute, Inc., Massachusetts Institute of Technology, ",
                 "and Regents of the University of California.  All rights reserved.", 
                 buildInfo);
         JOptionPane.showMessageDialog(fFrame, aboutPanel, "About GSEA", JOptionPane.PLAIN_MESSAGE);
     }
-    
-    public void makeVisible(final boolean bring2front) {
-        // load layout information from previous session. This indicates the end of beginLoadLayoutData() method above.
-        // This makes the frame visible
-        fFrame.getDockingManager().loadLayoutData();
 
-        // disallow drop dockable frame to workspace area
-        fFrame.getDockingManager().getWorkspace().setAcceptDockableFrame(false);
-
-        if (bring2front) {
-            fFrame.toFront();
+    // TODO: can we save size, position for reuse on next launch?
+    // Will probably use the Preferences API.
+    // Should check if saved position is out of bounds for the current screen.  Likewise for size.
+    // That is, would their use result in an unusable desktop?
+    public void makeVisible() {
+        int lastHeight = XPreferencesFactory.kAppHeight.getInt();
+        int lastWidth = XPreferencesFactory.kAppWidth.getInt();
+        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+        if (lastHeight > screenSize.height || lastWidth > screenSize.width) {
+            // If *either* the last height or width is larger than the current screen allows, 
+            // use a smaller default size reasonable for this screen
+            fFrame.setSize(screenSize.width * 3 / 4, screenSize.height * 3 / 4);
+        } else {
+            fFrame.setSize(lastWidth, lastHeight);
         }
+        int lastX = XPreferencesFactory.kAppXPosition.getInt();
+        int lastY = XPreferencesFactory.kAppYPosition.getInt();
+        if (lastX > screenSize.width || lastX < 0 || lastY > screenSize.height || lastY < 0) {
+            // If the last window position would be out-of-bounds for the current screen,
+            // use a position reasonable for this screen
+            fFrame.setLocation((screenSize.width - getWidth()) / 2, (screenSize.height - getHeight()) / 2);
+        } else {
+            fFrame.setLocation(lastX, lastY);
+        }
+        fFrame.setVisible(true);
+        if (XPreferencesFactory.kAppMaximized.getBoolean()) {
+            this.setExtendedState(this.getExtendedState() | JFrame.MAXIMIZED_BOTH);
+        }
+        
+        fFrame.toFront();
     }
 
     private AppToolLauncherAction fGseaTool_launcher;
@@ -227,18 +225,10 @@ public class GseaFijiTabsApplicationFrame extends DefaultDockableHolder implemen
         split.add(fWindowManager.getTabbedPane());
 
         fWindowManager.openWindow(createStartupPanel());
-
-        try {
-            fWindowManager.getTabbedPane().setTabClosableAt(0, false);
-        } catch (Throwable t) {
-
-        }
-
         fFrame.getContentPane().add(split);
 
         // create one project tab for current project
-        fFrame.getContentPane().add(fStatusBarAppender.getAsComponent(), BorderLayout.AFTER_LAST_LINE);
-        
+        fFrame.getContentPane().add(fStatusBarAppender.getAsComponent(fFrame), BorderLayout.AFTER_LAST_LINE);
         UpdateChecker.oneTimeGseaUpdateCheck(this);
     }
 
@@ -506,10 +496,19 @@ public class GseaFijiTabsApplicationFrame extends DefaultDockableHolder implemen
         fFrame.removeWindowListener(fWindowListener);
         fWindowListener = null;
 
-        if (fFrame.getDockingManager() != null) {
-            fFrame.getDockingManager().saveLayoutData();
+        // save current position, size (etc) before exit
+        try {
+            XPreferencesFactory.kAppHeight.setValue(this.getHeight());
+            XPreferencesFactory.kAppWidth.setValue(this.getWidth());
+            XPreferencesFactory.kAppXPosition.setValue(this.getX());
+            XPreferencesFactory.kAppYPosition.setValue(this.getY());
+            XPreferencesFactory.kAppMaximized.setValue(this.getExtendedState() == JFrame.MAXIMIZED_BOTH);
+            XPreferencesFactory.save();
+        } catch (Exception e) {
+            e.printStackTrace(System.out);
+            System.out.println("Error saving window size and position");
         }
-
+        
         fFrame.dispose();
         fFrame = null;
         if (Conf.isDebugMode() == false) {
@@ -541,8 +540,8 @@ public class GseaFijiTabsApplicationFrame extends DefaultDockableHolder implemen
         }
 
         public void actionPerformed(final ActionEvent evt) {
-            // make this new every time so that the GUI doestn cache settings
-            // (i.e read from rpefs)
+            // make this new every time so that the GUI doesn't cache settings
+            // (i.e force read from prefs)
 
             GseaPreferencesDialog opt = new GseaPreferencesDialog(fFrame, "Preferences");
             opt.pack();

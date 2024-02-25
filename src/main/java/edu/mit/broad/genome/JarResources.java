@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2023 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2024 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.genome;
 
@@ -149,10 +149,6 @@ public class JarResources {
         return JarResources.class.getResource(PKG_RESOURCE + filename);
     }
 
-    public static String getWikiErrorURL(String errName) {
-        return GseaWebResources.getGseaHelpURL() + "GSEA_User_Guide/#error-" + errName;
-    }
-
     public static JButton createHelpButton(final String keyName) {
         Action a = createHelpAction(keyName);
         if (a != null) {
@@ -191,13 +187,7 @@ public class JarResources {
     }
 
     public static Action createHelpAction(final StandardException se) {
-        String urle = getWikiErrorURL("" + se.getErrorCode());
-        if (urle == null || urle.length() == 0) {
-            urle = "Help broken for key: " + se.getErrorCode();
-            klog.warn(urle);
-        }
-
-        final String url = urle;
+        final String url = GseaWebResources.getGseaHelpURL() + "GSEA/GSEA_User_Guide/#error-" + "" + se.getErrorCode();
 
         return new AbstractAction("Help for error " + se.getErrorCode(), getIcon("Help16_v2.gif")) {
             public void actionPerformed(ActionEvent e) {

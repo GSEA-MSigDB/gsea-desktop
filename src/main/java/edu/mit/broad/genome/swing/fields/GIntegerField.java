@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2023 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2024 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.genome.swing.fields;
 
@@ -19,6 +19,7 @@ public class GIntegerField extends JTextField implements GFieldPlusChooser {
 
     public GIntegerField(final int value, final int columns) {
         this(value, columns, NumberFormat.getNumberInstance());
+        integerFormatter.setGroupingUsed(false);
     }
 
     public GIntegerField(final int value, final int columns, final NumberFormat format) {

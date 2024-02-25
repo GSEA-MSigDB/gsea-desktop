@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2024 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.xbench.prefs;
 
@@ -10,6 +10,7 @@ import edu.mit.broad.genome.utils.SystemUtils;
 import edu.mit.broad.xbench.actions.XAction;
 import edu.mit.broad.xbench.core.ApplicationDialog;
 import edu.mit.broad.xbench.core.api.Application;
+import edu.mit.broad.xbench.core.api.DialogDescriptor;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -165,8 +166,6 @@ public class XPreferencesFactory {
         }
     }
 
-    // NOTE: These are not referenced anywhere else in the Application code, but without them 
-    // the app window will be set incorrectly.
     public static final IntPreference kAppWidth = new IntPreference("Last app width",
             "Dont change me",
             screenSize.width - 400, false, true);
@@ -174,6 +173,12 @@ public class XPreferencesFactory {
     public static final IntPreference kAppHeight = new IntPreference("Last app height",
             "Dont change me",
             screenSize.height - 400, false, true);
+
+    public static final IntPreference kAppXPosition = new IntPreference("Last app x position",
+            "Dont change me", 50, false, true);
+
+    public static final IntPreference kAppYPosition = new IntPreference("Last app Y position",
+            "Dont change me", 50, false, true);
 
     public static final BooleanPreference kAppMaximized = new BooleanPreference("app was maximized", "dummy", false, false, true);
 
@@ -236,7 +241,7 @@ public class XPreferencesFactory {
 
         ApplicationDialog dd = new ApplicationDialog(title, input);
         int res = dd.show();
-        if (res == ApplicationDialog.OK_OPTION) {
+        if (res == DialogDescriptor.OK_OPTION) {
             try {
                 pref.setValue(field.getValue());
             } catch (Throwable t) {

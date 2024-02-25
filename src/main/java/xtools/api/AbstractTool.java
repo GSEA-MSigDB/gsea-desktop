@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2023 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2024 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package xtools.api;
 
@@ -264,9 +264,16 @@ public abstract class AbstractTool implements Tool {
                     + "along with the source for the gene set as listed on the gene set page: ");
             LI citingMSigDB2011 = new LI(HtmlFormat.Links.hyper("Liberzon A, et al. (Bioinformatics, 2011). ", 
                     "https://doi.org/10.1093/bioinformatics/btr260", null));
+            citingMSigDB2011.setNeedClosingTag(true);
             LI citingMSigDB2015 = new LI(HtmlFormat.Links.hyper("Liberzon A, et al. (Cell Systems 2015). ", 
                     "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4707969/", null));
-            citingMSigDB.addElement(citingMSigDBText).addElement(new UL().addElement(citingMSigDB2011).addElement(citingMSigDB2015));
+            citingMSigDB2015.setNeedClosingTag(true);
+            LI citingMSigDB2023 = new LI("If you use Mouse MSigDB, please also cite ");
+            citingMSigDB2023.addElement(HtmlFormat.Links.hyper("Castanza A, et al. (Nature Methods 2023). ", 
+                    "https://doi.org/10.1038/s41592-023-02014-7", null));
+            citingMSigDB.addElement(citingMSigDBText).addElement(new UL().addElement(citingMSigDB2011).addElement(citingMSigDB2015)
+                    .addElement(citingMSigDB2023));
+            citingMSigDB2023.setNeedClosingTag(true);
             div.addElement(citingMSigDB);
 
             fReport.getIndexPage().addBlock(div, false);

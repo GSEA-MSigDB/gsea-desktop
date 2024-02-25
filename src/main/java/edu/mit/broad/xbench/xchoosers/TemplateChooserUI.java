@@ -1,12 +1,15 @@
 /*
- * Copyright (c) 2003-2023 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2024 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.xbench.xchoosers;
 
-import com.jidesoft.dialog.ButtonPanel;
 import edu.mit.broad.genome.JarResources;
 import edu.mit.broad.genome.alg.ComparatorFactory;
-import edu.mit.broad.genome.objects.*;
+import edu.mit.broad.genome.objects.Template;
+import edu.mit.broad.genome.objects.TemplateDerivative;
+import edu.mit.broad.genome.objects.TemplateDerivatives;
+import edu.mit.broad.genome.objects.TemplateFactory;
+import edu.mit.broad.genome.objects.TemplateMode;
 import edu.mit.broad.genome.parsers.ParserFactory;
 import edu.mit.broad.genome.swing.fields.GFieldUtils;
 import edu.mit.broad.genome.swing.fields.GOptionsFieldPlusChooser;
@@ -17,13 +20,40 @@ import gnu.trove.TIntArrayList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.swing.*;
+import javax.swing.Action;
+import javax.swing.BorderFactory;
+import javax.swing.ComboBoxModel;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.DefaultListCellRenderer;
+import javax.swing.DefaultListModel;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextField;
+import javax.swing.ListSelectionModel;
 import javax.swing.text.Document;
-import java.awt.*;
-import java.awt.event.*;
+
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.GridLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
+import java.awt.event.KeyEvent;
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Just the window component to show and get the template(s)
@@ -53,22 +83,13 @@ public class TemplateChooserUI {
     private TemplateCreatorWidgets.OnTheFlyFromSampleNames otf;
     private TemplateCreatorWidgets.GenePhenotype gtf;
 
-    /**
-     * Class constructor
-     *
-     * @param isMultiAllowed
-     */
     public TemplateChooserUI(boolean isMultiAllowed, TemplateMode mode) {
-
         this.fIsMultiAllowed = isMultiAllowed;
         this.fMode = mode;
-
     }
 
     private void jbInit() {
-
         this.jlOptions = new JList();
-
         if (fIsMultiAllowed) {
             jlOptions.setBorder(BorderFactory.createTitledBorder("Select one or more phenotype(s)"));
         } else {
@@ -87,41 +108,27 @@ public class TemplateChooserUI {
 
         cbTemplates = new JComboBox();
         cbTemplates.setBorder(BorderFactory.createTitledBorder("Select source file"));
-
-        // dont bind via object bindery regular method as that grabs all templates - aux and not
-        // we want to only show in the jcombobox the main (i.e non aux) templates
-        // the aux templates will get auto displayed in the jlist when a cb item is choosen
-        //ObjectBindery.bind(cbTemplates, Template.class);
         ComboBoxModel model = ParserFactory.getCache().createBoxModel(Template.class);
         cbTemplates.setModel(new TemplateNonAuxBoxModel(model));
         cbTemplates.setRenderer(new RendererFactory2.CommonLookListRenderer(true));
-
-        // dont use, prefer to use item listener as item listener can be controlled
-        // to react only ti changes
-        // else this methods gets called on all template parsing events too!
-        //cbTemplates.addActionListener(new MyActionListener());
         cbTemplates.addItemListener(new MyItemListener());
         if (cbTemplates.getModel().getSize() > 0) {
             cbTemplates.setSelectedIndex(0);
         }
-        //doTemplateSelection((Template) cbTemplates.getSelectedItem());
         doTemplateSelection(cbTemplates.getSelectedItem());
 
         JPanel tcPanel = new JPanel();
         tcPanel.setLayout(new BorderLayout());
         tcPanel.add(cbTemplates, BorderLayout.NORTH);
         tcPanel.add(new JScrollPane(jlOptions), BorderLayout.CENTER);
-
-
         JButton bShowComboPhenotypes = new JButton("Show phenotypes from all source files");
         bShowComboPhenotypes.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 // get all current templates from cache
                 List allTss_orig = ParserFactory.getCache().getCachedObjectsL(Template.class);
-                //allTss_orig = splitContinuousTemplates();
                 List allTss = qualifyByTypeAndMode(allTss_orig, true);
                 Collections.sort(allTss, new ComparatorFactory.PobComparator());
-                List allTds = new ArrayList();
+                List<TemplateDerivative> allTds = new ArrayList<>();
                 for (int i = 0; i < allTss.size(); i++) {
                     Template template = (Template) allTss.get(i);
                     TemplateDerivative td = new TemplateDerivatives.PseudoTemplateDerivative(template);
@@ -136,12 +143,10 @@ public class TemplateChooserUI {
         });
 
         this.chooserPanel = new JPanel(new BorderLayout());
-
         this.chooserPanel.add(tcPanel, BorderLayout.CENTER);
-
-        final ButtonPanel bp = new ButtonPanel(ButtonPanel.NO_LESS_THAN);
+        final JPanel bp = new JPanel(new GridLayout(3, 1));
         bp.setBorder(BorderFactory.createTitledBorder("Options"));
-        bp.addButton(bShowComboPhenotypes);
+        bp.add(bShowComboPhenotypes);
 
         final JButton bOnTheFly = new JButton("Create an on-the-fly phenotype ...");
         bOnTheFly.addActionListener(new ActionListener() {
@@ -154,7 +159,7 @@ public class TemplateChooserUI {
                 dd.show();
             }
         });
-        bp.addButton(bOnTheFly);
+        bp.add(bOnTheFly);
 
         final JButton bFromGene = new JButton("Use a gene as the phenotype ...");
         bFromGene.addActionListener(new ActionListener() {
@@ -167,13 +172,11 @@ public class TemplateChooserUI {
                 dd.show();
             }
         });
-        bp.addButton(bFromGene);
-
+        bp.add(bFromGene);
         this.chooserPanel.add(bp, BorderLayout.SOUTH);
     }
 
     private void setListOptionsInComboMode(boolean value) {
-
         if (value) {
             this.fComboTemplateSourceMode = true;
             jlOptions.setForeground(Color.MAGENTA);
@@ -181,11 +184,9 @@ public class TemplateChooserUI {
             this.fComboTemplateSourceMode = false;
             jlOptions.setForeground(Color.BLACK);
         }
-
     }
 
     private JComponent createChooserPanel(final TemplateSelection sel) throws Exception {
-
         if (chooserPanel == null) {
             jbInit();
         }
@@ -199,13 +200,11 @@ public class TemplateChooserUI {
                 model.add(i, options[i]);
             }
             jlOptions.setModel(model);
-
             if (sel.getTemplateNames() != null && sel.getTemplateNames().size() < 3) {
                 jlOptions.setSelectionMode(ListSelectionModel.SINGLE_SELECTION); // disable multi sels if only 1 or 2 options (i.e a simple 2 class template)
             } else {
                 jlOptions.setSelectionMode(fSelectionMode);
             }
-
             if (sel.getTemplateNames() != null) {
                 Iterator it = sel.getTemplateNames().iterator();
                 while (it.hasNext()) {
@@ -217,62 +216,48 @@ public class TemplateChooserUI {
                 }
             }
         }
-
         if (indices.size() == 0) {
             safeSelectFirst(jlOptions);
         } else {
             jlOptions.setSelectedIndices(indices.toNativeArray());
         }
-
         return chooserPanel;
     }
 
     public TemplateSelection showChooser(final TemplateSelection selBag) throws Exception {
-
         JComponent comp = createChooserPanel(selBag);
-
         String text = "Select a phenotype";
-
         if (fSelectionMode == ListSelectionModel.MULTIPLE_INTERVAL_SELECTION) {
             text = "Select one or more phenotype(s)";
         }
-
         Action helpAction = JarResources.createDataFormatAction("#cls");
         DialogDescriptor desc = Application.getWindowManager().createDialogDescriptor(text, comp, helpAction);
         desc.enableDoubleClickableJList(jlOptions);
         int res = desc.show();
-
         if (res == DialogDescriptor.CANCEL_OPTION) {
             return null;
         } else {
-
             TemplateSelection sel;
-
             Object[] objs = jlOptions.getSelectedValuesList().toArray();
             if (fComboTemplateSourceMode) {
                 sel = new TemplateSelectionMultiSource();
                 for (int i = 0; i < objs.length; i++) {
                     sel.add((TemplateDerivative) objs[i], false, true);
                 }
-
             } else {
                 sel = new TemplateSelection(cbTemplates.getSelectedItem());
                 for (int i = 0; i < objs.length; i++) {
                     sel.add((TemplateDerivative) objs[i], false, false);
                 }
             }
-
             return sel;
         }
-
     }
-
 
     private Map fTemplateOptionsArrayCacheMap = new HashMap();
 
     private TemplateDerivative[] createTemplateOptions_safe(final Object fullTemplate, final boolean onlyHashOnesForBiphasic) {
         try {
-
             if (fullTemplate instanceof Template) {
                 return createTemplateOptions_from_template((Template) fullTemplate, onlyHashOnesForBiphasic);
             } else if (fullTemplate instanceof TemplateNonAuxBoxModel.TemplateContWrapper) {
@@ -282,17 +267,14 @@ public class TemplateChooserUI {
             } else {
                 throw new IllegalArgumentException("Unknown object: " + fullTemplate + " " + fullTemplate.getClass());
             }
-
         } catch (Exception e) {
             Application.getWindowManager().showError("Error making Template options", e);
             return new TemplateDerivative[]{};
         }
-
     }
 
     // does the real work
     private TemplateDerivative[] createTemplateOptions_file_cont(final File fullTemplate_file) throws Exception {
-
         if (fullTemplate_file == null) {
             return new TemplateDerivative[]{};
         }
@@ -312,13 +294,10 @@ public class TemplateChooserUI {
         }
         cts = (Template[]) set.toArray(new Template[set.size()]);
         cts = qualifyByTypeAndMode(cts, false);
-
-
         TemplateDerivative[] tds = new TemplateDerivative[cts.length];
         for (int i = 0; i < cts.length; i++) {
             tds[i] = new TemplateDerivatives.ContTemplateDerivative(cts[i].getName(), fullTemplate_file);
         }
-
 
         fTemplateOptionsArrayCacheMap.put(fullTemplate_file, tds);
         return tds;
@@ -326,7 +305,6 @@ public class TemplateChooserUI {
 
     private TemplateDerivative[] createTemplateOptions_from_template(final Template fullTemplate,
                                                                      final boolean onlyHashOnesForBiphasic) throws Exception {
-
         if (fullTemplate == null) {
             return new TemplateDerivative[]{};
         }
@@ -337,11 +315,8 @@ public class TemplateChooserUI {
         }
 
         boolean addOrig = true;
-
         Template[] tss = TemplateFactory.extractAllPossibleTemplates(fullTemplate, addOrig); // @note
-
         tss = qualifyByTypeAndMode(tss, onlyHashOnesForBiphasic);
-
         List tdsList = new ArrayList();
 
         for (int i = 0; i < tss.length; i++) {
@@ -380,9 +355,7 @@ public class TemplateChooserUI {
     }
 
     private void doTemplateSelection(final Object selectedMainTemplate) {
-        if (selectedMainTemplate == null) {
-            return;
-        }
+        if (selectedMainTemplate == null) { return; }
 
         // careful with rebuild / reset the model here -> that ruins the selection policy
         Object[] options = createTemplateOptions_safe(selectedMainTemplate, true); // we dont want to show the .cls ones here
@@ -401,24 +374,18 @@ public class TemplateChooserUI {
         safeSelectFirst(jlOptions);
     }
 
-    private List qualifyByTypeAndMode(final List templates, boolean onlyAuxForBiphasicOnes) {
-
-        //log.debug("# before qualifyByTypeAndMode: " + templates.size());
+    private List<Template> qualifyByTypeAndMode(final List templates, boolean onlyAuxForBiphasicOnes) {
         final Template[] tss = qualifyByTypeAndMode((Template[]) templates.toArray(new Template[templates.size()]), onlyAuxForBiphasicOnes);
-
-        //log.debug("# after qualifyByTypeAndMode: " + templates.size());
-
-        List list = new ArrayList();
+        List<Template> list = new ArrayList<>();
         for (int i = 0; i < tss.length; i++) {
             list.add(tss[i]);
         }
-
         return list;
     }
 
     // this is for the jlist and NOT the jcombobox
     private Template[] qualifyByTypeAndMode(final Template[] tss, final boolean onlyHashOnesForBiphasic) {
-        List list = new ArrayList();
+        List<Template> list = new ArrayList<>();
 
         if (fMode == TemplateMode.CONTINUOUS_ONLY) {
             for (int i = 0; i < tss.length; i++) {
@@ -453,7 +420,6 @@ public class TemplateChooserUI {
         } else if (fMode == TemplateMode.ALL) {
             return tss;
         } else if (fMode == TemplateMode.CATEGORICAL_2_CLASS_AND_NUMERIC) {
-
             for (int i = 0; i < tss.length; i++) {
                 if (tss[i].isContinuous()) {
                     list.add(tss[i]);
@@ -471,22 +437,17 @@ public class TemplateChooserUI {
                     }
                 }
             }
-
-
         } else {
             throw new RuntimeException("Unknown mode: " + fMode);
         }
-        return (Template[]) list.toArray(new Template[list.size()]);
+        return list.toArray(new Template[list.size()]);
     }
 
     class Renderer extends DefaultListCellRenderer {
-
         public Component getListCellRendererComponent(JList list, Object value, int index,
                                                       boolean isSelected, boolean cellHasFocus) {
-
             // doesnt work properly unless called
             super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-
             String text;
 
             if (value instanceof TemplateDerivative) {
@@ -494,15 +455,12 @@ public class TemplateChooserUI {
             } else {
                 throw new RuntimeException("Unknown object to render: " + value);
             }
-
             this.setText(text);
             return this;
         }
-
     }
     
     public static class Field extends GOptionsFieldPlusChooser {
-
         public Field(ActionListener al) {
             this.setLayout(new BorderLayout());
 
@@ -517,7 +475,6 @@ public class TemplateChooserUI {
             if (text == null) {
                 return;
             }
-
             tfEntry.setForeground(GFieldUtils.getFileFieldColor(text));
         }
 
@@ -527,7 +484,6 @@ public class TemplateChooserUI {
                 try {
                     String text = tfEntry.getDocument().getText(0, doc.getLength());
                     this.setForeground(GFieldUtils.getFileFieldColor(text));
-                    //ev.consume();
                     super.processKeyEvent(ev);
                 } catch (javax.swing.text.BadLocationException e) {
                     super.processKeyEvent(ev);

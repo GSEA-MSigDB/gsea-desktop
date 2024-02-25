@@ -1,19 +1,18 @@
 /*
- * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2024 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package xapps.api.frameworks.fiji;
-
-import com.jidesoft.popup.JidePopup;
-import com.jidesoft.status.*;
-import com.jidesoft.swing.JideBoxLayout;
 
 import edu.mit.broad.genome.Conf;
 import edu.mit.broad.genome.JarResources;
 import edu.mit.broad.genome.viewers.SystemConsoleViewer;
 
-import javax.swing.*;
+import org.genepattern.uiutil.CenteredDialog;
 
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Cursor;
+import java.awt.Dimension;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.logging.ErrorManager;
@@ -23,68 +22,65 @@ import java.util.logging.LogManager;
 import java.util.logging.LogRecord;
 import java.util.logging.SimpleFormatter;
 
+import javax.swing.BorderFactory;
+import javax.swing.JComponent;
+import javax.swing.JDialog;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+
 public class StatusBarAppender {
-    private StatusBar fJideStatusBar;
-    private LabelStatusBarItem fStatusBarLabelItem;
+    private JPanel fStatusBar;
+    private JLabel fStatusBarLabel;
     private SystemConsoleViewer fSystemConsoleComp;
+    private JDialog popup;
     
     public StatusBarAppender(String name) {
-        this.fJideStatusBar = new StatusBar();
+        this.fStatusBar = new JPanel(new BorderLayout());
         this.fSystemConsoleComp = new SystemConsoleViewer();
         fSystemConsoleComp.setBorder(BorderFactory.createTitledBorder("Application messages"));
 
-        fJideStatusBar.add(new TimeStatusBarItem(), JideBoxLayout.FIX);
-
         // Status bar component to display logging messages in the UI
-        this.fStatusBarLabelItem = new LabelStatusBarItem();
-        fStatusBarLabelItem.setIcon(JarResources.getIcon("expandall.png"));
-        fStatusBarLabelItem.setToolTipText("Click for application messages (such as # of permutations complete)");
+        this.fStatusBarLabel = new JLabel();
+        fStatusBarLabel.setIcon(JarResources.getIcon("expandall.png"));
+        fStatusBarLabel.setToolTipText("Click for application messages (such as # of permutations complete)");
         // Create a Logging Handler wrapped around this label object and register it with the Root logger
-        LabelStatusBarLoggingHandler handler = new LabelStatusBarLoggingHandler(fStatusBarLabelItem);
+        LabelStatusBarLoggingHandler handler = new LabelStatusBarLoggingHandler(fStatusBarLabel);
         LogManager.getLogManager().getLogger("").addHandler(handler);
 
-        fJideStatusBar.add(fStatusBarLabelItem, JideBoxLayout.FLEXIBLE);
+        fStatusBar.add(fStatusBarLabel, BorderLayout.WEST);
 
-        final MemoryStatusBarItem gc = new MemoryStatusBarItem();
-        gc.setPreferredWidth(75);
-        fJideStatusBar.add(gc, JideBoxLayout.FIX);
-
-        final ResizeStatusBarItem resize = new ResizeStatusBarItem();
-        resize.setPreferredWidth(20);
-        resize.setBorder(BorderFactory.createEmptyBorder());
-        fJideStatusBar.add(resize, JideBoxLayout.FIX);
-
-        this.fStatusBarLabelItem.addMouseListener(new MouseAdapter() {
-            public void mouseClicked(MouseEvent e) { showPopup(fStatusBarLabelItem); }
-            public void mouseEntered(MouseEvent e) { fStatusBarLabelItem.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)); }
-            public void mouseExited(MouseEvent e) {  fStatusBarLabelItem.setCursor(Cursor.getDefaultCursor()); }
+        this.fStatusBarLabel.addMouseListener(new MouseAdapter() {
+            public void mouseClicked(MouseEvent e) { showPopup(); }
+            public void mouseEntered(MouseEvent e) { fStatusBarLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)); }
+            public void mouseExited(MouseEvent e) {  fStatusBarLabel.setCursor(Cursor.getDefaultCursor()); }
         });
     }
 
-    public JComponent getAsComponent() { return fJideStatusBar; }
+    public JComponent getAsComponent(JFrame frame) {
+        this.popup = new CenteredDialog(frame);
+        return fStatusBar;
+    }
 
-    private void showPopup(final JComponent owner) {
-        final JidePopup popup = new JidePopup();
-        popup.setMovable(true);
+    private void showPopup() {
+        if (popup == null) { return; }
         popup.getContentPane().setLayout(new BorderLayout());
+        popup.setSize(new Dimension(700, 350));
 
         fSystemConsoleComp.setPreferredSize(new Dimension(700, 350));
         popup.getContentPane().add(fSystemConsoleComp);
-        popup.setDefaultFocusComponent(fSystemConsoleComp);
-        popup.setOwner(owner);
         popup.setResizable(true);
-        popup.setMovable(true);
-        if (popup.isPopupVisible()) {
-            popup.hidePopup();
+        if (popup.isVisible()) {
+            popup.setVisible(false);
         } else {
-            popup.showPopup();
+            popup.setVisible(true);
         }
     }
     
     private class LabelStatusBarLoggingHandler extends Handler {
-        final LabelStatusBarItem labelStatusBarItem;
-        public LabelStatusBarLoggingHandler(LabelStatusBarItem labelStatusBarItem) {
-            this.labelStatusBarItem = labelStatusBarItem;
+        final JLabel statusBarLabel;
+        public LabelStatusBarLoggingHandler(JLabel statusBarLabel) {
+            this.statusBarLabel = statusBarLabel;
             this.setLevel(Conf.isDebugMode() ? Level.FINE : Level.INFO);
             this.setFormatter(new SimpleFormatter());
         }
@@ -101,9 +97,9 @@ public class StatusBarAppender {
             try {
                 String message = getFormatter().format(record);
                 Level level = record.getLevel();
-                fStatusBarLabelItem.setForeground(Color.BLACK);
-                if (level == Level.WARNING) { fStatusBarLabelItem.setForeground(Color.MAGENTA); }
-                labelStatusBarItem.setText(message);
+                fStatusBarLabel.setForeground(Color.BLACK);
+                if (level == Level.WARNING) { fStatusBarLabel.setForeground(Color.MAGENTA); }
+                statusBarLabel.setText(message);
             } catch (Exception ex) {
                 reportError(null, ex, ErrorManager.FORMAT_FAILURE);
             }
@@ -111,7 +107,7 @@ public class StatusBarAppender {
         
         @Override
         public boolean isLoggable(LogRecord record) {
-            return this.labelStatusBarItem != null && super.isLoggable(record);
+            return this.statusBarLabel != null && super.isLoggable(record);
         }
     }
 }

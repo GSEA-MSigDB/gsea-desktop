@@ -1,66 +1,48 @@
 /*
- * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2024 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.xbench.searchers;
 
-import com.jidesoft.list.QuickListFilterField;
-import com.jidesoft.swing.JideTitledBorder;
-import com.jidesoft.swing.PartialEtchedBorder;
-import com.jidesoft.swing.PartialSide;
-import com.jidesoft.swing.SearchableUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.swing.*;
-import javax.swing.event.ListDataEvent;
-import javax.swing.event.ListDataListener;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.KeyEvent;
+import javax.swing.BorderFactory;
+import javax.swing.DefaultListModel;
+import javax.swing.JComponent;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextField;
+import javax.swing.ListSelectionModel;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
+
+import java.awt.BorderLayout;
+import java.awt.FlowLayout;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.List;
 
 /**
- * @author Aravind Subramanian
+ * @author Aravind Subramanian, David Eby
  */
 public class GeneSearchList {
-
     private JPanel fMainPanel;
-
-    private java.util.List fFeatureNames;
-
-    private JList fSearchList;
-
-    private DefaultListModel listModel;
-
+    private List<String> fFeatureNames;
+    private JList<String> fSearchList;
+    private JTextField field = new JTextField(25);
+    private DefaultListModel<String> listModel;
     private Logger log = LoggerFactory.getLogger(GeneSearchList.class);
 
-
     public GeneSearchList() {
-        this.fFeatureNames = new ArrayList();
+        this.fFeatureNames = new ArrayList<>();
     }
 
     public JComponent getComponent() {
-        if (fMainPanel == null) {
-            jbInit();
-        }
-
+        if (fMainPanel == null) { jbInit(); }
         return fMainPanel;
     }
 
-    public JList getJList() {
-        if (fMainPanel == null) {
-            jbInit();
-        }
-
-        return fSearchList;
-    }
-
-    //Map listModelMap;
-
-    // @todo improve this
-
-    public void setFeatures(final java.util.List featureNames) {
+    public void setFeatures(final List<String> featureNames) {
         log.debug("setFeatures: {}", featureNames.size());
         this.fFeatureNames = featureNames;
         listModel.removeAllElements();
@@ -71,73 +53,44 @@ public class GeneSearchList {
         fSearchList.revalidate();
         fMainPanel.revalidate();
     }
+    
+    public String getChosenFeature() {
+        return field.getText();
+    }
 
+    public boolean isChosenFeatureInList() {
+        return fFeatureNames != null && fFeatureNames.contains(field.getText());
+    }
+    
     public void jbInit() {
-
-        listModel = new DefaultListModel();
+        listModel = new DefaultListModel<>();
         for (int i = 0; i < fFeatureNames.size(); i++) {
             listModel.addElement(fFeatureNames.get(i));
         }
 
         this.fMainPanel = new JPanel(new BorderLayout(6, 6));
 
-        JPanel quickSearchPanel = new JPanel(new FlowLayout(FlowLayout.LEADING));
-        final QuickListFilterField field = new QuickListFilterField(listModel);
-        quickSearchPanel.add(field);
-        quickSearchPanel.setBorder(new JideTitledBorder(new PartialEtchedBorder(PartialEtchedBorder.LOWERED, PartialSide.NORTH), "QuickListFilterField", JideTitledBorder.LEADING, JideTitledBorder.ABOVE_TOP));
+        JPanel quickSelectPanel = new JPanel(new FlowLayout(FlowLayout.LEADING));
+        quickSelectPanel.add(field);
+        quickSelectPanel.setBorder(BorderFactory.createTitledBorder("Selected Gene"));
 
-        this.fSearchList = new JList(field.getDisplayListModel());
-        fSearchList.setVisibleRowCount(30);
-        field.setList(fSearchList);
-        SearchableUtils.installSearchable(fSearchList);
+        this.fSearchList = new JList<String>(listModel);
+        this.fSearchList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        this.fSearchList.setVisibleRowCount(50);
 
         JPanel listPanel = new JPanel(new BorderLayout(2, 2));
-        listPanel.setBorder(BorderFactory.createCompoundBorder(new JideTitledBorder(new PartialEtchedBorder(PartialEtchedBorder.LOWERED, PartialSide.NORTH), "Filtered features List", JideTitledBorder.LEADING, JideTitledBorder.ABOVE_TOP),
-                BorderFactory.createEmptyBorder(0, 0, 0, 0)));
-        final JLabel label = new JLabel(field.getDisplayListModel().getSize() + " out of " + listModel.getSize() + " features");
-        label.setHorizontalAlignment(SwingConstants.CENTER);
-        label.setBorder(BorderFactory.createEmptyBorder(2, 0, 2, 0));
-        fSearchList.registerKeyboardAction(new AbstractAction() {
-            public void actionPerformed(ActionEvent e) {
-                int[] selection = fSearchList.getSelectedIndices();
-                int[] actualSelection = new int[selection.length];
-                for (int i = 0; i < selection.length; i++) {
-                    actualSelection[i] = field.getDisplayListModel().getActualIndexAt(selection[i]);
-                }
+        listPanel.setBorder(BorderFactory.createTitledBorder("Feature List"));
 
-                Arrays.sort(actualSelection);
-
-                for (int i = actualSelection.length - 1; i >= 0; i--) {
-                    int index = actualSelection[i];
-                    listModel.remove(index);
-                }
-            }
-        }, KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0), JComponent.WHEN_FOCUSED);
-
-        field.getDisplayListModel().addListDataListener(new ListDataListener() {
-            public void intervalAdded(ListDataEvent e) {
-                updateLabel(e);
-            }
-
-            public void intervalRemoved(ListDataEvent e) {
-                updateLabel(e);
-            }
-
-            public void contentsChanged(ListDataEvent e) {
-                updateLabel(e);
-            }
-
-            protected void updateLabel(ListDataEvent e) {
-                if (e.getSource() instanceof ListModel) {
-                    int count = ((ListModel) e.getSource()).getSize();
-                    label.setText(count + " out of " + listModel.getSize() + " features");
-                }
+        fSearchList.addListSelectionListener(new ListSelectionListener() {
+            @Override
+            public void valueChanged(ListSelectionEvent e) {
+                if (e.getValueIsAdjusting()) { return; }
+                field.setText(fSearchList.getSelectedValue());
             }
         });
         listPanel.add(new JScrollPane(fSearchList));
-        listPanel.add(label, BorderLayout.BEFORE_FIRST_LINE);
 
-        fMainPanel.add(quickSearchPanel, BorderLayout.BEFORE_FIRST_LINE);
+        fMainPanel.add(quickSelectPanel, BorderLayout.BEFORE_FIRST_LINE);
         fMainPanel.add(listPanel, BorderLayout.CENTER);
     }
 }
