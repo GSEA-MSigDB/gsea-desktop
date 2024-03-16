@@ -19,7 +19,7 @@ tasks.withType(JavaCompile) {
     options.deprecation = true
 }
 
-tasks.withType(Zip).configureEach {
+tasks.withType(Copy).configureEach {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 
