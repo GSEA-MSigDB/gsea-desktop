@@ -19,6 +19,10 @@ tasks.withType(JavaCompile) {
     options.deprecation = true
 }
 
+tasks.withType(Zip).configureEach {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
 processResources {
     // Set the current timestamp for release builds; pass in a blank property to enable (i.e. -Ptimestamp="" at CLI)
     if (timestamp.equals("")) { timestamp = new Date().format("EEE, d MMM yyyy HH:mm:ss Z") }
@@ -103,7 +107,6 @@ task createLinuxDistZip(type: Zip, dependsOn: createDist) {
 task createMacDistZip(type: Zip, dependsOn: createDist) {
     archiveBaseName = "GSEA_Mac"
     archiveFileName = "GSEA_Mac_${version}.zip"
-    duplicatesStrategy = DuplicatesStrategy.WARN
     destinationDirectory = file("${buildDir}/distZip")
     if (!jdkBundleMac.equals("")) {
         with copySpec { from jdkBundleMac into "jdk-17" }
