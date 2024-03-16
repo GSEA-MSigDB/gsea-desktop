@@ -103,6 +103,7 @@ task createLinuxDistZip(type: Zip, dependsOn: createDist) {
 task createMacDistZip(type: Zip, dependsOn: createDist) {
     archiveBaseName = "GSEA_Mac"
     archiveFileName = "GSEA_Mac_${version}.zip"
+    duplicatesStrategy = DuplicatesStrategy.WARN
     destinationDirectory = file("${buildDir}/distZip")
     if (!jdkBundleMac.equals("")) {
         with copySpec { from jdkBundleMac into "jdk-17" }
