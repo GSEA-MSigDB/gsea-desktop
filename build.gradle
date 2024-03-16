@@ -93,7 +93,7 @@ task createLinuxDistZip(type: Zip, dependsOn: createDist) {
         exclude "*.bat"
         exclude "*.command"
     }
-    into { createLinuxDistZip.archiveBaseName + "_${version}" }
+    into { "GSEA_Linux_${version}" }
 
     doLast {
         project.exec { commandLine('chmod', '775', createLinuxDistZip.archivePath ) }
@@ -111,7 +111,7 @@ task createMacDistZip(type: Zip, dependsOn: createDist) {
         exclude "*.bat"
         exclude "*_hidpi.sh"
     }
-    into { createMacDistZip.archiveBaseName + "_${version}" }
+    into { "GSEA_Mac_${version}" }
 
     doLast {
         project.exec { commandLine('chmod', '775', createMacDistZip.archivePath ) }
