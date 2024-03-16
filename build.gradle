@@ -75,7 +75,7 @@ task createDistZip(type: Zip, dependsOn: createDist) {
     archiveFileName = "GSEA_${version}.zip"
     destinationDirectory = file("${buildDir}/distZip")
     from "${buildDir}/GSEA-dist"
-    into { createDistZip.archiveBaseName + "_${version}" }
+    into { "GSEA_${version}" }
 
     doLast {
         project.exec { commandLine('chmod', '775', createDistZip.archivePath ) }
