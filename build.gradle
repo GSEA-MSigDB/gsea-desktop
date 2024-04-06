@@ -92,7 +92,7 @@ task createLinuxDistZip(type: Zip, dependsOn: createDist) {
     archiveFileName = "GSEA_Linux_${version}.zip"
     destinationDirectory = file("${buildDir}/distZip")
     if (!jdkBundleLinux.equals("")) {
-        with copySpec { from jdkBundleLinux into "jdk-17" }
+        with copySpec { from jdkBundleLinux into "jdk" }
     }
     from ("${buildDir}/GSEA-dist") {
         exclude "*.bat"
@@ -110,7 +110,7 @@ task createMacDistZip(type: Zip, dependsOn: createDist) {
     archiveFileName = "GSEA_Mac_${version}.zip"
     destinationDirectory = file("${buildDir}/distZip")
     if (!jdkBundleMac.equals("")) {
-        with copySpec { from jdkBundleMac into "jdk-17" }
+        with copySpec { from jdkBundleMac into "jdk" }
     }
     from ("${buildDir}/GSEA-dist") {
         exclude "*.bat"
@@ -125,7 +125,7 @@ task createMacDistZip(type: Zip, dependsOn: createDist) {
 
 task createMacAppDist(type: Copy, dependsOn: createDist) {
     if (!jdkBundleMac.equals("")) {
-        with copySpec { from jdkBundleMac into "GSEA_${version}.app/Contents/jdk-17" }
+        with copySpec { from jdkBundleMac into "GSEA_${version}.app/Contents/jdk" }
     }
     with copySpec {
         from ("scripts/mac.app") {
@@ -176,7 +176,7 @@ task createMacAppDistZip(type: Zip, dependsOn: createMacAppDist) {
 
 task createWinDist(type: Copy, dependsOn: createDist) {
     if (!jdkBundleWindows.equals("")) {
-        with copySpec { from jdkBundleWindows into "GSEA_${version}/jdk-17" }
+        with copySpec { from jdkBundleWindows into "GSEA_${version}/jdk" }
     }
     with copySpec {
         from("${buildDir}/GSEA-dist") {

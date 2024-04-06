@@ -7,9 +7,9 @@
 prefix=`dirname $(readlink -f $0 || echo $0)`
 
 # Check whether or not to use the bundled JDK
-if [ -d "${prefix}/jdk-17" ]; then
+if [ -d "${prefix}/jdk" ]; then
     echo echo "Using bundled JDK."
-    JAVA_HOME="${prefix}/jdk-11"
+    JAVA_HOME="${prefix}/jdk"
     PATH=$JAVA_HOME/bin:$PATH
 else
     echo "Bundled JDK not found.  Using system JDK."
@@ -18,7 +18,6 @@ fi
 
 exec java -showversion --module-path="${prefix}/modules" -Xmx4g \
     @"${prefix}/gsea.args" \
-    --patch-module="jide.common=${prefix}/lib/jide-components-3.7.4.jar:${prefix}/lib/jide-dock-3.7.4.jar:${prefix}/lib/jide-grids-3.7.4.jar" \
     -Djava.util.logging.config.file="${prefix}/logging.properties" \
     -Dapple.laf.useScreenMenuBar=true \
     --module=org.gsea_msigdb.gsea/xapps.gsea.GSEA "$@"
