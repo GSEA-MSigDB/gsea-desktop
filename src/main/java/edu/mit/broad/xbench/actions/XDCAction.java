@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2024 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.xbench.actions;
 
 import java.awt.event.ActionEvent;
@@ -15,7 +15,6 @@ import javax.swing.Icon;
  * to optionally only respond to double clicks
  *
  * @author Aravind Subramanian
- * @version %I%, %G%
  * @see XAction
  */
 public abstract class XDCAction extends AbstractAction implements MouseListener {
@@ -26,15 +25,6 @@ public abstract class XDCAction extends AbstractAction implements MouseListener 
      */
     protected boolean fOnlyDoubleClick;
 
-//    public XDCAction() {
-//
-//        super();
-//
-//        // dont -> class vars not inited yet
-//        //putValue(Action.NAME, getName());
-//        //putValue(Action.SMALL_ICON, getIcon());
-//    }
-
     public XDCAction(String id, String name, String description, Icon icon) {
         super();
         super.putValue(ID, id);
@@ -44,33 +34,21 @@ public abstract class XDCAction extends AbstractAction implements MouseListener 
     }
 
     public void mouseClicked(MouseEvent e) {
-
-        if (fOnlyDoubleClick == false) {
+        if (!fOnlyDoubleClick) {
             e.consume();
-
             return;
         }
 
         if (e.getClickCount() == 2) {
             fOnlyDoubleClick = false;
-
-            //log.debug("Doing double click");
             actionPerformed(new ActionEvent(e.getSource(), e.getID(), getValue(ID).toString(),
-                    e.getModifiers()));
-
+                    e.getModifiersEx()));
             fOnlyDoubleClick = true;
         }
     }
 
-    public void mouseEntered(MouseEvent e) {
-    }
-
-    public void mouseExited(MouseEvent e) {
-    }
-
-    public void mousePressed(MouseEvent e) {
-    }
-
-    public void mouseReleased(MouseEvent e) {
-    }
-}    // End XDCAction
+    public void mouseEntered(MouseEvent e) { }
+    public void mouseExited(MouseEvent e) { }
+    public void mousePressed(MouseEvent e) { }
+    public void mouseReleased(MouseEvent e) { }
+}

@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2024 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package org.genepattern.menu.jfree;
 
 import org.genepattern.menu.PlotAction;
@@ -12,10 +12,19 @@ import org.jfree.chart.axis.ValueAxis;
 import org.jfree.chart.editor.ChartEditor;
 import org.jfree.chart.editor.ChartEditorManager;
 
-import javax.swing.*;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Frame;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+
+import javax.swing.AbstractAction;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JDialog;
+import javax.swing.JPanel;
+import javax.swing.KeyStroke;
 
 /**
  * @author Joshua Gould
@@ -60,8 +69,7 @@ public class JFreeViewMenu extends ViewMenu {
         yAxis.setRange(ymin - deltay * .1, ymax + deltay * .1);
     }
 
-    public static JDialog showPlotOptionsDialog(final ChartPanel chartPanel,
-                                                Frame parent) {
+    public static JDialog showPlotOptionsDialog(final ChartPanel chartPanel, Frame parent) {
         JFreeChart chart = chartPanel.getChart();
         final ChartEditor panel = ChartEditorManager.getChartEditor(chart);
         final JDialog dialog = new CenteredDialog(parent);
@@ -93,7 +101,6 @@ public class JFreeViewMenu extends ViewMenu {
 
         public PlotOptionsAction() {
             super("Display Options...");
-
         }
 
         private void createDialog() {
@@ -121,11 +128,9 @@ public class JFreeViewMenu extends ViewMenu {
                     "true").equalsIgnoreCase("true")) {
                 KeyStroke ks = KeyStroke.getKeyStroke(
                         java.awt.event.KeyEvent.VK_CLOSE_BRACKET, Toolkit
-                        .getDefaultToolkit().getMenuShortcutKeyMask());
+                        .getDefaultToolkit().getMenuShortcutKeyMaskEx());
                 this.putValue(AbstractAction.ACCELERATOR_KEY, ks);
-
             }
-
         }
 
         public void actionPerformed(java.awt.event.ActionEvent e) {
@@ -144,7 +149,7 @@ public class JFreeViewMenu extends ViewMenu {
                     "true").equalsIgnoreCase("true")) {
                 KeyStroke ks = KeyStroke.getKeyStroke(
                         java.awt.event.KeyEvent.VK_OPEN_BRACKET, Toolkit
-                        .getDefaultToolkit().getMenuShortcutKeyMask());
+                        .getDefaultToolkit().getMenuShortcutKeyMaskEx());
                 this.putValue(AbstractAction.ACCELERATOR_KEY, ks);
             }
         }

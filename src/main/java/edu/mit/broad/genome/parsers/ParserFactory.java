@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2024 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.genome.parsers;
 
@@ -19,6 +19,7 @@ import org.slf4j.LoggerFactory;
 import xapps.gsea.GseaWebResources;
 
 import java.io.*;
+import java.net.URI;
 import java.net.URL;
 import java.util.*;
 
@@ -1043,14 +1044,12 @@ public class ParserFactory implements Constants {
     // useful before using a new FileInputStream(f) as the error message from that is not
     // very explanatory
     private static InputStream createInputStream(File file) throws IOException {
-
-        // @note as a convebicne auto detect of the file is really a URL
+        // @note as a convenience auto detect of the file is really a URL
         if (NamingConventions.isURL(file.getPath())) {
-            return createInputStream(new URL(file.getPath()));
+            return createInputStream(URI.create(file.getPath()).toURL());
         }
 
         if (AuxUtils.isAuxFile(file)) {
-            //klog.debug("Auto UNauxing file: " + file);
             file = AuxUtils.getBaseFileFromAuxFile(file);
         }
 
@@ -1109,7 +1108,7 @@ public class ParserFactory implements Constants {
                 path = "ftp://" + path;
             }
 
-            return createInputStream(new URL(path));
+            return createInputStream(URI.create(path).toURL());
         }
 
         // Ok, it might be a file

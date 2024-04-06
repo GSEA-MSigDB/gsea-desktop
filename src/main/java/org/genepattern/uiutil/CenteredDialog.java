@@ -1,10 +1,13 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2024 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package org.genepattern.uiutil;
 
-import javax.swing.*;
-import java.awt.*;
+import java.awt.Dimension;
+import java.awt.Frame;
+import java.awt.Toolkit;
+
+import javax.swing.JDialog;
 
 /**
  * A JDialog that will be centered on the screen when shown
@@ -19,27 +22,16 @@ public class CenteredDialog extends JDialog {
      * owner of the dialog.
      *
      * @param owner the Frame from which the dialog is displayed
-     * @throws HeadlessException if GraphicsEnvironment.isHeadless() returns
-     *                           true
+     * @throws HeadlessException if GraphicsEnvironment.isHeadless() returns true
      */
     public CenteredDialog(Frame owner) {
         super(owner);
     }
 
-
-    public void show() {
-        center();
-        super.show();
-    }
-
-
     public void setVisible(boolean visible) {
-        if (visible) {
-            center();
-        }
+        if (visible) { center(); }
         super.setVisible(visible);
     }
-
 
     private void center() {
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();

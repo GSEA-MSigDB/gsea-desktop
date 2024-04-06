@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California. All
+ * rights reserved.
  */
 module org.gsea_msigdb.gsea {
     exports edu.mit.broad.cytoscape;
@@ -100,7 +101,7 @@ module org.gsea_msigdb.gsea {
     requires java.xml;
     requires transitive jcommon;
     requires jdk.xml.dom;
-    requires jfreechart;
+    requires transitive jfreechart;
     requires jgoodies.uif.lite;
     requires json.simple;
     requires looks;

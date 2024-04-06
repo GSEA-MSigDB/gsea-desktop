@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2024 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package xapps.gsea;
 
@@ -34,7 +34,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.awt.*;
+import java.awt.Desktop;
 import java.io.File;
 import java.net.URI;
 import java.util.ArrayList;
@@ -338,7 +338,6 @@ public class GseaActionRegistry {
      * @return
      */
     public XAction createAction(final XAction action, final Object data) throws Exception {
-        // TODO: parameterize classes here, work on getting rid of casts.
         if (action instanceof FileObjectAction) {
             return (new ProxyFileObjectAction((FileObjectAction) action, data));
         } else if (action instanceof ObjectAction) {
@@ -351,18 +350,15 @@ public class GseaActionRegistry {
         } else if ((action instanceof FilesAction) && (data instanceof File[])) {
             return (new ProxyFileAction((FilesAction) action, (File[]) data));
         } else if ((action instanceof ExtAction) && (data instanceof File)) {
-            Class cl = action.getClass();
-            ExtAction real = (ExtAction) cl.newInstance();
+            ExtAction real = (ExtAction) action.getClass().getDeclaredConstructor().newInstance();
             real.setPath(((File) data));
             return real;
         } else if ((action instanceof ExtAction) && (data instanceof PersistentObject)) {
-            Class cl = action.getClass();
-            ExtAction real = (ExtAction) cl.newInstance();
+            ExtAction real = (ExtAction) action.getClass().getDeclaredConstructor().newInstance();
             real.setPath(ParserFactory.getCache().getSourceFile(data));
             return real;
         } else if (action instanceof XAction) {    // simple, data-less widget opening
-            Class cl = action.getClass();
-            return (XAction) cl.newInstance();
+            return (XAction) action.getClass().getDeclaredConstructor().newInstance();
         } else {
             throw new Exception("Unknown action type: " + action + " and object combo: " + data);
         }
