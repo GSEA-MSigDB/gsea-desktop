@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2023 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2024 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package org.genepattern.annotation;
 
@@ -13,14 +13,19 @@ import org.genepattern.data.matrix.ClassVector;
 import org.genepattern.module.VisualizerUtil;
 import org.genepattern.uiutil.UIUtil;
 
-import javax.swing.*;
-
-import java.awt.*;
+import java.awt.Color;
+import java.awt.FileDialog;
+import java.awt.Frame;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+
+import javax.swing.JMenuItem;
+import javax.swing.JTable;
+import javax.swing.KeyStroke;
 
 /**
  * Annotates sets (lists) in a table
@@ -29,34 +34,25 @@ import java.util.List;
  */
 // TODO: evaluate whether this code is still reachable
 public class SetAnnotator {
-    private SparseClassVector classVector = new SparseClassVector();
-
-    private int classNumberCounter = 0;
-
     private final static Color[] colors = {Color.red, Color.yellow, Color.blue,
             Color.GREEN, Color.ORANGE, Color.magenta, Color.CYAN, Color.PINK,
             Color.GRAY};
 
+    private SparseClassVector classVector = new SparseClassVector();
+    private int classNumberCounter = 0;
     private boolean annotateRow = true;
-
     private SetAnnotatorModel model;
-
     private SampleClassEditor sampleClassEditor;
-
     private FeatureClassEditor featureClassEditor;
-
     private JMenuItem openFeaturesMenuItem;
-
     private JMenuItem viewFeatureListsMenuItem;
-
     private JTable table;
 
     public SparseClassVector getClassVector() {
         return classVector;
     }
 
-    public SetAnnotator(final Frame parent, final SetAnnotatorModel model,
-                        boolean _annotateRow) {
+    public SetAnnotator(final Frame parent, final SetAnnotatorModel model, boolean _annotateRow) {
         this.model = model;
         this.annotateRow = _annotateRow;
         if (annotateRow) {
@@ -85,7 +81,6 @@ public class SetAnnotator {
         }
         openFeaturesMenuItem.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-
                 String title = annotateRow ? "Select Feature List(s)" : "Select Cls File";
                 File f = showOpenDialog(parent, title);
                 if (f == null) return;
@@ -113,7 +108,6 @@ public class SetAnnotator {
                     extension = extension.toLowerCase();
                     if (extension.equals("gmt") || extension.equals("gmx")) {
                         GeneSetMatrix gmt = ParserFactory.readGeneSetMatrix(f, false);
-        
                         int sets = gmt.getNumGeneSets();
                         for (int i = 0; i < sets; i++) {
                             GeneSet set = gmt.getGeneSet(i);
@@ -140,9 +134,7 @@ public class SetAnnotator {
             private void annotateSamplesFromFile(final Frame parent, final SetAnnotatorModel model, File f, String extension)
                     throws Exception {
                 ClassVector cv = VisualizerUtil.readCls(parent, f.getCanonicalPath());
-                if (cv == null) {
-                    return;
-                }
+                if (cv == null) { return; }
                 if (cv.size() != model.getFeatureCount()) {
                     UIUtil.showErrorDialog(parent,
                             "The number of samples in the cls file (" + cv.size()
@@ -169,14 +161,12 @@ public class SetAnnotator {
         // Skip the menu if we're running without a parent Frame (e.g. reporting from the command-line 
         if (annotateRow && parent != null) {
             openFeaturesMenuItem.setAccelerator(KeyStroke.getKeyStroke('O',
-                    Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+                    Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
         }
     }
 
     private File showOpenDialog(Frame parent, String title) {
-        if (title == null) {
-            title = "GSEA";
-        }
+        if (title == null) { title = "GSEA"; }
         FileDialog fOpenDialog = Application.getFileManager().getSetAnnotatorFileDialog();
         fOpenDialog.setTitle(title);
         fOpenDialog.setVisible(true);
@@ -188,7 +178,6 @@ public class SetAnnotator {
     }
 
     private boolean addToFeatureList(List<String> featureList, String className) {
-
         boolean missingFeatures = false;
         for (String feature : featureList) {
             int index = model.getIndex(feature);

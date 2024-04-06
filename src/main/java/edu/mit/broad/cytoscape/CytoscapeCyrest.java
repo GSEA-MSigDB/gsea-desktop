@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2024 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.cytoscape;
 
@@ -43,18 +43,15 @@ public class CytoscapeCyrest {
     /*
      * Method to test if the cytoscape rest service is up and running and if one of the commands listed is enrichment map
      */
-    public boolean CytoscapeRestActive() throws IOException {
-
-        URL url = new URL(getRestURL());
+    public boolean CytoscapeRestActive() throws IOException, URISyntaxException {
+        URL url = URI.create(getRestURL()).toURL();
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 
         if (conn.getResponseCode() != 200) {
             klog.error("cannot connect to cytoscape rest server");
             conn.disconnect();
             return false;
-        }
-
-        else {
+        } else {
             klog.info("successfully connected to cytoscape rest");
             conn.disconnect();
             return true;
@@ -64,8 +61,8 @@ public class CytoscapeCyrest {
     /*
      * Method to test if the cytoscape rest service is up and running and if one of the commands listed is enrichment map
      */
-    public boolean CytoscapeRestCommandEM() throws IOException {
-        URL url = new URL(getRestURL() + "commands/");
+    public boolean CytoscapeRestCommandEM() throws IOException, URISyntaxException {
+        URL url = URI.create(getRestURL() + "commands/").toURL();
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 
         if (conn.getResponseCode() != 200) {
@@ -90,7 +87,6 @@ public class CytoscapeCyrest {
     }
 
     public boolean createEM_get() throws IOException, URISyntaxException {
-
         URIBuilder builder = new URIBuilder();
         URI uri;
 
@@ -109,7 +105,6 @@ public class CytoscapeCyrest {
             if (!this.params.getExpression2FilePath().equals(""))
                 builder.setParameter("expressionfile2", this.params.getExpression2FilePath());
         }
-
         uri = builder.build();
 
         CloseableHttpClient httpclient = HttpClients.createDefault();

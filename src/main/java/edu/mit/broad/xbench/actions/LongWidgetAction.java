@@ -1,12 +1,13 @@
 /*
- * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2024 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.xbench.actions;
 
 import edu.mit.broad.xbench.core.Widget;
 import edu.mit.broad.xbench.core.api.Application;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JInternalFrame;
 import javax.swing.event.InternalFrameListener;
 
 import java.awt.event.ActionEvent;
@@ -14,7 +15,7 @@ import java.awt.event.MouseEvent;
 
 /**
  * for widget actions that take a while (more than several secs) to launch
- * Basicaly same as the WidgetAction except no cursor or app status stuff
+ * Basically same as the WidgetAction except no cursor or app status stuff
  *
  * @author Aravind Subramanian
  */
@@ -25,13 +26,10 @@ public abstract class LongWidgetAction extends WidgetAction {
 
     public Runnable createTask(final ActionEvent evt) {
         final LongWidgetAction instance = this;
-
         return new Runnable() {
-
             public void run() {
-
                 try {
-                    // this is just to indicate that something hapenned so a dummy timer
+                    // this is just to indicate that something happened so a dummy timer
                     log.info("Starting: {}", getActionName(instance));
                     Widget widget = getWidget();
 
@@ -42,9 +40,6 @@ public abstract class LongWidgetAction extends WidgetAction {
                             fWindow = Application.getWindowManager().openWindow(widget);
                         }
 
-                        //window.setIcon(true); // causes the window to launch and then instantly become an icon
-
-                        // comm out after window interface
                         if (fWindow instanceof JInternalFrame) {
                             ((JInternalFrame) fWindow).setJMenuBar(widget.getJMenuBar());
                             InternalFrameListener ifl = getInternalFrameListener();
@@ -54,11 +49,9 @@ public abstract class LongWidgetAction extends WidgetAction {
                         }
 
                         log.info("Opened widget: {}", widget.getAssociatedTitle());
-
                     } else {
                         log.info("Null widget - no window opened");
                     }
-
                 } catch (Throwable t) {
                     Application.getWindowManager().showError("Trouble making widget", t);
                 }
@@ -77,34 +70,21 @@ public abstract class LongWidgetAction extends WidgetAction {
     }
 
     public void mouseClicked(MouseEvent e) {
-
-        if (fOnlyDc == false) {
+        if (!fOnlyDc) {
             e.consume();
-
             return;
         }
 
         if (e.getClickCount() == 2) {
-
-            //log.debug("Doing double click");
             fOnlyDc = false;
-
             actionPerformed(new ActionEvent(e.getSource(), e.getID(), getActionId(this),
-                    e.getModifiers()));
-
+                    e.getModifiersEx()));
             fOnlyDc = true;
         }
     }
 
-    public void mouseEntered(MouseEvent e) {
-    }
-
-    public void mouseExited(MouseEvent e) {
-    }
-
-    public void mousePressed(MouseEvent e) {
-    }
-
-    public void mouseReleased(MouseEvent e) {
-    }
+    public void mouseEntered(MouseEvent e) { }
+    public void mouseExited(MouseEvent e) { }
+    public void mousePressed(MouseEvent e) { }
+    public void mouseReleased(MouseEvent e) { }
 }

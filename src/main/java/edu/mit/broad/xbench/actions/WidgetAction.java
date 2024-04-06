@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2018 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2024 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.xbench.actions;
 
 import java.awt.Dimension;
@@ -22,7 +22,6 @@ import edu.mit.broad.xbench.core.api.Application;
  * Implementing classes should prefer to extends ObjectAction or FileAction or FilesAction
  *
  * @author Aravind Subramanian
- * @version %I%, %G%
  */
 public abstract class WidgetAction extends XAction implements MouseListener {
     protected WidgetAction(String id, String name, String description, Icon icon) {
@@ -55,31 +54,20 @@ public abstract class WidgetAction extends XAction implements MouseListener {
      * @param h
      */
     protected void setSize(int w, int h, boolean usedefaultifdefaultisbigger) {
-        // IMP dont place this in the class init are -- cause the pp to recursive loop
-
         if (usedefaultifdefaultisbigger) {
             Dimension d = Application.getWindowManager().getExpectedWindowSize();
             if (d != null) {
-                if (d.width > w) {
-                    w = d.width;
-                }
-
-                if (d.height > h) {
-                    h = d.height;
-                }
+                if (d.width > w) { w = d.width; }
+                if (d.height > h) { h = d.height; }
             }
         }
-
         this.fExplicitSize = new Dimension(w, h);
-
     }
 
     public void actionPerformed(final ActionEvent evt) {
-
         if (fOnlyDc) {
             return;
         }
-        
         createTask();
     }
     
@@ -132,34 +120,21 @@ public abstract class WidgetAction extends XAction implements MouseListener {
     }
 
     public void mouseClicked(MouseEvent e) {
-
-        if (fOnlyDc == false) {
+        if (!fOnlyDc) {
             e.consume();
-
             return;
         }
 
         if (e.getClickCount() == 2) {
-
-            //log.debug("Doing double click");
             fOnlyDc = false;
-
             actionPerformed(new ActionEvent(e.getSource(), e.getID(), getActionId(this),
-                    e.getModifiers()));
-
+                    e.getModifiersEx()));
             fOnlyDc = true;
         }
     }
 
-    public void mouseEntered(MouseEvent e) {
-    }
-
-    public void mouseExited(MouseEvent e) {
-    }
-
-    public void mousePressed(MouseEvent e) {
-    }
-
-    public void mouseReleased(MouseEvent e) {
-    }
-}    // End WidgetAction
+    public void mouseEntered(MouseEvent e) { }
+    public void mouseExited(MouseEvent e) { }
+    public void mousePressed(MouseEvent e) { }
+    public void mouseReleased(MouseEvent e) { }
+}

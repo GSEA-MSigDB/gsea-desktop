@@ -12,9 +12,13 @@ import xapps.gsea.GseaWebResources;
 
 import javax.swing.*;
 
-import java.awt.*;
+import java.awt.Desktop;
+import java.awt.GraphicsEnvironment;
+import java.awt.Image;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.io.InputStream;
+import java.net.URI;
 import java.net.URL;
 import java.util.Properties;
 
@@ -32,11 +36,9 @@ import java.util.Properties;
  * Use methods of this class to avoid hardcoding paths, package structures etc in other places.
  *
  * @author Aravind Subramanian
- * @version %I%, %G%
  * @maint If the package hierarchy changes, this class could need attention.
  */
 public class JarResources {
-
     /**
      * @maint IMPORTANT: Be very careful defining public statics in this class.
      * Also do NOT be careful about using logging here as it might need initialization etc.
@@ -49,31 +51,23 @@ public class JarResources {
      * (note: absence of this icon will probably cause grevious application startup damage)
      */
     public static Icon ICON_NOT_FOUND;
-
     public static Icon ICON_UNKNOWN_DATA_FORMAT;
 
-    // ------------------------------------------------------------------------
-    // class variables
-    // ------------------------------------------------------------------------
-
-    /**
+    /*
      * The base genome package's hierarchy - dont use leading /
      */
     private static final String PKG_GENOME = "/edu/mit/broad/genome/";
     private static final String PKG_RESOURCE = PKG_GENOME + "resources/";
-
     private static Logger klog = LoggerFactory.getLogger(JarResources.class);
 
-    /**
+    /*
      * Ensure that "not founds" are present
      */
     static {
         try {
             if (!GraphicsEnvironment.isHeadless()) {
-                //TraceUtils.showTrace();
                 klog.debug("Loading basic icons ...");
                 URL nf_url = JarResources.class.getResource(PKG_RESOURCE + "IconNotFound.gif");
-
                 if (nf_url == null) {
                     System.err.println("FATAL resources error ICON_NOT_FOUND not found!");
                     System.err.println("Expected location: " + PKG_RESOURCE + "IconNotFound.gif");
@@ -94,15 +88,12 @@ public class JarResources {
                         ICON_UNKNOWN_DATA_FORMAT = new ImageIcon(image);
                     }
                 }
-            } else {
-                //klog.debug("Skipping icons as na headless");
             }
 
         } catch (Throwable t) {
             t.printStackTrace();
             System.out.println("Fatal error initializing JarResources " + t.getMessage());
         }
-
     }
 
     public static class NotFoundIcon extends ImageIcon {
@@ -133,8 +124,7 @@ public class JarResources {
      * Privatized constructor to prevent instantiation.
      * No instantiation needed. All public static methods.
      */
-    private JarResources() {
-    }
+    private JarResources() { }
 
     /**
      * Gets a resource as a URL. Resources are all assumed to be in the
@@ -144,8 +134,6 @@ public class JarResources {
      *                 For example: "foo.gif"
      */
     public static URL toURL(final String filename) {
-        // webstarting barfs if the system class loader is used
-        //URL url = ClassLoader.getSystemClassLoader().getResource(PKG_RESOURCE + filename);
         return JarResources.class.getResource(PKG_RESOURCE + filename);
     }
 
@@ -164,7 +152,7 @@ public class JarResources {
         return new AbstractAction("Help", getIcon("Help16_v2.gif")) {
             public void actionPerformed(ActionEvent e) {
                 try {
-                    Desktop.getDesktop().browse((new URL(url)).toURI());
+                    Desktop.getDesktop().browse(URI.create(url));
                 } catch (Throwable t) {
                     Application.getWindowManager().showError(url + ": unable to launch web browser", t);
                 }
@@ -178,7 +166,7 @@ public class JarResources {
         return new AbstractAction("Help", getIcon("Help16_v2.gif")) {
             public void actionPerformed(ActionEvent e) {
                 try {
-                    Desktop.getDesktop().browse((new URL(url)).toURI());
+                    Desktop.getDesktop().browse(URI.create(url));
                 } catch (Throwable t) {
                     Application.getWindowManager().showError("Unable to launch web browser for " + url, t);
                 }
@@ -192,7 +180,7 @@ public class JarResources {
         return new AbstractAction("Help for error " + se.getErrorCode(), getIcon("Help16_v2.gif")) {
             public void actionPerformed(ActionEvent e) {
                 try {
-                    Desktop.getDesktop().browse(java.net.URI.create(url));
+                    Desktop.getDesktop().browse(URI.create(url));
                 } catch (Throwable t) {
                     Application.getWindowManager().showError("Unable to launch web browser for " + url, t);
                 }

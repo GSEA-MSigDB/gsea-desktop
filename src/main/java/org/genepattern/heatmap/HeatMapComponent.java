@@ -279,7 +279,7 @@ public class HeatMapComponent extends JComponent {
             getContentPane().add(btnPanel, BorderLayout.SOUTH);
             pack();
             setResizable(false);
-            show();
+            setVisible(true);
         }
     }
 

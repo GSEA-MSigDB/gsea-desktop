@@ -1,9 +1,10 @@
 /*
- *  Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ *  Copyright (c) 2003-2024 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package xapps.gsea;
 
 import java.awt.Component;
+import java.net.URI;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.charset.Charset;
@@ -23,21 +24,16 @@ import org.json.simple.parser.ParseException;
 import edu.mit.broad.xbench.prefs.XPreferencesFactory;
 
 public class UpdateChecker {
-
     private static final String GSEA_UPDATE_CHECK_URL = GseaWebResources.getGseaBaseURL() + "/gseaUpdate";
-
     private static final transient Logger klog = LoggerFactory.getLogger(UpdateChecker.class);
-
     private static boolean MAKE_GSEA_UPDATE_CHECK = BooleanUtils.toBoolean(System.getProperty("MAKE_GSEA_UPDATE_CHECK", "true"))
             && XPreferencesFactory.kMakeGseaUpdateCheck.getBoolean();
-
     private static final String UPDATE_CHECK_EXTRA_PROJECT_INFO = System.getProperty("UPDATE_CHECK_EXTRA_PROJECT_INFO", "GSEA");
 
     public static final void oneTimeGseaUpdateCheck(Component parent) {
         if (!XPreferencesFactory.kOnlineMode.getBoolean()) {
             klog.info("Currently running disconnected from the internet: skipping GSEA update check.");
         } else if (MAKE_GSEA_UPDATE_CHECK) {
-
             try {
                 int currMajor = NumberUtils.toInt(GseaFijiTabsApplicationFrame.buildProps.getProperty("build.major", "not_found"), -1);
                 int currMinor = NumberUtils.toInt(GseaFijiTabsApplicationFrame.buildProps.getProperty("build.minor", "not_found"), -1);
@@ -53,7 +49,7 @@ public class UpdateChecker {
                             + GseaFijiTabsApplicationFrame.buildProps.getProperty("build.version", "not_available")
                             + "&extraProjectInfo=" + UPDATE_CHECK_EXTRA_PROJECT_INFO;
     
-                    URL url = new URL(versionQueryString);
+                    URL url = URI.create(versionQueryString).toURL();
                     URLConnection connection = url.openConnection();
                     connection.setConnectTimeout(10000);
                     connection.setReadTimeout(20000);
@@ -100,7 +96,6 @@ public class UpdateChecker {
         MAKE_GSEA_UPDATE_CHECK = false;
     }
 
-    @SuppressWarnings("unchecked")
     private static final Properties parseGseaVersionInfo(String versionCheckInfo) throws ParseException {
         JSONParser jsonParser = new JSONParser();
         JSONObject jsonObj = (JSONObject) (jsonParser.parse(versionCheckInfo));

@@ -1,33 +1,40 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2024 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package org.genepattern.menu;
 
 import org.genepattern.data.expr.IExpressionData;
 import org.genepattern.uiutil.CenteredDialog;
 import org.genepattern.uiutil.UIUtil;
 
-import javax.swing.*;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Container;
+import java.awt.Frame;
+import java.awt.GridLayout;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+
+import javax.swing.AbstractAction;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTable;
+import javax.swing.JTextField;
+import javax.swing.KeyStroke;
 
 /**
  * @author Joshua Gould
  */
 public class FindAction extends AbstractAction {
-    JTable table;
+    private JTable table;
+    private SearchDialog searchDialog;
+    private int highlightColumn;
+    private Frame parent;
+    private FindModel findModel;
 
-    SearchDialog searchDialog;
-
-    int highlightColumn;
-
-    Frame parent;
-
-    FindModel findModel;
-
-    public FindAction(Frame parent, JTable table, IExpressionData data,
-                      int highlightColumn) {
+    public FindAction(Frame parent, JTable table, IExpressionData data, int highlightColumn) {
         this(parent, table);
         findModel = new IExpressionDataModel(data);
         this.highlightColumn = highlightColumn;
@@ -39,15 +46,12 @@ public class FindAction extends AbstractAction {
         this.table = table;
 
         KeyStroke ks = KeyStroke.getKeyStroke('F', Toolkit.getDefaultToolkit()
-                .getMenuShortcutKeyMask());
-        // String cmd = (String) this.getValue(Action.NAME);
+                .getMenuShortcutKeyMaskEx());
         this.putValue(AbstractAction.ACCELERATOR_KEY, ks);
     }
 
     public void actionPerformed(ActionEvent e) {
-        if (searchDialog == null) {
-            searchDialog = new SearchDialog();
-        }
+        if (searchDialog == null) { searchDialog = new SearchDialog(); }
         searchDialog.setVisible(true);
     }
 
@@ -56,9 +60,7 @@ public class FindAction extends AbstractAction {
     }
 
     private static class IExpressionDataModel implements FindModel {
-
         private IExpressionData data;
-
         public IExpressionDataModel(IExpressionData data) {
             this.data = data;
         }
@@ -72,7 +74,6 @@ public class FindAction extends AbstractAction {
      * @author Joshua Gould
      */
     class SearchDialog extends CenteredDialog {
-
         public SearchDialog() {
             super(parent);
             setTitle("Find");
@@ -90,13 +91,8 @@ public class FindAction extends AbstractAction {
             searchPanel.add(searchTermLabel, BorderLayout.NORTH);
             searchPanel.add(searchField, BorderLayout.CENTER);
 
-            // JLabel searchLabel = new JLabel("Search:");
-            // final JComboBox searchComboBox = new JComboBox(new String[]{"By
-            // Columns", "By Rows"});
             final JCheckBox caseCheckBox = new JCheckBox("Match case");
             JPanel optionsPanel = new JPanel();
-            // optionsPanel.add(searchLabel);
-            // optionsPanel.add(searchComboBox);
             optionsPanel.add(caseCheckBox);
 
             JButton findButton = new JButton("Find Next");
@@ -131,12 +127,8 @@ public class FindAction extends AbstractAction {
                     }
                     if (!found) {
                         for (int i = 0; i < startRow && !found; i++) { // wrap
-                            // search
-                            // if
-                            // not
-                            // found
-                            String value = String
-                                    .valueOf(findModel.getValue(i));
+                            // search if not found
+                            String value = String.valueOf(findModel.getValue(i));
                             if (!caseSensitive) {
                                 value = value.toLowerCase();
                             }
@@ -150,8 +142,7 @@ public class FindAction extends AbstractAction {
                     if (!found) {
                         notFound();
                     } else {
-                        table.changeSelection(row, highlightColumn, false,
-                                false);
+                        table.changeSelection(row, highlightColumn, false, false);
                     }
                 }
             });
@@ -174,8 +165,7 @@ public class FindAction extends AbstractAction {
         }
 
         private void notFound() {
-            UIUtil.showMessageDialog(this,
-                    "The search term you entered was not found.");
+            UIUtil.showMessageDialog(this, "The search term you entered was not found.");
         }
     }
 }
