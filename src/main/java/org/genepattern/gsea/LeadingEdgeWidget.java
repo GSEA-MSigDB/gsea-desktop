@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2024 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2025 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package org.genepattern.gsea;
 
@@ -10,6 +10,7 @@ import edu.mit.broad.genome.objects.esmatrix.db.EnrichmentResult;
 import edu.mit.broad.genome.objects.esmatrix.db.EnrichmentScore;
 import edu.mit.broad.genome.parsers.ParserFactory;
 import edu.mit.broad.genome.reports.EnrichmentReports;
+import edu.mit.broad.genome.swing.ClosableTabComponent;
 import edu.mit.broad.genome.utils.ZipUtility;
 import edu.mit.broad.xbench.core.Widget;
 import edu.mit.broad.xbench.core.api.Application;
@@ -86,7 +87,9 @@ public class LeadingEdgeWidget implements Widget {
         tabbedPane = new JTabbedPane();
         this.edb = edb;
         init(edb);
-        tabbedPane.addTab("GSEA Results", viewAndSearchComponent);
+        tabbedPane.addTab(null, viewAndSearchComponent);
+        tabbedPane.setTabComponentAt(tabbedPane.getTabCount() - 1,
+                new ClosableTabComponent(tabbedPane, "GSEA Results", null));
     }
 
     public LeadingEdgeWidget(JTabbedPane tabbedPane, EnrichmentDb edb) {
@@ -99,7 +102,9 @@ public class LeadingEdgeWidget implements Widget {
         UIUtil.setMessageHandler(new XToolsMessageHandler());
         this.edb = edb;
         init(edb);
-        tabbedPane.addTab("GSEA Results", viewAndSearchComponent);
+        tabbedPane.addTab(null, viewAndSearchComponent);
+        tabbedPane.setTabComponentAt(tabbedPane.getTabCount() - 1,
+                new ClosableTabComponent(tabbedPane, "GSEA Results", null));
     }
 
     public JMenuBar getJMenuBar() {
@@ -404,8 +409,10 @@ public class LeadingEdgeWidget implements Widget {
                         LeadingEdgeAnalysis analysis = get();
                         if (analysis == null) return;
 
-                        tabbedPane.addTab("Leading Edge Analysis-" + runs, analysis
-                                .getComponent());
+                        String tabTitle = "Leading Edge Analysis-" + runs;
+                        tabbedPane.addTab(null, analysis.getComponent());
+                        tabbedPane.setTabComponentAt(tabbedPane.getTabCount() - 1,
+                                new ClosableTabComponent(tabbedPane, tabTitle, null));
                         tabbedPane.setSelectedComponent(analysis.getComponent());
                         tabbedPane.setCursor(Cursor
                                 .getPredefinedCursor(Cursor.DEFAULT_CURSOR));
