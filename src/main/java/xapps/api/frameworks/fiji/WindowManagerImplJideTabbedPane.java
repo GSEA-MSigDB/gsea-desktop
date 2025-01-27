@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2024 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2025 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package xapps.api.frameworks.fiji;
 
@@ -10,6 +10,7 @@ import javax.swing.JFrame;
 import javax.swing.JPopupMenu;
 import javax.swing.JTabbedPane;
 
+import edu.mit.broad.genome.swing.ClosableTabComponent;
 import edu.mit.broad.xbench.core.WrappedComponent;
 import edu.mit.broad.xbench.core.api.AbstractWindowManager;
 
@@ -46,8 +47,10 @@ public class WindowManagerImplJideTabbedPane extends AbstractWindowManager {
         if (selIndex != -1) { // helps the jumpiness a lot
             fTabbedPane.setSelectedIndex(selIndex);
         } else {
-            fTabbedPane.addTab(wc.getAssociatedTitle(), wc.getAssociatedIcon(), wc.getWrappedComponent());
+            fTabbedPane.addTab(null, wc.getWrappedComponent());
             fTabbedPane.setSelectedComponent(wc.getWrappedComponent());
+            fTabbedPane.setTabComponentAt(fTabbedPane.getTabCount() - 1, 
+                    new ClosableTabComponent(fTabbedPane, wc.getAssociatedTitle(), wc.getAssociatedIcon()));
         }
 
         return new JideWindow(wc.getAssociatedTitle(), wc.getWrappedComponent());

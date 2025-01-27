@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2023 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2025 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.cytoscape.view;
 
@@ -22,6 +22,7 @@ import com.jgoodies.forms.builder.PanelBuilder;
 import com.jgoodies.forms.layout.CellConstraints;
 
 import edu.mit.broad.genome.JarResources;
+import edu.mit.broad.genome.swing.ClosableTabComponent;
 import edu.mit.broad.genome.swing.GuiHelper;
 import edu.mit.broad.genome.swing.fields.GDirFieldPlusChooser;
 import edu.mit.broad.genome.swing.fields.GFieldPlusChooser;
@@ -105,7 +106,9 @@ public class EnrichmentMapInputPanel extends AbstractViewer {
                                 try {
                                     EnrichmentMapParameterPanel new_panel = new EnrichmentMapParameterPanel(datasets);
                                     JScrollPane scrollablePanel = new JScrollPane(new_panel);
-                                    sharedTabbedPane.addTab("EM Analysis", scrollablePanel);
+                                    sharedTabbedPane.addTab(null, scrollablePanel);
+                                    sharedTabbedPane.setTabComponentAt(sharedTabbedPane.getTabCount() - 1,
+                                            new ClosableTabComponent(sharedTabbedPane, "EM Analysis", null));
                                     sharedTabbedPane.setSelectedComponent(scrollablePanel);
                                 } catch (Throwable t) {
                                     System.out.println("unable to initialize interface");

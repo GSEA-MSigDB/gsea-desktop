@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2025 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.xbench.core.api;
 
@@ -8,6 +8,8 @@ import edu.mit.broad.genome.parsers.ParserFactory;
 import xapps.gsea.GseaAppConf;
 import xapps.gsea.GseaFileFilter;
 
+import org.apache.commons.io.FileSystemUtils;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
 import org.slf4j.Logger;
@@ -146,7 +148,7 @@ public class FileManager {
         XStore xs = getRecentDirsStore();
 
         if (xs.getSize() == 0) {
-            return null;
+            return SystemUtils.getUserHome();
         }
 
         String str = xs.getElementAt(xs.getSize() - 1);
@@ -154,7 +156,7 @@ public class FileManager {
         if (str != null) {
             return new File(str);
         } else {
-            return null;
+            return SystemUtils.getUserHome();
         }
     }
 
