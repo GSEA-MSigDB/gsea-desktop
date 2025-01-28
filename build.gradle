@@ -128,10 +128,7 @@ task createMacAppDist(type: Copy, dependsOn: createDist) {
         with copySpec { from jdkBundleMac into "GSEA_${version}.app/Contents/jdk" }
     }
     with copySpec {
-        from ("scripts/mac.app") {
-            exclude "Contents/Info.plist.template"
-            exclude "Contents/MacOS/JavaAppLauncher"
-        }
+        from ("scripts/mac.app")
         into "GSEA_${version}.app"
     }
     with copySpec {
@@ -148,10 +145,6 @@ task createMacAppDist(type: Copy, dependsOn: createDist) {
     with copySpec {
         from ("src/main/resources/edu/mit/broad/genome/resources/icon_64x64.png")
         into "GSEA_${version}.app/Contents/Resources"
-    }
-    with copySpec {
-        from ("${buildDir}/GSEA-dist/") include 'gsea.args'
-        into "GSEA_${version}.app/Contents/Java/"
     }
     with copySpec {
         from ("${buildDir}/GSEA-dist/modules") include '*.jar'
