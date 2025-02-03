@@ -204,7 +204,7 @@ task createWinDist(type: Copy, dependsOn: createDist) {
     with copySpec {
         // Create a build-specific NSIS installer script.
         from ("scripts/nsis/installer.nsi")
-        filter (ReplaceTokens, tokens: [ VERSION: version ])
+        filter (ReplaceTokens, tokens: [ VERSION: version, WITH_JAVA: "" ])
     }
     from ("scripts/nsis") { include "LICENSE_WIN.txt" }
     into "${buildDir}/GSEA-WinExe-dist"
@@ -214,8 +214,20 @@ task createWinWithJavaDist(type: Copy, dependsOn: createWinDist) {
     if (jdkBundleWindows == "") {
         throw new GradleException("Required property not set: jdkBundleWindows");
     }
-    with copySpec { from jdkBundleWindows into "GSEA_${version}/jdk" }
-    from ("${buildDir}/GSEA-WinExe-dist")
+    with copySpec {
+        from("${buildDir}/GSEA-dist") {
+            exclude "*.sh"
+            exclude "*.command"
+        }
+        from ("scripts/nsis") { include "GSEA_Icon.ico" }
+        into "GSEA_${version}"
+    }
+    with copySpec {
+        // Create a build-specific NSIS installer script.
+        from ("scripts/nsis/installer.nsi")
+        filter (ReplaceTokens, tokens: [ VERSION: version, WITH_JAVA: "-WithJava" ])
+    }
+    from ("scripts/nsis") { include "LICENSE_WIN.txt" }
     into "${buildDir}/GSEA-WinExe-WithJava-dist"
 }
 
