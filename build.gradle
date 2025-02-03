@@ -188,7 +188,7 @@ task createMacAppIntelWithJavaDistZip(type: Zip, dependsOn: createMacAppDist) {
     from "${buildDir}/GSEA-MacApp-dist"
     
     doLast {
-        project.exec { commandLine('chmod', '775', createMacAppIntelDistWithJavaZip.archivePath ) }
+        project.exec { commandLine('chmod', '775', createMacAppIntelWithJavaDistZip.archivePath ) }
     }
 }
 
