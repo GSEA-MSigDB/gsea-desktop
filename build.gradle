@@ -124,9 +124,6 @@ task createMacDistZip(type: Zip, dependsOn: createDist) {
 }
 
 task createMacAppDist(type: Copy, dependsOn: createDist) {
-    if (!jdkBundleMac.equals("")) {
-        with copySpec { from jdkBundleMac into "GSEA_${version}.app/Contents/jdk" }
-    }
     with copySpec {
         from ("scripts/mac.app")
         into "GSEA_${version}.app"
@@ -167,10 +164,35 @@ task createMacAppDistZip(type: Zip, dependsOn: createMacAppDist) {
     }
 }
 
-task createWinDist(type: Copy, dependsOn: createDist) {
-    if (!jdkBundleWindows.equals("")) {
-        with copySpec { from jdkBundleWindows into "GSEA_${version}/jdk" }
+task createMacAppWithJavaDistZip(type: Zip, dependsOn: createMacAppDist) {
+    if (jdkBundleMac == "") {
+        throw new GradleException("Required property not set: jdkBundleMac");
     }
+    archiveFileName = "GSEA_MacApp_${version}_WithJava.app.zip"
+    destinationDirectory = file("${buildDir}/distZip")
+    with copySpec { from jdkBundleMac into "GSEA_${version}.app/Contents/jdk" }
+    from "${buildDir}/GSEA-MacApp-dist"
+    
+    doLast {
+        project.exec { commandLine('chmod', '775', createMacAppWithJavaDistZip.archivePath ) }
+    }
+}
+
+task createMacAppIntelWithJavaDistZip(type: Zip, dependsOn: createMacAppDist) {
+    if (jdkBundleMacIntel == "") {
+        throw new GradleException("Required property not set: jdkBundleMacIntel");
+    }
+    archiveFileName = "GSEA_MacAppIntel_${version}_WithJava.app.zip"
+    destinationDirectory = file("${buildDir}/distZip")
+    with copySpec { from jdkBundleMacIntel into "GSEA_${version}.app/Contents/jdk" }
+    from "${buildDir}/GSEA-MacApp-dist"
+    
+    doLast {
+        project.exec { commandLine('chmod', '775', createMacAppIntelDistWithJavaZip.archivePath ) }
+    }
+}
+
+task createWinDist(type: Copy, dependsOn: createDist) {
     with copySpec {
         from("${buildDir}/GSEA-dist") {
             exclude "*.sh"
@@ -188,30 +210,47 @@ task createWinDist(type: Copy, dependsOn: createDist) {
     into "${buildDir}/GSEA-WinExe-dist"
 }
 
+task createWinWithJavaDist(type: Copy, dependsOn: createWinDist) {
+    if (jdkBundleWindows == "") {
+        throw new GradleException("Required property not set: jdkBundleWindows");
+    }
+    with copySpec { from jdkBundleWindows into "GSEA_${version}/jdk" }
+    from ("${buildDir}/GSEA-WinExe-dist")
+    into "${buildDir}/GSEA-WinExe-WithJava-dist"
+}
+
 task createWinExeDist(type: Exec, dependsOn: createWinDist) {
+    if (makensisCommand == "") {
+        throw new GradleException("Required property not set: makensisCommand");
+    }
     commandLine(makensisCommand, "-O${buildDir}/tmp/nsis-build.log",
                 "${buildDir}/GSEA-WinExe-dist/installer.nsi")
-    doLast {
-        if (makensisCommand.equals("")) {
-            throw new GradleException("Required property not set: makensisCommand");
-        }
-    }
 }
-        
+
+task createWinExeWithJavaDist(type: Exec, dependsOn: createWinWithJavaDist) {
+    if (makensisCommand == "") {
+        throw new GradleException("Required property not set: makensisCommand");
+    }
+    commandLine(makensisCommand, "-O${buildDir}/tmp/nsis-build.log",
+                "${buildDir}/GSEA-WinExe-WithJava-dist/installer.nsi")
+}
+
 task signWinExeDist(type: Exec, dependsOn: createWinExeDist) {
+    if (signcodeCommand == "") {
+        throw new GradleException("Required property not set: signcodeCommand");
+    }
     standardInput = new ByteArrayInputStream( keyPassword.getBytes() );
     commandLine(signcodeCommand, "-spc", spcFile, "-v", pvkFile, "-a", "sha512", 
                 "-\$", "commercial", "-n", "GSEA ${version}", "-i", "http://www.gsea-msigdb.org/",
                 "-t", tsaurl, "-tr", "10", "${buildDir}/GSEA-WinExe-dist/GSEA_Win_${version}-installer.exe")
-    doLast {
-        if (signcodeCommand.equals("")) {
-            throw new GradleException("Required property not set: signcodeCommand");
-        }
-    }
 }
 
-//build.dependsOn createDistZip,createLinuxDistZip,createMacAppDistZip
-
-if (!makensisCommand.equals("") && !signcodeCommand.equals("")) {
-    build.dependsOn signWinExeDist
+task signWinExeWithJavaDist(type: Exec, dependsOn: createWinExeWithJavaDist) {
+    if (signcodeCommand == "") {
+        throw new GradleException("Required property not set: signcodeCommand");
+    }
+    standardInput = new ByteArrayInputStream( keyPassword.getBytes() );
+    commandLine(signcodeCommand, "-spc", spcFile, "-v", pvkFile, "-a", "sha512", 
+                "-\$", "commercial", "-n", "GSEA ${version}", "-i", "http://www.gsea-msigdb.org/",
+                "-t", tsaurl, "-tr", "10", "${buildDir}/GSEA-WinExe-WithJava-dist/GSEA_Win_${version}-WithJava-installer.exe")
 }
