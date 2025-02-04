@@ -77,7 +77,7 @@ task createDist(type: Copy, dependsOn: jar)  {
 
 task createDistZip(type: Zip, dependsOn: createDist) {
     archiveBaseName = "GSEA"
-    archiveFileName = "GSEA_${version}.zip"
+    archiveFileName = "GSEA_${version}-NoJava.zip"
     destinationDirectory = file("${buildDir}/distZip")
     from "${buildDir}/GSEA-dist"
     into { "GSEA_${version}" }
@@ -89,7 +89,7 @@ task createDistZip(type: Zip, dependsOn: createDist) {
 
 task createLinuxDistZip(type: Zip, dependsOn: createDist) {
     archiveBaseName = "GSEA_Linux"
-    archiveFileName = "GSEA_Linux_${version}.zip"
+    archiveFileName = "GSEA_LinuxIntel_${version}-WithJava.zip"
     destinationDirectory = file("${buildDir}/distZip")
     if (!jdkBundleLinux.equals("")) {
         with copySpec { from jdkBundleLinux into "jdk" }
@@ -135,11 +135,6 @@ task createMacAppDist(type: Copy, dependsOn: createDist) {
         into "GSEA_${version}.app/Contents"
     }
     with copySpec {
-        from ("scripts/GSEA_mac.app_launcher")
-        rename "GSEA_mac.app_launcher", "GSEA"
-        into "GSEA_${version}.app/Contents/MacOS"
-    }
-    with copySpec {
         from ("src/main/resources/edu/mit/broad/genome/resources/icon_64x64.png")
         into "GSEA_${version}.app/Contents/Resources"
     }
@@ -155,13 +150,9 @@ task createMacAppDist(type: Copy, dependsOn: createDist) {
 }
 
 task createMacAppDistZip(type: Zip, dependsOn: createMacAppDist) {
-    archiveFileName = "GSEA_MacApp_${version}.app.zip"
+    archiveFileName = "GSEA_MacApp_${version}_NoJava.app.zip"
     destinationDirectory = file("${buildDir}/distZip")
     from "${buildDir}/GSEA-MacApp-dist"
-    
-    doLast {
-        project.exec { commandLine('chmod', '775', createMacAppDistZip.archivePath ) }
-    }
 }
 
 task createMacAppWithJavaDistZip(type: Zip, dependsOn: createMacAppDist) {
@@ -172,10 +163,6 @@ task createMacAppWithJavaDistZip(type: Zip, dependsOn: createMacAppDist) {
     destinationDirectory = file("${buildDir}/distZip")
     with copySpec { from jdkBundleMac into "GSEA_${version}.app/Contents/jdk" }
     from "${buildDir}/GSEA-MacApp-dist"
-    
-    doLast {
-        project.exec { commandLine('chmod', '775', createMacAppWithJavaDistZip.archivePath ) }
-    }
 }
 
 task createMacAppIntelWithJavaDistZip(type: Zip, dependsOn: createMacAppDist) {
@@ -186,10 +173,6 @@ task createMacAppIntelWithJavaDistZip(type: Zip, dependsOn: createMacAppDist) {
     destinationDirectory = file("${buildDir}/distZip")
     with copySpec { from jdkBundleMacIntel into "GSEA_${version}.app/Contents/jdk" }
     from "${buildDir}/GSEA-MacApp-dist"
-    
-    doLast {
-        project.exec { commandLine('chmod', '775', createMacAppIntelWithJavaDistZip.archivePath ) }
-    }
 }
 
 task createWinDist(type: Copy, dependsOn: createDist) {
@@ -204,7 +187,7 @@ task createWinDist(type: Copy, dependsOn: createDist) {
     with copySpec {
         // Create a build-specific NSIS installer script.
         from ("scripts/nsis/installer.nsi")
-        filter (ReplaceTokens, tokens: [ VERSION: version, WITH_JAVA: "" ])
+        filter (ReplaceTokens, tokens: [ VERSION: version, WITH_JAVA: "-NoJava" ])
     }
     from ("scripts/nsis") { include "LICENSE_WIN.txt" }
     into "${buildDir}/GSEA-WinExe-dist"
@@ -254,7 +237,7 @@ task signWinExeDist(type: Exec, dependsOn: createWinExeDist) {
     standardInput = new ByteArrayInputStream( keyPassword.getBytes() );
     commandLine(signcodeCommand, "-spc", spcFile, "-v", pvkFile, "-a", "sha512", 
                 "-\$", "commercial", "-n", "GSEA ${version}", "-i", "http://www.gsea-msigdb.org/",
-                "-t", tsaurl, "-tr", "10", "${buildDir}/GSEA-WinExe-dist/GSEA_Win_${version}-installer.exe")
+                "-t", tsaurl, "-tr", "10", "${buildDir}/GSEA-WinExe-dist/GSEA_Win_${version}-NoJava-installer.exe")
 }
 
 task signWinExeWithJavaDist(type: Exec, dependsOn: createWinExeWithJavaDist) {
