@@ -141,7 +141,7 @@ task createMacAppDistZip(type: Zip, dependsOn: createMacAppDist) {
     with copySpec {
         from ("scripts/GSEA_mac_universal")
         rename "GSEA_mac_universal", "GSEA"
-        into "GSEA_${version}.app/MacOS"
+        into "GSEA_${version}.app/Contents/MacOS"
     }
     from "${buildDir}/GSEA-MacApp-dist"
 }
@@ -158,7 +158,7 @@ task createMacAppWithJavaDistZip(type: Zip, dependsOn: createMacAppDist) {
     with copySpec {
         from ("scripts/GSEA_mac_arm")
         rename "GSEA_mac_arm", "GSEA"
-        into "GSEA_${version}.app/MacOS"
+        into "GSEA_${version}.app/Contents/MacOS"
     }
     from "${buildDir}/GSEA-MacApp-dist"
 }
@@ -175,7 +175,7 @@ task createMacAppIntelWithJavaDistZip(type: Zip, dependsOn: createMacAppDist) {
     with copySpec {
         from ("scripts/GSEA_mac_x64")
         rename "GSEA_mac_x64", "GSEA"
-        into "GSEA_${version}.app/MacOS"
+        into "GSEA_${version}.app/Contents/MacOS"
     }
     from "${buildDir}/GSEA-MacApp-dist"
 }
