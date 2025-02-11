@@ -139,6 +139,10 @@ task createMacAppDist(type: Copy, dependsOn: createDist) {
         into "GSEA_${version}.app/Contents/Resources"
     }
     with copySpec {
+        from ("scripts/logging.properties")
+        into "GSEA_${version}.app/Contents/Resources"
+    }
+    with copySpec {
         from ("${buildDir}/GSEA-dist/modules") include '*.jar'
         into "GSEA_${version}.app/Contents/Java/modules"
     }
