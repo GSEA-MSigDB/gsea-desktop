@@ -4,8 +4,9 @@ GSEA Binary Distribution
 
 Prerequisites:
 
-Java 17 (http://openjdk.java.net).  This is bundled with our distributions.
-Not compatible with earlier versions of Java and untested with newer versions of Java.
+Java 17 or 21 (http://openjdk.java.net).  Java 21 is bundled with our distributions.
+It is likely to also work on Java 22 and above, though this is untested.  It is not
+compatible with earlier Java versions.
 
 
 Instructions:
@@ -24,18 +25,26 @@ gsea-cli.sh    (for Linux and macOS command line usage)
 gsea-cli.bat   (for Windows command line usage)
 gsea.command   (for macOS, double-click to start)
 
-The bat and shell scripts are configured to start GSEA with 4GB of
-memory.  This is a reasonable default for most machines.  If you are
-working with very large datasets you can increase the amount of memory
-available to GSEA by editing the first line of the startup script.
-Specifically change the value of the "-Xmx" parameter.  For example,
-to start GSEA with 8 GB of memory, change the value
+These scripts are configured to start GSEA with 4GB of memory.  This is a 
+reasonable default for most machines.  If you are working with very large datasets 
+you can override this setting (and other Java-related defaults) by editing GSEA's
+java_arguments file, found here (create it if it doesn't exist):
+   $HOME/.gsea/java_arguments           (Mac and Linux)
+   %USERPROFILE%/.gsea/java_arguments   (Windows)
 
-   -Xmx4g
+Specifically set the value of the "-Xmx" parameter.  For example, to start GSEA with 
+8 GB of memory add the following to the file: 
 
-to
+-Xmx8g
 
-   -Xmx8g
+This will override the default 4GB memory specification.
+
+Other Java-related command-line options can also be set in this file, though changing anything
+beyond the memory specification is for advanced users only and is not recommended.  See
+   https://docs.oracle.com/en/java/javase/21/docs/specs/man/java.html
+for more information on the Java 21 command line, and
+   https://docs.oracle.com/en/java/javase/21/docs/specs/man/java.html#java-command-line-argument-files
+in particular for specifics of the "java_arguments" file format.
 
 Use gsea-cli.sh (Linux, Mac) or gsea-cli.bat (Windows) to run GSEA at the command line,
 For example:
@@ -47,9 +56,3 @@ Where [operationName] is one of GSEA, GSEAPreranked, CollapseDataset, Chip2Chip,
 for the chosen operation and [parameters] are the corresponding parameters for that operation.
 Use of the Command feature in the UI is the best way to discover the available parameters 
 for each operation.
-
-Alternatively, to start the GSEA Desktop UI execute the following from the command line:
-
-     $ java --module-path=modules -Xmx4g @gsea.args --patch-module=jide.common=lib/jide-components-3.7.4.jar:lib/jide-dock-3.7.4.jar:lib/jide-grids-3.7.4.jar --module=org.gsea_msigdb.gsea/xapps.gsea.GSEA
-
-As noted above, use of the scripts above instead is strongly recommended.

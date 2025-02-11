@@ -34,9 +34,9 @@ The GSEA project is currently a joint effort of the Broad Institute and the Univ
 
 # Dependencies
 
-GSEA Desktop is 100% Pure Java.  Java 17 is required for building and to run our pre-built binaries.  Builds against other versions of Java may be possible but are unsupported.
+GSEA Desktop is 100% Pure Java.  Java 17 or 21 is required for building and to run our pre-built binaries.  Builds against other versions of Java may be possible but are unsupported.
 
 See the [LICENSE-3RD-PARTY.txt](LICENSE-3RD-PARTY.txt) file for a full list of the GSEA library dependencies.  In our binary builds, all required 3rd party library code is bundled along with the GSEA jar file so that no additional downloads or installation are required. 
 
 ------
-Copyright (c) 2003-2023 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+Copyright (c) 2003-2025 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.

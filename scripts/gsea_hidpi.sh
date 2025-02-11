@@ -16,9 +16,20 @@ else
     java -version
 fi
 
-exec java -showversion --module-path="${prefix}/modules" -Xmx4g \
-    @"${prefix}/gsea.args" \
-    -Dsun.java2d.uiScale=2 \
-    -Djava.util.logging.config.file="${prefix}/logging.properties" \
-    -Dapple.laf.useScreenMenuBar=true \
-    --module=org.gsea_msigdb.gsea/xapps.gsea.GSEA "$@"
+# Check if there is a user-specified Java arguments file
+# For more info, see the README at 
+# https://raw.githubusercontent.com/GSEA-MSigDB/gsea-desktop/master/scripts/readme.txt
+if [ -e "$HOME/.gsea/java_arguments" ]; then
+    exec java -showversion --module-path="${prefix}/modules" -Xmx4g \
+        @"${prefix}/gsea.args" \
+        -Dsun.java2d.uiScale=2 \
+        -Djava.util.logging.config.file="${prefix}/logging.properties" \
+        @"$HOME/.gsea/java_arguments" \
+        --module=org.gsea_msigdb.gsea/xapps.gsea.GSEA "$@"
+else
+    exec java -showversion --module-path="${prefix}/modules" -Xmx4g \
+        @"${prefix}/gsea.args" \
+        -Dsun.java2d.uiScale=2 \
+        -Djava.util.logging.config.file="${prefix}/logging.properties" \
+        --module=org.gsea_msigdb.gsea/xapps.gsea.GSEA "$@"
+fi

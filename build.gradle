@@ -64,6 +64,7 @@ task createDist(type: Copy, dependsOn: jar)  {
         include 'gsea*'
         include 'logging.properties'
         include 'readme.txt'
+        exclude 'GSEA_mac_*'
         exclude 'mac.app'
         exclude 'nsis'
     }
@@ -88,39 +89,20 @@ task createDistZip(type: Zip, dependsOn: createDist) {
 }
 
 task createLinuxDistZip(type: Zip, dependsOn: createDist) {
+    doFirst {
+        if (jdkBundleLinux == "") {
+            throw new GradleException("Required property not set: jdkBundleLinux");
+        }
+    }
     archiveBaseName = "GSEA_Linux"
     archiveFileName = "GSEA_LinuxIntel_${version}-WithJava.zip"
     destinationDirectory = file("${buildDir}/distZip")
-    if (!jdkBundleLinux.equals("")) {
-        with copySpec { from jdkBundleLinux into "jdk" }
-    }
+    with copySpec { from jdkBundleLinux into "jdk" }
     from ("${buildDir}/GSEA-dist") {
         exclude "*.bat"
         exclude "*.command"
     }
     into { "GSEA_Linux_${version}" }
-
-    doLast {
-        project.exec { commandLine('chmod', '775', createLinuxDistZip.archivePath ) }
-    }
-}
-
-task createMacDistZip(type: Zip, dependsOn: createDist) {
-    archiveBaseName = "GSEA_Mac"
-    archiveFileName = "GSEA_Mac_${version}.zip"
-    destinationDirectory = file("${buildDir}/distZip")
-    if (!jdkBundleMac.equals("")) {
-        with copySpec { from jdkBundleMac into "jdk" }
-    }
-    from ("${buildDir}/GSEA-dist") {
-        exclude "*.bat"
-        exclude "*_hidpi.sh"
-    }
-    into { "GSEA_Mac_${version}" }
-
-    doLast {
-        project.exec { commandLine('chmod', '775', createMacDistZip.archivePath ) }
-    }
 }
 
 task createMacAppDist(type: Copy, dependsOn: createDist) {
@@ -156,26 +138,45 @@ task createMacAppDist(type: Copy, dependsOn: createDist) {
 task createMacAppDistZip(type: Zip, dependsOn: createMacAppDist) {
     archiveFileName = "GSEA_MacApp_${version}_NoJava.app.zip"
     destinationDirectory = file("${buildDir}/distZip")
+    with copySpec {
+        from ("scripts/GSEA_mac_universal")
+        rename "GSEA_mac_universal", "GSEA"
+        into "GSEA_${version}.app/MacOS"
+    }
     from "${buildDir}/GSEA-MacApp-dist"
 }
 
 task createMacAppWithJavaDistZip(type: Zip, dependsOn: createMacAppDist) {
-    if (jdkBundleMac == "") {
-        throw new GradleException("Required property not set: jdkBundleMac");
+    doFirst {
+        if (jdkBundleMac == "") {
+            throw new GradleException("Required property not set: jdkBundleMac");
+        }
     }
     archiveFileName = "GSEA_MacApp_${version}_WithJava.app.zip"
     destinationDirectory = file("${buildDir}/distZip")
     with copySpec { from jdkBundleMac into "GSEA_${version}.app/Contents/jdk" }
+    with copySpec {
+        from ("scripts/GSEA_mac_arm")
+        rename "GSEA_mac_arm", "GSEA"
+        into "GSEA_${version}.app/MacOS"
+    }
     from "${buildDir}/GSEA-MacApp-dist"
 }
 
 task createMacAppIntelWithJavaDistZip(type: Zip, dependsOn: createMacAppDist) {
-    if (jdkBundleMacIntel == "") {
-        throw new GradleException("Required property not set: jdkBundleMacIntel");
+    doFirst {
+        if (jdkBundleMacIntel == "") {
+            throw new GradleException("Required property not set: jdkBundleMacIntel");
+        }
     }
     archiveFileName = "GSEA_MacAppIntel_${version}_WithJava.app.zip"
     destinationDirectory = file("${buildDir}/distZip")
     with copySpec { from jdkBundleMacIntel into "GSEA_${version}.app/Contents/jdk" }
+    with copySpec {
+        from ("scripts/GSEA_mac_x64")
+        rename "GSEA_mac_x64", "GSEA"
+        into "GSEA_${version}.app/MacOS"
+    }
     from "${buildDir}/GSEA-MacApp-dist"
 }
 
@@ -198,8 +199,10 @@ task createWinDist(type: Copy, dependsOn: createDist) {
 }
 
 task createWinWithJavaDist(type: Copy, dependsOn: createWinDist) {
-    if (jdkBundleWindows == "") {
-        throw new GradleException("Required property not set: jdkBundleWindows");
+    doFirst {
+        if (jdkBundleWindows == "") {
+            throw new GradleException("Required property not set: jdkBundleWindows");
+        }
     }
     with copySpec {
         from("${buildDir}/GSEA-dist") {
@@ -219,24 +222,30 @@ task createWinWithJavaDist(type: Copy, dependsOn: createWinDist) {
 }
 
 task createWinExeDist(type: Exec, dependsOn: createWinDist) {
-    if (makensisCommand == "") {
-        throw new GradleException("Required property not set: makensisCommand");
+    doFirst {
+        if (makensisCommand == "") {
+            throw new GradleException("Required property not set: makensisCommand");
+        }
     }
     commandLine(makensisCommand, "-O${buildDir}/tmp/nsis-build.log",
                 "${buildDir}/GSEA-WinExe-dist/installer.nsi")
 }
 
 task createWinExeWithJavaDist(type: Exec, dependsOn: createWinWithJavaDist) {
-    if (makensisCommand == "") {
-        throw new GradleException("Required property not set: makensisCommand");
+    doFirst {
+        if (makensisCommand == "") {
+            throw new GradleException("Required property not set: makensisCommand");
+        }
     }
     commandLine(makensisCommand, "-O${buildDir}/tmp/nsis-build.log",
                 "${buildDir}/GSEA-WinExe-WithJava-dist/installer.nsi")
 }
 
 task signWinExeDist(type: Exec, dependsOn: createWinExeDist) {
-    if (signcodeCommand == "") {
-        throw new GradleException("Required property not set: signcodeCommand");
+    doFirst {
+        if (signcodeCommand == "") {
+            throw new GradleException("Required property not set: signcodeCommand");
+        }
     }
     standardInput = new ByteArrayInputStream( keyPassword.getBytes() );
     commandLine(signcodeCommand, "-spc", spcFile, "-v", pvkFile, "-a", "sha512", 
@@ -245,8 +254,10 @@ task signWinExeDist(type: Exec, dependsOn: createWinExeDist) {
 }
 
 task signWinExeWithJavaDist(type: Exec, dependsOn: createWinExeWithJavaDist) {
-    if (signcodeCommand == "") {
-        throw new GradleException("Required property not set: signcodeCommand");
+    doFirst {
+        if (signcodeCommand == "") {
+            throw new GradleException("Required property not set: signcodeCommand");
+        }
     }
     standardInput = new ByteArrayInputStream( keyPassword.getBytes() );
     commandLine(signcodeCommand, "-spc", spcFile, "-v", pvkFile, "-a", "sha512", 

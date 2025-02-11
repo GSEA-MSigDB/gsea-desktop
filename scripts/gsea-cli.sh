@@ -22,8 +22,20 @@ else
     PREFS_PROP=
 fi;
 
-exec java --module-path="${prefix}/modules" -Xmx4g \
-    -Djava.awt.headless=true $PREFS_PROP \
-    -Djava.util.logging.config.file="${prefix}/logging.properties" \
-    @"${prefix}/gsea.args" \
-    --module=org.gsea_msigdb.gsea/xapps.gsea.CLI "$@"
+# Check if there is a user-specified Java arguments file
+# For more info, see the README at 
+# https://raw.githubusercontent.com/GSEA-MSigDB/gsea-desktop/master/scripts/readme.txt
+if [ -e "$HOME/.gsea/java_arguments" ]; then
+    exec java --module-path="${prefix}/modules" -Xmx4g \
+        @"${prefix}/gsea.args" \
+        -Djava.awt.headless=true $PREFS_PROP \
+        -Djava.util.logging.config.file="${prefix}/logging.properties" \
+        @"$HOME/.gsea/java_arguments" \
+        --module=org.gsea_msigdb.gsea/xapps.gsea.CLI "$@"
+else
+    exec java --module-path="${prefix}/modules" -Xmx4g \
+        @"${prefix}/gsea.args" \
+        -Djava.awt.headless=true $PREFS_PROP \
+        -Djava.util.logging.config.file="${prefix}/logging.properties" \
+        --module=org.gsea_msigdb.gsea/xapps.gsea.CLI "$@"
+fi
