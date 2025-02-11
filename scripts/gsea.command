@@ -17,10 +17,24 @@ else
     java -version
 fi
 
-java -showversion --module-path="${prefix}/modules" -Xmx4g \
-    @"${prefix}/gsea.args" \
-    -Xdock:name="GSEA" \
-    -Xdock:icon="${prefix}/icon_64x64.png" \
-    -Djava.util.logging.config.file="${prefix}/logging.properties" \
-    -Dapple.laf.useScreenMenuBar=true \
-    --module=org.gsea_msigdb.gsea/xapps.gsea.GSEA "$@"
+# Check if there is a user-specified Java arguments file
+# For more info, see the README at 
+# https://raw.githubusercontent.com/GSEA-MSigDB/gsea-desktop/master/scripts/readme.txt
+if [ -e "$HOME/.gsea/java_arguments" ]; then
+    java -showversion --module-path="${prefix}/modules" -Xmx4g \
+        @"${prefix}/gsea.args" \
+        -Xdock:name="GSEA" \
+        -Xdock:icon="${prefix}/icon_64x64.png" \
+        -Djava.util.logging.config.file="${prefix}/logging.properties" \
+        -Dapple.laf.useScreenMenuBar=true \
+        @"$HOME/.gsea/java_arguments" \
+        --module=org.gsea_msigdb.gsea/xapps.gsea.GSEA "$@"
+else
+    java -showversion --module-path="${prefix}/modules" -Xmx4g \
+        @"${prefix}/gsea.args" \
+        -Xdock:name="GSEA" \
+        -Xdock:icon="${prefix}/icon_64x64.png" \
+        -Djava.util.logging.config.file="${prefix}/logging.properties" \
+        -Dapple.laf.useScreenMenuBar=true \
+        --module=org.gsea_msigdb.gsea/xapps.gsea.GSEA "$@"
+fi
