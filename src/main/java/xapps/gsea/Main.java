@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2024 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2025 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package xapps.gsea;
 
@@ -9,6 +9,9 @@ import com.jgoodies.looks.plastic.PlasticXPLookAndFeel;
 import com.jgoodies.looks.plastic.theme.ExperienceBlue;
 
 import edu.mit.broad.genome.JarResources;
+import edu.mit.broad.xbench.prefs.XPreferencesFactory;
+
+import java.util.Properties;
 
 import javax.swing.ToolTipManager;
 import javax.swing.UIManager;
@@ -27,16 +30,23 @@ import org.broad.gsea.ui.DesktopIntegration;
  */
 public class Main {
     private static final Logger klog = LoggerFactory.getLogger(Main.class);
+    private static final Properties buildProps = JarResources.getBuildInfo();
 
-    /**
-     * Note that it is necessary to provide a JIDE Software license key in order to use JIDE Components, Dock and Grids.
-     * The key included here was generously provided to the GSEA development team for use with the GSEA project.
-     * Other developers and commercial users should contact http://www.jidesoft.com to determine what type of license
-     * is needed.
-     */
     static {
-        DesktopIntegration.verifyJavaPlatform();
         DesktopIntegration.setDockIcon(JarResources.getImage("icon_64x64.png"));
+        klog.info("Startup  GSEA Version " + buildProps.getProperty("build.version")
+                + " " + buildProps.getProperty("build.timestamp"));
+        klog.info("Java " + System.getProperty("java.version")
+                + " (build " + System.getProperty("java.vm.version")
+                + ") " + System.getProperty("java.version.date", ""));
+        klog.info("Java Vendor: " + System.getProperty("java.vendor")
+                + " " + System.getProperty("java.vendor.url", ""));
+        klog.info("JVM: " + System.getProperty("java.vm.name", "")
+                + " " + System.getProperty("java.vendor.version", "")
+                + "   " + System.getProperty("java.compiler", ""));
+        klog.info("OS: " + System.getProperty("os.name") + " " + System.getProperty("os.version")
+                + " " + System.getProperty("os.arch"));
+        klog.info("GSEA Directory: " + XPreferencesFactory.kAppRuntimeHomeDir.getAbsolutePath());
         
         if (SystemUtils.IS_OS_MAC_OSX) {
             System.setProperty("apple.laf.useScreenMenuBar", "true");

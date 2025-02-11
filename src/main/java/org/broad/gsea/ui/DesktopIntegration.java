@@ -20,21 +20,6 @@ import xapps.gsea.GseaFijiTabsApplicationFrame;
  * @author eby
  */
 public class DesktopIntegration {
-    public static final void verifyJavaPlatform() {
-        String javaVersion = System.getProperty("java.version");
-        if (javaVersion == null || javaVersion.startsWith("1.8")) {
-            try {
-                System.out.println("Detected an unsupported Java version.  Java 8 is not supported by this release.");
-
-                if (!GraphicsEnvironment.isHeadless()) {
-                    JOptionPane.showMessageDialog(null, "Detected an unsupported Java version.  Java 8 is not supported by this release.");
-                }
-            } finally {
-                System.exit(1);
-            }
-        }
-    }
-    
     public static void setDockIcon(Image image) {
         if (SystemUtils.IS_OS_MAC_OSX) {
             Taskbar.getTaskbar().setIconImage(image);

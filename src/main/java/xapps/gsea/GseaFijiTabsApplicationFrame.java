@@ -166,7 +166,7 @@ public class GseaFijiTabsApplicationFrame extends JFrame implements Application.
             buildInfo += ", " + buildTS;
         }
         AboutPanel aboutPanel = new AboutPanel("Gene Set Enrichment Analysis (GSEA) v" + buildProps.getProperty("build.version"), 
-                "Copyright (c) 2003-2024 Broad Institute, Inc., Massachusetts Institute of Technology, ",
+                "Copyright (c) 2003-2025 Broad Institute, Inc., Massachusetts Institute of Technology, ",
                 "and Regents of the University of California.  All rights reserved.", 
                 buildInfo);
         JOptionPane.showMessageDialog(fFrame, aboutPanel, "About GSEA", JOptionPane.PLAIN_MESSAGE);
