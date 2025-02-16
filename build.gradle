@@ -217,6 +217,7 @@ task createWinWithJavaDist(type: Copy, dependsOn: createWinDist) {
         from ("scripts/nsis/installer.nsi")
         filter (ReplaceTokens, tokens: [ VERSION: version, WITH_JAVA: "-WithJava" ])
     }
+    with copySpec { from jdkBundleWindows into "GSEA_${version}/jdk" }
     from ("scripts/nsis") { include "LICENSE_WIN.txt" }
     into "${buildDir}/GSEA-WinExe-WithJava-dist"
 }
