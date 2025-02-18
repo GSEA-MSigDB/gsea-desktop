@@ -251,7 +251,7 @@ task signWinExeDist(type: Exec, dependsOn: createWinExeDist) {
     standardInput = new ByteArrayInputStream( keyPassword.getBytes() );
     commandLine(signcodeCommand, "-spc", spcFile, "-v", pvkFile, "-a", "sha512", 
                 "-\$", "commercial", "-n", "GSEA ${version}", "-i", "http://www.gsea-msigdb.org/",
-                "-t", tsaurl, "-tr", "10", "-tw", "15, "${buildDir}/GSEA-WinExe-dist/GSEA_Win_${version}-NoJava-installer.exe")
+                "-t", tsaurl, "-tr", "10", "-tw", "15", "${buildDir}/GSEA-WinExe-dist/GSEA_Win_${version}-NoJava-installer.exe")
 }
 
 task signWinExeWithJavaDist(type: Exec, dependsOn: createWinExeWithJavaDist) {
@@ -263,5 +263,5 @@ task signWinExeWithJavaDist(type: Exec, dependsOn: createWinExeWithJavaDist) {
     standardInput = new ByteArrayInputStream( keyPassword.getBytes() );
     commandLine(signcodeCommand, "-spc", spcFile, "-v", pvkFile, "-a", "sha512", 
                 "-\$", "commercial", "-n", "GSEA ${version}", "-i", "http://www.gsea-msigdb.org/",
-                "-t", tsaurl, "-tr", "10", "-tw", "15,  "${buildDir}/GSEA-WinExe-WithJava-dist/GSEA_Win_${version}-WithJava-installer.exe")
+                "-t", tsaurl, "-tr", "10", "-tw", "15",  "${buildDir}/GSEA-WinExe-WithJava-dist/GSEA_Win_${version}-WithJava-installer.exe")
 }
