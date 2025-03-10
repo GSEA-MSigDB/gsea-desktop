@@ -32,6 +32,9 @@ java_arguments file, found here (create it if it doesn't exist):
    $HOME/.gsea/java_arguments           (Mac and Linux)
    %USERPROFILE%/.gsea/java_arguments   (Windows)
 
+That file should be created with a plain-text editor (like NotePad, TextEdit, or emacs)
+and should have no extension.
+
 Specifically set the value of the "-Xmx" parameter.  For example, to start GSEA with 
 8 GB of memory add the following to the file: 
 
