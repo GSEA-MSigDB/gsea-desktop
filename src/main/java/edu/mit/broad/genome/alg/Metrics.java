@@ -25,7 +25,7 @@ public class Metrics {
     private static final int MIN_NUM_FOR_VAR = 3;
 
     // @maint add a metric and this array might need updating
-    public static Metric[] METRICS_FOR_GSEA = new Metric[] { new Signal2Noise(), new tTest(), new Cosine(), 
+    public static Metric[] METRICS_FOR_GSEA = new Metric[] { new Signal2Noise(), new tTest(), new Wald(), new Cosine(), 
             new Euclidean(), new Manhattan(), new Pearson(), new Spearman(), new ClassRatio(), new ClassDiff(), new ClassLog2Ratio()
     };
     public static Metric NONE_METRIC = new None();
@@ -237,6 +237,33 @@ public class Metrics {
         public static final String NAME = "tTest";
 
         public tTest() { super(CATEGORICAL, NAME, MIN_NUM_FOR_VAR); }
+
+        /**
+         * USE_MEDIAN -> true or false (Boolean objects). Default is TRUE.
+         * USE_BIASED -> true or false (Boolean objects). Default is FALSE.
+         * FIX_LOW    -> true or false (Boolean objects). Default is TRUE
+         * Template is required.
+         */
+        public double getScore(Vector profile, Template template, Map<String, Boolean> params) {
+            boolean usemedian = AlgMap.isMedian(params);
+            boolean usebiased = AlgMap.isBiased(params);
+            boolean fixlow = AlgMap.isFixLowVar(params);
+            Vector[] vs = fSplitter.splitBiphasic_nansafe(profile, template);
+
+            if (vs == null) { return 0.0; }
+            int coiIndex = template.getClassOfInterestIndex();
+            if (coiIndex == 0) {
+                return XMath.tTest(vs[0], vs[1], usebiased, usemedian, fixlow);
+            } else {
+                return XMath.tTest(vs[1], vs[0], usebiased, usemedian, fixlow);
+            }
+        }
+    }
+
+    public static class Wald extends AbstractMetric {
+        public static final String NAME = "Wald";
+
+        public Wald() { super(CATEGORICAL, NAME, MIN_NUM_FOR_VAR); }
 
         /**
          * USE_MEDIAN -> true or false (Boolean objects). Default is TRUE.

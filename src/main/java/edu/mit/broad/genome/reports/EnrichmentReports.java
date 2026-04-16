@@ -8,6 +8,7 @@ import edu.mit.broad.genome.NamingConventions;
 import edu.mit.broad.genome.NotImplementedException;
 import edu.mit.broad.genome.Printf;
 import edu.mit.broad.genome.alg.DatasetGenerators;
+import edu.mit.broad.genome.alg.gsea.Norms;
 import edu.mit.broad.genome.alg.gsea.PValueCalculator;
 import edu.mit.broad.genome.alg.gsea.PValueCalculatorImpls;
 import edu.mit.broad.genome.alg.markers.PermutationTest;
@@ -181,6 +182,94 @@ public class EnrichmentReports {
         final PValueCalculator pvc = new PValueCalculatorImpls.GseaImpl(normModeName);
         final EnrichmentResult[] results = pvc.calcNPValuesAndFDR(edb_original.getResults());
         final EnrichmentDb edb = edb_original.cloneDeep(results);
+
+        if (Norms.MEDIAN_OF_RATIOS.equals(normModeName) && cd instanceof CollapsedDetails.Data) {
+            try {
+                final Dataset datasetToNormalize = ((CollapsedDetails.Data) cd).getDataset();
+                final int rowCount = datasetToNormalize.getNumRow();
+                final int colCount = datasetToNormalize.getNumCol();
+                final Matrix normalizedMatrix = new Matrix(rowCount, colCount);
+                final double[] sizeFactors = new double[colCount];
+                final double[] geometricMeans = new double[rowCount];
+                final boolean[] includeRow = new boolean[rowCount];
+
+                int usableRows = 0;
+                for (int r = 0; r < rowCount; r++) {
+                    final Vector row = datasetToNormalize.getRow(r);
+                    boolean usable = true;
+                    double sumLog = 0.0d;
+
+                    for (int c = 0; c < colCount; c++) {
+                        final double value = row.getElement(c);
+                        if (!Double.isFinite(value) || value <= 0.0d) {
+                            usable = false;
+                            break;
+                        }
+                        sumLog += Math.log(value);
+                    }
+
+                    if (usable) {
+                        geometricMeans[r] = Math.exp(sumLog / colCount);
+                        includeRow[r] = true;
+                        usableRows++;
+                    } else {
+                        geometricMeans[r] = Double.NaN;
+                        includeRow[r] = false;
+                    }
+                }
+
+                for (int c = 0; c < colCount; c++) {
+                    if (usableRows == 0) {
+                        sizeFactors[c] = 1.0d;
+                        continue;
+                    }
+
+                    final double[] ratios = new double[usableRows];
+                    int ratioIndex = 0;
+                    for (int r = 0; r < rowCount; r++) {
+                        if (!includeRow[r]) {
+                            continue;
+                        }
+                        ratios[ratioIndex++] = datasetToNormalize.getRow(r).getElement(c) / geometricMeans[r];
+                    }
+
+                    Arrays.sort(ratios);
+                    final double median;
+                    if (ratios.length % 2 == 0) {
+                        median = (ratios[(ratios.length / 2) - 1] + ratios[ratios.length / 2]) / 2.0d;
+                    } else {
+                        median = ratios[ratios.length / 2];
+                    }
+
+                    sizeFactors[c] = (Double.isFinite(median) && median > 0.0d) ? median : 1.0d;
+                }
+
+                for (int r = 0; r < rowCount; r++) {
+                    final Vector row = datasetToNormalize.getRow(r);
+                    final Vector normalizedRow = new Vector(colCount);
+                    for (int c = 0; c < colCount; c++) {
+                        final float value = row.getElement(c);
+                        if (Float.isFinite(value)) {
+                            normalizedRow.setElement(c, (float) (value / sizeFactors[c]));
+                        } else {
+                            normalizedRow.setElement(c, value);
+                        }
+                    }
+                    normalizedMatrix.setRow(r, normalizedRow);
+                }
+
+                final Dataset normalizedDataset = new DefaultDataset(datasetToNormalize.getName() + "_normalized_" + normModeName,
+                        normalizedMatrix, datasetToNormalize.getRowNames(), datasetToNormalize.getColumnNames(), datasetToNormalize.getAnnot());
+                final File edbDir = new File(saveInThisDir, "edb");
+                if (!edbDir.exists()) {
+                    edbDir.mkdirs();
+                }
+                final File normalizedGct = new File(edbDir, normalizedDataset.getName() + ".gct");
+                new GctParser().export(normalizedDataset, normalizedGct);
+            } catch (Throwable t) {
+                report.addError("Trouble exporting normalized dataset GCT", t);
+            }
+        }
 
         boolean haveInfiniteOrNaN = false;
         for (int i = 0; i < results.length; i++) {

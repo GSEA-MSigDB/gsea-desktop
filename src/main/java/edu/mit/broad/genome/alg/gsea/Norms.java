@@ -23,11 +23,14 @@ public class Norms {
 
     public static final String MEANDIV_POS_NEG_SEPERATE = MeanDivPosNegSeperate.NAME;
 
+    public static final String MEDIAN_OF_RATIOS = MedianOfRatios.NAME;
+
     // @maint need to keep in synch with above and below
     public static String[] createNormModeNames() {
         return new String[]{
                 NONE,
-                MEANDIV_POS_NEG_SEPERATE
+                MEANDIV_POS_NEG_SEPERATE,
+                MEDIAN_OF_RATIOS
         };
     }
 
@@ -41,6 +44,8 @@ public class Norms {
             return new None(realScore, rndScores);
         } else if (normModeName.equals(MEANDIV_POS_NEG_SEPERATE)) {
             return new Norms.MeanDivPosNegSeperate(realScore, rndScores);
+        } else if (normModeName.equals(MEDIAN_OF_RATIOS)) {
+            return new Norms.MedianOfRatios(realScore, rndScores);
         } else {
             throw new IllegalArgumentException("Unknown norm mode: " + normModeName);
         }
@@ -53,6 +58,114 @@ public class Norms {
 
     // This is the key API
     public static Struc normalize(final String normName, final LabelledVector realScores, final Dataset rndScores_full) {
+
+        if (MEDIAN_OF_RATIOS.equals(normName)) {
+            final int rowCount = realScores.getSize();
+            final int rndColCount = rndScores_full.getNumCol();
+            final int sampleCount = rndColCount + 1; // real + random columns
+
+            final String[] labels = new String[rowCount];
+            final List<String> labels_list = new ArrayList<String>();
+
+            final double[] geometricMeans = new double[rowCount];
+            final boolean[] includeRow = new boolean[rowCount];
+
+            int usableRows = 0;
+            for (int r = 0; r < rowCount; r++) {
+                final String rowName = realScores.getLabel(r);
+                final float real = realScores.getScore(rowName);
+                final Vector rnd = rndScores_full.getRow(rowName);
+
+                labels[r] = rowName;
+                labels_list.add(rowName);
+
+                boolean usable = true;
+                double sumLog = 0.0d;
+
+                final double absReal = Math.abs(real);
+                if (Double.isNaN(absReal) || Double.isInfinite(absReal) || absReal <= 0.0d) {
+                    usable = false;
+                } else {
+                    sumLog += Math.log(absReal);
+                }
+
+                if (usable) {
+                    for (int c = 0; c < rndColCount; c++) {
+                        final double absRnd = Math.abs(rnd.getElement(c));
+                        if (Double.isNaN(absRnd) || Double.isInfinite(absRnd) || absRnd <= 0.0d) {
+                            usable = false;
+                            break;
+                        }
+                        sumLog += Math.log(absRnd);
+                    }
+                }
+
+                if (usable) {
+                    geometricMeans[r] = Math.exp(sumLog / sampleCount);
+                    includeRow[r] = true;
+                    usableRows++;
+                } else {
+                    geometricMeans[r] = Double.NaN;
+                    includeRow[r] = false;
+                }
+            }
+
+            final float[] sizeFactors = new float[sampleCount];
+            for (int s = 0; s < sampleCount; s++) {
+                if (usableRows == 0) {
+                    sizeFactors[s] = 1.0f;
+                    continue;
+                }
+
+                final Vector ratios = new Vector(usableRows);
+                int pos = 0;
+                for (int r = 0; r < rowCount; r++) {
+                    if (!includeRow[r]) {
+                        continue;
+                    }
+
+                    final String rowName = realScores.getLabel(r);
+                    final double absValue;
+                    if (s == 0) {
+                        absValue = Math.abs(realScores.getScore(rowName));
+                    } else {
+                        absValue = Math.abs(rndScores_full.getRow(rowName).getElement(s - 1));
+                    }
+
+                    ratios.setElement(pos, (float) (absValue / geometricMeans[r]));
+                    pos++;
+                }
+
+                final float sf = (float) ratios.median();
+                if (Float.isNaN(sf) || Float.isInfinite(sf) || sf == 0.0f) {
+                    sizeFactors[s] = 1.0f;
+                } else {
+                    sizeFactors[s] = sf;
+                }
+            }
+
+            final Vector normRealScores = new Vector(rowCount);
+            final Matrix normRndScoresMatrix = new Matrix(rowCount, rndColCount);
+
+            for (int r = 0; r < rowCount; r++) {
+                final String rowName = labels[r];
+                final float real = realScores.getScore(rowName);
+                normRealScores.setElement(r, real / sizeFactors[0]);
+
+                final Vector rnd = rndScores_full.getRow(rowName);
+                final Vector normRnd = new Vector(rndColCount);
+                for (int c = 0; c < rndColCount; c++) {
+                    normRnd.setElement(c, rnd.getElement(c) / sizeFactors[c + 1]);
+                }
+                normRndScoresMatrix.setRow(r, normRnd);
+            }
+
+            Struc struc = new Struc();
+            struc.normReal = new LabelledVector(realScores.getName() + "_norm", labels, normRealScores);
+            struc.normRnd = new DefaultDataset("norm", normRndScoresMatrix, labels_list, rndScores_full.getColumnNames(), rndScores_full.getAnnot());
+
+            return struc;
+        }
 
         final Vector normRealScores = new Vector(realScores.getSize());
         final String[] labels = new String[realScores.getSize()];
@@ -185,4 +298,18 @@ public class Norms {
             }
         }
     } // End class MeanDivPosNegSeperate
+
+    // DESeq2-style median-of-ratios normalization is computed across the full matrix in normalize(),
+    // not on a single row. This class exists only to expose the mode name consistently.
+    public static class MedianOfRatios extends AbstractNormOne {
+        private static String NAME = "median_of_ratios";
+
+        public MedianOfRatios(final float real, final Vector rnd) {
+            super(NAME);
+            this.real_orig = real;
+            this.rnd_orig = rnd;
+            this.rndNorm = rnd_orig;
+            this.realNorm = real_orig;
+        }
+    }
 }

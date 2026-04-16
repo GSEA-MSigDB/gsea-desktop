@@ -8,7 +8,9 @@ import edu.mit.broad.genome.alg.DatasetGenerators;
 import edu.mit.broad.genome.alg.Metric;
 import edu.mit.broad.genome.alg.Metrics;
 import edu.mit.broad.genome.alg.gsea.KSTests;
+import edu.mit.broad.genome.alg.gsea.Norms;
 import edu.mit.broad.genome.math.*;
+import edu.mit.broad.genome.objects.Dataset;
 import edu.mit.broad.genome.objects.GeneSet;
 import edu.mit.broad.genome.objects.RankedList;
 import edu.mit.broad.genome.objects.Template;
@@ -77,6 +79,29 @@ public abstract class AbstractGsea2Tool extends AbstractGseaTool {
             List<RankedList> store_rnd_ranked_lists_here_opt) throws Exception {
         final RandomSeedGenerator rst = fRndSeedTypeParam.createSeed();
         final DatasetTemplate dt = new DatasetGenerators().extract(fullCd.getDataset(), template);
+
+        if (Norms.MEDIAN_OF_RATIOS.equals(fNormModeParam.getNormModeName())
+                && Metrics.Wald.NAME.equalsIgnoreCase(fMetricParam.getMetric().getName())) {
+            final Dataset dsForValidation = dt.getDataset();
+            final int rowCount = dsForValidation.getNumRow();
+            final int colCount = dsForValidation.getNumCol();
+            for (int rowIndex = 0; rowIndex < rowCount; rowIndex++) {
+                final Vector row = dsForValidation.getRow(rowIndex);
+                for (int columnIndex = 0; columnIndex < colCount; columnIndex++) {
+                    final double value = row.getElement(columnIndex);
+                    if (!Double.isFinite(value)) {
+                        continue;
+                    }
+                    final double nearestInteger = Math.rint(value);
+                    final double tolerance = 2.0d * Math.ulp(nearestInteger == 0.0d ? 1.0d : nearestInteger);
+                    if (Math.abs(value - nearestInteger) > tolerance) {
+                        throw new BadParamException("median_of_ratios normalization requires integer count inputs for Wald scoring. "
+                                + "Found non-integer value " + value + " at row '" + dsForValidation.getRowName(rowIndex)
+                                + "', column '" + dsForValidation.getColumnName(columnIndex) + "'.", 1006);
+                    }
+                }
+            }
+        }
 
         if (log.isDebugEnabled()) { log.debug(">>>>> Using samples: {}", dt.getDataset().getColumnNames()); }
 

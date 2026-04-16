@@ -21,6 +21,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,6 +36,8 @@ import java.util.Map;
  */
 public class KSTests {
     private final Logger log = LoggerFactory.getLogger(KSTests.class);
+
+    private static final double MIN_WALD_MEAN_NORMALIZED_COUNT = 5.0d;
 
     private final KSCore core;
 
@@ -75,7 +78,10 @@ public class KSTests {
             throw new BadParamException("Too few samples in the dataset to use this metric", 1006);
 		}
 		
-        if (!filterFeaturesWithMissingValues) { markerScores = null; }
+        // For Wald metric, always keep markerScores to enable low-information gene filtering
+        if (!filterFeaturesWithMissingValues && !Metrics.Wald.NAME.equalsIgnoreCase(metric.getName())) { 
+            markerScores = null; 
+        }
 		
 		try {
 			if (permuteTemplate) {
@@ -121,7 +127,7 @@ public class KSTests {
 
         int origSize = rlReal.getSize();
         if (origSize != ds.getNumRow()) { throw new MismatchedSizeException(); } // sanity check
-        rlReal = filterRankedListIfNecessary(rlReal, ds, markerScores);
+        rlReal = filterRankedListIfNecessary(rlReal, ds, markerScores, metric);
         boolean warnGeneRankingValues = checkRankedListForInfinityOrNaN(rlReal);
         final GeneSet[] gsets = gcohgen.filterGeneSetsByMembersAndSize(rlReal, origGeneSets);
 
@@ -137,7 +143,7 @@ public class KSTests {
         // Each row is a "geneset", and each column a randomization
         for (int c = 0; c < rndTemplates.length; c++) {
             ScoredDataset rndRl = dm.scoreDataset(metric, sort, order, metricParams, ds, rndTemplates[c]);
-            rndRl = filterRankedListIfNecessary(rndRl, ds, markerScores);
+            rndRl = filterRankedListIfNecessary(rndRl, ds, markerScores, metric);
             if (!warnPermutationValues) { warnPermutationValues = checkRankedListForInfinityOrNaN(rndRl); }
             
             if (store_rnd_ranked_lists_here_opt != null) { store_rnd_ranked_lists_here_opt.add(rndRl); }
@@ -179,10 +185,30 @@ public class KSTests {
 
         EnrichmentDb enrichmentDb = new EnrichmentDb(dstName, rlReal, ds, template,
                 results, metric, metricParams, sort, order, rndTemplates.length, null, ptest);
-        int rowsNotMeetingMetricSize = origSize - rlReal.getSize();
+        int rowsNotMeetingMetricSize = 0;
+        if (markerScores != null) {
+            for (TwoClassMarkerStats markerScore : markerScores.values()) {
+                if (markerScore.omit) {
+                    rowsNotMeetingMetricSize++;
+                }
+            }
+        }
         if (rowsNotMeetingMetricSize > 0) {
             enrichmentDb.addWarning("There were " + rowsNotMeetingMetricSize + 
                     " row(s) of this dataset where one of the classes has too few samples to use the chosen metric.  See the log for more details.");
+        }
+        int lowInformationRows = 0;
+        if (metric.getName().equalsIgnoreCase(Metrics.Wald.NAME) && markerScores != null) {
+            for (TwoClassMarkerStats markerScore : markerScores.values()) {
+                if (markerScore.lowInformation) {
+                    lowInformationRows++;
+                }
+            }
+        }
+        if (lowInformationRows > 0) {
+            enrichmentDb.addWarning("There were " + lowInformationRows
+                    + " low-information row(s) removed before Wald-based enrichment scoring because their mean normalized count was below "
+                    + MIN_WALD_MEAN_NORMALIZED_COUNT + ".");
         }
         if (warnGeneRankingValues) {
             enrichmentDb.addWarning("Infinite or NaN value(s) detected during gene rank computations. "
@@ -249,7 +275,7 @@ public class KSTests {
         final DatasetMetrics dm = new DatasetMetrics();
         ScoredDataset rlReal = dm.scoreDataset(metric, sort, order, metricParams, ds, template);
         int origSize = rlReal.getSize();
-        rlReal = filterRankedListIfNecessary(rlReal, ds, markerScores);
+        rlReal = filterRankedListIfNecessary(rlReal, ds, markerScores, metric);
         boolean warnGeneRankingValues = checkRankedListForInfinityOrNaN(rlReal);
         final GeneSet[] gsets = gen.filterGeneSetsByMembersAndSize(rlReal, origGeneSets);
         
@@ -261,10 +287,30 @@ public class KSTests {
         EnrichmentDb enrichmentDb = new EnrichmentDb(name, rlReal, ds, template,
                 results, metric, metricParams, sort, order, nperm, null, null);
         
-        int rowsNotMeetingMetricSize = origSize - rlReal.getSize();
+        int rowsNotMeetingMetricSize = 0;
+        if (markerScores != null) {
+            for (TwoClassMarkerStats markerScore : markerScores.values()) {
+                if (markerScore.omit) {
+                    rowsNotMeetingMetricSize++;
+                }
+            }
+        }
         if (rowsNotMeetingMetricSize > 0) {
             enrichmentDb.addWarning("There were " + rowsNotMeetingMetricSize + 
                     " row(s) of this dataset where one of the classes has too few samples to use the chosen metric.  See the log for more details.");
+        }
+        int lowInformationRows = 0;
+        if (metric.getName().equalsIgnoreCase(Metrics.Wald.NAME) && markerScores != null) {
+            for (TwoClassMarkerStats markerScore : markerScores.values()) {
+                if (markerScore.lowInformation) {
+                    lowInformationRows++;
+                }
+            }
+        }
+        if (lowInformationRows > 0) {
+            enrichmentDb.addWarning("There were " + lowInformationRows
+                    + " low-information row(s) removed before Wald-based enrichment scoring because their mean normalized count was below "
+                    + MIN_WALD_MEAN_NORMALIZED_COUNT + ".");
         }
         if (warnGeneRankingValues) {
             enrichmentDb.addWarning("Infinite or NaN value(s) detected during gene rank computations. "
@@ -276,13 +322,117 @@ public class KSTests {
     
     // Some features may need to be filtered out due to missing values causing them to not meet Metric min-sample requirements.
     // This is signaled by being passed a non-null/non-empty markerScores Map by the caller; otherwise we ignore this filtering pass.
-    private ScoredDataset filterRankedListIfNecessary(ScoredDataset rankedList, final Dataset ds, Map<String, TwoClassMarkerStats> markerScores) {
+    private ScoredDataset filterRankedListIfNecessary(ScoredDataset rankedList, final Dataset ds, Map<String, TwoClassMarkerStats> markerScores,
+            final Metric metric) {
         if (markerScores == null || markerScores.isEmpty()) { return rankedList; }
+
+        if (metric.getName().equalsIgnoreCase(Metrics.Wald.NAME)) {
+            TwoClassMarkerStats example = markerScores.values().iterator().next();
+            if (!example.lowInformationChecked) {
+                final int rowCount = ds.getNumRow();
+                final int colCount = ds.getNumCol();
+                final double[] sizeFactors = new double[colCount];
+                final double[] geometricMeans = new double[rowCount];
+                final boolean[] includeRow = new boolean[rowCount];
+
+                int usableRows = 0;
+                for (int rowIndex = 0; rowIndex < rowCount; rowIndex++) {
+                    final Vector row = ds.getRow(rowIndex);
+                    boolean usable = true;
+                    double sumLog = 0.0d;
+
+                    for (int columnIndex = 0; columnIndex < colCount; columnIndex++) {
+                        final double value = row.getElement(columnIndex);
+                        if (!Double.isFinite(value) || value <= 0.0d) {
+                            usable = false;
+                            break;
+                        }
+                        sumLog += Math.log(value);
+                    }
+
+                    if (usable) {
+                        geometricMeans[rowIndex] = Math.exp(sumLog / colCount);
+                        includeRow[rowIndex] = true;
+                        usableRows++;
+                    } else {
+                        geometricMeans[rowIndex] = Double.NaN;
+                        includeRow[rowIndex] = false;
+                    }
+                }
+
+                for (int columnIndex = 0; columnIndex < colCount; columnIndex++) {
+                    if (usableRows == 0) {
+                        sizeFactors[columnIndex] = 1.0d;
+                        continue;
+                    }
+
+                    final double[] ratios = new double[usableRows];
+                    int ratioIndex = 0;
+                    for (int rowIndex = 0; rowIndex < rowCount; rowIndex++) {
+                        if (!includeRow[rowIndex]) {
+                            continue;
+                        }
+                        ratios[ratioIndex++] = ds.getRow(rowIndex).getElement(columnIndex) / geometricMeans[rowIndex];
+                    }
+
+                    Arrays.sort(ratios);
+                    final double median;
+                    if (ratios.length % 2 == 0) {
+                        median = (ratios[(ratios.length / 2) - 1] + ratios[ratios.length / 2]) / 2.0d;
+                    } else {
+                        median = ratios[ratios.length / 2];
+                    }
+
+                    sizeFactors[columnIndex] = (Double.isFinite(median) && median > 0.0d) ? median : 1.0d;
+                }
+
+                for (int rowIndex = 0; rowIndex < rowCount; rowIndex++) {
+                    final String rowName = ds.getRowName(rowIndex);
+                    final TwoClassMarkerStats markerScore = markerScores.get(rowName);
+                    if (markerScore == null) {
+                        continue;
+                    }
+
+                    markerScore.lowInformationChecked = true;
+                    if (markerScore.omit) {
+                        continue;
+                    }
+
+                    final Vector row = ds.getRow(rowIndex);
+                    double normalizedSum = 0.0d;
+                    int normalizedCount = 0;
+                    for (int columnIndex = 0; columnIndex < colCount; columnIndex++) {
+                        final double value = row.getElement(columnIndex);
+                        if (!Double.isFinite(value)) {
+                            continue;
+                        }
+                        normalizedSum += value / sizeFactors[columnIndex];
+                        normalizedCount++;
+                    }
+
+                    if (normalizedCount == 0) {
+                        markerScore.lowInformation = true;
+                        log.warn("Omitting row {} of this dataset with name '{}' from Wald-based enrichment scoring as it has no finite normalized counts.",
+                                (rowIndex + 1), rowName);
+                        continue;
+                    }
+
+                    final double meanNormalizedCount = normalizedSum / normalizedCount;
+                    if (meanNormalizedCount < MIN_WALD_MEAN_NORMALIZED_COUNT) {
+                        markerScore.lowInformation = true;
+                        log.warn("Omitting row {} of this dataset with name '{}' from Wald-based enrichment scoring due to low mean normalized count ({}).",
+                                (rowIndex + 1), rowName, meanNormalizedCount);
+                    }
+                }
+            }
+        }
         
         List<DoubleElement> dels = new ArrayList<DoubleElement>(rankedList.getSize());
         for (String feature: rankedList.getRankedNames()) {
             TwoClassMarkerStats markerScore = markerScores.get(feature);
-            if (!markerScore.omit) { dels.add(new DoubleElement(ds.getRowIndex(feature), rankedList.getScore(feature))); }
+            if (!markerScore.omit && !markerScore.lowInformation) {
+                dels.add(new DoubleElement(ds.getRowIndex(feature), rankedList.getScore(feature)));
+            }
         }
         ScoredDatasetImpl filtered = new ScoredDatasetImpl(new AddressedVector(dels), ds);
         // Preserve any warnings attached to the RL
