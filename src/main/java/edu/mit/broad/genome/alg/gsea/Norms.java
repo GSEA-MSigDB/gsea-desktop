@@ -299,10 +299,11 @@ public class Norms {
         }
     } // End class MeanDivPosNegSeperate
 
-    // DESeq2-style median-of-ratios normalization is computed across the full matrix in normalize(),
-    // not on a single row. This class exists only to expose the mode name consistently.
+    // Median-of-ratios (Anders & Huber 2010) size-factor normalization is computed across the full
+    // matrix in normalize(), not on a single row. This class exists only to expose the mode name
+    // consistently.
     public static class MedianOfRatios extends AbstractNormOne {
-        private static String NAME = "median_of_ratios";
+        public static String NAME = "median_of_ratios";
 
         public MedianOfRatios(final float real, final Vector rnd) {
             super(NAME);

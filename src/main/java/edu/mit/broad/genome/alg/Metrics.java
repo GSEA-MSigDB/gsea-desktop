@@ -261,7 +261,7 @@ public class Metrics {
     }
 
     public static class Wald extends AbstractMetric {
-        public static final String NAME = "Wald";
+        public static final String NAME = "Wald_Z";
 
         public Wald() { super(CATEGORICAL, NAME, MIN_NUM_FOR_VAR); }
 

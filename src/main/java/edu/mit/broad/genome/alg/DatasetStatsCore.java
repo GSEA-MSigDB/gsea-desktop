@@ -42,9 +42,10 @@ public class DatasetStatsCore {
         // This can probably be accomplished a better way, possibly allowing removal of the entire class.
         public boolean omit = false;
 
-        // Used by the Wald ranking path to exclude low-information features before enrichment scoring.
+        // Used by the Wald_Z ranking path to exclude low-information features before enrichment scoring.
         public boolean lowInformation = false;
         public boolean lowInformationChecked = false;
+        public double lowInformationThreshold = Double.NaN;
         
         public double getScore() {
             return score;

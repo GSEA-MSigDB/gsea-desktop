@@ -6,6 +6,7 @@ package xtools.gsea;
 import edu.mit.broad.genome.StandardException;
 import edu.mit.broad.genome.alg.DatasetGenerators;
 import edu.mit.broad.genome.alg.Metric;
+import edu.mit.broad.genome.alg.Metrics;
 import edu.mit.broad.genome.objects.Dataset;
 import edu.mit.broad.genome.objects.GeneSet;
 import edu.mit.broad.genome.objects.Template;
@@ -160,8 +161,22 @@ public class Gsea extends AbstractGsea2Tool {
         
         Dataset ds = fDatasetParam.getDataset(fChipParam);
 
-        final Dataset fullDs = uniquize(ds);
-        final CollapsedDetails.Data cd = getDataset(fullDs);
+        final boolean waldZSelected = Metrics.Wald.NAME.equalsIgnoreCase(metric.getName());
+        final CollapsedDetails.Data cd;
+        if (waldZSelected) {
+            // For Wald_Z, preserve all rows through collapse first.
+            // De-duplicating before collapse can arbitrarily drop rows and distort count-model ranking.
+            cd = getDataset(ds);
+            final Dataset deDuped = uniquize(cd.getDataset());
+            if (cd.wasCollapsed) {
+                cd.collapsed = deDuped;
+            } else {
+                cd.orig = deDuped;
+            }
+        } else {
+            final Dataset fullDs = uniquize(ds);
+            cd = getDataset(fullDs);
+        }
 
         execute_one_with_reporting(cd, template, origGeneSets, fShowDetailsForTopXSetsParam.getIValue(), 
                 (fMakeZippedReportParam.isSpecified() && fMakeZippedReportParam.isTrue()), (fMakeGeneSetReportsParam.isSpecified() && fMakeGeneSetReportsParam.isTrue()), 

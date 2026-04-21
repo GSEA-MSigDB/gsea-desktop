@@ -5,8 +5,6 @@ package xapps.gsea;
 
 import com.jgoodies.looks.LookUtils;
 import com.jgoodies.looks.Options;
-import com.jgoodies.looks.plastic.PlasticXPLookAndFeel;
-import com.jgoodies.looks.plastic.theme.ExperienceBlue;
 
 import edu.mit.broad.genome.JarResources;
 import edu.mit.broad.xbench.prefs.XPreferencesFactory;
@@ -91,11 +89,8 @@ public class Main {
             UIManager.put("ClassLoader", LookUtils.class.getClassLoader());
     
             try {
-                if (!SystemUtils.IS_OS_MAC_OSX) {
-                    PlasticXPLookAndFeel.setMyCurrentTheme(new ExperienceBlue());
-                    UIManager.setLookAndFeel(new com.jgoodies.looks.plastic.PlasticXPLookAndFeel());
-                }
-    
+                // Use one Look and Feel on every OS to keep the same color palette everywhere.
+                UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
             } catch (Throwable t) {
                 t.printStackTrace();
             }
