@@ -192,11 +192,11 @@ class Deseq2LikeRegressionZModel {
         final double[] dispersionRaw = new double[rowCount];
         final double[][] geneWiseMu = new double[rowCount][];
         Arrays.fill(dispersionRaw, Double.NaN);
-        for (int rowIndex = 0; rowIndex < rowCount; rowIndex++) {
+        java.util.stream.IntStream.range(0, rowCount).parallel().forEach(rowIndex -> {
             final TwoClassMarkerStats markerScore = markerScores.get(ds.getRowName(rowIndex));
             if (markerScore == null || markerScore.omit || !Double.isFinite(meanNormCounts[rowIndex])
                     || meanNormCounts[rowIndex] <= 0.0d) {
-                continue;
+                return;
             }
 
             final double alphaStart = initialDispersionStart(
@@ -216,7 +216,7 @@ class Deseq2LikeRegressionZModel {
                 muHat = meanFit.valid ? meanFit.muHat : null;
             }
             if (muHat == null) {
-                continue;
+                return;
             }
             geneWiseMu[rowIndex] = muHat;
 
@@ -246,7 +246,7 @@ class Deseq2LikeRegressionZModel {
                         maxDisp);
             }
             dispersionRaw[rowIndex] = clamp(dispGeneEst, MIN_DISP, maxDisp);
-        }
+        });
 
         // On the refit-after-outlier-replacement pass, DESeq2 reuses the ORIGINAL trend
         // function and
@@ -302,18 +302,18 @@ class Deseq2LikeRegressionZModel {
         Arrays.fill(shrunkDispersion, Double.NaN);
         final double outlierCutoff = 2.0d * Math.sqrt(varLogDispEsts);
 
-        for (int rowIndex = 0; rowIndex < rowCount; rowIndex++) {
+        java.util.stream.IntStream.range(0, rowCount).parallel().forEach(rowIndex -> {
             if (!Double.isFinite(meanNormCounts[rowIndex]) || meanNormCounts[rowIndex] <= 0.0d) {
-                continue;
+                return;
             }
             final double trend = clamp(fittedDispersionTrend[rowIndex], MIN_DISP, maxDisp);
             if (!Double.isFinite(dispersionRaw[rowIndex]) || dispersionRaw[rowIndex] <= 0.0d) {
                 shrunkDispersion[rowIndex] = trend;
-                continue;
+                return;
             }
             if (geneWiseMu[rowIndex] == null) {
                 shrunkDispersion[rowIndex] = trend;
-                continue;
+                return;
             }
 
             final double raw = clamp(dispersionRaw[rowIndex], MIN_DISP, maxDisp);
@@ -343,7 +343,7 @@ class Deseq2LikeRegressionZModel {
             final double residual = Math.log(raw) - Math.log(trend);
             final double finalDisp = (Double.isFinite(residual) && residual > outlierCutoff) ? raw : dispMap;
             shrunkDispersion[rowIndex] = clamp(finalDisp, MIN_DISP, maxDisp);
-        }
+        });
 
         final Deseq2LikeRegressionZModel provisionalModel = new Deseq2LikeRegressionZModel(ds,
                 fitDs,
@@ -372,29 +372,29 @@ class Deseq2LikeRegressionZModel {
         final ResultsContext resultsContext = provisionalModel.buildResultsContext(conditionReal);
         final double[] realPValues = new double[rowCount];
         Arrays.fill(realPValues, Double.NaN);
-        for (int rowIndex = 0; rowIndex < rowCount; rowIndex++) {
+        java.util.stream.IntStream.range(0, rowCount).parallel().forEach(rowIndex -> {
             final TwoClassMarkerStats markerScore = markerScores.get(ds.getRowName(rowIndex));
             if (markerScore == null || markerScore.omit) {
-                continue;
+                return;
             }
             if (replacedRows[rowIndex] && meanNormCounts[rowIndex] == 0.0d) {
                 realPValues[rowIndex] = 1.0d;
-                continue;
+                return;
             }
             if (!Double.isFinite(shrunkDispersion[rowIndex])) {
-                continue;
+                return;
             }
             final WaldFit mleWald = fitWaldForRowMleWide(
                     fitDs, rowIndex, conditionReal, sizeFactors, shrunkDispersion[rowIndex]);
             if (!mleWald.valid) {
-                continue;
+                return;
             }
             final CooksResult cooks = provisionalModel.computeCooksResult(rowIndex, mleWald, resultsContext);
             final boolean contrastAllZero = provisionalModel.contrastAllZeroForRow(rowIndex, conditionReal);
             // Match DESeq2 default (betaPrior=FALSE): p-value derived from MLE Wald z.
             realPValues[rowIndex] = cooks.outlier ? Double.NaN
                     : (contrastAllZero ? 1.0d : twoSidedPValueFromZ(mleWald.z));
-        }
+        });
 
         final double independentFilterThreshold = selectIndependentFilteringThreshold(meanNormCounts, realPValues);
         for (int rowIndex = 0; rowIndex < rowCount; rowIndex++) {
@@ -430,9 +430,8 @@ class Deseq2LikeRegressionZModel {
         final double[] condition = createConditionVector(template, ds.getNumCol());
         final ResultsContext resultsContext = buildResultsContext(condition);
         final DoubleElement[] elements = new DoubleElement[rowCount];
-        int neutralizedRows = 0;
-
-        for (int rowIndex = 0; rowIndex < rowCount; rowIndex++) {
+        java.util.concurrent.atomic.AtomicInteger neutralizedRowsAtomic = new java.util.concurrent.atomic.AtomicInteger(0);
+        java.util.stream.IntStream.range(0, rowCount).parallel().forEach(rowIndex -> {
             final TwoClassMarkerStats markerScore = markerScores != null ? markerScores.get(ds.getRowName(rowIndex))
                     : null;
             if (markerScore != null) {
@@ -461,10 +460,11 @@ class Deseq2LikeRegressionZModel {
                 }
             }
             if (score == 0.0d) {
-                neutralizedRows++;
+                neutralizedRowsAtomic.incrementAndGet();
             }
             elements[rowIndex] = new DoubleElement(rowIndex, score);
-        }
+        });
+        int neutralizedRows = neutralizedRowsAtomic.get();
 
         final DoubleElement.DoubleElementComparator baseComparator = new DoubleElement.DoubleElementComparator(sort,
                 order.isAscending());
@@ -499,7 +499,7 @@ class Deseq2LikeRegressionZModel {
         Arrays.fill(stats, Double.NaN);
         Arrays.fill(maxCooks, Double.NaN);
 
-        for (int rowIndex = 0; rowIndex < rowCount; rowIndex++) {
+        java.util.stream.IntStream.range(0, rowCount).parallel().forEach(rowIndex -> {
             final TwoClassMarkerStats markerScore = markerScores != null ? markerScores.get(ds.getRowName(rowIndex))
                     : null;
             omit[rowIndex] = markerScore != null && markerScore.omit;
@@ -522,7 +522,7 @@ class Deseq2LikeRegressionZModel {
                     stats[rowIndex] = 0.0d;
                     pValues[rowIndex] = 1.0d;
                 }
-                continue;
+                return;
             }
 
             // DESeq2 default: DESeq(dds) uses betaPrior=FALSE; results() reports the
@@ -534,7 +534,7 @@ class Deseq2LikeRegressionZModel {
             final WaldFit mleWald = fitWaldForRowMleWide(
                     fitDs, rowIndex, condition, sizeFactors, shrunkDispersion[rowIndex]);
             if (!mleWald.valid) {
-                continue;
+                return;
             }
 
             final boolean contrastAllZero = contrastAllZeroForRow(rowIndex, condition);
@@ -546,26 +546,26 @@ class Deseq2LikeRegressionZModel {
             maxCooks[rowIndex] = cooks.maxCooks;
             cooksOutlier[rowIndex] = cooks.outlier;
             pValues[rowIndex] = cooks.outlier ? Double.NaN : (contrastAllZero ? 1.0d : twoSidedPValueFromZ(mleWald.z));
-        }
+        });
 
         final double[] padj = applyIndependentFilteringAtThreshold(meanNormCounts, pValues, independentFilterThreshold);
-        final List<MainStat> rows = new ArrayList<MainStat>(rowCount);
-        for (int rowIndex = 0; rowIndex < rowCount; rowIndex++) {
-            rows.add(new MainStat(
-                    ds.getRowName(rowIndex),
-                    meanNormCounts[rowIndex],
-                    log2FoldChanges[rowIndex],
-                    lfcSEs[rowIndex],
-                    stats[rowIndex],
-                    pValues[rowIndex],
-                    padj[rowIndex],
-                    shrunkDispersion[rowIndex],
-                    maxCooks[rowIndex],
-                    cooksOutlier[rowIndex],
-                    lowInformation[rowIndex],
-                    omit[rowIndex]));
-        }
-        return rows;
+        final MainStat[] mainStats = new MainStat[rowCount];
+        java.util.stream.IntStream.range(0, rowCount).parallel().forEach(rowIndex -> {
+            mainStats[rowIndex] = new MainStat(
+                ds.getRowName(rowIndex),
+                meanNormCounts[rowIndex],
+                log2FoldChanges[rowIndex],
+                lfcSEs[rowIndex],
+                stats[rowIndex],
+                pValues[rowIndex],
+                padj[rowIndex],
+                shrunkDispersion[rowIndex],
+                maxCooks[rowIndex],
+                cooksOutlier[rowIndex],
+                lowInformation[rowIndex],
+                omit[rowIndex]);
+        });
+        return Arrays.asList(mainStats);
     }
 
     static final class MainStat {
@@ -859,17 +859,17 @@ class Deseq2LikeRegressionZModel {
         final int rowCount = fitDs.getNumRow();
         final int colCount = fitDs.getNumCol();
         final boolean[] replaced = new boolean[rowCount];
-        boolean changed = false;
-        for (int rowIndex = 0; rowIndex < rowCount; rowIndex++) {
+        java.util.concurrent.atomic.AtomicBoolean changed = new java.util.concurrent.atomic.AtomicBoolean(false);
+        java.util.stream.IntStream.range(0, rowCount).parallel().forEach(rowIndex -> {
             final TwoClassMarkerStats markerScore = markerScores.get(ds.getRowName(rowIndex));
             if (markerScore == null || markerScore.omit || !Double.isFinite(shrunkDispersion[rowIndex])) {
-                continue;
+                return;
             }
 
             final WaldFit fit = fitWaldForRowMleWide(fitDs, rowIndex, condition, sizeFactors,
                     shrunkDispersion[rowIndex]);
             if (!fit.valid) {
-                continue;
+                return;
             }
 
             final double[] cooksValues = computeCooksValues(rowIndex, fit, resultsContext);
@@ -884,17 +884,19 @@ class Deseq2LikeRegressionZModel {
                 if (!flagged) {
                     continue;
                 }
-                matrix.setElement(rowIndex,
+                synchronized (matrix) {
+                    matrix.setElement(rowIndex,
                         columnIndex,
                         (float) Math.floor(Math.max(0.0d, replacementValue * sizeFactors[columnIndex])));
+                }
                 rowChanged = true;
             }
 
             replaced[rowIndex] = rowChanged;
-            changed = changed || rowChanged;
-        }
+            if (rowChanged) changed.set(true);
+        });
 
-        if (!changed) {
+        if (!changed.get()) {
             return null;
         }
 
