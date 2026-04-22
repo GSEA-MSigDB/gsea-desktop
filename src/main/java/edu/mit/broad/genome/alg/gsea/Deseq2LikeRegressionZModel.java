@@ -4,6 +4,7 @@
 package edu.mit.broad.genome.alg.gsea;
 
 import edu.mit.broad.genome.alg.DatasetStatsCore.TwoClassMarkerStats;
+import edu.mit.broad.genome.alg.Metrics;
 import edu.mit.broad.genome.math.AddressedVector;
 import edu.mit.broad.genome.math.DoubleElement;
 import edu.mit.broad.genome.math.Matrix;
@@ -120,14 +121,49 @@ class Deseq2LikeRegressionZModel {
     public static Deseq2LikeRegressionZModel fit(final Dataset ds,
             final Template realTemplate,
             final Map<String, TwoClassMarkerStats> markerScores) {
+        return fit(ds, realTemplate, markerScores, null, true);
+    }
+
+    /**
+     * Fit model while optionally reusing precomputed size factors.
+     * Size factors in DESeq2 are computed from counts only, not from the design,
+     * so this can be shared across phenotype permutations with identical counts.
+     */
+    public static Deseq2LikeRegressionZModel fit(final Dataset ds,
+            final Template realTemplate,
+            final Map<String, TwoClassMarkerStats> markerScores,
+            final double[] precomputedSizeFactorsOpt) {
+        return fit(ds, realTemplate, markerScores, precomputedSizeFactorsOpt, true);
+    }
+
+    /**
+     * @param computeIndependentFilteringPass when {@code false} (phenotype permutation refits),
+     *        skip gene-wise Wald p-values, independent-filter threshold selection, and
+     *        {@link TwoClassMarkerStats} updates — the same work is not needed for ranking because
+     *        {@link #scoreForTemplate} recomputes Wald z (and Cook's for the z); the real run's
+     *        filter universe is applied separately. Saves roughly one parallel pass over all genes
+     *        per permutation and avoids mutating a shared {@code markerScores} map.
+     */
+    public static Deseq2LikeRegressionZModel fit(final Dataset ds,
+            final Template realTemplate,
+            final Map<String, TwoClassMarkerStats> markerScores,
+            final double[] precomputedSizeFactorsOpt,
+            final boolean computeIndependentFilteringPass) {
         if (markerScores == null) {
-            throw new IllegalArgumentException("markerScores cannot be null for Wald_Z (DESeq2-like count) scoring");
+            throw new IllegalArgumentException("markerScores cannot be null for "
+                    + Metrics.Wald.NAME + " (DESeq2-like count) scoring");
         }
 
         validateRawIntegerCounts(ds);
 
         final int colCount = ds.getNumCol();
-        final double[] sizeFactors = computeSizeFactors(ds);
+        final double[] sizeFactors = precomputedSizeFactorsOpt != null
+                ? Arrays.copyOf(precomputedSizeFactorsOpt, precomputedSizeFactorsOpt.length)
+                : computeSizeFactors(ds);
+        if (sizeFactors.length != colCount) {
+            throw new IllegalArgumentException("precomputedSizeFactorsOpt length " + sizeFactors.length
+                    + " does not match column count " + colCount);
+        }
         final double[] conditionReal = createConditionVector(realTemplate, colCount);
         final boolean[] replaceableSamples = samplesEligibleForReplacement(conditionReal, MIN_REPLICATES_FOR_REPLACE);
         return fitInternal(ds,
@@ -138,7 +174,98 @@ class Deseq2LikeRegressionZModel {
                 new boolean[ds.getNumRow()],
                 replaceableSamples,
                 true,
-                null);
+                null,
+                computeIndependentFilteringPass,
+                null,
+                Double.NaN);
+    }
+
+    /**
+     * Mean of {@code 1/sizeFactor} over valid columns (DESeq2 gene-wise dispersion helper).
+     * Depends only on size factors, so it can be computed once and reused across phenotype permutations.
+     */
+    public static double meanInverseSizeFactorForSizeFactors(final double[] sizeFactors) {
+        if (sizeFactors == null) {
+            throw new NullPointerException("sizeFactors");
+        }
+        return computeMeanInverseSizeFactor(sizeFactors);
+    }
+
+    /**
+     * If this model was fit on the unreplaced count matrix ({@code fitDs == ds} with no row replacement),
+     * returns its mean normalized count vector — identical to {@link #meanNormalizedCounts} for that
+     * matrix and these size factors, without a second pass. Otherwise {@code null}.
+     */
+    public double[] meanNormCountsForPermBaselineIfUnreplaced() {
+        if (anyRowsReplaced || fitDs != ds) {
+            return null;
+        }
+        return meanNormCounts;
+    }
+
+    /**
+     * Mean normalized counts per gene for {@code ds} and {@code sizeFactors} (DESeq2-style baseline).
+     * Does not validate count matrix; callers should use the same {@code ds} already validated for Wald scoring.
+     */
+    public static double[] meanNormalizedCounts(final Dataset ds, final double[] sizeFactors) {
+        if (sizeFactors == null) {
+            throw new NullPointerException("sizeFactors");
+        }
+        if (sizeFactors.length != ds.getNumCol()) {
+            throw new IllegalArgumentException("sizeFactors length " + sizeFactors.length
+                    + " does not match column count " + ds.getNumCol());
+        }
+        return computeMeanNormalizedCounts(ds, sizeFactors);
+    }
+
+    /**
+     * Phenotype-permutation refit: same count matrix and size factors as the real fit; skips redundant
+     * integer validation, does not copy {@code sharedSizeFactorsImmutable}, and reuses
+     * {@code baselineMeanNormCounts} when fitting the unreplaced dataset (same as
+     * {@link #meanNormalizedCounts} for this {@code ds} and size factors).
+     *
+     * @param sharedMeanInverseSizeFactor {@link #meanInverseSizeFactorForSizeFactors} for
+     *        {@code sharedSizeFactorsImmutable} (same for every permutation).
+     */
+    public static Deseq2LikeRegressionZModel fitPermutationRefit(final Dataset ds,
+            final Template permutedTemplate,
+            final Map<String, TwoClassMarkerStats> markerScores,
+            final double[] sharedSizeFactorsImmutable,
+            final double[] baselineMeanNormCounts,
+            final double sharedMeanInverseSizeFactor) {
+        if (markerScores == null) {
+            throw new IllegalArgumentException("markerScores cannot be null for "
+                    + Metrics.Wald.NAME + " (DESeq2-like count) scoring");
+        }
+        if (sharedSizeFactorsImmutable == null || baselineMeanNormCounts == null) {
+            throw new NullPointerException("sharedSizeFactorsImmutable and baselineMeanNormCounts must be non-null");
+        }
+        if (!Double.isFinite(sharedMeanInverseSizeFactor)) {
+            throw new IllegalArgumentException("sharedMeanInverseSizeFactor must be finite");
+        }
+        if (sharedSizeFactorsImmutable.length != ds.getNumCol()) {
+            throw new IllegalArgumentException("sharedSizeFactorsImmutable length "
+                    + sharedSizeFactorsImmutable.length + " does not match column count " + ds.getNumCol());
+        }
+        if (baselineMeanNormCounts.length != ds.getNumRow()) {
+            throw new IllegalArgumentException("baselineMeanNormCounts length "
+                    + baselineMeanNormCounts.length + " does not match row count " + ds.getNumRow());
+        }
+        final int colCount = ds.getNumCol();
+        final double[] conditionReal = createConditionVector(permutedTemplate, colCount);
+        final boolean[] replaceableSamples = samplesEligibleForReplacement(conditionReal, MIN_REPLICATES_FOR_REPLACE);
+        return fitInternal(ds,
+                ds,
+                markerScores,
+                sharedSizeFactorsImmutable,
+                conditionReal,
+                new boolean[ds.getNumRow()],
+                replaceableSamples,
+                true,
+                null,
+                false,
+                baselineMeanNormCounts,
+                sharedMeanInverseSizeFactor);
     }
 
     /**
@@ -181,12 +308,23 @@ class Deseq2LikeRegressionZModel {
             final boolean[] replacedRows,
             final boolean[] replaceableSamples,
             final boolean allowOutlierReplacement,
-            final FrozenDispersionContext frozen) {
+            final FrozenDispersionContext frozen,
+            final boolean computeIndependentFilteringPass,
+            final double[] precomputedMeanNormForRootFitDsOpt,
+            final double meanInverseSizeFactorHint) {
         final int rowCount = fitDs.getNumRow();
         final int colCount = fitDs.getNumCol();
         final double maxDisp = Math.max(10.0d, colCount);
-        final double[] meanNormCounts = computeMeanNormalizedCounts(fitDs, sizeFactors);
-        final double meanInverseSizeFactor = meanInverseSizeFactor(sizeFactors);
+        final double[] meanNormCounts;
+        if (precomputedMeanNormForRootFitDsOpt != null && fitDs == ds
+                && precomputedMeanNormForRootFitDsOpt.length == rowCount) {
+            meanNormCounts = precomputedMeanNormForRootFitDsOpt;
+        } else {
+            meanNormCounts = computeMeanNormalizedCounts(fitDs, sizeFactors);
+        }
+        final double meanInverseSizeFactor = Double.isNaN(meanInverseSizeFactorHint)
+                ? computeMeanInverseSizeFactor(sizeFactors)
+                : meanInverseSizeFactorHint;
         final boolean linearMu = canUseLinearMuForGeneWiseDispersion(conditionReal);
 
         final double[] dispersionRaw = new double[rowCount];
@@ -365,8 +503,22 @@ class Deseq2LikeRegressionZModel {
                         replacement.replacedRows,
                         replaceableSamples,
                         false,
-                        frozenOut);
+                        frozenOut,
+                        computeIndependentFilteringPass,
+                        null,
+                        meanInverseSizeFactor);
             }
+        }
+
+        if (!computeIndependentFilteringPass) {
+            return new Deseq2LikeRegressionZModel(ds,
+                    fitDs,
+                    sizeFactors,
+                    meanNormCounts,
+                    shrunkDispersion,
+                    Double.NaN,
+                    replacedRows,
+                    replaceableSamples);
         }
 
         final ResultsContext resultsContext = provisionalModel.buildResultsContext(conditionReal);
@@ -422,10 +574,47 @@ class Deseq2LikeRegressionZModel {
                 replaceableSamples);
     }
 
+    /**
+     * Independent filtering cutoff from the real-phenotype fit (mean normalized count threshold).
+     * Reused when scoring permuted phenotypes so the ranked-list gene universe matches the real run
+     * while dispersions are refit under each permutation (DESeq2-style).
+     */
+    double getIndependentFilterThreshold() {
+        return independentFilterThreshold;
+    }
+
+    double[] copySizeFactors() {
+        return Arrays.copyOf(sizeFactors, sizeFactors.length);
+    }
+
     public ScoredDataset scoreForTemplate(final Template template,
             final SortMode sort,
             final Order order,
             final Map<String, TwoClassMarkerStats> markerScores) {
+        return scoreForTemplate(template, sort, order, markerScores, Double.NaN);
+    }
+
+    /**
+     * @param independentFilterThresholdOverride if finite, use this cutoff for
+     *        {@link TwoClassMarkerStats#lowInformationThreshold} only; {@code lowInformation} itself
+     *        is left as in {@code markerScores} so the ranked-list universe matches the real
+     *        phenotype (perm fits can change mean normalized counts after outlier replacement).
+     *        If {@code NaN}, use {@link #independentFilterThreshold} and recompute
+     *        {@code lowInformation} from this model's {@link #meanNormCounts} as usual.
+     */
+    public ScoredDataset scoreForTemplate(final Template template,
+            final SortMode sort,
+            final Order order,
+            final Map<String, TwoClassMarkerStats> markerScores,
+            final double independentFilterThresholdOverride) {
+        final double meanCountCutoff = Double.isFinite(independentFilterThresholdOverride)
+                ? independentFilterThresholdOverride
+                : independentFilterThreshold;
+        // When scoring permuted phenotypes we pass the real template's cutoff but must not
+        // re-derive lowInformation from *this* fit's meanNormCounts: outlier replacement under the
+        // permuted design can change normalized means per gene, shrinking rndRl vs rlReal while
+        // gene sets stay qualified to rlReal — then GeneSetScoringTables.getScore(member) throws.
+        final boolean freezeLowInformationFromMarkerMap = Double.isFinite(independentFilterThresholdOverride);
         final int rowCount = ds.getNumRow();
         final double[] condition = createConditionVector(template, ds.getNumCol());
         final ResultsContext resultsContext = buildResultsContext(condition);
@@ -436,11 +625,11 @@ class Deseq2LikeRegressionZModel {
                     : null;
             if (markerScore != null) {
                 markerScore.lowInformationChecked = true;
-                markerScore.lowInformationThreshold = independentFilterThreshold;
-                if (!markerScore.omit) {
+                markerScore.lowInformationThreshold = meanCountCutoff;
+                if (!freezeLowInformationFromMarkerMap && !markerScore.omit) {
                     markerScore.lowInformation = !Double.isFinite(meanNormCounts[rowIndex])
-                            || (Double.isFinite(independentFilterThreshold)
-                            && meanNormCounts[rowIndex] < independentFilterThreshold);
+                            || (Double.isFinite(meanCountCutoff)
+                            && meanNormCounts[rowIndex] < meanCountCutoff);
                 }
             }
 
@@ -474,7 +663,8 @@ class Deseq2LikeRegressionZModel {
         });
 
         if (neutralizedRows > 0 && log.isDebugEnabled()) {
-            log.debug("Wald_Z neutralized {} row(s) due to invalid fits or Cook's outliers", neutralizedRows);
+            log.debug("{} neutralized {} row(s) due to invalid fits or Cook's outliers",
+                    Metrics.Wald.NAME, neutralizedRows);
         }
 
         return new ScoredDatasetImpl(new AddressedVector(Arrays.asList(elements)), ds);
@@ -1124,14 +1314,16 @@ class Deseq2LikeRegressionZModel {
                     continue;
                 }
                 if (value < 0.0d) {
-                    throw new IllegalArgumentException("Wald_Z requires non-negative raw count data");
+                    throw new IllegalArgumentException(Metrics.Wald.NAME
+                            + " requires non-negative raw count data");
                 }
                 final double nearestInteger = Math.rint(value);
                 final float nearestAsFloat = (float) nearestInteger;
                 final double tolerance = Math.max(1.0e-4d,
                         4.0d * (double) Math.ulp(nearestAsFloat == 0.0f ? 1.0f : nearestAsFloat));
                 if (Math.abs(value - nearestInteger) > tolerance) {
-                    throw new IllegalArgumentException("Wald_Z requires raw integer count data");
+                    throw new IllegalArgumentException(Metrics.Wald.NAME
+                            + " requires raw integer count data");
                 }
             }
         }
@@ -1242,7 +1434,8 @@ class Deseq2LikeRegressionZModel {
             for (int columnIndex = 0; columnIndex < colCount; columnIndex++) {
                 final double value = ds.getElement(rowIndex, columnIndex);
                 if (!Double.isFinite(value) || value < 0.0d) {
-                    throw new IllegalArgumentException("Wald_Z requires non-negative raw count data");
+                    throw new IllegalArgumentException(Metrics.Wald.NAME
+                            + " requires non-negative raw count data");
                 }
                 if (value > 0.0d) {
                     allZero = false;
@@ -1315,7 +1508,7 @@ class Deseq2LikeRegressionZModel {
         return clamp(Double.isFinite(alpha) ? alpha : MIN_DISP, MIN_DISP, maxDisp);
     }
 
-    private static double meanInverseSizeFactor(final double[] sizeFactors) {
+    private static double computeMeanInverseSizeFactor(final double[] sizeFactors) {
         double sum = 0.0d;
         int count = 0;
         for (double sizeFactor : sizeFactors) {

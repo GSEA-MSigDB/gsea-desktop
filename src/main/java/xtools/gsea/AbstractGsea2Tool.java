@@ -80,18 +80,20 @@ public abstract class AbstractGsea2Tool extends AbstractGseaTool {
         final RandomSeedGenerator rst = fRndSeedTypeParam.createSeed();
         final DatasetTemplate dt = new DatasetGenerators().extract(fullCd.getDataset(), template);
         final Dataset dsForValidation = dt.getDataset();
-        final boolean waldSelected = Metrics.Wald.NAME.equalsIgnoreCase(fMetricParam.getMetric().getName());
+        final boolean waldSelected = Metrics.isWaldZFamily(fMetricParam.getMetric());
         final boolean medianOfRatiosSelected = Norms.MEDIAN_OF_RATIOS.equals(fNormModeParam.getNormModeName());
         final boolean rawIntegerCounts = isDataRawIntegerCounts(dsForValidation);
 
         if (waldSelected && rawIntegerCounts && !medianOfRatiosSelected) {
-            throw new BadParamException(Metrics.Wald.NAME + " scoring on raw integer count data requires "
+            throw new BadParamException(Metrics.Wald.NAME + " / " + Metrics.WaldFast.NAME
+                + " scoring on raw integer count data requires "
                 + Norms.MEDIAN_OF_RATIOS + " normalization. "
                 + "Please enable normalization mode '" + Norms.MEDIAN_OF_RATIOS + "'.", 1006);
         }
 
         if (waldSelected && medianOfRatiosSelected && !rawIntegerCounts) {
-            final String warningMessage = Metrics.Wald.NAME + " scoring requested with " + Norms.MEDIAN_OF_RATIOS
+            final String warningMessage = Metrics.Wald.NAME + " / " + Metrics.WaldFast.NAME
+                    + " scoring requested with " + Norms.MEDIAN_OF_RATIOS
                     + " normalization, but dataset contains non-integer (pre-normalized) values. Skipping "
                     + Norms.MEDIAN_OF_RATIOS + " and using normalized linear-model ranking instead.";
             log.warn(warningMessage);
@@ -100,7 +102,7 @@ public abstract class AbstractGsea2Tool extends AbstractGseaTool {
 
         if (waldSelected && medianOfRatiosSelected && rawIntegerCounts && fullCd.wasCollapsed
             && !"Sum_of_probes".equals(fCollapseModeParam.getValue().toString())) {
-            final String warningMessage = Metrics.Wald.NAME + " with " + Norms.MEDIAN_OF_RATIOS
+            final String warningMessage = Metrics.Wald.NAME + " / " + Metrics.WaldFast.NAME + " with " + Norms.MEDIAN_OF_RATIOS
                 + " is running on collapsed counts using mode '"
                 + fCollapseModeParam.getValue() + "'. For DESeq2-like agreement, prefer collapse mode 'Sum_of_probes' "
                 + "because non-additive collapse modes can distort count-model statistics.";
@@ -115,8 +117,7 @@ public abstract class AbstractGsea2Tool extends AbstractGseaTool {
             final File edbDir = fReport.createSubDir("edb");
             final File diagnosticsFile = new File(edbDir, "deseq2_main_stats.tsv");
             tests.setDeseq2DiagnosticOutputFile(diagnosticsFile);
-            fReport.addComment("DESeq2-style main statistics saved to: edb/" + diagnosticsFile.getName()
-                    + " and intermediate fit diagnostics saved to: edb/deseq2_debug_stats.tsv");
+            fReport.addComment("DESeq2-style main statistics saved to: edb/" + diagnosticsFile.getName());
         }
         
         // If we have a RandomSeedGenerator.Timestamp instance, save the timestamp for later reference

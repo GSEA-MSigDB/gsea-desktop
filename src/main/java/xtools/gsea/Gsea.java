@@ -161,10 +161,10 @@ public class Gsea extends AbstractGsea2Tool {
         
         Dataset ds = fDatasetParam.getDataset(fChipParam);
 
-        final boolean waldZSelected = Metrics.Wald.NAME.equalsIgnoreCase(metric.getName());
+        final boolean waldZSelected = Metrics.isWaldZFamily(metric);
         final CollapsedDetails.Data cd;
         if (waldZSelected) {
-            // For Wald_Z, preserve all rows through collapse first.
+            // For Wald Z-style metrics, preserve all rows through collapse first.
             // De-duplicating before collapse can arbitrarily drop rows and distort count-model ranking.
             cd = getDataset(ds);
             final Dataset deDuped = uniquize(cd.getDataset());

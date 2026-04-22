@@ -180,11 +180,23 @@ public class TaskManager {
     }
 
     private void updateTable() {
-        // it does a a jig, but thats ok as visual indicator of a change in state
-        fModel.fireTableStructureChanged(); // needed for consistent updates
-        fTaskTable.repaint();
-        fTaskTable.revalidate();
-        setColNumWidth(fTaskTable);
+        // ToolRunnable invokes this from a worker thread; all model/table updates
+        // must run on the EDT to keep column model and header paint in sync.
+        Runnable refresh = () -> {
+            if (fTaskTable == null) {
+                return;
+            }
+            // it does a a jig, but thats ok as visual indicator of a change in state
+            fModel.fireTableStructureChanged(); // needed for consistent updates
+            fTaskTable.repaint();
+            fTaskTable.revalidate();
+            setColNumWidth(fTaskTable);
+        };
+        if (SwingUtilities.isEventDispatchThread()) {
+            refresh.run();
+        } else {
+            SwingUtilities.invokeLater(refresh);
+        }
     }
 
     /**
