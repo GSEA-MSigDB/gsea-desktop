@@ -427,6 +427,7 @@ public class ToolReport implements Report {
 
         try {
             xc.saveAsPNG(file, width, height);
+            _centralAddPage(new FileWrapperPage(file, xc.getTitle() + " (PNG)"));
             return file;
         } catch (Throwable t) {
             addError("Trouble saving png image", t);
@@ -438,6 +439,7 @@ public class ToolReport implements Report {
     public void savePageSvg(final XChart xc, final int width, final int height, final File file) {
         try {
             ImageUtil.saveAsSVG(xc.getFreeChart(), file, width, height, true);
+            _centralAddPage(new FileWrapperPage(file, xc.getTitle() + " (compressed SVG)"));
         } catch (Throwable t) {
             addError("Trouble saving svg image", t);
         }

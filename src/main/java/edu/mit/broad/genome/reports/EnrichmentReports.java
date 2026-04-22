@@ -40,18 +40,31 @@ import org.slf4j.LoggerFactory;
 import org.genepattern.io.ImageUtil;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
+import org.jfree.chart.LegendItem;
+import org.jfree.chart.LegendItemCollection;
+import org.jfree.chart.LegendItemSource;
 import org.jfree.chart.annotations.XYTextAnnotation;
+import org.jfree.chart.axis.AxisSpace;
 import org.jfree.chart.axis.NumberAxis;
+import org.jfree.chart.axis.SymbolAxis;
+import org.jfree.chart.axis.ValueAxis;
+import org.jfree.chart.labels.ItemLabelAnchor;
+import org.jfree.chart.labels.ItemLabelPosition;
+import org.jfree.chart.labels.XYItemLabelGenerator;
 import org.jfree.chart.block.BlockContainer;
 import org.jfree.chart.block.BorderArrangement;
 import org.jfree.chart.block.EmptyBlock;
 import org.jfree.chart.plot.*;
 import org.jfree.chart.renderer.xy.StandardXYItemRenderer;
 import org.jfree.chart.renderer.xy.XYItemRenderer;
+import org.jfree.chart.renderer.xy.XYItemRendererState;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.jfree.chart.title.CompositeTitle;
+import org.jfree.chart.title.ImageTitle;
 import org.jfree.chart.title.LegendTitle;
+import org.jfree.chart.title.TextTitle;
 import org.jfree.chart.ui.Layer;
+import org.jfree.chart.ui.HorizontalAlignment;
 import org.jfree.chart.ui.RectangleAnchor;
 import org.jfree.chart.ui.RectangleEdge;
 import org.jfree.chart.ui.RectangleInsets;
@@ -66,6 +79,8 @@ import org.jfree.data.xy.XYSeriesCollection;
 import java.awt.*;
 import java.awt.Font;
 import java.awt.geom.Ellipse2D;
+import java.awt.geom.Rectangle2D;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -78,6 +93,364 @@ import java.util.List;
  * Several enrichemnt related reports
  */
 public class EnrichmentReports {
+    private static final double NOM_P_005_X = -Math.log10(0.05d);
+    private static final double NOM_P_025_X = -Math.log10(0.25d);
+    private static final double EPSILON = 1e-10d;
+    // Explicit FDR legend dimensions (px) to avoid padding-based layout drift.
+    private static final int FDR_LEGEND_IMAGE_WIDTH = 300;
+    private static final int FDR_LEGEND_IMAGE_HEIGHT = 52;
+    private static final int FDR_BAR_WIDTH = 240;
+    private static final int FDR_BAR_HEIGHT = 10;
+    private static final int FDR_BAR_RIGHT_PAD = 8;
+
+    private static final class BubblePlotData {
+        private final int n;
+        private final String[] labels;
+        private final double[] xs;
+        private final double[] ys;
+        private final double[] sizePx;
+        private final float[] fdrs;
+        private final Paint[] itemPaints;
+        private final double nesNorm;
+
+        private BubblePlotData(int n, String[] labels, double[] xs, double[] ys,
+                               double[] sizePx, float[] fdrs, Paint[] itemPaints, double nesNorm) {
+            this.n = n;
+            this.labels = labels;
+            this.xs = xs;
+            this.ys = ys;
+            this.sizePx = sizePx;
+            this.fdrs = fdrs;
+            this.itemPaints = itemPaints;
+            this.nesNorm = nesNorm;
+        }
+    }
+
+    private static final class BubbleCanvasSpec {
+        private final double sharedMaxNegLog10NomP;
+        private final double sharedLeftAxisSpacePx;
+        private final double sharedNesNorm;
+
+        private BubbleCanvasSpec(double sharedMaxNegLog10NomP, double sharedLeftAxisSpacePx, double sharedNesNorm) {
+            this.sharedMaxNegLog10NomP = sharedMaxNegLog10NomP;
+            this.sharedLeftAxisSpacePx = sharedLeftAxisSpacePx;
+            this.sharedNesNorm = sharedNesNorm;
+        }
+    }
+
+    /**
+     * Single-phenotype bubble plot.
+     * X = -log10(NOM p-value), bubble size = |NES|, bubble color encodes FDR intensity
+     * (white->red for positive NES, white->blue for negative NES).
+     */
+    public static XChart createBubblePlotForGseaResults(final List<EnrichmentResult> topResults,
+                                                        final String phenotypeLabel, final boolean positiveNes,
+                                                        final BubbleCanvasSpec canvasSpec) {
+        if (topResults.isEmpty()) {
+            return createEmptyBubbleChart(positiveNes, "No finite enrichment results available for plotting");
+        }
+
+        final BubblePlotData data = buildBubblePlotData(topResults, positiveNes, canvasSpec.sharedNesNorm);
+        final XYSeries series = new XYSeries("bubble-points", false, true);
+        for (int i = 0; i < data.n; i++) {
+            series.add(data.xs[i], data.ys[i]);
+        }
+        final XYSeriesCollection ds = new XYSeriesCollection(series);
+
+        final XYLineAndShapeRenderer renderer = new XYLineAndShapeRenderer(false, true) {
+            @Override
+            public Paint getItemPaint(int series, int item) {
+                return data.itemPaints[item];
+            }
+
+            @Override
+            public Shape getItemShape(int series, int item) {
+                final double d = data.sizePx[item];
+                return new Ellipse2D.Double(-d / 2.0d, -d / 2.0d, d, d);
+            }
+
+            @Override
+            public void drawItem(Graphics2D g2,
+                                 XYItemRendererState state,
+                                 Rectangle2D dataArea,
+                                 PlotRenderingInfo info,
+                                 XYPlot plot,
+                                 ValueAxis domainAxis,
+                                 ValueAxis rangeAxis,
+                                 XYDataset dataset,
+                                 int series,
+                                 int item,
+                                 CrosshairState crosshairState,
+                                 int pass) {
+                final Shape oldClip = g2.getClip();
+                try {
+                    // Draw bubbles above the frame clipping region so edge bubbles are not cut.
+                    g2.setClip(null);
+                    super.drawItem(g2, state, dataArea, info, plot, domainAxis, rangeAxis, dataset, series, item, crosshairState, pass);
+                } finally {
+                    g2.setClip(oldClip);
+                }
+            }
+        };
+        renderer.setUseOutlinePaint(true);
+        renderer.setSeriesOutlinePaint(0, new Color(0x55, 0x55, 0x55));
+        renderer.setSeriesOutlineStroke(0, new BasicStroke(1.0f));
+        renderer.setDefaultItemLabelGenerator(new XYItemLabelGenerator() {
+            @Override
+            public String generateLabel(XYDataset dataset, int series, int item) {
+                final float fdr = data.fdrs[item];
+                if (fdr < 0.01f) return "***";
+                if (fdr <= 0.05f) return "**";
+                if (fdr <= 0.25f) return "*";
+                return null;
+            }
+        });
+        renderer.setDefaultItemLabelsVisible(true);
+        renderer.setDefaultItemLabelPaint(Color.BLACK);
+        renderer.setDefaultItemLabelFont(new Font("SansSerif", Font.BOLD, 10));
+        renderer.setDefaultPositiveItemLabelPosition(
+                new ItemLabelPosition(ItemLabelAnchor.OUTSIDE1, TextAnchor.BOTTOM_LEFT));
+
+        final NumberAxis xAxis = new NumberAxis("-log10(NOM p-value)");
+        final SymbolAxis yAxis = new SymbolAxis("", data.labels);
+        yAxis.setGridBandsVisible(false);
+        yAxis.setAutoRangeIncludesZero(false);
+        yAxis.setVerticalTickLabels(false);
+        yAxis.setLowerMargin(0.01d);
+        yAxis.setUpperMargin(0.24d);
+
+        final XYPlot plot = new XYPlot(ds, xAxis, yAxis, renderer);
+        plot.setBackgroundPaint(Color.WHITE);
+        plot.setDomainGridlinePaint(Color.LIGHT_GRAY);
+        plot.setRangeGridlinePaint(Color.LIGHT_GRAY);
+        plot.setDomainGridlinesVisible(true);
+        plot.setRangeGridlinesVisible(true);
+
+        final AxisSpace fixedAxisSpace = new AxisSpace();
+        fixedAxisSpace.setLeft(Math.max(260.0d, canvasSpec.sharedLeftAxisSpacePx));
+        plot.setFixedRangeAxisSpace(fixedAxisSpace);
+
+        final BasicStroke thresholdStroke = new BasicStroke(1.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 1.0f, new float[]{4.0f, 4.0f}, 0.0f);
+        plot.addDomainMarker(new ValueMarker(NOM_P_025_X, Color.BLACK, thresholdStroke));
+        plot.addDomainMarker(new ValueMarker(NOM_P_005_X, Color.BLACK, thresholdStroke));
+
+        final double lowerBound = 0.0d;
+        final double upperBound = Math.max(canvasSpec.sharedMaxNegLog10NomP, NOM_P_005_X + 0.15d);
+        xAxis.setRange(lowerBound, upperBound);
+
+        final double thresholdLabelY = (data.n - 1) + 0.95d;
+        final XYTextAnnotation line025 = new XYTextAnnotation("NOM p = 0.25", NOM_P_025_X, thresholdLabelY);
+        line025.setTextAnchor(TextAnchor.BOTTOM_RIGHT);
+        line025.setFont(new Font("SansSerif", Font.PLAIN, 8));
+        line025.setPaint(Color.BLACK);
+        plot.addAnnotation(line025);
+        final XYTextAnnotation line005 = new XYTextAnnotation("NOM p = 0.05", NOM_P_005_X, thresholdLabelY);
+        line005.setTextAnchor(TextAnchor.BOTTOM_RIGHT);
+        line005.setFont(new Font("SansSerif", Font.PLAIN, 8));
+        line005.setPaint(Color.BLACK);
+        plot.addAnnotation(line005);
+        final String phenoTitle = (phenotypeLabel != null && phenotypeLabel.length() > 0) ? phenotypeLabel : Constants.NA;
+        final JFreeChart chart = new JFreeChart("Bubble plot of enrichment in phenotype: " + phenoTitle, JFreeChart.DEFAULT_TITLE_FONT, plot, false);
+        chart.setBackgroundPaint(CHART_FRAME_COLOR);
+
+        chart.addSubtitle(createBottomAlignedLegendRow(positiveNes, data.nesNorm));
+
+        return new XChartImpl("gsea_bubble_plot_" + (positiveNes ? "pos" : "neg"),
+                "Bubble plot: X=-log10(NOM p-value), size=|NES|, color=FDR intensity",
+                chart);
+    }
+
+    private static XChart createEmptyBubbleChart(final boolean positiveNes, final String description) {
+        JFreeChart emptyChart = ChartFactory.createScatterPlot(
+                "Bubble plot of enrichment results", "-log10(NOM p-value)", "Gene set",
+                new XYSeriesCollection(), PlotOrientation.VERTICAL, false, false, false);
+        emptyChart.setBackgroundPaint(CHART_FRAME_COLOR);
+        return new XChartImpl("gsea_bubble_plot_" + (positiveNes ? "pos" : "neg"), description, emptyChart);
+    }
+
+    private static List<EnrichmentResult> selectTopFiniteResults(final EnrichmentResult[] inputResults, final int topXSets) {
+        final List<EnrichmentResult> finiteResults = new ArrayList<EnrichmentResult>();
+        for (int i = 0; i < inputResults.length; i++) {
+            final EnrichmentScore s = inputResults[i].getScore();
+            if (Float.isFinite(s.getNES()) && Float.isFinite(s.getNP()) && Float.isFinite(s.getFDR())) {
+                finiteResults.add(inputResults[i]);
+            }
+        }
+
+        finiteResults.sort((a, b) -> Float.compare(Math.abs(b.getScore().getNES()), Math.abs(a.getScore().getNES())));
+        final int requestedTopN = (topXSets > 0) ? topXSets : finiteResults.size();
+        return finiteResults.subList(0, Math.min(requestedTopN, finiteResults.size()));
+    }
+
+    private static BubblePlotData buildBubblePlotData(final List<EnrichmentResult> topResults, final boolean positiveNes, final double sharedNesNorm) {
+        final int n = topResults.size();
+        final String[] labels = new String[n];
+        final double[] xs = new double[n];
+        final double[] ys = new double[n];
+        final double[] sizePx = new double[n];
+        final float[] fdrs = new float[n];
+        final Paint[] itemPaints = new Paint[n];
+
+        final double nesNorm = Math.max(sharedNesNorm, 1e-9d);
+
+        for (int i = 0; i < n; i++) {
+            final EnrichmentResult r = topResults.get(i);
+            final EnrichmentScore s = r.getScore();
+            final float nes = s.getNES();
+            final float nomP = Math.max(s.getNP(), (float) EPSILON);
+            final float fdr = Math.max(s.getFDR(), (float) EPSILON);
+            final double tSize = Math.min(1.0d, Math.abs(nes) / nesNorm);
+
+            labels[(n - 1) - i] = r.getGeneSet().getName(true);
+            xs[i] = -Math.log10(nomP);
+            ys[i] = (n - 1) - i;
+            sizePx[i] = 8.0d + 14.0d * tSize;
+            fdrs[i] = fdr;
+            itemPaints[i] = createFdrPaint(fdr, positiveNes);
+        }
+
+        return new BubblePlotData(n, labels, xs, ys, sizePx, fdrs, itemPaints, nesNorm);
+    }
+
+    private static BubbleCanvasSpec computeBubbleCanvasSpec(final List<EnrichmentResult> posTop, final List<EnrichmentResult> negTop) {
+        double sharedBubbleXMax = NOM_P_005_X + 0.15d;
+        double sharedNesNorm = 1e-9d;
+        int maxLabelLen = 8;
+
+        final List<EnrichmentResult>[] both = new List[]{posTop, negTop};
+        for (int listIdx = 0; listIdx < both.length; listIdx++) {
+            final List<EnrichmentResult> rows = both[listIdx];
+            for (int i = 0; i < rows.size(); i++) {
+                final EnrichmentScore s = rows.get(i).getScore();
+                final float np = Math.max(s.getNP(), (float) EPSILON);
+                final double x = -Math.log10(np) + 0.15d;
+                sharedBubbleXMax = Math.max(sharedBubbleXMax, x);
+                sharedNesNorm = Math.max(sharedNesNorm, Math.abs(s.getNES()));
+
+                final String nameLabel = rows.get(i).getGeneSet().getName(true);
+                if (nameLabel != null) {
+                    maxLabelLen = Math.max(maxLabelLen, nameLabel.length());
+                }
+            }
+        }
+
+        final double sharedLeftAxisSpacePx = Math.min(760.0d, Math.max(260.0d, (maxLabelLen * 8.2d) + 70.0d));
+        return new BubbleCanvasSpec(sharedBubbleXMax, sharedLeftAxisSpacePx, sharedNesNorm);
+    }
+
+    private static Paint createFdrPaint(final float fdr, final boolean positiveNes) {
+        if (positiveNes) {
+            if (fdr < 0.01f) return new Color(255, 20, 20);
+            if (fdr <= 0.05f) return new Color(255, 70, 70);
+            if (fdr <= 0.25f) return new Color(255, 140, 140);
+            return new Color(255, 220, 220);
+        }
+        if (fdr < 0.01f) return new Color(20, 20, 255);
+        if (fdr <= 0.05f) return new Color(70, 70, 255);
+        if (fdr <= 0.25f) return new Color(140, 140, 255);
+        return new Color(220, 220, 255);
+    }
+
+    private static ImageTitle createColorGradientLegend(final boolean positiveNes) {
+        final BufferedImage img = new BufferedImage(FDR_LEGEND_IMAGE_WIDTH, FDR_LEGEND_IMAGE_HEIGHT, BufferedImage.TYPE_INT_ARGB);
+        final Graphics2D g = img.createGraphics();
+        try {
+            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g.setColor(new Color(0, 0, 0, 0));
+            g.fillRect(0, 0, FDR_LEGEND_IMAGE_WIDTH, FDR_LEGEND_IMAGE_HEIGHT);
+
+            final int barX = FDR_LEGEND_IMAGE_WIDTH - FDR_BAR_WIDTH - FDR_BAR_RIGHT_PAD;
+            final int barY = 18;
+
+            g.setColor(Color.BLACK);
+            g.setFont(new Font("SansSerif", Font.PLAIN, 9));
+            final FontMetrics fm = g.getFontMetrics();
+            final String fdrHeading = "FDR q-val";
+            final int headingW = fm.stringWidth(fdrHeading);
+            final int headingX = barX + (FDR_BAR_WIDTH - headingW) / 2;
+            g.drawString(fdrHeading, headingX, barY - 4);
+
+            for (int x = 0; x < FDR_BAR_WIDTH; x++) {
+                final double t = (double) x / (double) Math.max(1, (FDR_BAR_WIDTH - 1));
+                final float fdr = (float) (0.30d * (1.0d - t));
+                g.setPaint(createFdrPaint(fdr, positiveNes));
+                g.drawLine(barX + x, barY, barX + x, barY + FDR_BAR_HEIGHT - 1);
+            }
+            g.setColor(new Color(0x66, 0x66, 0x66));
+            g.drawRect(barX, barY, FDR_BAR_WIDTH, FDR_BAR_HEIGHT);
+
+            g.setColor(Color.BLACK);
+            final int tickY = barY + FDR_BAR_HEIGHT + fm.getAscent() + 2;
+            final String tickHi = "0.30";
+            final String tickLo = "0.00";
+            g.drawString(tickHi, barX, tickY);
+            g.drawString(tickLo, barX + FDR_BAR_WIDTH - fm.stringWidth(tickLo), tickY);
+        } finally {
+            g.dispose();
+        }
+
+        final ImageTitle legend = new ImageTitle(img);
+        legend.setPosition(RectangleEdge.BOTTOM);
+        legend.setHorizontalAlignment(HorizontalAlignment.RIGHT);
+        return legend;
+    }
+
+    private static TextTitle createFdrStarsSubtitle() {
+        final TextTitle starsNote = new TextTitle("* FDR <= 0.25     ** FDR <= 0.05     *** FDR < 0.01");
+        starsNote.setFont(new Font("SansSerif", Font.PLAIN, 9));
+        starsNote.setPosition(RectangleEdge.BOTTOM);
+        starsNote.setHorizontalAlignment(HorizontalAlignment.RIGHT);
+        return starsNote;
+    }
+
+    private static CompositeTitle createBottomAlignedLegendRow(final boolean positiveNes, final double nesNorm) {
+        final LegendTitle nesLegend = createSizeLegendTitle(nesNorm);
+        nesLegend.setHorizontalAlignment(HorizontalAlignment.LEFT);
+
+        final TextTitle starsNote = createFdrStarsSubtitle();
+        final ImageTitle fdrLegend = createColorGradientLegend(positiveNes);
+
+        final BlockContainer rightBlock = new BlockContainer(new BorderArrangement());
+        rightBlock.add(fdrLegend, RectangleEdge.TOP);
+        rightBlock.add(starsNote, RectangleEdge.BOTTOM);
+
+        final BlockContainer row = new BlockContainer(new BorderArrangement());
+        // Same pattern as createNESvsSignificancePlot: LEFT + RIGHT + wide EmptyBlock pins both to panel edges.
+        row.add(nesLegend, RectangleEdge.LEFT);
+        row.add(rightBlock, RectangleEdge.RIGHT);
+        row.add(new EmptyBlock(2000, 0));
+
+        final CompositeTitle legends = new CompositeTitle(row);
+        legends.setPosition(RectangleEdge.BOTTOM);
+        legends.setHorizontalAlignment(HorizontalAlignment.LEFT);
+        return legends;
+    }
+
+    private static LegendTitle createSizeLegendTitle(final double nesNorm) {
+        final LegendItemCollection sizeLegendItems = new LegendItemCollection();
+        final double[] nesRefs = new double[]{0.5d * nesNorm, 0.75d * nesNorm, nesNorm};
+        for (int i = 0; i < nesRefs.length; i++) {
+            final double t = Math.min(1.0d, nesRefs[i] / nesNorm);
+            final double d = 8.0d + 10.0d * t;
+            final double half = d / 2.0d;
+            sizeLegendItems.add(new LegendItem("|NES| = " + Printf.format((float) nesRefs[i], 2), null, null, null,
+                    new Ellipse2D.Double(-half, -half, d, d),
+                    new Color(0xAA, 0xAA, 0xAA),
+                    new BasicStroke(1.0f),
+                    new Color(0x66, 0x66, 0x66)));
+        }
+        final LegendTitle legend = new LegendTitle(new LegendItemSource() {
+            @Override
+            public LegendItemCollection getLegendItems() {
+                return sizeLegendItems;
+            }
+        });
+        legend.setItemFont(new Font("SansSerif", Font.PLAIN, 9));
+        legend.setPosition(RectangleEdge.BOTTOM);
+        legend.setHorizontalAlignment(HorizontalAlignment.LEFT);
+        return legend;
+    }
+
     protected static final transient Logger klog = LoggerFactory.getLogger(EnrichmentReports.class);
 
     public static Shape createCircleShape() {
@@ -388,6 +761,27 @@ public class EnrichmentReports {
             report.savePageSvg(pvalues_nes_plot_xc, 500, 500, pvalues_nes_plot_svg_file);
         }
 
+        // Build a single shared canvas from first principles, then populate it separately by sign.
+        final List<EnrichmentResult> posTop = selectTopFiniteResults(results_pos, topXSets);
+        final List<EnrichmentResult> negTop = selectTopFiniteResults(results_neg, topXSets);
+        final BubbleCanvasSpec bubbleCanvasSpec = computeBubbleCanvasSpec(posTop, negTop);
+
+        // --- Enrichment bubble plots by phenotype (PNG / optional SVG) ---
+        final XChart bubble_plot_pos_xc = createBubblePlotForGseaResults(posTop, classA_name_opt, true, bubbleCanvasSpec);
+        final File bubble_plot_pos_file = report.savePage(bubble_plot_pos_xc, 1300, 700, saveInThisDir);
+        File bubble_plot_pos_svg_file = null;
+        if (createSvgs) {
+            bubble_plot_pos_svg_file = ImageUtil.getSvgFileFromImgFile(bubble_plot_pos_file, true);
+            report.savePageSvg(bubble_plot_pos_xc, 1300, 700, bubble_plot_pos_svg_file);
+        }
+        final XChart bubble_plot_neg_xc = createBubblePlotForGseaResults(negTop, classB_name_opt, false, bubbleCanvasSpec);
+        final File bubble_plot_neg_file = report.savePage(bubble_plot_neg_xc, 1300, 700, saveInThisDir);
+        File bubble_plot_neg_svg_file = null;
+        if (createSvgs) {
+            bubble_plot_neg_svg_file = ImageUtil.getSvgFileFromImgFile(bubble_plot_neg_file, true);
+            report.savePageSvg(bubble_plot_neg_xc, 1300, 700, bubble_plot_neg_svg_file);
+        }
+
         final XChart global_es_histogram_xc = createGlobalESHistogram(AuxUtils.getAuxNameOnlyNoHash(phenotypeName), edb.getESS_lv());
         final File global_es_histogram_file = report.savePage(global_es_histogram_xc, 500, 500, saveInThisDir);
         File global_es_histogram_svg_file = null;
@@ -413,6 +807,7 @@ public class EnrichmentReports {
             StringElement line2b = new StringElement(edb.getNumNominallySig(0.05f, true) + " gene sets are significantly enriched at nominal pvalue < 5%");
             StringElement line3 = new StringElement(edb.getNumFDRSig(0.25f, true) + " gene sets are significant at FDR < 25%");
             StringElement line4 = HtmlFormat.Links.hyper("Snapshot", pos_snapshot_html, "of enrichment results", saveInThisDir);
+            StringElement line4a = HtmlFormat.Links.hyper("", "Bubble plot", bubble_plot_pos_file, "of enrichment results", saveInThisDir);
             StringElement line5 = HtmlFormat.Links.hyper("Detailed", "enrichment results in html", pos_basic_html, " format", saveInThisDir);
             StringElement line6 = HtmlFormat.Links.hyper("Detailed", "enrichment results in TSV", pos_basic_tsv, " format (tab delimited text)", saveInThisDir);
 
@@ -421,6 +816,10 @@ public class EnrichmentReports {
             ul.addElement(new LI(line2a));
             ul.addElement(new LI(line2b));
             ul.addElement(new LI(line4));
+            ul.addElement(new LI(line4a));
+            if (createSvgs && bubble_plot_pos_svg_file != null) {
+                ul.addElement(new LI(HtmlFormat.Links.hyper("", "Bubble plot", bubble_plot_pos_svg_file, "of enrichment results (SVG)", saveInThisDir)));
+            }
             ul.addElement(new LI(line5));
             ul.addElement(new LI(line6));
             ul.addElement(new LI(line7));
@@ -445,6 +844,7 @@ public class EnrichmentReports {
             StringElement line2b = new StringElement(edb.getNumNominallySig(0.05f, false) + " gene sets are significantly enriched at nominal pvalue < 5%");
             StringElement line3 = new StringElement(edb.getNumFDRSig(0.25f, false) + " gene sets are significantly enriched at FDR < 25%");
             StringElement line4 = HtmlFormat.Links.hyper("Snapshot", neg_snapshot_html, "of enrichment results", saveInThisDir);
+            StringElement line4a = HtmlFormat.Links.hyper("", "Bubble plot", bubble_plot_neg_file, "of enrichment results", saveInThisDir);
             StringElement line5 = HtmlFormat.Links.hyper("Detailed", "enrichment results in html", neg_basic_html, " format", saveInThisDir);
             StringElement line6 = HtmlFormat.Links.hyper("Detailed", "enrichment results in TSV", neg_basic_tsv, " format (tab delimited text)", saveInThisDir);
             ul.addElement(new LI(line1));
@@ -452,6 +852,10 @@ public class EnrichmentReports {
             ul.addElement(new LI(line2a));
             ul.addElement(new LI(line2b));
             ul.addElement(new LI(line4));
+            ul.addElement(new LI(line4a));
+            if (createSvgs && bubble_plot_neg_svg_file != null) {
+                ul.addElement(new LI(HtmlFormat.Links.hyper("", "Bubble plot", bubble_plot_neg_svg_file, "of enrichment results (SVG)", saveInThisDir)));
+            }
             ul.addElement(new LI(line5));
             ul.addElement(new LI(line6));
             ul.addElement(new LI(line7));
@@ -547,11 +951,11 @@ public class EnrichmentReports {
         ul = new UL();
         div.addElement(new H4("Global statistics and plots"));
         ul.addElement(new LI(HtmlFormat.Links.hyper("Plot of ", "p-values <i>vs.</i> NES", pvalues_nes_plot_file, "", saveInThisDir)));
-        if (createSvgs) {
+        if (createSvgs && pvalues_nes_plot_svg_file != null) {
             ul.addElement(new LI(HtmlFormat.Links.hyper("Plot of ", "p-values <i>vs.</i> NES", pvalues_nes_plot_svg_file, "(in compressed SVG format)", saveInThisDir)));
         }
         ul.addElement(new LI(HtmlFormat.Links.hyper("Global ES", global_es_histogram_file, "histogram", saveInThisDir)));
-        if (createSvgs) {
+        if (createSvgs && global_es_histogram_svg_file != null) {
             ul.addElement(new LI(HtmlFormat.Links.hyper("Global ES", global_es_histogram_svg_file, "histogram (in compressed SVG format)", saveInThisDir)));
         }
         div.addElement(ul);
