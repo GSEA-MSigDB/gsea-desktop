@@ -80,6 +80,7 @@ import xtools.api.Tool;
 import xtools.chip2chip.Chip2Chip;
 import xtools.gsea.Gsea;
 import xtools.gsea.GseaPreranked;
+import xtools.gsea.SsGsea;
 import xtools.munge.CollapseDataset;
 
 public class GseaFijiTabsApplicationFrame extends JFrame implements Application.Handler {
@@ -280,6 +281,13 @@ public class GseaFijiTabsApplicationFrame extends JFrame implements Application.
                 new AppToolLauncherAction(gsea_tool, gsea_tool.getParamSet(),
                         "Run Gsea on a Pre-Ranked gene list", JarResources.getIcon("Gsea_app16_v2.png")
                 ), 
+                width, height, font, true);
+        tb2.add(Box.createVerticalStrut(struth));
+
+        final SsGsea ssGseaTool = new SsGsea();
+        tb2.add(JarResources.toURL("GseaApp24.gif"), "Run ssGSEA          ",
+                new AppToolLauncherAction(ssGseaTool, ssGseaTool.getParamSet(),
+                        "ssGSEA — single-sample GSEA (gene-set scores per sample)", JarResources.getIcon("Gsea_app16_v2.png")),
                 width, height, font, true);
         tb2.add(Box.createVerticalStrut(struth));
         

@@ -4,16 +4,13 @@
 package xtools.gsea;
 
 import edu.mit.broad.genome.StandardException;
-import edu.mit.broad.genome.alg.DatasetGenerators;
 import edu.mit.broad.genome.alg.Metric;
 import edu.mit.broad.genome.alg.Metrics;
 import edu.mit.broad.genome.objects.Dataset;
 import edu.mit.broad.genome.objects.GeneSet;
 import edu.mit.broad.genome.objects.Template;
 import edu.mit.broad.genome.objects.strucs.CollapsedDetails;
-import edu.mit.broad.genome.parsers.GctParser;
 import edu.mit.broad.genome.reports.api.ReportIndexState;
-import edu.mit.broad.vdb.chip.Chip;
 import xtools.api.AbstractTool;
 import xtools.api.param.*;
 
@@ -69,54 +66,11 @@ public class Gsea extends AbstractGsea2Tool {
     public String getName() { return "GSEA"; }
 
     protected CollapsedDetails.Data getDataset(final Dataset origDs) throws Exception {
-        CollapsedDetails.Data cd = new CollapsedDetails.Data();
-        cd.orig = origDs;
-    
-        if (fFeatureSpaceParam.isSymbols()) {
-            if (!fChipParam.isSpecified()) {
-                // dont as the chip param isnt really reqd (and hence isnt caught in the usual way)
-                //throw new MissingReqdParamException(_getMissingChipMessage());
-                throw new BadParamException("Chip parameter must be specified as you asked to analyze" +
-                        " in the space of gene symbols. Chip is used to collapse probe ids into symbols", 1002);
-            }
-    
-            final Chip chip = fChipParam.getChip();
-            // Remap_only is actually implemented as a Collapse Mode beneath everything else.
-            // Also note: we do not allow result file renaming when collapsing via the GSEA tool.
-            int collapseModeIndex = fFeatureSpaceParam.isRemap() ? 5 : fCollapseModeParam.getStringIndexChoosen();
-            DatasetGenerators.CollapsedDataset cds = new DatasetGenerators().collapse(origDs, chip,
-                    fIncludeOnlySymbols.isTrue(), collapseModeIndex, null);
-
-    		Dataset collapsed = cds.symbolized;
-            log.info("Collapsing dataset was done. Original: {} collapsed: {}", origDs.getQuickInfo(), collapsed.getQuickInfo());
-
-            // Make a summary etiology always
-            fReport.savePageTsv(cds.makeEtiologySdf());
-
-            // Also save the collapsed dataset if Create GCTs is true
-            if (fCreateGctsParam.isSpecified() && fCreateGctsParam.isTrue()) {
-                File reportDir = fReport.getReportDir();
-                File edbDir = new File(reportDir, "edb");
-                if (!edbDir.exists()) { edbDir.mkdirs(); }
-                File collapsedGct = new File(edbDir, collapsed.getName() + ".gct");
-                GctParser gctExporter = new GctParser();
-                gctExporter.export(collapsed, collapsedGct);
-            }
-            
-            cd.chip = chip;
-            cd.wasCollapsed = true;
-            cd.collapsed = collapsed;
-            if (cd.getNumRow_orig() != 0 && cd.getNumRow_collapsed() == 0) {
-                throw new BadParamException("The collapsed dataset was empty when used with chip:" + cd.getChipName(), 1005);
-            }
-    
-        } else {
-            cd.wasCollapsed = false;
-            cd.collapsed = origDs;
-            log.info("No dataset collapsing was done .. using original as is");
-        }
-    
-        return cd;
+        final File edbForGct = (fCreateGctsParam.isSpecified() && fCreateGctsParam.isTrue())
+                ? new File(fReport.getReportDir(), "edb")
+                : null;
+        return GseaExpressionDataPrep.collapseForExpressionUse(origDs, fFeatureSpaceParam, fChipParam,
+                fCollapseModeParam, fIncludeOnlySymbols, fReport, edbForGct).data;
     }
 
     public void execute() throws Exception {

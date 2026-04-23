@@ -48,6 +48,21 @@ public class Timer {
         System.out.println(_timeTaken(null));
     }
 
+    public String getTimeTakenLabel(final String label) {
+        return _timeTaken(label);
+    }
+
+    public long getTimeTakenMillis() {
+        if (!stopped) {
+            stop();
+        }
+        return fStop - fStart;
+    }
+
+    public long getTimeTakenSeconds() {
+        return getTimeTakenMillis() / 1000;
+    }
+
     private String _timeTaken(String label) {
         if (!stopped) {
             stop();

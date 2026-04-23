@@ -10,7 +10,6 @@ import edu.mit.broad.genome.reports.api.Report;
 import edu.mit.broad.genome.reports.api.ReportIndexState;
 import edu.mit.broad.genome.reports.api.ToolReport;
 import edu.mit.broad.genome.reports.pages.HtmlFormat;
-import edu.mit.broad.genome.utils.ClassUtils;
 import edu.mit.broad.genome.utils.CmdLineArgs;
 import edu.mit.broad.genome.utils.SystemUtils;
 import edu.mit.broad.vdb.chip.Chip;
@@ -225,6 +224,11 @@ public abstract class AbstractTool implements Tool {
     }
 
     public void doneExec() {
+        fTimer.stop();
+        final long elapsedSeconds = fTimer.getTimeTakenSeconds();
+        fReport.addComment("Run time: " + elapsedSeconds + " seconds.");
+        fReport.addComment(fTimer.getTimeTakenLabel(getName()));
+
         if (!fReport.getToolComments().isEmpty()) {
             if (fReport.getIndexPage() != null) {
                 Div div = new Div();
@@ -285,7 +289,6 @@ public abstract class AbstractTool implements Tool {
             fReport.display();
         }
 
-        fTimer.stop();
         fTimer.printTimeTakenS();
     }
 
@@ -347,7 +350,7 @@ public abstract class AbstractTool implements Tool {
     }
 
     public String getTitle() {
-        String sn = ClassUtils.shorten(getClass().getName());
+        String sn = getName();
         String desc = getDesc();
 
         if (desc == null || desc.length() == 0) {

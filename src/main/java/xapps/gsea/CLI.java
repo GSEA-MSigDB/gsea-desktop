@@ -14,7 +14,7 @@ import org.genepattern.modules.LeadingEdgeToolWrapper;
 public class CLI {
     
     private static final String USAGE_MESSAGE = "Usage: operationName followed by operation-specific arguments "
-            + "where operationName is one of GSEA, GSEAPreranked, CollapseDataset, Chip2Chip, or LeadingEdgeTool";
+            + "where operationName is one of GSEA, GSEAPreranked, ssGSEA, CollapseDataset, Chip2Chip, or LeadingEdgeTool";
 
     public static void main(String[] args) throws Exception {
         if (args == null || args.length == 0) {
@@ -29,6 +29,8 @@ public class CLI {
             GseaWrapper.main(operationArgs);
         } else if ("GSEAPreranked".equalsIgnoreCase(operationName)) {
             GseaPrerankedWrapper.main(operationArgs);
+        } else if ("ssGSEA".equalsIgnoreCase(operationName) || "SsGsea".equalsIgnoreCase(operationName)) {
+            xtools.gsea.SsGsea.main(operationArgs);
         } else if ("CollapseDataset".equalsIgnoreCase(operationName)) {
             CollapseDatasetWrapper.main(operationArgs);
         } else if ("Chip2Chip".equalsIgnoreCase(operationName)) {

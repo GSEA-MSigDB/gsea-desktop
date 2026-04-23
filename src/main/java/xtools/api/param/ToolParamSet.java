@@ -241,8 +241,13 @@ public class ToolParamSet implements ParamSet {
                 setval = null;
             }
 
-            if ((setval != null) && (param.isFileBased()) && !(NamingConventions.isURL(setval))) { // check for existence
+            // Optional file-based params: must resolve aux paths (e.g. foo.cls#ClassA_vs_B) the same
+            // way as required params, or existence checks look for a literal "file#tag" on disk and fail
+            // (affects e.g. optional CLS with class-of-interest encoded after '#' for analysis history).
+            if ((setval != null) && (param.isFileBased()) &&
+                    !(param instanceof ReportDirParam) && !(NamingConventions.isURL(setval))) { // check for existence
                 File f = new File(setval);
+                f = AuxUtils.getBaseFileFromAuxFile(f);
                 if (f.exists() == false) {
                     setval = null; // null it
                     missingFiles.add(f);
