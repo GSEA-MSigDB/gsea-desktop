@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2026 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.genome.alg.gsea;
 
@@ -327,9 +327,9 @@ public class KSTests {
             enrichmentDb.addWarning("There were " + rowsNotMeetingMetricSize + 
                     " row(s) of this dataset where one of the classes has too few samples to use the chosen metric.  See the log for more details.");
         }
-        int lowInformationRows = 0;
-        double lowInformationThreshold = Double.NaN;
         if (Metrics.isWaldZFamily(metric) && markerScores != null) {
+            int lowInformationRows = 0;
+            double lowInformationThreshold = Double.NaN;
             for (TwoClassMarkerStats markerScore : markerScores.values()) {
                 if (markerScore.lowInformation) {
                     lowInformationRows++;
@@ -338,16 +338,16 @@ public class KSTests {
                     lowInformationThreshold = markerScore.lowInformationThreshold;
                 }
             }
-        }
-        if (lowInformationRows > 0) {
-            StringBuilder filterWarning = new StringBuilder();
-            filterWarning.append("There were ").append(lowInformationRows)
-                    .append(" low-information row(s) removed before Wald Z-style enrichment scoring by independent filtering");
-            if (Double.isFinite(lowInformationThreshold)) {
-                filterWarning.append(" using mean normalized count threshold ").append(lowInformationThreshold);
+            if (lowInformationRows > 0) {
+                StringBuilder filterWarning = new StringBuilder();
+                filterWarning.append("There were ").append(lowInformationRows)
+                        .append(" low-information row(s) removed before Wald Z-style enrichment scoring by independent filtering");
+                if (Double.isFinite(lowInformationThreshold)) {
+                    filterWarning.append(" using mean normalized count threshold ").append(lowInformationThreshold);
+                }
+                filterWarning.append('.');
+                enrichmentDb.addWarning(filterWarning.toString());
             }
-            filterWarning.append('.');
-            enrichmentDb.addWarning(filterWarning.toString());
         }
         if (warnGeneRankingValues) {
             enrichmentDb.addWarning("Infinite or NaN value(s) detected during gene rank computations. "

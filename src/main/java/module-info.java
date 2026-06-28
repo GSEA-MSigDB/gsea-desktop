@@ -88,6 +88,7 @@ module org.gsea_msigdb.gsea {
     requires commons.compress;
     requires commons.io;
     requires commons.lang3;
+    requires commons.math3;
     requires dom4j.full;
     requires ecs;
     requires edtftpj;

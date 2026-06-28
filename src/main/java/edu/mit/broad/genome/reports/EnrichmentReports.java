@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2023 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2026 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.genome.reports;
 
@@ -143,7 +143,7 @@ public class EnrichmentReports {
      * X = -log10(NOM p-value), bubble size = |NES|, bubble color encodes FDR intensity
      * (white->red for positive NES, white->blue for negative NES).
      */
-    public static XChart createBubblePlotForGseaResults(final List<EnrichmentResult> topResults,
+    private static XChart createBubblePlotForGseaResults(final List<EnrichmentResult> topResults,
                                                         final String phenotypeLabel, final boolean positiveNes,
                                                         final BubbleCanvasSpec canvasSpec) {
         if (topResults.isEmpty()) {
@@ -317,9 +317,7 @@ public class EnrichmentReports {
         double sharedNesNorm = 1e-9d;
         int maxLabelLen = 8;
 
-        final List<EnrichmentResult>[] both = new List[]{posTop, negTop};
-        for (int listIdx = 0; listIdx < both.length; listIdx++) {
-            final List<EnrichmentResult> rows = both[listIdx];
+        for (var rows : Arrays.asList(posTop, negTop)) {
             for (int i = 0; i < rows.size(); i++) {
                 final EnrichmentScore s = rows.get(i).getScore();
                 final float np = Math.max(s.getNP(), (float) EPSILON);
@@ -1140,7 +1138,7 @@ public class EnrichmentReports {
 
     // does the real page creation
     // one html page and one TSV page
-    public static MyEnrichmentReportImpl createReport(final String dsName, final String phenotypeName, final String classAName_opt, final String classBName_opt, 
+    private static MyEnrichmentReportImpl createReport(final String dsName, final String phenotypeName, final String classAName_opt, final String classBName_opt, 
     		final RankedList rl, final Template template_opt, final GeneSet gset, final int[] hitIndices, final Vector esProfile, final Vector esProfile_full_opt, 
     		float es, float nes, float np, final float fdr, final float fwer, final Vector rndEss, final HtmlPage htmlPage, final FeatureAnnot fann_opt, 
     		boolean createSvgs, boolean createGcts, final IntervalMarker[] markers, File saveDetailFilesInDir) {

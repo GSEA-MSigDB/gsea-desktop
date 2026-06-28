@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2026 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.genome.alg;
 
@@ -25,9 +25,10 @@ public class Metrics {
     private static final int MIN_NUM_FOR_VAR = 3;
 
     // @maint add a metric and this array might need updating
-    public static Metric[] METRICS_FOR_GSEA = new Metric[] { new Signal2Noise(), new tTest(), new Wald(), new WaldFast(),
-            new Cosine(),
-            new Euclidean(), new Manhattan(), new Pearson(), new Spearman(), new ClassRatio(), new ClassDiff(), new ClassLog2Ratio()
+    public static Metric[] METRICS_FOR_GSEA = new Metric[] { 
+    		new Signal2Noise(), new tTest(), new Wald(), new WaldFast(), new Cosine(),
+            new Euclidean(), new Manhattan(), new Pearson(), new Spearman(), new ClassRatio(),
+            new ClassDiff(), new ClassLog2Ratio()
     };
     public static Metric NONE_METRIC = new None();
 

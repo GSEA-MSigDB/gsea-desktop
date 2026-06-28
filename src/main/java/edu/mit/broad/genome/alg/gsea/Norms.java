@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2026 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.genome.alg.gsea;
 
@@ -58,14 +58,15 @@ public class Norms {
 
     // This is the key API
     public static Struc normalize(final String normName, final LabelledVector realScores, final Dataset rndScores_full) {
+        final int rowCount = realScores.getSize();
+        final String[] labels = new String[rowCount];
+        final List<String> labels_list = new ArrayList<String>();
+        final Vector normRealScores = new Vector(rowCount);
+        final int rndColCount = rndScores_full.getNumCol();
+        final Matrix normRndScoresMatrix = new Matrix(rowCount, rndColCount);
 
         if (MEDIAN_OF_RATIOS.equals(normName)) {
-            final int rowCount = realScores.getSize();
-            final int rndColCount = rndScores_full.getNumCol();
             final int sampleCount = rndColCount + 1; // real + random columns
-
-            final String[] labels = new String[rowCount];
-            final List<String> labels_list = new ArrayList<String>();
 
             final double[] geometricMeans = new double[rowCount];
             final boolean[] includeRow = new boolean[rowCount];
@@ -79,24 +80,19 @@ public class Norms {
                 labels[r] = rowName;
                 labels_list.add(rowName);
 
-                boolean usable = true;
-                double sumLog = 0.0d;
-
                 final double absReal = Math.abs(real);
-                if (Double.isNaN(absReal) || Double.isInfinite(absReal) || absReal <= 0.0d) {
-                    usable = false;
-                } else {
-                    sumLog += Math.log(absReal);
-                }
-
+                double sumLog = 0.0d;
+                boolean usable = (Double.isNaN(absReal) || Double.isInfinite(absReal) || absReal <= 0.0d);
                 if (usable) {
+                    sumLog += Math.log(absReal);
                     for (int c = 0; c < rndColCount; c++) {
                         final double absRnd = Math.abs(rnd.getElement(c));
-                        if (Double.isNaN(absRnd) || Double.isInfinite(absRnd) || absRnd <= 0.0d) {
+                        if (Double.isFinite(absRnd) && absRnd > 0.0d) {
+                            sumLog += Math.log(absRnd);
+                        } else {
                             usable = false;
                             break;
                         }
-                        sumLog += Math.log(absRnd);
                     }
                 }
 
@@ -144,9 +140,6 @@ public class Norms {
                 }
             }
 
-            final Vector normRealScores = new Vector(rowCount);
-            final Matrix normRndScoresMatrix = new Matrix(rowCount, rndColCount);
-
             for (int r = 0; r < rowCount; r++) {
                 final String rowName = labels[r];
                 final float real = realScores.getScore(rowName);
@@ -159,37 +152,23 @@ public class Norms {
                 }
                 normRndScoresMatrix.setRow(r, normRnd);
             }
+        } else {
+            // @note end ds may have more rows that in the real scores
+            // we pick only those that we want
+            for (int r = 0; r < rowCount; r++) {
+                final String rowName = realScores.getLabel(r);
+                final float real = realScores.getScore(rowName);
+                final Norm norm = Norms.createNorm(normName, real, rndScores_full.getRow(rowName));
 
-            Struc struc = new Struc();
-            struc.normReal = new LabelledVector(realScores.getName() + "_norm", labels, normRealScores);
-            struc.normRnd = new DefaultDataset("norm", normRndScoresMatrix, labels_list, rndScores_full.getColumnNames(), rndScores_full.getAnnot());
-
-            return struc;
-        }
-
-        final Vector normRealScores = new Vector(realScores.getSize());
-        final String[] labels = new String[realScores.getSize()];
-        final List<String> labels_list = new ArrayList<String>();
-
-        // @note end ds may have more rows that in the real scores
-        // we pick only those that we want
-
-        final Matrix normRndScoresMatrix = new Matrix(realScores.getSize(), rndScores_full.getNumCol());
-
-        for (int r = 0; r < realScores.getSize(); r++) {
-
-            final String rowName = realScores.getLabel(r);
-            final float real = realScores.getScore(rowName);
-            final Norm norm = Norms.createNorm(normName, real, rndScores_full.getRow(rowName));
-
-            // Note from Pablo:
-            // I think the NES with NaN (because of the skewness) should ... 
-            // be excluded from the computation of p-values or FDRs.
-            
-            normRndScoresMatrix.setRow(r, norm.getRandomNorm());
-            normRealScores.setElement(r, norm.getRealNorm());
-            labels[r] = rowName;
-            labels_list.add(rowName);
+                // Note from Pablo:
+                // I think the NES with NaN (because of the skewness) should ... 
+                // be excluded from the computation of p-values or FDRs.
+                
+                normRndScoresMatrix.setRow(r, norm.getRandomNorm());
+                normRealScores.setElement(r, norm.getRealNorm());
+                labels[r] = rowName;
+                labels_list.add(rowName);
+            }
         }
 
         Struc struc = new Struc();
