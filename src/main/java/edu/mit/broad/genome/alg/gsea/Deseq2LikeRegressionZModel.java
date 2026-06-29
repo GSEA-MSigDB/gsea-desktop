@@ -16,16 +16,13 @@ import edu.mit.broad.genome.objects.ScoredDataset;
 import edu.mit.broad.genome.objects.ScoredDatasetImpl;
 import edu.mit.broad.genome.objects.Template;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.math3.analysis.UnivariateFunction;
 import org.apache.commons.math3.analysis.interpolation.LoessInterpolator;
 import org.apache.commons.math3.distribution.ChiSquaredDistribution;
-import org.apache.commons.math3.distribution.NormalDistribution;
 import org.apache.commons.math3.distribution.FDistribution;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.linear.ArrayRealVector;
@@ -38,8 +35,7 @@ import org.apache.commons.math3.special.Gamma;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-class Deseq2LikeRegressionZModel {
-
+public class Deseq2LikeRegressionZModel {
     private static final Logger log = LoggerFactory.getLogger(Deseq2LikeRegressionZModel.class);
 
     private static final double TARGET_FDR = 0.10d;
@@ -83,8 +79,6 @@ class Deseq2LikeRegressionZModel {
      * scale.
      */
     private static final double LN_2 = Math.log(2.0d);
-    private static final double WIDE_RIDGE = WIDE_PRIOR_LAMBDA_LOG2 / (LN_2 * LN_2);
-    private static final NormalDistribution STANDARD_NORMAL = new NormalDistribution(0.0d, 1.0d);
     private static final double ROBUST_COOKS_MIN_DISP = 0.04d;
     private static final int MIN_REPLICATES_FOR_REPLACE = 7;
     private static final double OUTLIER_REPLACEMENT_TRIM = 0.20d;
@@ -579,11 +573,11 @@ class Deseq2LikeRegressionZModel {
      * Reused when scoring permuted phenotypes so the ranked-list gene universe matches the real run
      * while dispersions are refit under each permutation (DESeq2-style).
      */
-    double getIndependentFilterThreshold() {
+    public double getIndependentFilterThreshold() {
         return independentFilterThreshold;
     }
 
-    double[] copySizeFactors() {
+    public double[] copySizeFactors() {
         return Arrays.copyOf(sizeFactors, sizeFactors.length);
     }
 
@@ -670,7 +664,7 @@ class Deseq2LikeRegressionZModel {
         return new ScoredDatasetImpl(new AddressedVector(Arrays.asList(elements)), ds);
     }
 
-    List<MainStat> computeMainStatsForTemplate(final Template template,
+    public List<MainStat> computeMainStatsForTemplate(final Template template,
             final Map<String, TwoClassMarkerStats> markerScores) {
         final int rowCount = ds.getNumRow();
         final double[] condition = createConditionVector(template, ds.getNumCol());
@@ -758,8 +752,7 @@ class Deseq2LikeRegressionZModel {
         return Arrays.asList(mainStats);
     }
 
-    static final class MainStat {
-
+    public static final class MainStat {
         final String feature;
         final double baseMean;
         final double log2FoldChange;
@@ -801,7 +794,6 @@ class Deseq2LikeRegressionZModel {
     }
 
     private static final class WaldFit {
-
         final double beta1;
         final double se1;
         final double z;
@@ -825,7 +817,6 @@ class Deseq2LikeRegressionZModel {
     }
 
     private static final class CoefFit {
-
         final double beta0;
         final double beta1;
         final double[] muHat;
@@ -846,7 +837,6 @@ class Deseq2LikeRegressionZModel {
     }
 
     private static final class DispersionFit {
-
         final double alpha;
         final int iterations;
         final double initialLogPosterior;
@@ -864,7 +854,6 @@ class Deseq2LikeRegressionZModel {
     }
 
     private static final class ResultsContext {
-
         final double[] robustDispersion;
         final boolean[] samplesForCooks;
         final double cooksCutoff;
@@ -879,7 +868,6 @@ class Deseq2LikeRegressionZModel {
     }
 
     private static final class CooksResult {
-
         final double maxCooks;
         final boolean outlier;
 
@@ -890,7 +878,6 @@ class Deseq2LikeRegressionZModel {
     }
 
     private static final class ReplacementResult {
-
         final Dataset dataset;
         final boolean[] replacedRows;
 
@@ -901,7 +888,6 @@ class Deseq2LikeRegressionZModel {
     }
 
     private static final class GammaIdentityFit {
-
         final double a;
         final double b;
         final boolean converged;
@@ -919,7 +905,6 @@ class Deseq2LikeRegressionZModel {
     }
 
     private static final class LowessPointFit {
-
         final double y;
         final boolean ok;
 
@@ -2725,10 +2710,6 @@ class Deseq2LikeRegressionZModel {
         return Gamma.logGamma(y + r) - Gamma.logGamma(r) - Gamma.logGamma(y + 1.0d)
                 + r * logP
                 + y * logOneMinusP;
-    }
-
-    private static double[] fitDispersionTrendValues(final double[] means, final double[] alphaRaw) {
-        return fitDispersionTrendValuesCapturing(means, alphaRaw, null, null, null);
     }
 
     /**
