@@ -37,9 +37,7 @@ public final class SsGseaProjection {
                     matrix[r][c] = (float) Math.log(v + Math.E);
                 }
             }
-            return;
-        }
-        if ("rank".equals(normType) || "log.rank".equals(normType)) {
+        } else if ("rank".equals(normType) || "log.rank".equals(normType)) {
             float[] col = new float[nRows];
             int[] order = new int[nRows];
             for (int c = 0; c < nCols; c++) {

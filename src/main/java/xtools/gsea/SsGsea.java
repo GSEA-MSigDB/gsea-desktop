@@ -219,7 +219,7 @@ public class SsGsea extends AbstractTool {
                     throw new BadParamException("A 2-class categorical CLS is required when using phenotype labels with ssGSEA (template: " + t.getName() + ").", 1092);
                 }
                 clsTemplateBeforeExtract = t;
-                final DatasetTemplate dtx = new DatasetGenerators().extract(work, t, true);
+                final DatasetTemplate dtx = DatasetGenerators.extract(work, t, true);
                 work = dtx.getDataset();
                 templateOpt = dtx.getTemplate();
                 fReport.addComment("Phenotype (CLS) applied: " + templateOpt.getName() + " - " + work.getNumCol() + " samples in analysis order.");
