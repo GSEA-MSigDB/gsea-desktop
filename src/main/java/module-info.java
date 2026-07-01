@@ -95,6 +95,8 @@ module org.gsea_msigdb.gsea {
     requires forms;
     requires httpclient;
     requires httpcore;
+    requires hipparchus.core;
+    requires hipparchus.stat;
     requires java.datatransfer;
     requires transitive java.desktop;
     requires java.logging;

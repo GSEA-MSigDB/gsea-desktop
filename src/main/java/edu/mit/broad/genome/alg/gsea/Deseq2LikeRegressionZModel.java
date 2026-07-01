@@ -7,6 +7,7 @@ import edu.mit.broad.genome.alg.DatasetStatsCore.TwoClassMarkerStats;
 import edu.mit.broad.genome.alg.Metrics;
 import edu.mit.broad.genome.math.AddressedVector;
 import edu.mit.broad.genome.math.DoubleElement;
+import edu.mit.broad.genome.math.Gamma;
 import edu.mit.broad.genome.math.Matrix;
 import edu.mit.broad.genome.math.Order;
 import edu.mit.broad.genome.math.SortMode;
@@ -31,7 +32,7 @@ import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
 import org.apache.commons.math3.random.MersenneTwister;
 import org.apache.commons.math3.special.Erf;
-import org.apache.commons.math3.special.Gamma;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
