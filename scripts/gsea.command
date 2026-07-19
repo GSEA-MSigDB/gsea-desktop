@@ -17,11 +17,19 @@ else
     java -version
 fi
 
+MODULE_PATH="${prefix}/modules"
+if [ -d "${prefix}/javafx-modules" ]; then
+    MODULE_PATH="${MODULE_PATH}:${prefix}/javafx-modules"
+fi
+
 # Check if there is a user-specified Java arguments file
 # For more info, see the README at 
 # https://raw.githubusercontent.com/GSEA-MSigDB/gsea-desktop/master/scripts/readme.txt
 if [ -e "$HOME/.gsea/java_arguments" ]; then
-    java -showversion --module-path="${prefix}/modules" -Xmx4g \
+    java -showversion --module-path="${MODULE_PATH}" \
+        --add-opens=javafx.graphics/com.sun.javafx.stage=org.gsea_msigdb.gsea \
+        -Xmx4g \
+        -Djava.awt.headless=false -Dgsea.ui=javafx \
         @"${prefix}/gsea.args" \
         -Xdock:name="GSEA" \
         -Xdock:icon="${prefix}/icon_64x64.png" \
@@ -30,7 +38,10 @@ if [ -e "$HOME/.gsea/java_arguments" ]; then
         @"$HOME/.gsea/java_arguments" \
         --module=org.gsea_msigdb.gsea/xapps.gsea.GSEA "$@"
 else
-    java -showversion --module-path="${prefix}/modules" -Xmx4g \
+    java -showversion --module-path="${MODULE_PATH}" \
+        --add-opens=javafx.graphics/com.sun.javafx.stage=org.gsea_msigdb.gsea \
+        -Xmx4g \
+        -Djava.awt.headless=false -Dgsea.ui=javafx \
         @"${prefix}/gsea.args" \
         -Xdock:name="GSEA" \
         -Xdock:icon="${prefix}/icon_64x64.png" \

@@ -3,21 +3,15 @@
  */
 package xtools.api.param;
 
-import edu.mit.broad.genome.swing.fields.GComboBoxField;
-import edu.mit.broad.genome.swing.fields.GFieldPlusChooser;
 
 import org.apache.commons.lang3.StringUtils;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 /**
  * @author Aravind Subramanian, David Eby
  */
-public class IntegerParam extends AbstractParam implements ActionListener {
-    private GComboBoxField cbOptions;
-
-    public IntegerParam(final String name, final String englishName, final String desc, int def_andonly_hint, boolean reqd) {
+public class IntegerParam extends AbstractParam {
+public IntegerParam(final String name, final String englishName, final String desc, int def_andonly_hint, boolean reqd) {
         super(name, englishName, Integer.class, desc, def_andonly_hint, reqd);
     }
 
@@ -64,17 +58,5 @@ public class IntegerParam extends AbstractParam implements ActionListener {
         }
 
         return ((Integer) val).intValue();
-    }
-
-    public GFieldPlusChooser getSelectionComponent() {
-        if (cbOptions == null) {
-            cbOptions = ParamHelper.createActionListenerBoundHintsComboBox(true, this, this);
-        }
-
-        return cbOptions;
-    }
-
-    public void actionPerformed(ActionEvent evt) {
-        this.setValue(cbOptions.getComboBox().getSelectedItem());
     }
 }

@@ -4,12 +4,7 @@
 package xtools.api.param;
 
 import edu.mit.broad.genome.math.Order;
-import edu.mit.broad.genome.swing.fields.GComboBoxField;
-import edu.mit.broad.genome.swing.fields.GFieldPlusChooser;
 
-import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 /**
  * <p> Object to capture commandline params</p>
@@ -17,11 +12,8 @@ import java.awt.event.ActionListener;
  * @author Aravind Subramanian
  * @version %I%, %G%
  */
-public class OrderParam extends AbstractParam implements ActionListener {
-
-    private GComboBoxField cbOptions;
-
-    /**
+public class OrderParam extends AbstractParam {
+/**
      * Class constructor
      *
      * @param name
@@ -62,22 +54,4 @@ public class OrderParam extends AbstractParam implements ActionListener {
 
         return (Order) val;
     }
-
-
-    public GFieldPlusChooser getSelectionComponent() {
-
-        if (cbOptions == null) {
-            cbOptions = ParamHelper.createActionListenerBoundHintsComboBox(false, this, this);
-            ParamHelper.safeSelectValueDefaultByString(cbOptions.getComboBox(), this);
-        }
-
-        return cbOptions;
-
-    }
-
-    public void actionPerformed(ActionEvent evt) {
-        this.setValue((Order) ((JComboBox) cbOptions.getComponent()).getSelectedItem());
-
-    }
-
 }    // End class OrderParam

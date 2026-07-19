@@ -45,7 +45,7 @@ public class ReportBlocks {
 
             this.fReport = report;
 
-            this.fDiv = new Div();
+            this.fDiv = HtmlFormat.Divs.reportSection();
             H4 h4 = new H4(title);
             this.fDiv.addElement(h4);
             this.fUl = new UL();

@@ -6,12 +6,7 @@ package xtools.api.param;
 import edu.mit.broad.genome.objects.PersistentObject;
 import edu.mit.broad.genome.parsers.DataFormat;
 import edu.mit.broad.genome.parsers.ParserFactory;
-import edu.mit.broad.genome.swing.fields.GComboBoxField;
-import edu.mit.broad.genome.swing.fields.GFieldPlusChooser;
 
-import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.File;
 
 /**
@@ -19,10 +14,8 @@ import java.io.File;
  *
  * @author Aravind Subramanian
  */
-abstract class PobParam extends AbstractParam implements ActionListener {
-    private GComboBoxField cbOptions;
-
-    protected PobParam(String name, String nameEnglish, Class type, String desc, Object def_andonly_hint,
+abstract class PobParam extends AbstractParam {
+protected PobParam(String name, String nameEnglish, Class type, String desc, Object def_andonly_hint,
                        boolean reqd) {
 
         super(name, nameEnglish, type, desc, def_andonly_hint, reqd);
@@ -84,22 +77,9 @@ abstract class PobParam extends AbstractParam implements ActionListener {
         return true;
     }
 
-    public GFieldPlusChooser getSelectionComponent() {
-
-        if (cbOptions == null) {
-            cbOptions = ParamHelper.createActionListenerBoundPobComboBox(this, getTypes());
-            ParamHelper.safeSelectPobValueDefaultOrFirst(cbOptions.getComboBox(), this);
-        }
-
-        return cbOptions;
-    }
 
     // One problem with this is that we will respond even when a new pob
     // is parsed into the application
-    public void actionPerformed(ActionEvent evt) {
-        this.setValue(((JComboBox) cbOptions.getComponent()).getSelectedItem());
-    }
-
     public String getValueStringRepresentation(boolean full) {
 
         try {

@@ -4,12 +4,7 @@
 package xtools.api.param;
 
 import edu.mit.broad.genome.math.SortMode;
-import edu.mit.broad.genome.swing.fields.GComboBoxField;
-import edu.mit.broad.genome.swing.fields.GFieldPlusChooser;
 
-import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 /**
  * <p> Object to capture commandline params</p>
@@ -17,11 +12,8 @@ import java.awt.event.ActionListener;
  * @author Aravind Subramanian
  * @version %I%, %G%
  */
-public class SortParam extends AbstractParam implements ActionListener {
-
-    private GComboBoxField cbOptions;
-
-    /**
+public class SortParam extends AbstractParam {
+/**
      * Class constructor
      *
      * @param name
@@ -54,21 +46,6 @@ public class SortParam extends AbstractParam implements ActionListener {
 
         return (SortMode) val;
     }
-
-    public GFieldPlusChooser getSelectionComponent() {
-
-        if (cbOptions == null) {
-            cbOptions = ParamHelper.createActionListenerBoundHintsComboBox(false, this, this);
-            ParamHelper.safeSelectValueDefaultByString(cbOptions.getComboBox(), this);
-        }
-
-        return cbOptions;
-    }
-
-    public void actionPerformed(ActionEvent evt) {
-        this.setValue((SortMode) ((JComboBox) cbOptions.getComponent()).getSelectedItem());
-    }
-
     public boolean isFileBased() {
         return false;
     }

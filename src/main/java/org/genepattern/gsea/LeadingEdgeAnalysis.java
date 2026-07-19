@@ -1,11 +1,31 @@
 /*
- * Copyright (c) 2003-2023 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Decompiled with CFR 0.152.
+ * 
+ * Could not load the following classes:
+ *  gnu.trove.TFloatIntHashMap
+ *  gnu.trove.TFloatIntIterator
+ *  gnu.trove.TIntIntHashMap
+ *  org.jfree.chart.ChartFactory
+ *  org.jfree.chart.JFreeChart
+ *  org.jfree.chart.axis.NumberAxis
+ *  org.jfree.chart.axis.SymbolAxis
+ *  org.jfree.chart.axis.ValueAxis
+ *  org.jfree.chart.plot.PlotOrientation
+ *  org.jfree.chart.plot.XYPlot
+ *  org.jfree.chart.renderer.xy.StandardXYBarPainter
+ *  org.jfree.chart.renderer.xy.XYBarPainter
+ *  org.jfree.chart.renderer.xy.XYBarRenderer
+ *  org.jfree.chart.renderer.xy.XYItemRenderer
+ *  org.jfree.chart.ui.RectangleInsets
+ *  org.jfree.data.xy.IntervalXYDataset
+ *  org.jfree.data.xy.XYSeries
+ *  org.jfree.data.xy.XYSeriesCollection
  */
 package org.genepattern.gsea;
 
+import edu.mit.broad.genome.alg.AlgUtils;
 import edu.mit.broad.genome.alg.ComparatorFactory;
 import edu.mit.broad.genome.alg.GeneSetStats;
-import edu.mit.broad.genome.alg.gsea.PValueCalculator;
 import edu.mit.broad.genome.alg.gsea.PValueCalculatorImpls;
 import edu.mit.broad.genome.math.Matrix;
 import edu.mit.broad.genome.math.Order;
@@ -15,290 +35,398 @@ import edu.mit.broad.genome.objects.DefaultDataset;
 import edu.mit.broad.genome.objects.DefaultGeneSetMatrix;
 import edu.mit.broad.genome.objects.GPWrappers;
 import edu.mit.broad.genome.objects.GeneSet;
-import edu.mit.broad.genome.objects.GeneSetMatrix;
 import edu.mit.broad.genome.objects.RankedList;
 import edu.mit.broad.genome.objects.esmatrix.db.EnrichmentDb;
 import edu.mit.broad.genome.objects.esmatrix.db.EnrichmentResult;
+import edu.mit.broad.genome.reports.EnrichmentReports;
+import edu.mit.broad.xbench.heatmap.DisplayState;
+import edu.mit.broad.xbench.heatmap.GramImagerImpl;
 import gnu.trove.TFloatIntHashMap;
-
-import org.genepattern.data.expr.IExpressionData;
-import org.genepattern.heatmap.ColorScheme;
-import org.genepattern.heatmap.HeatMapComponent;
-import org.genepattern.menu.jfree.JFreeMenuBar;
-import org.jfree.chart.ChartMouseEvent;
-import org.jfree.chart.ChartMouseListener;
-
-import java.awt.BorderLayout;
+import gnu.trove.TFloatIntIterator;
+import gnu.trove.TIntIntHashMap;
+import gnu.trove.TIntIntIterator;
+import java.awt.BasicStroke;
 import java.awt.Color;
-import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.Frame;
+import java.awt.Font;
+import java.awt.Paint;
+import java.awt.Stroke;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.HashMap;
-import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
+import org.genepattern.data.expr.IExpressionData;
+import org.genepattern.gsea.HCLAlgorithm;
+import org.genepattern.heatmap.ColorScheme;
+import org.genepattern.heatmap.image.HeatMap;
+import org.jfree.chart.ChartFactory;
+import org.jfree.chart.JFreeChart;
+import org.jfree.chart.axis.NumberAxis;
+import org.jfree.chart.axis.SymbolAxis;
+import org.jfree.chart.axis.ValueAxis;
+import org.jfree.chart.plot.PlotOrientation;
+import org.jfree.chart.plot.XYPlot;
+import org.jfree.chart.renderer.xy.StandardXYBarPainter;
+import org.jfree.chart.renderer.xy.XYBarPainter;
+import org.jfree.chart.renderer.xy.XYBarRenderer;
+import org.jfree.chart.renderer.xy.XYItemRenderer;
+import org.jfree.chart.ui.RectangleInsets;
+import org.jfree.data.xy.IntervalXYDataset;
+import org.jfree.data.xy.XYSeries;
+import org.jfree.data.xy.XYSeriesCollection;
 
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JSplitPane;
-import javax.swing.JTabbedPane;
-import javax.swing.UIManager;
+public final class LeadingEdgeAnalysis {
+    private LeadingEdgeAnalysis() {
+    }
 
-/**
- * @author jgould
- */
-public class LeadingEdgeAnalysis {
-    public static final LeadingEdgeAnalysis runAnalysis(EnrichmentDb edb,
-            String[] gsetNames, JTabbedPane tabbedPane) {
-        Frame parentFrame = (tabbedPane == null) ? null : 
-            (Frame)tabbedPane.getTopLevelAncestor();
-        
-        Dimension containerDim = (tabbedPane == null) ? null :
-            new Dimension(tabbedPane.getWidth(), tabbedPane.getHeight());
-        
-        final GeneSet[] gsets = new GeneSet[gsetNames.length];
-        for (int r = 0; r < gsetNames.length; r++) {
+    public static EnrichmentResult[] getAllResultsFromEdb(EnrichmentDb edb_original) {
+        String normModeName = "meandiv";
+        PValueCalculatorImpls.GseaImpl pvc = new PValueCalculatorImpls.GseaImpl(normModeName);
+        EnrichmentResult[] results = pvc.calcNPValuesAndFDR(edb_original.getResults());
+        EnrichmentDb edb = edb_original.cloneDeep(results);
+        return edb.getResults(new ComparatorFactory.EnrichmentResultByNESComparator(Order.DESCENDING));
+    }
+
+    public static Result runAnalysis(EnrichmentDb edb, String[] gsetNames) {
+        Dataset clusteredDataset;
+        if (edb == null) {
+            throw new IllegalArgumentException("EnrichmentDb cannot be null");
+        }
+        if (gsetNames == null || gsetNames.length < 2) {
+            throw new IllegalArgumentException("Select at least two gene sets for leading edge analysis");
+        }
+        GeneSet[] gsets = new GeneSet[gsetNames.length];
+        for (int r = 0; r < gsetNames.length; ++r) {
             EnrichmentResult result = edb.getResultForGeneSet(gsetNames[r]);
             gsets[r] = result.getSignal().getAsGeneSet();
         }
-        final GeneSetMatrix lev_gmx = new DefaultGeneSetMatrix(
-                "leading_edge_matrix_for_" + edb.getName(), gsets);
-        LeadingEdgeAnalysis analysis = new LeadingEdgeAnalysis(lev_gmx, edb
-                .getRankedList(), parentFrame, containerDim);
-        analysis.setResultDirectory(edb.getEdbDir());
-        return analysis;
-    }
-    
-    public static EnrichmentResult[] getAllResultsFromEdb(EnrichmentDb edb_original) {
-        String normModeName = "meandiv"; // hard coded
-        final PValueCalculator pvc = new PValueCalculatorImpls.GseaImpl(
-                normModeName);
-        final EnrichmentResult[] results = pvc
-                .calcNPValuesAndFDR(edb_original.getResults());
-        final EnrichmentDb edb = edb_original.cloneDeep(results);
-        EnrichmentResult[] enrichmentResults = edb
-                .getResults(new ComparatorFactory.EnrichmentResultByNESComparator(Order.DESCENDING));
-        return enrichmentResults;
-    }
-
-    private JPanel mainComponent;
-    
-    private JaccardHistogram jaccardHistogram = new JaccardHistogram();
-    private final GeneHistogram geneHistogram = new GeneHistogram();
-    private HeatMapComponent geneSetSimilarityHeatmap;
-
-    private LeadingEdgePanel leadingEdgePanel;
-
-    private Dataset clusteredDataset = null;
-
-    private final static String LEADING_EDGE_MATRIX_KEY = "Leading Edge Matrix";
-
-    private final static String GENE_SET_SIMILARITY_MATRIX_KEY = "Gene Set Similarity Matrix";
-
-    private final static String GENE_HISTOGRAM_KEY = "Gene Histogram";
-
-    private final static String JACCARD_HISTOGRAM_KEY = "Jaccard Histogram of Gene Sets";
-
-    private Dataset _morph(Dataset ds, RankedList rl) {
-        Matrix m = new Matrix(ds.getNumRow(), ds.getNumCol());
-        for (int r = 0; r < ds.getNumRow(); r++) {
-            for (int c = 0; c < ds.getNumCol(); c++) {
-                float score = rl.getScore(ds.getColumnName(c));
-                float value = ds.getElement(r, c);
-                if (value == 1) {
-                    m.setElement(r, c, score);
-                } else {
-                    m.setElement(r, c, value); // ought to be zero
-                }
-            }
-        }
-
-        return new DefaultDataset(ds.getName(), m, ds.getRowNames(), ds
-                .getColumnNames(), ds.getAnnot());
-    }
-
-    public void setResultDirectory(File file) {
-        leadingEdgePanel.setResultDirectory(file);
-    }
-
-    public LeadingEdgeAnalysis(final GeneSetMatrix lev_gmx, RankedList rankedList,
-            final Frame parent, Dimension containerDim) {
-        final GeneSet[] gsets = lev_gmx.getGeneSets();
-        final Dataset lev_ds = new BitSetDataset(lev_gmx).toDataset();
-    
+        DefaultGeneSetMatrix lev_gmx = new DefaultGeneSetMatrix("leading_edge_matrix_for_" + edb.getName(), gsets);
+        RankedList rankedList = edb.getRankedList();
+        Dataset lev_ds = new BitSetDataset(lev_gmx).toDataset();
         try {
             clusteredDataset = HCLAlgorithm.cluster(lev_ds);
-
-        } catch (Throwable t) {
-            clusteredDataset = lev_ds;
-            t.printStackTrace();
         }
+        catch (Throwable t) {
+            clusteredDataset = lev_ds;
+        }
+        Dataset lev_ds_clustered_m = rankedList != null ? LeadingEdgeAnalysis.morph(clusteredDataset, rankedList) : clusteredDataset;
+        ColorScheme leColorScheme = rankedList != null ? GPWrappers.createColorScheme_for_lev_with_score(lev_ds_clustered_m) : LeadingEdgeAnalysis.binaryMembershipColorScheme(lev_ds_clustered_m);
+        HeatMap leHeatMap = new GramImagerImpl(new DisplayState(leColorScheme)).createBpogHeatMap(lev_ds_clustered_m);
+        GeneSet[] reorderedGeneSets = LeadingEdgeAnalysis.reorderGeneSets(gsets, lev_ds_clustered_m);
+        Dataset similarityDs = LeadingEdgeAnalysis.buildJaccardSimilarityDataset(reorderedGeneSets);
+        ColorScheme simColorScheme = LeadingEdgeAnalysis.jaccardColorScheme(similarityDs);
+        HeatMap simHeatMap = new GramImagerImpl(new DisplayState(simColorScheme)).createBpogHeatMap(similarityDs);
+        GeneSetStats.RedStruc rs = new GeneSetStats().calcRedundancy(gsets, false);
+        JFreeChart geneHistChart = LeadingEdgeAnalysis.createGeneHistogramChart(rs.featureFreq, rankedList);
+        JFreeChart jaccardHistChart = LeadingEdgeAnalysis.createJaccardHistogramChart(rs.jaccardDistrib, 0.02);
+        return new Result(leHeatMap, simHeatMap, leColorScheme, simColorScheme, geneHistChart, jaccardHistChart, lev_ds_clustered_m, similarityDs, reorderedGeneSets, rs.featureFreq, rankedList, rs.jaccardDistrib, edb.getEdbDir());
+    }
 
-        // TODO: refactor the following to separate UI from computation and reporting.
-        
-        final Dataset lev_ds_clustered_m = rankedList != null ? _morph(
-                clusteredDataset, rankedList) : clusteredDataset;
+    public static JFreeChart createJaccardHistogramChart(TFloatIntHashMap jaccardToOccurrencesMap, double binWidth) {
+        if (jaccardToOccurrencesMap == null || binWidth <= 0.0 || binWidth > 1.0) {
+            return ChartFactory.createHistogram((String)"", (String)"Jaccard", (String)"Number of Occurences", (IntervalXYDataset)new XYSeriesCollection(), (PlotOrientation)PlotOrientation.VERTICAL, (boolean)false, (boolean)true, (boolean)false);
+        }
+        TIntIntHashMap binNumberToOccurencesMap = new TIntIntHashMap();
+        XYSeries series = new XYSeries((Comparable)((Object)""));
+        XYSeriesCollection coll = new XYSeriesCollection();
+        coll.addSeries(series);
+        TFloatIntIterator it = jaccardToOccurrencesMap.iterator();
+        while (it.hasNext()) {
+            it.advance();
+            float value = it.key();
+            int occurences = it.value();
+            int bin = (int)((double)value / binWidth);
+            int priorOccurences = binNumberToOccurencesMap.get(bin);
+            binNumberToOccurencesMap.put(bin, occurences + priorOccurences);
+        }
+        TIntIntIterator binIt = binNumberToOccurencesMap.iterator();
+        while (binIt.hasNext()) {
+            binIt.advance();
+            series.add((double)binIt.key() * binWidth, (double)binIt.value());
+        }
+        JFreeChart chart = ChartFactory.createHistogram((String)"", (String)"Jaccard", (String)"Number of Occurences", (IntervalXYDataset)coll, (PlotOrientation)PlotOrientation.VERTICAL, (boolean)false, (boolean)true, (boolean)false);
+        LeadingEdgeAnalysis.styleHistogramPlot(chart);
+        chart.setBackgroundPaint((Paint)EnrichmentReports.CHART_FRAME_COLOR);
+        return chart;
+    }
 
-        leadingEdgePanel = new LeadingEdgePanel(parent);
-        ColorScheme cs = rankedList != null ? GPWrappers
-                .createColorScheme_for_lev_with_score(lev_ds_clustered_m)
-                : new ColorScheme() {
+    public static BufferedImage renderJaccardHistogram(TFloatIntHashMap jaccardToOccurrencesMap, double binWidth, int width, int height) {
+        return LeadingEdgeAnalysis.createJaccardHistogramChart(jaccardToOccurrencesMap, binWidth).createBufferedImage(width, height);
+    }
 
-            public Color getColor(int row, int column) {
-                return lev_ds_clustered_m.getElement(row, column) == 0 ? Color.white
-                        : Color.yellow;
+    public static JFreeChart createGeneHistogramChart(RankedList featureFrequency, RankedList scores) {
+        return LeadingEdgeAnalysis.createGeneHistogramChart(featureFrequency, scores, null);
+    }
+
+    public static JFreeChart createGeneHistogramChart(RankedList featureFrequency, RankedList scores, AtomicInteger selectedGeneIndex) {
+        if (featureFrequency == null || featureFrequency.getSize() == 0) {
+            return ChartFactory.createHistogram((String)"", (String)"Gene", (String)"Number Of Gene Sets", (IntervalXYDataset)new XYSeriesCollection(), (PlotOrientation)PlotOrientation.VERTICAL, (boolean)false, (boolean)false, (boolean)false);
+        }
+        XYSeries series = new XYSeries((Comparable)((Object)"Histogram"));
+        XYSeriesCollection coll = new XYSeriesCollection();
+        coll.addSeries(series);
+        for (int i = 0; i < featureFrequency.getSize(); ++i) {
+            series.add((double)i, (double)featureFrequency.getScore(i));
+        }
+        JFreeChart chart = ChartFactory.createHistogram((String)"", (String)"Gene", (String)"Number Of Gene Sets", (IntervalXYDataset)coll, (PlotOrientation)PlotOrientation.VERTICAL, (boolean)false, (boolean)true, (boolean)false);
+        XYPlot plot = chart.getXYPlot();
+        LeadingEdgeAnalysis.styleHistogramPlot(chart);
+        SymbolAxis xAxis = new SymbolAxis("Gene", featureFrequency.getRankedNamesArray());
+        xAxis.setVerticalTickLabels(true);
+        xAxis.setTickLabelFont(new Font("SansSerif", 0, 9));
+        xAxis.setTickMarkPaint((Paint)Color.GRAY);
+        xAxis.setTickMarkStroke((Stroke)new BasicStroke(1.0f));
+        xAxis.setAxisLinePaint((Paint)Color.GRAY);
+        plot.setDomainAxis((ValueAxis)xAxis);
+        final RankedList scoresFinal = scores;
+        final RankedList freqFinal = featureFrequency;
+        final AtomicInteger selected = selectedGeneIndex;
+        XYBarRenderer renderer = new XYBarRenderer(){
+
+            public Paint getItemPaint(int seriesIndex, int item) {
+                if (selected != null && item == selected.get()) {
+                    return Color.YELLOW;
+                }
+                if (scoresFinal != null) {
+                    float value = scoresFinal.getScore(freqFinal.getRankName(item));
+                    return value > 0.0f ? Color.RED : Color.BLUE;
+                }
+                return super.getItemPaint(seriesIndex, item);
             }
-
-            public void setDataset(IExpressionData d) {
-            }
-
-            public Component getLegend() {
-                return null;
-            }
-
         };
+        renderer.setGradientPaintTransformer(null);
+        renderer.setBarPainter((XYBarPainter)new StandardXYBarPainter());
+        renderer.setShadowVisible(false);
+        plot.setRenderer((XYItemRenderer)renderer);
+        chart.setBackgroundPaint((Paint)EnrichmentReports.CHART_FRAME_COLOR);
+        return chart;
+    }
 
-        leadingEdgePanel.setData(GPWrappers
-                .createIExpressionData(lev_ds_clustered_m), cs);
+    private static BufferedImage renderGeneHistogram(RankedList featureFrequency, RankedList scores, int width, int height) {
+        return LeadingEdgeAnalysis.createGeneHistogramChart(featureFrequency, scores).createBufferedImage(width, height);
+    }
 
-        GeneSetStats stats = new GeneSetStats();
-        GeneSetStats.RedStruc rs = stats.calcRedundancy(gsets, false);
+    private static void styleHistogramPlot(JFreeChart chart) {
+        XYPlot plot = chart.getXYPlot();
+        plot.getRangeAxis().setStandardTickUnits(NumberAxis.createIntegerTickUnits());
+        plot.setAxisOffset(new RectangleInsets(0.0, 0.0, 0.0, 0.0));
+        plot.setBackgroundPaint((Paint)Color.WHITE);
+        plot.setDomainGridlinesVisible(true);
+        plot.setDomainGridlinePaint((Paint)Color.LIGHT_GRAY);
+        plot.setRangeGridlinesVisible(true);
+        plot.setRangeGridlinePaint((Paint)Color.LIGHT_GRAY);
+        plot.getRangeAxis().setAxisLinePaint((Paint)Color.GRAY);
+        plot.getRangeAxis().setTickMarkPaint((Paint)Color.GRAY);
+        if (plot.getRenderer() instanceof XYBarRenderer) {
+            XYBarRenderer renderer = (XYBarRenderer)plot.getRenderer();
+            renderer.setGradientPaintTransformer(null);
+            renderer.setBarPainter((XYBarPainter)new StandardXYBarPainter());
+            renderer.setShadowVisible(false);
+        }
+    }
 
-        GeneSetSimilarityPanel geneSetSimilarityPanel = new GeneSetSimilarityPanel(
-                parent);
-        // reorder genesets so that they are in the same order as the clustered
-        // gene sets
-        GeneSet[] reorderedGeneSets = new GeneSet[gsets.length];
-        Map<String, Integer> geneSetName2Index = new HashMap<String, Integer>();
-        for (int i = 0; i < gsets.length; i++) {
+    private static GeneSet[] reorderGeneSets(GeneSet[] gsets, Dataset clustered) {
+        HashMap<String, Integer> geneSetName2Index = new HashMap<String, Integer>();
+        for (int i = 0; i < gsets.length; ++i) {
             geneSetName2Index.put(gsets[i].getName(true), i);
         }
-
-        for (int i = 0; i < gsets.length; i++) {
-            String geneSetName = lev_ds_clustered_m.getRowName(i);
-            reorderedGeneSets[i] = gsets[geneSetName2Index.get(geneSetName)];
+        GeneSet[] reordered = new GeneSet[gsets.length];
+        for (int i = 0; i < gsets.length; ++i) {
+            String geneSetName = clustered.getRowName(i);
+            Integer idx = (Integer)geneSetName2Index.get(geneSetName);
+            if (idx == null) {
+                throw new IllegalStateException("Clustered row name not found in gene sets: " + geneSetName);
+            }
+            reordered[i] = gsets[idx];
         }
+        return reordered;
+    }
 
-        geneSetSimilarityPanel.setGeneSets(reorderedGeneSets);
+    private static Dataset buildJaccardSimilarityDataset(GeneSet[] geneSets) {
+        int n = geneSets.length;
+        Matrix m = new Matrix(n, n);
+        String[] names = new String[n];
+        for (int i = 0; i < n; ++i) {
+            names[i] = geneSets[i].getName(true);
+            for (int j = i; j < n; ++j) {
+                int intersection = AlgUtils.intersectSize(geneSets[i], geneSets[j]);
+                int union = AlgUtils.unionAllCount(new GeneSet[]{geneSets[i], geneSets[j]});
+                double jaccard = union == 0 ? 0.0 : (double)intersection / (double)union;
+                m.setElement(i, j, (float)jaccard);
+            }
+        }
+        return new DefaultDataset("gene_set_similarity", m, names, names, null);
+    }
 
-        TFloatIntHashMap jaccardToOccurrencesMap = rs.jaccardDistrib;
-        jaccardHistogram.setJaccardToOccurrencesMap(jaccardToOccurrencesMap);
-        jaccardHistogram.setPreferredSize(new Dimension(100, 100));
-
-        RankedList featureFrequency = rs.featureFreq;
-        geneHistogram.setFeatureFrequency(featureFrequency,
-                rankedList != null ? rankedList : null);
-
-        ChartMouseListener listener = new ChartMouseListener() {
-
-            public void chartMouseClicked(ChartMouseEvent event) {
-                int mouseX = event.getTrigger().getX();
-                int mouseY = event.getTrigger().getY();
-                int index = geneHistogram.getXIndex(mouseX, mouseY);
-                if (index != -1) {
-                    String geneName = geneHistogram.getGeneName(index);
-                    int columnIndex = lev_ds_clustered_m
-                            .getColumnIndex(geneName);
-                    leadingEdgePanel.getHeatMapComponent().getSampleTable()
-                            .setColumnSelectionInterval(columnIndex,
-                                    columnIndex);
+    private static Dataset morph(Dataset ds, RankedList rl) {
+        Matrix m = new Matrix(ds.getNumRow(), ds.getNumCol());
+        for (int r = 0; r < ds.getNumRow(); ++r) {
+            for (int c = 0; c < ds.getNumCol(); ++c) {
+                float score = rl.getScore(ds.getColumnName(c));
+                float value = ds.getElement(r, c);
+                if (value == 1.0f) {
+                    m.setElement(r, c, score);
+                    continue;
                 }
+                m.setElement(r, c, value);
+            }
+        }
+        return new DefaultDataset(ds.getName(), m, ds.getRowNames(), ds.getColumnNames(), ds.getAnnot());
+    }
+
+    private static ColorScheme binaryMembershipColorScheme(final Dataset ds) {
+        return new ColorScheme(){
+
+            @Override
+            public Color getColor(int row, int column) {
+                return ds.getElement(row, column) == 0.0f ? Color.WHITE : Color.YELLOW;
             }
 
-            public void chartMouseMoved(ChartMouseEvent event) {
+            @Override
+            public void setDataset(IExpressionData d) {
             }
         };
-
-        geneHistogram.getChartPanel().addChartMouseListener(listener);
-        geneHistogram.setPreferredSize(new Dimension(100, 100));
-        
-        JScrollPane leadingEdgeSP = new JScrollPane(leadingEdgePanel.getHeatMapComponent());
-        leadingEdgeSP.setBorder(null);
-
-        geneSetSimilarityHeatmap = geneSetSimilarityPanel.getHeatMapComponent();
-        JScrollPane geneSetSP = new JScrollPane(geneSetSimilarityHeatmap);
-        geneSetSP.setBorder(null);
-
-        // Skip over the rest if we are running without a Frame (CLI reporting, for example)
-        if (parent == null) return;
-
-        mainComponent = new JPanel();
-        JSplitPane topBottomSplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
-        JSplitPane leftRightTopSplit = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
-        JSplitPane leftRightBotSplit = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
-        
-        topBottomSplit.add(leftRightTopSplit);
-        topBottomSplit.add(leftRightBotSplit);
-        topBottomSplit.setResizeWeight(0.5d);
-        leftRightTopSplit.setResizeWeight(0.5d);
-        leftRightBotSplit.setResizeWeight(0.5d);
-        mainComponent.add(topBottomSplit);
-        
-        UIManager.getDefaults().put("JideSplitPane.dividerSize", 9);
-        int width = containerDim.width;
-        int height = containerDim.height;
-        mainComponent.setPreferredSize(containerDim);
-
-        JPanel f = new JPanel(new BorderLayout());
-        f.setToolTipText(LEADING_EDGE_MATRIX_KEY);
-        f.add(leadingEdgePanel.getMenuBar(), BorderLayout.PAGE_START);
-        f.add(leadingEdgeSP, BorderLayout.CENTER);
-        f.setPreferredSize(new Dimension(width / 2, height / 2));
-        leftRightTopSplit.add(f);
-        f.setVisible(true);
-        
-        f = new JPanel(new BorderLayout());
-        f.setToolTipText(GENE_SET_SIMILARITY_MATRIX_KEY);
-        f.add(geneSetSimilarityPanel.getMenuBar(), BorderLayout.PAGE_START);
-        f.add(geneSetSP, BorderLayout.CENTER);
-        f.setPreferredSize(new Dimension(width / 2, height / 2));
-        leftRightTopSplit.add(f);
-        f.setVisible(true);
-
-        f = new JPanel(new BorderLayout());
-        f.setToolTipText(GENE_HISTOGRAM_KEY);
-        JFreeMenuBar menuBar = new JFreeMenuBar(geneHistogram
-                .getChartPanel(), parent);
-        f.add(menuBar, BorderLayout.PAGE_START);
-        f.add(new JScrollPane(geneHistogram), BorderLayout.CENTER);
-        f.setPreferredSize(new Dimension(width / 2, height / 2));
-        leftRightBotSplit.add(f);
-        f.setVisible(true);
-
-        f = new JPanel(new BorderLayout());
-        f.setToolTipText(JACCARD_HISTOGRAM_KEY);
-        menuBar = new JFreeMenuBar(jaccardHistogram.getChartPanel(), parent);
-        f.add(menuBar, BorderLayout.PAGE_START);
-        f.add(new JScrollPane(jaccardHistogram), BorderLayout.CENTER);
-        f.setPreferredSize(new Dimension(width / 2, height / 2));
-        leftRightBotSplit.add(f);
-        f.setVisible(true);
-
-        topBottomSplit.setDividerLocation(0.5d);
-        leftRightTopSplit.setDividerLocation(0.5d);
-        leftRightBotSplit.setDividerLocation(0.5d);
     }
 
-    public Component getComponent() {
-        return mainComponent;
-    }
-    
-    public JaccardHistogram getJaccardHistogram() {
-        return jaccardHistogram;
+    private static ColorScheme jaccardColorScheme(final Dataset ds) {
+        // Swing GeneSetSimilarityPanel: GradientColorScheme(0,1,0.5, GREEN, RED, WHITE)
+        // with setUseDoubleGradient(false) → single WHITE→GREEN map across [0,1].
+        return new ColorScheme(){
+
+            @Override
+            public Color getColor(int row, int column) {
+                float v = ds.getElement(row, column);
+                if (v <= 0.0f) {
+                    return Color.WHITE;
+                }
+                if (v >= 1.0f) {
+                    return Color.GREEN;
+                }
+                return LeadingEdgeAnalysis.blend(Color.WHITE, Color.GREEN, v);
+            }
+
+            @Override
+            public void setDataset(IExpressionData d) {
+            }
+        };
     }
 
-    public GeneHistogram getGeneHistogram() {
-        return geneHistogram;
+    private static Color blend(Color a, Color b, float t) {
+        t = Math.max(0.0f, Math.min(1.0f, t));
+        int r = (int)((float)a.getRed() + (float)(b.getRed() - a.getRed()) * t);
+        int g = (int)((float)a.getGreen() + (float)(b.getGreen() - a.getGreen()) * t);
+        int bl = (int)((float)a.getBlue() + (float)(b.getBlue() - a.getBlue()) * t);
+        return new Color(r, g, bl);
     }
 
-    public HeatMapComponent getGeneSetSimilarityHeatmap() {
-        return geneSetSimilarityHeatmap;
+    private static BufferedImage emptyImage(int width, int height) {
+        return new BufferedImage(Math.max(1, width), Math.max(1, height), 1);
     }
 
-    public LeadingEdgePanel getLeadingEdgePanel() {
-        return leadingEdgePanel;
-    }
-    
-    public Dataset getClusteredDataset() {
-        return clusteredDataset;
+    public static final class Result {
+        private final HeatMap leadingEdgeHeatMapModel;
+        private final HeatMap similarityHeatMapModel;
+        private final ColorScheme leadingEdgeColorScheme;
+        private final ColorScheme similarityColorScheme;
+        private final BufferedImage leadingEdgeHeatMap;
+        private final BufferedImage similarityHeatMap;
+        private final JFreeChart geneHistogramChart;
+        private final JFreeChart jaccardHistogramChart;
+        private final BufferedImage geneHistogram;
+        private final BufferedImage jaccardHistogram;
+        private final Dataset clusteredMorphed;
+        private final Dataset similarityDataset;
+        private final GeneSet[] reorderedGeneSets;
+        private final RankedList featureFrequency;
+        private final RankedList geneScores;
+        private final TFloatIntHashMap jaccardDistrib;
+        private final File resultDirectory;
+
+        Result(HeatMap leadingEdgeHeatMapModel, HeatMap similarityHeatMapModel, ColorScheme leadingEdgeColorScheme, ColorScheme similarityColorScheme, JFreeChart geneHistogramChart, JFreeChart jaccardHistogramChart, Dataset clusteredMorphed, Dataset similarityDataset, GeneSet[] reorderedGeneSets, RankedList featureFrequency, RankedList geneScores, TFloatIntHashMap jaccardDistrib, File resultDirectory) {
+            this.leadingEdgeHeatMapModel = leadingEdgeHeatMapModel;
+            this.similarityHeatMapModel = similarityHeatMapModel;
+            this.leadingEdgeColorScheme = leadingEdgeColorScheme;
+            this.similarityColorScheme = similarityColorScheme;
+            this.leadingEdgeHeatMap = leadingEdgeHeatMapModel != null ? leadingEdgeHeatMapModel.snapshot() : null;
+            this.similarityHeatMap = similarityHeatMapModel != null ? similarityHeatMapModel.snapshot() : null;
+            this.geneHistogramChart = geneHistogramChart;
+            this.jaccardHistogramChart = jaccardHistogramChart;
+            this.geneHistogram = geneHistogramChart != null ? geneHistogramChart.createBufferedImage(720, 360) : null;
+            this.jaccardHistogram = jaccardHistogramChart != null ? jaccardHistogramChart.createBufferedImage(720, 360) : null;
+            this.clusteredMorphed = clusteredMorphed;
+            this.similarityDataset = similarityDataset;
+            this.reorderedGeneSets = reorderedGeneSets;
+            this.featureFrequency = featureFrequency;
+            this.geneScores = geneScores;
+            this.jaccardDistrib = jaccardDistrib;
+            this.resultDirectory = resultDirectory;
+        }
+
+        public HeatMap getLeadingEdgeHeatMapModel() {
+            return this.leadingEdgeHeatMapModel;
+        }
+
+        public HeatMap getSimilarityHeatMapModel() {
+            return this.similarityHeatMapModel;
+        }
+
+        public ColorScheme getLeadingEdgeColorScheme() {
+            return this.leadingEdgeColorScheme;
+        }
+
+        public ColorScheme getSimilarityColorScheme() {
+            return this.similarityColorScheme;
+        }
+
+        public BufferedImage getLeadingEdgeHeatMap() {
+            return this.leadingEdgeHeatMap;
+        }
+
+        public BufferedImage getSimilarityHeatMap() {
+            return this.similarityHeatMap;
+        }
+
+        public JFreeChart getGeneHistogramChart() {
+            return this.geneHistogramChart;
+        }
+
+        public JFreeChart getJaccardHistogramChart() {
+            return this.jaccardHistogramChart;
+        }
+
+        public BufferedImage getGeneHistogram() {
+            return this.geneHistogram;
+        }
+
+        public BufferedImage getJaccardHistogram() {
+            return this.jaccardHistogram;
+        }
+
+        public Dataset getClusteredMorphed() {
+            return this.clusteredMorphed;
+        }
+
+        public Dataset getSimilarityDataset() {
+            return this.similarityDataset;
+        }
+
+        public GeneSet[] getReorderedGeneSets() {
+            return this.reorderedGeneSets;
+        }
+
+        public RankedList getFeatureFrequency() {
+            return this.featureFrequency;
+        }
+
+        public RankedList getGeneScores() {
+            return this.geneScores;
+        }
+
+        public TFloatIntHashMap getJaccardDistrib() {
+            return this.jaccardDistrib;
+        }
+
+        public File getResultDirectory() {
+            return this.resultDirectory;
+        }
     }
 }

@@ -7,7 +7,7 @@ import java.util.Comparator;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
-import org.genepattern.uiutil.FTPFile;
+import org.genepattern.io.FTPFile;
 
 import edu.mit.broad.genome.math.Order;
 import edu.mit.broad.genome.objects.MSigDBVersion;

@@ -1,42 +1,67 @@
 /*
- * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2026 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California. All rights reserved.
  */
 package org.broad.gsea.ui;
 
 import java.awt.Desktop;
-import java.awt.GraphicsEnvironment;
 import java.awt.Image;
 import java.awt.Taskbar;
-
-import javax.swing.JOptionPane;
+import java.awt.desktop.QuitEvent;
+import java.awt.desktop.QuitHandler;
+import java.awt.desktop.QuitResponse;
 
 import org.apache.commons.lang3.SystemUtils;
 
-import xapps.gsea.GseaFijiTabsApplicationFrame;
-
 /**
- * Java version-specific integration with the platform Desktop and particularly 
- * for OS X (macOS) specific items.
- * @author eby
+ * Platform desktop integration (dock icon, About/Quit handlers on macOS).
  */
 public class DesktopIntegration {
+
     public static void setDockIcon(Image image) {
-        if (SystemUtils.IS_OS_MAC_OSX) {
-            Taskbar.getTaskbar().setIconImage(image);
+        if (SystemUtils.IS_OS_MAC_OSX && image != null) {
+            try {
+                Taskbar.getTaskbar().setIconImage(image);
+            } catch (UnsupportedOperationException | SecurityException ignored) {
+                // Some environments do not expose the taskbar API.
+            }
         }
     }
 
-    public static void setAboutHandler(GseaFijiTabsApplicationFrame applicationFrame) {
-        Desktop.getDesktop().setAboutHandler(e -> applicationFrame.showAboutDialog());
-    }
-    
-    public static void setQuitHandler(GseaFijiTabsApplicationFrame applicationFrame) {
-        Desktop.getDesktop().setQuitHandler((e, response) -> {
-            if (applicationFrame.exitApplication()) {
-            	response.performQuit();
-            } else {
-            	response.cancelQuit();
+    /**
+     * Wire macOS application menu About / Quit to the JavaFX shell callbacks.
+     * {@code quitHandler} returns {@code true} when quit should proceed (Swing
+     * {@code performQuit} / {@code cancelQuit} parity).
+     * Safe to call on any OS (no-ops when handlers are unsupported).
+     */
+    public static void installHandlers(Runnable aboutHandler, java.util.function.BooleanSupplier quitHandler) {
+        if (!Desktop.isDesktopSupported()) {
+            return;
+        }
+        Desktop desktop = Desktop.getDesktop();
+        try {
+            if (desktop.isSupported(Desktop.Action.APP_ABOUT) && aboutHandler != null) {
+                desktop.setAboutHandler(e -> aboutHandler.run());
             }
-        });
+        } catch (UnsupportedOperationException | SecurityException ignored) {
+        }
+        try {
+            if (desktop.isSupported(Desktop.Action.APP_QUIT_HANDLER) && quitHandler != null) {
+                desktop.setQuitHandler(new QuitHandler() {
+                    @Override
+                    public void handleQuitRequestWith(QuitEvent e, QuitResponse response) {
+                        try {
+                            if (quitHandler.getAsBoolean()) {
+                                response.performQuit();
+                            } else {
+                                response.cancelQuit();
+                            }
+                        } catch (Throwable t) {
+                            response.cancelQuit();
+                        }
+                    }
+                });
+            }
+        } catch (UnsupportedOperationException | SecurityException ignored) {
+        }
     }
 }

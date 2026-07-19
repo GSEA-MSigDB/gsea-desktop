@@ -3,8 +3,6 @@
  */
 package xtools.api.param;
 
-import edu.mit.broad.genome.swing.fields.GDirFieldPlusChooser;
-import edu.mit.broad.genome.swing.fields.GFieldPlusChooser;
 
 import java.io.File;
 
@@ -12,9 +10,6 @@ import java.io.File;
  * @author Aravind Subramanian
  */
 public class DirParam extends AbstractParam {
-
-    protected GDirFieldPlusChooser fChooser;
-
     public DirParam(String name, String nameEnglish, String desc, File hint, boolean reqd) {
         super(name, nameEnglish, File.class, desc, new File[]{hint}, reqd);
     }
@@ -84,21 +79,4 @@ public class DirParam extends AbstractParam {
         }
     }
 
-    public GFieldPlusChooser getSelectionComponent() {
-
-        if (fChooser == null) {
-            fChooser = new GDirFieldPlusChooser();
-
-            if (getValue() != null) {
-                fChooser.setValue(getValue());
-            } else {
-                fChooser.setValue(getDefault());
-            }
-
-            ParamHelper.addDocumentListener(fChooser.getTextField(), this);
-
-        }
-
-        return fChooser;
-    }
 }

@@ -3,12 +3,7 @@
  *******************************************************************************/
 package xtools.api.param;
 
-import edu.mit.broad.genome.swing.fields.GComboBoxField;
-import edu.mit.broad.genome.swing.fields.GFieldPlusChooser;
 
-import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 /**
  * Object to capture commandline params</p>
@@ -16,11 +11,8 @@ import java.awt.event.ActionListener;
  * @author Aravind Subramanian
  * @version %I%, %G%
  */
-public class StringReqdParam extends AbstractParam implements ActionListener {
-
-    protected GComboBoxField cbOptions;
-
-    /**
+public class StringReqdParam extends AbstractParam {
+/**
      * Class constructor
      *
      * @param name
@@ -78,22 +70,6 @@ public class StringReqdParam extends AbstractParam implements ActionListener {
 
         return -1;
     }
-
-    public GFieldPlusChooser getSelectionComponent() {
-
-        if (cbOptions == null) {
-            cbOptions = ParamHelper.createActionListenerBoundHintsComboBox(false, this, this);
-            ParamHelper.safeSelectValueDefaultByString(cbOptions.getComboBox(), this);
-        }
-
-        return cbOptions;
-
-    }
-
-    public void actionPerformed(ActionEvent evt) {
-        this.setValue(((JComboBox) cbOptions.getComponent()).getSelectedItem());
-    }
-
     public boolean isFileBased() {
         return false;
     }

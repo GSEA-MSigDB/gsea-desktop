@@ -1,0 +1,539 @@
+/*
+ * Copyright (c) 2003-2026 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California. All rights reserved.
+ */
+package xapps.gsea.fx.viewers;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Locale;
+import java.util.Set;
+import java.util.WeakHashMap;
+import java.util.stream.Collectors;
+
+import org.apache.commons.lang3.StringUtils;
+import org.genepattern.gsea.LeadingEdgeAnalysis;
+import org.gsea_msigdb.gsea.ui.api.ViewPage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import edu.mit.broad.genome.objects.esmatrix.db.EnrichmentDb;
+import edu.mit.broad.genome.objects.esmatrix.db.EnrichmentResult;
+import edu.mit.broad.genome.parsers.ParserFactory;
+import edu.mit.broad.xbench.core.api.Application;
+import edu.mit.broad.xbench.tui.TaskManager;
+import javafx.application.Platform;
+import javafx.geometry.Insets;
+import javafx.geometry.Orientation;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.SplitPane;
+import javafx.scene.control.Tab;
+import javafx.scene.control.TabPane;
+import javafx.scene.control.TableView;
+import javafx.scene.control.TextField;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.VBox;
+import javafx.stage.DirectoryChooser;
+import xapps.gsea.GseaWebResources;
+import xapps.gsea.fx.heatmap.FxChartPane;
+import xapps.gsea.fx.heatmap.FxHeatMapView;
+import xapps.gsea.fx.heatmap.FxJaccardLegend;
+import xapps.gsea.fx.params.FxFileChooserUtil;
+import xapps.gsea.fx.params.FxReportCacheChooser;
+import xapps.gsea.fx.params.FxReportCacheSupport;
+import xapps.gsea.fx.tui.FxTaskTablePane;
+import xapps.gsea.fx.viewers.report.EnrichmentResultRow;
+import xapps.gsea.fx.viewers.report.EnrichmentResultTable;
+import xapps.gsea.fx.viewers.report.LeadingEdgeOutputs;
+import xtools.api.param.ToolParamSet;
+import xtools.gsea.LeadingEdgeTool;
+
+/**
+ * Interactive Leading Edge viewer matching Swing LeadingEdgeWidget:
+ * load EDB, select ≥2 gene sets, run in-memory analysis (2×2 dashboard),
+ * or build the HTML report via {@link LeadingEdgeTool}.
+ * <p>
+ * Completed HTML report reopen (history / process table) uses
+ * {@link xapps.gsea.fx.viewers.FxReportViewer} + {@link xapps.gsea.fx.viewers.report.LeadingEdgeReportExplorer}.
+ */
+public class FxLeadingEdgePane implements ViewPage {
+
+    private static final Logger klog = LoggerFactory.getLogger(FxLeadingEdgePane.class);
+
+    /** Weak set so closed workspace tabs do not leak via TaskManager listeners. */
+    private static final Set<FxLeadingEdgePane> LIVE =
+            Collections.newSetFromMap(new WeakHashMap<>());
+    private static final TaskManager.StatusListener SHARED_STATUS = (runId, name, status, reportDir) -> {
+        if (name == null || !name.toLowerCase(Locale.ROOT).contains("leadingedge")) {
+            return;
+        }
+        if (status == null || !status.startsWith("Success") || reportDir == null || !reportDir.isDirectory()) {
+            return;
+        }
+        Platform.runLater(() -> {
+            for (FxLeadingEdgePane pane : LIVE) {
+                // Only panes still attached to a scene (open workspace tabs).
+                if (pane.root.getScene() != null) {
+                    pane.showLeadingEdgeOutputs(reportDir);
+                }
+            }
+        });
+    };
+
+    static {
+        TaskManager.getInstance().addStatusListener(SHARED_STATUS);
+    }
+
+    private final BorderPane root = new BorderPane();
+    private final TabPane mainTabs = new TabPane();
+    private final TextField folderField = new TextField();
+    private final FxReportCacheChooser cacheChooser = FxReportCacheChooser.single();
+    private File gseaResultDir;
+    private int analysisRun = 0;
+
+    public FxLeadingEdgePane() {
+        LIVE.add(this);
+        // Swing DirParam is clearable; keep editable so users can delete the path for XOR recovery.
+        // Swing DirParam: label beside field; field itself has no prompt chrome.
+        folderField.setEditable(true);
+        HBox.setHgrow(folderField, Priority.ALWAYS);
+        // Swing DirParam → GDirFieldPlusChooser: #EAFFEA + path coloring + Ellipsis.png.
+        if (!folderField.getStyleClass().contains("gsea-dir-field")) {
+            folderField.getStyleClass().add("gsea-dir-field");
+        }
+        xapps.gsea.fx.params.FxPathFieldColors.attach(folderField);
+
+        Button chooseFolder = xapps.gsea.fx.FxEllipsisButton.create(
+                "[ OR ] Locate a GSEA report folder from the file system");
+        chooseFolder.setOnAction(e -> chooseFolder());
+
+        // Swing LeadingEdgeReportViewer: Load only (no Clear/Refresh chrome).
+        Button load = new Button("Load GSEA Results");
+        xapps.gsea.fx.FxButtons.stylePrimary(load);
+        load.setOnAction(e -> loadGseaResults());
+
+        // Swing ReportCacheChooserParam → GOptionsFieldPlusChooser (field + ellipsis → list dialog).
+        HBox.setHgrow(cacheChooser.getNode(), Priority.ALWAYS);
+
+        // Swing LeadingEdgeReportViewer: cache param row, then dir param row, then Load.
+        HBox cacheRow = new HBox(8,
+                new Label("Select a GSEA result from the application cache"),
+                cacheChooser.getNode());
+        HBox folderRow = xapps.gsea.fx.FxButtons.row(
+                new Label("[ OR ] Locate a GSEA result folder from the file system"),
+                folderField, chooseFolder, load);
+        folderRow.setPadding(new Insets(0, 0, 4, 0));
+        // Swing LeadingEdgeReportViewer: params + Load only (no in-form section header).
+        VBox top = new VBox(8, cacheRow, folderRow);
+        top.setPadding(new Insets(12, 12, 4, 12));
+        mainTabs.setTabClosingPolicy(TabPane.TabClosingPolicy.ALL_TABS);
+        root.setTop(top);
+        root.setCenter(mainTabs);
+    }
+
+    /** Append heatmap / HTML Report tabs after {@link LeadingEdgeTool} succeeds. */
+    private void showLeadingEdgeOutputs(File reportDir) {
+        for (Tab tab : LeadingEdgeOutputs.buildTabs(reportDir, true)) {
+            mainTabs.getTabs().add(tab);
+            mainTabs.getSelectionModel().select(tab);
+        }
+    }
+
+    /**
+     * Equivalent of Swing's LeadingEdgeWidget.  Each loaded EDB owns its
+     * selection, filter, summary, and tool parameters so result tabs never
+     * overwrite one another.
+     */
+    private final class ResultsView extends BorderPane {
+        private final EnrichmentDb edb;
+        private final File gseaResultDir;
+        private final EnrichmentResultTable resultTable = new EnrichmentResultTable();
+        private final TableView<EnrichmentResultRow> table = resultTable.getTable();
+        private final Label positivePhenotypeLabel = new Label();
+        private final Label negativePhenotypeLabel = new Label();
+        private final Label selectionLabel = new Label("For 0 selected gene sets: ");
+        private final Button runAnalysisButton = new Button("Run leading edge analysis");
+        private final Button buildHtmlButton = new Button("Build HTML Report");
+
+        ResultsView(EnrichmentDb edb, File gseaResultDir, EnrichmentResult[] results) {
+            this.edb = edb;
+            this.gseaResultDir = gseaResultDir;
+            resultTable.setResults(results);
+
+            runAnalysisButton.setGraphic(xapps.gsea.fx.FxFileIcons.forResource("Run16.png"));
+            runAnalysisButton.setOnAction(e -> runInteractiveAnalysis(this));
+            buildHtmlButton.setGraphic(xapps.gsea.fx.FxFileIcons.forResource("Run16.png"));
+            buildHtmlButton.setOnAction(e -> runHtmlReport(this));
+            xapps.gsea.fx.FxButtons.stylePrimary(runAnalysisButton);
+            xapps.gsea.fx.FxButtons.styleSecondary(buildHtmlButton);
+            applyPhenotypeLabels(edb, positivePhenotypeLabel, negativePhenotypeLabel);
+            HBox phenotypeRow = new HBox(0, positivePhenotypeLabel, negativePhenotypeLabel);
+
+            Button help = helpButton();
+            HBox filterRow = xapps.gsea.fx.FxButtons.row(help, selectionLabel, runAnalysisButton, buildHtmlButton);
+            VBox top = new VBox(8, phenotypeRow, filterRow);
+            top.setPadding(new Insets(8, 12, 4, 12));
+
+            table.getSelectionModel().getSelectedItems().addListener(
+                    (javafx.collections.ListChangeListener<EnrichmentResultRow>) c -> updateSelectionUi());
+
+            setTop(top);
+            setCenter(table);
+            BorderPane.setMargin(table, new Insets(0, 12, 12, 12));
+            updateSelectionUi();
+        }
+
+        private void updateSelectionUi() {
+            int n = table.getSelectionModel().getSelectedItems().size();
+            selectionLabel.setText("For " + n + " selected gene sets: ");
+            boolean enabled = n >= 2;
+            runAnalysisButton.setDisable(!enabled);
+            buildHtmlButton.setDisable(!enabled);
+        }
+    }
+
+    private void chooseFolder() {
+        DirectoryChooser chooser = new DirectoryChooser();
+        // Swing GDirFieldPlusChooser → chooseDirByDialog (platform default title).
+        FxFileChooserUtil.seedInitialDirectory(chooser, folderField.getText());
+        File selected = chooser.showDialog(FxFileChooserUtil.windowOf(root));
+        if (selected == null) {
+            return;
+        }
+        // Swing: browse only sets DirParam — do not clear cache selection (XOR checked on Load).
+        gseaResultDir = selected;
+        folderField.setText(selected.getAbsolutePath());
+        FxFileChooserUtil.registerOpenedDir(selected);
+    }
+
+    /**
+     * Swing LeadingEdgeReportViewer: cache XOR browsed directory before load.
+     */
+    private void loadGseaResults() {
+        // Swing: cache XOR dir via isSpecified() on params (field text).
+        boolean cacheSpecified = cacheChooser.isSpecified();
+        boolean dirSpecified = folderField.getText() != null && !folderField.getText().isBlank();
+        if (cacheSpecified && dirSpecified) {
+            Application.getWindowManager().showMessage(
+                    "Both cache and a brows'ed directory were specified. Only 1 can be specified. Delete one and try again");
+            return;
+        }
+        if (!cacheSpecified && !dirSpecified) {
+            Application.getWindowManager().showMessage(
+                    "No GSEA result folder was specified. Specify one and try again");
+            return;
+        }
+        File dir;
+        if (cacheSpecified) {
+            FxReportCacheSupport.CachedReport sel = cacheChooser.getSelectedOne();
+            if (sel != null) {
+                dir = sel.edbDir;
+            } else {
+                // Typed reportDir path not in cache — use path / nested edb like Swing getReportDir.
+                List<File> dirs = cacheChooser.getReportDirs();
+                dir = dirs.isEmpty() ? null : dirs.get(0);
+                if (dir != null) {
+                    File nested = new File(dir, "edb");
+                    if (nested.isDirectory()) {
+                        dir = nested;
+                    }
+                }
+            }
+        } else {
+            String path = folderField.getText().trim();
+            dir = gseaResultDir != null && gseaResultDir.getAbsolutePath().equals(path)
+                    ? gseaResultDir
+                    : new File(path);
+        }
+        if (dir == null) {
+            Application.getWindowManager().showMessage(
+                    "No GSEA result folder was specified. Specify one and try again");
+            return;
+        }
+        // Cache selection must not populate DirParam: preserve the inputs' independent state.
+        loadEdb(dir);
+    }
+
+    /** Open an enrichment result folder (object-cache EnrichmentDb / folder browse). */
+    public void loadFromDirectory(File dir) {
+        if (dir == null) {
+            return;
+        }
+        gseaResultDir = dir;
+        folderField.setText(dir.getAbsolutePath());
+        // Programmatic/browsed directory loads own DirParam, so avoid a sticky cache+directory XOR.
+        cacheChooser.clearSelection();
+        FxFileChooserUtil.registerOpenedDir(dir);
+        loadEdb(dir);
+    }
+
+    private void loadEdb(File dir) {
+        Thread worker = new Thread(() -> {
+            try {
+                EnrichmentDb loaded = ParserFactory.readEdb(dir, true);
+                EnrichmentResult[] results = LeadingEdgeAnalysis.getAllResultsFromEdb(loaded);
+                Platform.runLater(() -> {
+                    this.gseaResultDir = dir;
+                    ResultsView view = new ResultsView(loaded, dir, results);
+                    Tab tab = new Tab("GSEA Results", view);
+                    tab.setClosable(true);
+                    mainTabs.getTabs().add(tab);
+                    mainTabs.getSelectionModel().select(tab);
+                });
+            } catch (Throwable t) {
+                klog.error("Failed to load EDB from {}", dir, t);
+                Platform.runLater(() -> {
+                    Application.getWindowManager().showError("Trouble loading enrichment database", t);
+                });
+            }
+        }, "gsea-load-edb");
+        worker.setDaemon(true);
+        worker.start();
+    }
+
+    private static void applyPhenotypeLabels(EnrichmentDb loaded, Label positive, Label negative) {
+        // Swing LeadingEdgeWidget bug-compatible: positive stays "na pos"; negative is class 1.
+        String pos = "na pos";
+        String neg = "na neg";
+        try {
+            if (loaded.getTemplate() != null) {
+                neg = loaded.getTemplate().getClassName(1);
+            }
+        } catch (Throwable ignored) {
+            // template optional for preranked
+        }
+        positive.setText("positive phenotype: " + pos + "   ");
+        positive.setStyle("-fx-text-fill: red;");
+        negative.setText("negative phenotype: " + neg);
+        negative.setStyle("-fx-text-fill: blue;");
+    }
+
+    private List<String> selectedNamesOrWarn(ResultsView view) {
+        if (view == null || view.edb == null || view.gseaResultDir == null) {
+            Application.getWindowManager().showMessage("Load a GSEA result folder first.");
+            return null;
+        }
+        List<EnrichmentResultRow> selected = new ArrayList<>(view.table.getSelectionModel().getSelectedItems());
+        if (selected.size() < 2) {
+            Application.getWindowManager().showMessage("Select at least two gene sets in the table.");
+            return null;
+        }
+        return selected.stream().map(r -> r.nameProperty().get()).collect(Collectors.toList());
+    }
+
+    private void runInteractiveAnalysis(ResultsView view) {
+        List<String> names = selectedNamesOrWarn(view);
+        if (names == null) {
+            return;
+        }
+        view.runAnalysisButton.setDisable(true);
+
+        EnrichmentDb edbRef = view.edb;
+        Thread worker = new Thread(() -> {
+            try {
+                LeadingEdgeAnalysis.Result result = LeadingEdgeAnalysis.runAnalysis(
+                        edbRef, names.toArray(new String[0]));
+                Platform.runLater(() -> {
+                    showInteractiveResult(result);
+                    view.updateSelectionUi();
+                });
+            } catch (Throwable t) {
+                klog.error("Interactive leading edge analysis failed", t);
+                Platform.runLater(() -> {
+                    Application.getWindowManager().showError(
+                            "An error occurred while running leading edge analysis", t);
+                    view.updateSelectionUi();
+                });
+            }
+        }, "gsea-le-interactive");
+        worker.setDaemon(true);
+        worker.start();
+    }
+
+    private Button helpButton() {
+        // Swing JarResources.createHelpButton → "Help" + Help16_v2.gif.
+        Button help = new Button("Help");
+        help.setGraphic(xapps.gsea.fx.FxFileIcons.forResource("Help16_v2.gif"));
+        xapps.gsea.fx.FxButtons.styleSecondary(help);
+        help.setOnAction(e -> {
+            String url = GseaWebResources.getGseaHelpURL() + "GSEA/GSEA_User_Guide/Interpret-Leading-Edge";
+            try {
+                xapps.gsea.fx.FxDesktopUtil.openUrl(url);
+            } catch (Exception ex) {
+                Application.getWindowManager().showError("Could not open Leading Edge help", ex);
+            }
+        });
+        return help;
+    }
+
+    private void showInteractiveResult(LeadingEdgeAnalysis.Result result) {
+        analysisRun++;
+
+        FxHeatMapView leHeat = new FxHeatMapView();
+        // Swing: rankedList != null → score ColorScheme; else white/yellow binary membership.
+        boolean binaryMembership = result.getGeneScores() == null;
+        leHeat.setData(result.getClusteredMorphed(), result.getLeadingEdgeColorScheme(), false,
+                binaryMembership);
+        // Swing LeadingEdgePanel: Gene Set / Gene; color scheme options hidden;
+        // setOptionsDialogOptions(false, false, false).
+        leHeat.setUiNaming("Gene Set", "Gene", false);
+        // Swing LeadingEdgePanel createMenuBar(false,false,false,false) → no Profile/Legend.
+        leHeat.setOptionsDialogOptions(false, false, false, false);
+        leHeat.setHtmlLookupDir(result.getResultDirectory());
+
+        FxHeatMapView simHeat = new FxHeatMapView();
+        simHeat.setData(result.getSimilarityDataset(), result.getSimilarityColorScheme(), true);
+        // Swing GeneSetSimilarityPanel: Gene Set / Gene Set; color scheme options hidden.
+        simHeat.setUiNaming("Gene Set", "Gene Set", false);
+        simHeat.setOptionsDialogOptions(false, false, false, false);
+        simHeat.setGeneSetsForTooltips(result.getReorderedGeneSets());
+        final int numSimCols = result.getSimilarityDataset() != null
+                ? result.getSimilarityDataset().getNumCol() : 15;
+        BorderPane simPane = new BorderPane(simHeat.getNode());
+        Runnable refreshLegend = () -> {
+            // Swing GeneSetSimilarityPanel: width = columnCount * columnSize (no floor).
+            int legendWidth = Math.max(1, numSimCols * simHeat.getCellSize());
+            simPane.setTop(FxJaccardLegend.create(legendWidth));
+        };
+        refreshLegend.run();
+        // Swing GeneSetSimilarityPanel: legend preferred width tracks columnSize.
+        simHeat.setOnCellSizeChanged(sz -> refreshLegend.run());
+
+        BorderPane lePane = leHeat.getNode();
+        lePane.setMinSize(0, 0);
+        simPane.setMinSize(0, 0);
+        SplitPane top = new SplitPane(lePane, simPane);
+        top.setOrientation(Orientation.HORIZONTAL);
+        top.setDividerPositions(0.5);
+
+        java.util.concurrent.atomic.AtomicInteger selectedGene = new java.util.concurrent.atomic.AtomicInteger(-1);
+        FxChartPane geneChart = new FxChartPane("Gene Histogram");
+        geneChart.setChart(
+                LeadingEdgeAnalysis.createGeneHistogramChart(
+                        result.getFeatureFrequency(), result.getGeneScores(), selectedGene),
+                720, 360);
+        if (result.getFeatureFrequency() != null) {
+            geneChart.setItemNames(result.getFeatureFrequency().getRankedNamesArray());
+            geneChart.setItemClickHandler(item -> {
+                selectedGene.set(item);
+                geneChart.refresh();
+                String gene = result.getFeatureFrequency().getRankName(item);
+                leHeat.selectColumnByName(gene);
+            });
+        }
+
+        VBox jaccardBox = new VBox(8);
+        FxChartPane jaccardChart = new FxChartPane("Jaccard Histogram of Gene Sets");
+        if (result.getJaccardHistogramChart() != null) {
+            jaccardChart.setChart(result.getJaccardHistogramChart(), 720, 360);
+        }
+        TextField binField = new TextField("0.02");
+        binField.setPrefWidth(80);
+        Button updateBin = new Button("Update");
+        xapps.gsea.fx.FxButtons.styleToolbar(updateBin);
+        updateBin.setOnAction(e -> {
+            try {
+                double bw = Double.parseDouble(binField.getText().trim());
+                if (bw < 0 || bw > 1) {
+                    Application.getWindowManager().showMessage("Bin width must be between zero and one.");
+                    return;
+                }
+                // Swing JaccardHistogram accepts zero but leaves the existing chart untouched.
+                if (bw == 0) {
+                    return;
+                }
+                jaccardChart.setChart(
+                        LeadingEdgeAnalysis.createJaccardHistogramChart(result.getJaccardDistrib(), bw),
+                        720, 360);
+            } catch (NumberFormatException nfe) {
+                Application.getWindowManager().showMessage("Bin width is not a number.");
+            }
+        });
+        jaccardBox.getChildren().addAll(
+                new HBox(8, new Label("Bin Width:"), binField, updateBin),
+                jaccardChart.getNode());
+        VBox.setVgrow(jaccardChart.getNode(), Priority.ALWAYS);
+
+        BorderPane geneNode = geneChart.getNode();
+        geneNode.setMinSize(0, 0);
+        jaccardBox.setMinSize(0, 0);
+        SplitPane bottom = new SplitPane(geneNode, jaccardBox);
+        bottom.setOrientation(Orientation.HORIZONTAL);
+        bottom.setDividerPositions(0.55);
+        bottom.setMinSize(0, 0);
+        top.setMinSize(0, 0);
+
+        SplitPane grid = new SplitPane(top, bottom);
+        grid.setOrientation(Orientation.VERTICAL);
+        grid.setDividerPositions(0.55);
+        grid.setPadding(new Insets(8));
+
+        Tab tab = new Tab("Leading Edge Analysis-" + analysisRun, grid);
+        tab.setClosable(true);
+        mainTabs.getTabs().add(tab);
+        mainTabs.getSelectionModel().select(tab);
+    }
+
+
+    private void runHtmlReport(ResultsView view) {
+        List<String> names = selectedNamesOrWarn(view);
+        if (names == null) {
+            return;
+        }
+
+        view.buildHtmlButton.setDisable(true);
+
+        Thread worker = new Thread(() -> {
+            try {
+                LeadingEdgeTool tool = new LeadingEdgeTool();
+                ToolParamSet paramSet = (ToolParamSet) tool.getParamSet();
+                paramSet.getParam("altDelim").setValue(";");
+                paramSet.getParam("gsets").setValue(StringUtils.join(names, ";"));
+                paramSet.getParam("dir").setValue(view.edb.getEdbDir());
+
+                String runId = TaskManager.getInstance().run(tool, paramSet, Thread.MIN_PRIORITY);
+                Platform.runLater(() -> {
+                    if (FxTaskTablePane.getInstance() != null) {
+                        FxTaskTablePane.getInstance().attachSnapshot(
+                                runId, tool, paramSet.toProperties());
+                    }
+                    if (TaskManager.getInstance().isParamConstructionError(runId)) {
+                        Throwable err = TaskManager.getInstance().getLastError(runId);
+                        Application.getWindowManager().showError(
+                                "One or more parameter(s) were not specified",
+                                err != null ? err : new IllegalStateException("Invalid parameters"));
+                    }
+                    view.updateSelectionUi();
+                });
+            } catch (Throwable t) {
+                klog.error("Leading edge HTML report failed to start", t);
+                Platform.runLater(() -> {
+                    Application.getWindowManager().showError(
+                            "An error occurred while building the HTML report", t);
+                    view.updateSelectionUi();
+                });
+            }
+        }, "gsea-leading-edge-html");
+        worker.setDaemon(true);
+        worker.start();
+    }
+
+    @Override
+    public String getTitle() {
+        return "Leading edge analysis";
+    }
+
+    @Override
+    public String getIconResourceId() {
+        return "Lev16_b.gif";
+    }
+
+    @Override
+    public Object getContent() {
+        return root;
+    }
+}

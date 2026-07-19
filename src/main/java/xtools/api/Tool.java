@@ -1,61 +1,33 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2026 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California. All rights reserved.
+ */
 package xtools.api;
 
-import edu.mit.broad.genome.JarResources;
 import edu.mit.broad.genome.reports.api.Report;
 import xtools.api.param.ParamSet;
 
-import javax.swing.*;
 import java.io.Serializable;
 
 /**
- * @author Aravind Subramanian
- * @version %I%, %G%
+ * Runnable analysis tool.
  */
 public interface Tool extends Serializable {
 
-    public static final Icon ICON = JarResources.getIcon("Tool16.gif");
+    String getHelpURL();
 
-    public String getHelpURL();
+    String getName();
 
-    /**
-     * @return The name of this Tool
-     */
-    public String getName();
+    String getTitle();
 
-    public String getTitle();
+    String getDesc();
 
-    /**
-     * @return A short description of this tool
-     */
-    public String getDesc();
+    ToolCategory getCategory();
 
-    /**
-     * @return The category that this tool belongs to
-     */
-    public ToolCategory getCategory();
+    ParamSet getParamSet();
 
-    /**
-     * @return ParamSet that this tools accepts/needs to execute
-     */
-    public ParamSet getParamSet();
+    void declareParams();
 
-    /**
-     * State the Param (reqd and opt) that the Tool uses.
-     */
-    public void declareParams();
+    void execute() throws Exception;
 
-    /**
-     * Actually run the Tool
-     */
-    public void execute() throws Exception;
-
-    /**
-     * Retrieve reports of results of execution of the tool.
-     * The Report may have nothing in it but canNOT be null
-     */
-    public Report getReport();
-
-}    // End Tool
+    Report getReport();
+}

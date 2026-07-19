@@ -3,19 +3,28 @@
  */
 package edu.mit.broad.genome.reports.pages;
 
-import edu.mit.broad.genome.Constants;
-import edu.mit.broad.genome.objects.strucs.Hyperlink;
-import edu.mit.broad.genome.objects.strucs.Linked;
+import java.io.File;
+
 import org.apache.ecs.Doctype;
 import org.apache.ecs.Document;
 import org.apache.ecs.Element;
 import org.apache.ecs.StringElement;
-import org.apache.ecs.html.*;
+import org.apache.ecs.html.A;
+import org.apache.ecs.html.BR;
+import org.apache.ecs.html.Caption;
+import org.apache.ecs.html.Div;
+import org.apache.ecs.html.Link;
+import org.apache.ecs.html.Meta;
+import org.apache.ecs.html.TD;
+import org.apache.ecs.html.TH;
+import org.apache.ecs.html.Title;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import xapps.gsea.GseaWebResources;
 
-import java.io.File;
+import edu.mit.broad.genome.Constants;
+import edu.mit.broad.genome.objects.strucs.Hyperlink;
+import edu.mit.broad.genome.objects.strucs.Linked;
+import xapps.gsea.GseaWebResources;
 
 /**
  * @author Aravind Subramanian
@@ -44,17 +53,6 @@ public class HtmlFormat {
     }
 
     public static void setCommonDocThings(final String title, final Document doc) {
-        // we want the HEAD to look like:
-        // <head>
-        // <title>Ensembl Genome Browser</title>
-        // <link rel="stylesheet" href="/xtools.css">
-        // can later add meta tags ala ensembl if needed
-        // <meta name="keywords" content="Ensembl, genome, automated annotation, Human Genome Project, Human genetics, DNA sequencing, genome browser">
-        //<meta name="description" content="Ensembl is a joint project between EMBL-EBI and the Sanger Institute to develop a software system which produces and maintains automatic annotation on eukaryotic genomes.">
-        // <meta name="author" content="webmaster@ensembl.org">
-        // </head>
-
-        // set the global html properties needed
         // doctype. I prefer html to xhtml as not really going to be parsed by anything
         // also, the xhtml ecs api uses lower case java classes and thats annoying and not-very-java-like
         doc.setDoctype(new Doctype.Html401Transitional());
@@ -62,8 +60,29 @@ public class HtmlFormat {
         // the title - shows up in the browser title bar and NOT in the content of the page
         doc.setTitle(new Title(title));
 
+        Meta viewport = new Meta();
+        viewport.addAttribute("name", "viewport");
+        viewport.addAttribute("content", "width=device-width, initial-scale=1");
+        doc.appendHead(viewport);
+
         doc.appendHead(CSS_XTOOLS_CANNED_REPORTS);
         doc.appendHead(ICON_CANNED_REPORTS);
+
+        // Shell class for report layout (aligned with gsea-msigdb.org styling)
+        doc.getBody().setClass("gsea-report");
+    }
+
+    /**
+     * Full-bleed page title bar for index / summary pages.
+     */
+    public static String reportHeader(final String titleText) {
+        if (titleText == null || titleText.isBlank()) {
+            return "";
+        }
+        if (titleText.contains("report-header")) {
+            return titleText;
+        }
+        return "<header class=\"report-header\"><h1>" + titleText + "</h1></header>\n";
     }
 
     /**
@@ -180,6 +199,16 @@ public class HtmlFormat {
 
         public static Div keyValTable() {
             return new MyDiv(keyValTable);
+        }
+
+        /** Index / summary section (MSigDB-style banded heading). */
+        public static Div reportSection() {
+            return new MyDiv("report-section");
+        }
+
+        /** Warnings / caveats section. */
+        public static Div reportSectionWarn() {
+            return new MyDiv("report-section report-section--warn");
         }
     } // End inner class Divs
 
@@ -303,7 +332,11 @@ public class HtmlFormat {
         }
 
         if (bgColor != null) {
-            td = td.setBgColor(bgColor);
+            // Prefer CSS style over legacy bgcolor attribute so report striping doesn't override it.
+            td.addAttribute("style", "background-color: " + bgColor + ";");
+            if ("#CCFFCC".equalsIgnoreCase(bgColor.trim())) {
+                td.setClass("core-enrichment");
+            }
         }
 
         return td;

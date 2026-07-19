@@ -5,13 +5,12 @@ package xtools.api.param;
 
 import edu.mit.broad.genome.objects.RankedList;
 
-import java.awt.event.ActionListener;
 
 /**
  * @author Aravind Subramanian
  * @version %I%, %G%
  */
-public class RankedListReqdParam extends PobParam implements ActionListener {
+public class RankedListReqdParam extends PobParam {
     /**
      * Class constructor
      */

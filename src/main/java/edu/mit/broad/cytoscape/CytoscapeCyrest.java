@@ -87,42 +87,45 @@ public class CytoscapeCyrest {
     }
 
     public boolean createEM_get() throws IOException, URISyntaxException {
+        int port = XPreferencesFactory.kCytoscapeRESTPort.getInt();
         URIBuilder builder = new URIBuilder();
-        URI uri;
-
-        builder.setScheme("http").setHost("localhost:1234/v1").setPath("/commands/enrichmentmap/gseabuild")
-                .setParameter("edbdir", this.params.getEdbdir()).setParameter("pvalue", Double.toString(this.params.getPvalue()))
+        builder.setScheme("http").setHost("localhost").setPort(port)
+                .setPath("/v1/commands/enrichmentmap/gseabuild")
+                .setParameter("edbdir", this.params.getEdbdir())
+                .setParameter("pvalue", Double.toString(this.params.getPvalue()))
                 .setParameter("qvalue", Double.toString(this.params.getQvalue()))
                 .setParameter("overlap", Double.toString(this.params.getSimilarityCutOff()))
                 .setParameter("similaritymetric", this.params.getSimilarityMetric())
                 .setParameter("combinedconstant", Double.toString(this.params.getCombinedConstant()));
 
-        if (!this.params.getExpressionFilePath().equals("")) builder.setParameter("expressionfile", this.params.getExpressionFilePath());
+        if (this.params.getExpressionFilePath() != null && !this.params.getExpressionFilePath().isEmpty()) {
+            builder.setParameter("expressionfile", this.params.getExpressionFilePath());
+        }
 
-        if (this.params.getEdbdir2() != null && !this.params.getEdbdir2().equalsIgnoreCase("")) {
+        if (this.params.getEdbdir2() != null && !this.params.getEdbdir2().isEmpty()) {
             builder.setParameter("edbdir2", this.params.getEdbdir2());
 
-            if (!this.params.getExpression2FilePath().equals(""))
+            if (this.params.getExpression2FilePath() != null && !this.params.getExpression2FilePath().isEmpty()) {
                 builder.setParameter("expressionfile2", this.params.getExpression2FilePath());
+            }
         }
-        uri = builder.build();
+        URI uri = builder.build();
 
-        CloseableHttpClient httpclient = HttpClients.createDefault();
-        HttpGet httpget = new HttpGet(uri);
-        klog.info("Get URL: {}", httpget.getURI());
-        CloseableHttpResponse response = httpclient.execute(httpget);
-
-        HttpEntity entity = response.getEntity();
-        StatusLine statusLine = response.getStatusLine();
-        klog.info("status: {}", statusLine.getReasonPhrase());
-        if (!statusLine.getReasonPhrase().equalsIgnoreCase("ok")) {
-            String message = EntityUtils.toString(entity);
-            Application.getWindowManager().showMessage("Unable to create Enrichment Map: " + statusLine.getReasonPhrase() + "\n" + message);
-            httpclient.close();            
-            return false;
+        try (CloseableHttpClient httpclient = HttpClients.createDefault()) {
+            HttpGet httpget = new HttpGet(uri);
+            klog.info("Get URL: {}", httpget.getURI());
+            try (CloseableHttpResponse response = httpclient.execute(httpget)) {
+                HttpEntity entity = response.getEntity();
+                StatusLine statusLine = response.getStatusLine();
+                klog.info("status: {}", statusLine.getReasonPhrase());
+                if (!"ok".equalsIgnoreCase(statusLine.getReasonPhrase())) {
+                    String message = EntityUtils.toString(entity);
+                    Application.getWindowManager().showMessage(
+                            "Unable to create Enrichment Map: " + statusLine.getReasonPhrase() + "\n" + message);
+                    return false;
+                }
+                return true;
+            }
         }
-
-        httpclient.close();
-        return true;
     }
 }

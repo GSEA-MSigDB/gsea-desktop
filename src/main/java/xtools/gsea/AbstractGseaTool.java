@@ -53,7 +53,7 @@ public abstract class AbstractGseaTool extends AbstractTool {
 
         // reqd
         fParamSet.addParam(fGeneSetMatrixParam);
-        fParamSet.addParam(fNumPermParam);
+        fParamSet.addParamPseudoReqd(fNumPermParam);
 
         // basic
         fParamSet.addParamBasic(fGcohGenReqdParam);

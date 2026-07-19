@@ -1,0 +1,376 @@
+/*
+ * GSEA JavaFX theme — controls, spacing, button chrome.
+ */
+
+.gsea-root {
+    -fx-font-family: "Segoe UI", "Helvetica Neue", sans-serif;
+    -fx-font-size: 13px;
+    -fx-background-color: #f6f7f9;
+}
+
+.gsea-section-header {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #1a2b3c;
+}
+
+.gsea-tool-desc {
+    -fx-text-fill: #334155;
+}
+
+.gsea-param-form {
+    -fx-background-color: #ffffff;
+}
+
+/* ---------- Buttons (shared chrome) ---------- */
+
+.gsea-root .button,
+.gsea-button {
+    -fx-background-color: #e8ecf1;
+    -fx-text-fill: #1a2b3c;
+    -fx-background-radius: 4;
+    -fx-border-color: #c5ced8;
+    -fx-border-radius: 4;
+    -fx-border-width: 1;
+    -fx-padding: 5 12 5 12;
+    -fx-min-height: 28;
+    -fx-cursor: hand;
+    -fx-content-display: left;
+    -fx-graphic-text-gap: 6;
+    /* Prefer growing / wrapping over "..." when space is tight. */
+    -fx-text-overrun: clip;
+}
+
+.gsea-root .button:hover,
+.gsea-button:hover {
+    -fx-background-color: #dde3ea;
+    -fx-border-color: #aeb8c4;
+}
+
+.gsea-root .button:pressed,
+.gsea-button:pressed {
+    -fx-background-color: #d0d7e0;
+}
+
+.gsea-root .button:disabled,
+.gsea-button:disabled {
+    -fx-opacity: 0.55;
+}
+
+/* Primary / commit actions (Run, Load, Build, …) */
+.gsea-run-button {
+    -fx-background-color: #0b6bcb;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-border-color: #0958a8;
+    -fx-padding: 6 16 6 16;
+    -fx-min-height: 30;
+}
+
+.gsea-run-button:hover {
+    -fx-background-color: #0958a8;
+    -fx-border-color: #074a8c;
+}
+
+.gsea-run-button:pressed {
+    -fx-background-color: #074a8c;
+}
+
+/* Compact rows: heatmap / chart toolbars */
+.gsea-toolbar-button {
+    -fx-padding: 4 10 4 10;
+    -fx-min-height: 26;
+    -fx-font-size: 12px;
+}
+
+/* Icon-only (Help, ellipsis, browse) */
+.gsea-icon-button {
+    -fx-padding: 4 6 4 6;
+    -fx-min-width: 28;
+    -fx-pref-width: 28;
+    -fx-min-height: 28;
+    -fx-max-width: 32;
+}
+
+/* LHS vertical tool rail — full-width tiles, icon left of wrapping label */
+.gsea-rail-button {
+    -fx-padding: 6 8 6 6;
+    -fx-background-radius: 3;
+    -fx-border-radius: 3;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-wrap-text: true;
+    -fx-text-alignment: left;
+    -fx-alignment: center-left;
+    -fx-content-display: left;
+    -fx-graphic-text-gap: 8;
+    -fx-min-height: 55;
+    -fx-text-overrun: clip;
+}
+
+/* Horizontal action / tool strips */
+.gsea-button-row {
+    -fx-spacing: 8;
+    -fx-alignment: center-left;
+}
+
+.gsea-action-bar {
+    -fx-spacing: 8;
+    -fx-alignment: center-left;
+    -fx-padding: 6 12 10 12;
+}
+
+.gsea-status {
+    -fx-text-fill: #475569;
+}
+
+.gsea-task-table {
+    -fx-background-color: #eef1f5;
+}
+
+.gsea-tool-group {
+    -fx-border-color: #a0a0a0;
+    -fx-border-width: 1;
+    -fx-border-radius: 2;
+}
+
+.gsea-panel-border {
+    -fx-border-color: #a0a0a0;
+    -fx-border-width: 1;
+}
+
+.gsea-muted {
+    -fx-text-fill: #64748b;
+}
+
+.gsea-tool-launcher-header {
+    -fx-background-color: #9696FF;
+}
+
+.gsea-task-chrome {
+    -fx-background-color: #d3d3d3;
+    -fx-border-color: #a0a0a0;
+    -fx-border-width: 1;
+    -fx-selection-bar: transparent;
+    -fx-selection-bar-non-focused: transparent;
+}
+
+/* Process status colors (matches Swing ExecState palette). */
+.gsea-task-table .table-cell.gsea-task-status-running {
+    -fx-text-fill: #0000ff;
+}
+
+.gsea-task-table .table-cell.gsea-task-status-paused {
+    -fx-text-fill: #ffa500;
+}
+
+.gsea-task-table .table-cell.gsea-task-status-success {
+    -fx-text-fill: #00ff00;
+}
+
+.gsea-task-table .table-cell.gsea-task-status-success-warn,
+.gsea-task-table .table-cell.gsea-task-status-killed {
+    -fx-text-fill: #ff00ff;
+}
+
+.gsea-task-table .table-cell.gsea-task-status-error {
+    -fx-text-fill: #ff0000;
+}
+
+.gsea-task-table .table-cell.gsea-task-status-invalid-param,
+.gsea-task-table .table-cell.gsea-task-status-canceled {
+    -fx-text-fill: #804040;
+}
+
+.gsea-task-table .table-cell.gsea-task-status-waiting {
+    -fx-text-fill: #808080;
+}
+
+.gsea-na-placeholder {
+    -fx-background-color: white;
+}
+
+.gsea-legend-box {
+    -fx-background-color: white;
+}
+
+.tab-pane > .tab-header-area > .headers-region > .tab {
+    -fx-background-radius: 4 4 0 0;
+}
+
+.table-view {
+    -fx-background-color: white;
+}
+
+.text-field,
+.text-area,
+.combo-box-base {
+    -fx-background-radius: 3;
+}
+
+/* Path validity (Swing GFieldUtils blue/red). Keep prompt gray if any promptText is set —
+ * otherwise -fx-text-fill makes gray ComboBox/TextField filler look like real typed text. */
+.text-input:gsea-path-good {
+    -fx-text-fill: #0000FF;
+    -fx-prompt-text-fill: #999999;
+}
+.text-input:gsea-path-bad {
+    -fx-text-fill: #FF0000;
+    -fx-prompt-text-fill: #999999;
+}
+
+/* Swing GDirFieldPlusChooser light-green directory field */
+.gsea-dir-field {
+    -fx-control-inner-background: #EAFFEA;
+}
+
+/* Swing ParamSetDisplay ReportLabel yellow */
+.gsea-report-label-field {
+    -fx-control-inner-background: #FFFF99;
+}
+
+.gsea-toast {
+    -fx-background-color: rgba(26, 43, 60, 0.92);
+    -fx-background-radius: 6;
+    -fx-border-color: #334155;
+    -fx-border-radius: 6;
+    -fx-border-width: 1;
+}
+
+.gsea-toast-label {
+    -fx-text-fill: #f8fafc;
+    -fx-font-size: 13px;
+}
+
+/* ---------- Native report explorer ---------- */
+
+.gsea-report-shell {
+    -fx-background-color: #f6f7f9;
+}
+
+.gsea-report-header {
+    -fx-background-color: #ffffff;
+    -fx-border-color: transparent transparent #e2e8f0 transparent;
+    -fx-border-width: 0 0 1 0;
+}
+
+.gsea-report-title {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #0f172a;
+}
+
+.gsea-report-kind {
+    -fx-background-color: #e8f1fb;
+    -fx-text-fill: #0b6bcb;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-padding: 3 8 3 8;
+    -fx-background-radius: 4;
+}
+
+.gsea-report-action-bar {
+    -fx-background-color: #ffffff;
+    -fx-border-color: transparent transparent #e2e8f0 transparent;
+    -fx-border-width: 0 0 1 0;
+}
+
+.gsea-report-tabs > .tab-header-area {
+    -fx-padding: 6 10 0 10;
+    -fx-background-color: #f6f7f9;
+}
+
+.gsea-report-explorer,
+.gsea-enrichment-root {
+    -fx-background-color: #f6f7f9;
+}
+
+.gsea-report-filter {
+    -fx-pref-width: 280;
+    -fx-background-radius: 6;
+    -fx-border-radius: 6;
+}
+
+.gsea-stat-chip {
+    -fx-background-color: #ffffff;
+    -fx-background-radius: 6;
+    -fx-border-color: #e2e8f0;
+    -fx-border-radius: 6;
+    -fx-border-width: 1;
+    -fx-padding: 6 10 6 10;
+    -fx-min-width: 72;
+}
+
+.gsea-stat-value {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #0f172a;
+}
+
+.gsea-stat-label {
+    -fx-font-size: 11px;
+    -fx-text-fill: #64748b;
+}
+
+.gsea-pheno-panel {
+    -fx-background-color: #ffffff;
+    -fx-background-radius: 8;
+    -fx-border-color: #e2e8f0;
+    -fx-border-radius: 8;
+    -fx-border-width: 1;
+}
+
+.gsea-pheno-panel-pos {
+    -fx-border-color: #fecaca;
+}
+
+.gsea-pheno-panel-neg {
+    -fx-border-color: #bfdbfe;
+}
+
+.gsea-pheno-title {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+}
+
+.gsea-pheno-pos {
+    -fx-text-fill: #b91c1c;
+}
+
+.gsea-pheno-neg {
+    -fx-text-fill: #1d4ed8;
+}
+
+.gsea-pheno-badge {
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-padding: 2 8 2 8;
+    -fx-background-radius: 4;
+    -fx-background-color: #f1f5f9;
+}
+
+.gsea-pheno-badge.gsea-pheno-pos {
+    -fx-background-color: #fee2e2;
+}
+
+.gsea-pheno-badge.gsea-pheno-neg {
+    -fx-background-color: #dbeafe;
+}
+
+.gsea-detail-pane {
+    -fx-background-color: #ffffff;
+    -fx-background-radius: 8;
+    -fx-border-color: #e2e8f0;
+    -fx-border-radius: 8;
+    -fx-border-width: 1;
+}
+
+.gsea-enrichment-table {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+}
+
+.gsea-enrichment-table .column-header-background {
+    -fx-background-color: #f8fafc;
+}
+

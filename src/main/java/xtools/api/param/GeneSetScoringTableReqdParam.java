@@ -4,22 +4,15 @@
 package xtools.api.param;
 
 import edu.mit.broad.genome.alg.gsea.*;
-import edu.mit.broad.genome.swing.fields.GComboBoxField;
-import edu.mit.broad.genome.swing.fields.GFieldPlusChooser;
 
-import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 /**
  * Object to capture commandline params</p>
  *
  * @author Aravind Subramanian, David Eby
  */
-public class GeneSetScoringTableReqdParam extends AbstractParam implements ActionListener {
-    private GComboBoxField cbOptions;
-
-    public GeneSetScoringTableReqdParam() {
+public class GeneSetScoringTableReqdParam extends AbstractParam {
+public GeneSetScoringTableReqdParam() {
         this(new GeneSetScoringTables.Weighted());
     }
 
@@ -51,19 +44,5 @@ public class GeneSetScoringTableReqdParam extends AbstractParam implements Actio
 
     public void setValue(GeneSetScoringTable table) {
         super.setValue(table);
-    }
-
-
-    public GFieldPlusChooser getSelectionComponent() {
-        if (cbOptions == null) {
-            cbOptions = ParamHelper.createActionListenerBoundHintsComboBox(false, this, this);
-            ParamHelper.safeSelectValueDefaultByString(cbOptions.getComboBox(), this);
-        }
-
-        return cbOptions;
-    }
-
-    public void actionPerformed(ActionEvent evt) {
-        this.setValue((GeneSetScoringTable) ((JComboBox) cbOptions.getComponent()).getSelectedItem());
     }
 }

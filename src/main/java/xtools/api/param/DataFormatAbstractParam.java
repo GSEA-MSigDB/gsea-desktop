@@ -4,22 +4,14 @@
 package xtools.api.param;
 
 import edu.mit.broad.genome.parsers.DataFormat;
-import edu.mit.broad.genome.swing.fields.GComboBoxField;
-import edu.mit.broad.genome.swing.fields.GFieldPlusChooser;
 
-import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 /**
  * @author Aravind Subramanian
  * @version %I%, %G%
  */
-public abstract class DataFormatAbstractParam extends AbstractParam implements ActionListener {
-
-    private GComboBoxField cbOptions;
-
-    /**
+public abstract class DataFormatAbstractParam extends AbstractParam {
+/**
      * Class constructor
      *
      * @param def
@@ -57,22 +49,4 @@ public abstract class DataFormatAbstractParam extends AbstractParam implements A
             return (DataFormat) val;
         }
     }
-
-
-    public GFieldPlusChooser getSelectionComponent() {
-
-        if (cbOptions == null) {
-            cbOptions = ParamHelper.createActionListenerBoundHintsComboBox(false, this, this);
-            ParamHelper.safeSelectValueDefaultByString(cbOptions.getComboBox(), this);
-        }
-
-        return cbOptions;
-
-    }
-
-    public void actionPerformed(ActionEvent evt) {
-        this.setValue((DataFormat) ((JComboBox) cbOptions.getComponent()).getSelectedItem());
-    }
-
-
 }    // End class AbstractDataFormatParam

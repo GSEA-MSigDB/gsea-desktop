@@ -3,9 +3,10 @@
  */
 package edu.mit.broad.genome.reports.pages;
 
-import edu.mit.broad.genome.Printf;
 import org.apache.ecs.Element;
-import org.apache.ecs.html.*;
+import org.apache.ecs.html.TR;
+
+import edu.mit.broad.genome.Printf;
 
 /**
  * Simple table with:
@@ -21,10 +22,12 @@ public class KeyValTable {
     public KeyValTable() {
         this.fTable = new org.apache.ecs.html.Table(0);
         fTable.setCols(2); // always
-        
-        // add the col names
-        fTable.addElement(HtmlFormat.THs.keyValTable(""));
-        fTable.addElement(HtmlFormat.THs.keyValTable(""));
+
+        // Keep header cells in a row so table markup is valid and layout is stable.
+        TR headerRow = new TR();
+        headerRow.addElement(HtmlFormat.THs.keyValTable(""));
+        headerRow.addElement(HtmlFormat.THs.keyValTable(""));
+        fTable.addElement(headerRow);
         this.fFloatFormatPrecision = -1; // @note magic number
     }
 

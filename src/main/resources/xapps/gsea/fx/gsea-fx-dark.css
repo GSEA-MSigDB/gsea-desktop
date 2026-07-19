@@ -1,0 +1,441 @@
+/*
+ * GSEA JavaFX dark theme — loaded after gsea-fx.css when .gsea-dark is active.
+ */
+
+.gsea-root.gsea-dark {
+    -fx-base: #3c4043;
+    -fx-background: #1e1f22;
+    -fx-control-inner-background: #2b2d30;
+    -fx-control-inner-background-alt: #323438;
+    -fx-text-base-color: #e8eaed;
+    -fx-text-inner-color: #e8eaed;
+    -fx-text-background-color: #e8eaed;
+    -fx-accent: #4c8bf5;
+    -fx-focus-color: #4c8bf5;
+    -fx-faint-focus-color: #4c8bf533;
+    -fx-background-color: #1e1f22;
+    -fx-text-fill: #e8eaed;
+}
+
+.gsea-root.gsea-dark .label,
+.gsea-root.gsea-dark .check-box,
+.gsea-root.gsea-dark .radio-button {
+    -fx-text-fill: #e8eaed;
+}
+
+.gsea-root.gsea-dark .hyperlink {
+    -fx-text-fill: #8ab4f8;
+}
+
+.gsea-root.gsea-dark .hyperlink:visited {
+    -fx-text-fill: #c58af9;
+}
+
+.gsea-root.gsea-dark .gsea-section-header {
+    -fx-text-fill: #f1f3f4;
+}
+
+.gsea-root.gsea-dark .gsea-tool-desc {
+    -fx-text-fill: #bdc1c6;
+}
+
+.gsea-root.gsea-dark .gsea-param-form {
+    -fx-background-color: #2b2d30;
+}
+
+.gsea-root.gsea-dark .gsea-status {
+    -fx-text-fill: #9aa0a6;
+}
+
+.gsea-root.gsea-dark .menu-bar,
+.gsea-root.gsea-dark .menu-bar .label {
+    -fx-background-color: #2b2d30;
+    -fx-text-fill: #e8eaed;
+}
+
+.gsea-root.gsea-dark .context-menu,
+.gsea-root.gsea-dark .menu-item {
+    -fx-background-color: #2b2d30;
+}
+
+.gsea-root.gsea-dark .menu-item:focused {
+    -fx-background-color: #3c4043;
+}
+
+.gsea-root.gsea-dark .tab-pane > .tab-header-area > .tab-header-background {
+    -fx-background-color: #25262a;
+}
+
+.gsea-root.gsea-dark .tab-pane > .tab-header-area > .headers-region > .tab {
+    -fx-background-color: #323438;
+}
+
+.gsea-root.gsea-dark .tab-pane > .tab-header-area > .headers-region > .tab:selected {
+    -fx-background-color: #1e1f22;
+}
+
+.gsea-root.gsea-dark .tab-pane > .tab-header-area > .headers-region > .tab .tab-label {
+    -fx-text-fill: #e8eaed;
+}
+
+.gsea-root.gsea-dark .split-pane {
+    -fx-background-color: #1e1f22;
+}
+
+.gsea-root.gsea-dark .scroll-pane,
+.gsea-root.gsea-dark .scroll-pane > .viewport {
+    -fx-background-color: #1e1f22;
+}
+
+.gsea-root.gsea-dark .table-view,
+.gsea-root.gsea-dark .list-view,
+.gsea-root.gsea-dark .tree-view {
+    -fx-background-color: #2b2d30;
+    -fx-control-inner-background: #2b2d30;
+    -fx-control-inner-background-alt: #323438;
+    -fx-text-background-color: #e8eaed;
+}
+
+.gsea-root.gsea-dark .table-view .column-header,
+.gsea-root.gsea-dark .table-view .column-header .label,
+.gsea-root.gsea-dark .table-view .filler {
+    -fx-background-color: #323438;
+    -fx-text-fill: #e8eaed;
+}
+
+.gsea-root.gsea-dark .text-field,
+.gsea-root.gsea-dark .text-area,
+.gsea-root.gsea-dark .combo-box-base {
+    -fx-background-color: #1e1f22;
+    -fx-control-inner-background: #1e1f22;
+    -fx-text-fill: #e8eaed;
+    -fx-prompt-text-fill: #9aa0a6;
+    -fx-border-color: #5f6368;
+}
+
+.gsea-root.gsea-dark .titled-pane > .title {
+    -fx-background-color: #323438;
+    -fx-text-fill: #e8eaed;
+}
+
+.gsea-root.gsea-dark .titled-pane > .content {
+    -fx-background-color: #2b2d30;
+    -fx-border-color: #5f6368;
+}
+
+.gsea-root.gsea-dark .separator *.line {
+    -fx-border-color: #5f6368;
+    -fx-background-color: #5f6368;
+}
+
+/* Buttons */
+.gsea-root.gsea-dark .button,
+.gsea-root.gsea-dark .gsea-button {
+    -fx-background-color: #3c4043;
+    -fx-text-fill: #e8eaed;
+    -fx-border-color: #5f6368;
+}
+
+.gsea-root.gsea-dark .button:hover,
+.gsea-root.gsea-dark .gsea-button:hover {
+    -fx-background-color: #4a4e52;
+    -fx-border-color: #80868b;
+}
+
+.gsea-root.gsea-dark .button:pressed,
+.gsea-root.gsea-dark .gsea-button:pressed {
+    -fx-background-color: #2b2d30;
+}
+
+.gsea-root.gsea-dark .gsea-run-button {
+    -fx-background-color: #1a73e8;
+    -fx-text-fill: white;
+    -fx-border-color: #174ea6;
+}
+
+.gsea-root.gsea-dark .gsea-run-button:hover {
+    -fx-background-color: #1967d2;
+    -fx-border-color: #174ea6;
+}
+
+.gsea-root.gsea-dark .gsea-run-button:pressed {
+    -fx-background-color: #185abc;
+}
+
+.gsea-root.gsea-dark .gsea-tool-group {
+    -fx-border-color: #5f6368;
+    -fx-border-width: 1;
+    -fx-border-radius: 2;
+    -fx-background-color: #2b2d30;
+}
+
+.gsea-root.gsea-dark .gsea-tool-launcher-header {
+    -fx-background-color: #3f51b5;
+}
+
+.gsea-root.gsea-dark .gsea-task-table,
+.gsea-root.gsea-dark .gsea-task-table .table-view,
+.gsea-root.gsea-dark .gsea-task-chrome {
+    -fx-background-color: #2b2d30;
+    -fx-border-color: #5f6368;
+}
+
+.gsea-root.gsea-dark .gsea-panel-border {
+    -fx-border-color: #5f6368;
+    -fx-border-width: 1;
+}
+
+.gsea-root.gsea-dark .gsea-na-placeholder {
+    -fx-background-color: #2b2d30;
+}
+
+.gsea-root.gsea-dark .gsea-legend-box {
+    -fx-background-color: #2b2d30;
+}
+
+/* Path validity stays high-contrast on dark surfaces */
+.gsea-root.gsea-dark .text-input:gsea-path-good {
+    -fx-text-fill: #8ab4f8;
+    -fx-prompt-text-fill: #9aa0a6;
+}
+.gsea-root.gsea-dark .text-input:gsea-path-bad {
+    -fx-text-fill: #f28b82;
+    -fx-prompt-text-fill: #9aa0a6;
+}
+
+.gsea-root.gsea-dark .gsea-dir-field {
+    -fx-control-inner-background: #1a3d2e;
+}
+
+.gsea-root.gsea-dark .gsea-report-label-field {
+    -fx-control-inner-background: #4a3f12;
+}
+
+.gsea-root.gsea-dark .dialog-pane {
+    -fx-background-color: #2b2d30;
+}
+
+.gsea-root.gsea-dark .dialog-pane > .content.label,
+.gsea-root.gsea-dark .dialog-pane .label {
+    -fx-text-fill: #e8eaed;
+}
+
+.gsea-root.gsea-dark .dialog-pane > .button-bar > .container {
+    -fx-background-color: #2b2d30;
+}
+
+.gsea-root.gsea-dark .dialog-pane:header .header-panel {
+    -fx-background-color: #323438;
+}
+
+.gsea-root.gsea-dark .dialog-pane:header .header-panel .label {
+    -fx-text-fill: #e8eaed;
+}
+
+/* Menus / popups outside the scene graph still inherit via stylesheet on DialogPane/Scene */
+.gsea-root.gsea-dark .context-menu .label,
+.gsea-root.gsea-dark .menu-item .label {
+    -fx-text-fill: #e8eaed;
+}
+
+.gsea-root.gsea-dark .menu-bar .menu:hover,
+.gsea-root.gsea-dark .menu-bar .menu:showing {
+    -fx-background-color: #3c4043;
+}
+
+.gsea-root.gsea-dark .combo-box-popup .list-view,
+.gsea-root.gsea-dark .combo-box-popup .list-cell {
+    -fx-background-color: #2b2d30;
+    -fx-text-fill: #e8eaed;
+}
+
+.gsea-root.gsea-dark .combo-box-popup .list-cell:filled:hover,
+.gsea-root.gsea-dark .combo-box-popup .list-cell:filled:selected {
+    -fx-background-color: #3c4043;
+}
+
+.gsea-root.gsea-dark .tooltip {
+    -fx-background-color: #323438;
+    -fx-text-fill: #e8eaed;
+    -fx-border-color: #5f6368;
+}
+
+.gsea-root.gsea-dark .check-box > .box,
+.gsea-root.gsea-dark .radio-button > .radio {
+    -fx-background-color: #1e1f22;
+    -fx-border-color: #5f6368;
+}
+
+.gsea-root.gsea-dark .check-box:selected > .box > .mark,
+.gsea-root.gsea-dark .radio-button:selected > .radio > .dot {
+    -fx-background-color: #4c8bf5;
+}
+
+.gsea-root.gsea-dark .scroll-bar {
+    -fx-background-color: #25262a;
+}
+
+.gsea-root.gsea-dark .scroll-bar .thumb {
+    -fx-background-color: #5f6368;
+}
+
+.gsea-root.gsea-dark .scroll-bar .thumb:hover {
+    -fx-background-color: #80868b;
+}
+
+.gsea-root.gsea-dark .scroll-bar .increment-button,
+.gsea-root.gsea-dark .scroll-bar .decrement-button {
+    -fx-background-color: #25262a;
+}
+
+.gsea-root.gsea-dark .list-cell,
+.gsea-root.gsea-dark .tree-cell,
+.gsea-root.gsea-dark .table-row-cell {
+    -fx-background-color: #2b2d30;
+    -fx-text-fill: #e8eaed;
+}
+
+.gsea-root.gsea-dark .list-cell:filled:selected,
+.gsea-root.gsea-dark .tree-cell:filled:selected,
+.gsea-root.gsea-dark .table-row-cell:filled:selected {
+    -fx-background-color: #3c4043;
+}
+
+.gsea-root.gsea-dark .list-cell:filled:hover,
+.gsea-root.gsea-dark .tree-cell:filled:hover,
+.gsea-root.gsea-dark .table-row-cell:filled:hover {
+    -fx-background-color: #323438;
+}
+
+/* Preserve process status semantics in dark mode as well. */
+.gsea-root.gsea-dark .gsea-task-table .table-cell.gsea-task-status-running {
+    -fx-text-fill: #8ab4f8;
+}
+
+.gsea-root.gsea-dark .gsea-task-table .table-cell.gsea-task-status-paused {
+    -fx-text-fill: #f6c177;
+}
+
+.gsea-root.gsea-dark .gsea-task-table .table-cell.gsea-task-status-success {
+    -fx-text-fill: #7ee787;
+}
+
+.gsea-root.gsea-dark .gsea-task-table .table-cell.gsea-task-status-success-warn,
+.gsea-root.gsea-dark .gsea-task-table .table-cell.gsea-task-status-killed {
+    -fx-text-fill: #ff9de1;
+}
+
+.gsea-root.gsea-dark .gsea-task-table .table-cell.gsea-task-status-error {
+    -fx-text-fill: #f28b82;
+}
+
+.gsea-root.gsea-dark .gsea-task-table .table-cell.gsea-task-status-invalid-param,
+.gsea-root.gsea-dark .gsea-task-table .table-cell.gsea-task-status-canceled {
+    -fx-text-fill: #c58f8f;
+}
+
+.gsea-root.gsea-dark .gsea-task-table .table-cell.gsea-task-status-waiting {
+    -fx-text-fill: #9aa0a6;
+}
+
+.gsea-root.gsea-dark .progress-bar > .track {
+    -fx-background-color: #1e1f22;
+}
+
+.gsea-root.gsea-dark .progress-bar > .bar {
+    -fx-background-color: #4c8bf5;
+}
+
+.gsea-root.gsea-dark .spinner .text-field {
+    -fx-background-color: #1e1f22;
+    -fx-text-fill: #e8eaed;
+}
+
+.gsea-root.gsea-dark .tool-bar {
+    -fx-background-color: #2b2d30;
+    -fx-border-color: #5f6368;
+}
+
+.gsea-root.gsea-dark .gsea-muted,
+.gsea-root.gsea-dark .gsea-muted .label {
+    -fx-text-fill: #9aa0a6;
+}
+
+.gsea-root.gsea-dark .gsea-toast {
+    -fx-background-color: rgba(60, 64, 67, 0.95);
+    -fx-border-color: #5f6368;
+}
+
+.gsea-root.gsea-dark .gsea-toast-label {
+    -fx-text-fill: #e8eaed;
+}
+
+.gsea-root.gsea-dark .gsea-report-shell,
+.gsea-root.gsea-dark .gsea-report-explorer,
+.gsea-root.gsea-dark .gsea-enrichment-root,
+.gsea-root.gsea-dark .gsea-report-tabs > .tab-header-area {
+    -fx-background-color: #1e1f22;
+}
+
+.gsea-root.gsea-dark .gsea-report-header,
+.gsea-root.gsea-dark .gsea-report-action-bar {
+    -fx-background-color: #2b2d30;
+    -fx-border-color: transparent transparent #5f6368 transparent;
+}
+
+.gsea-root.gsea-dark .gsea-report-title {
+    -fx-text-fill: #e8eaed;
+}
+
+.gsea-root.gsea-dark .gsea-report-kind {
+    -fx-background-color: #1a3a5c;
+    -fx-text-fill: #8ab4f8;
+}
+
+.gsea-root.gsea-dark .gsea-stat-chip,
+.gsea-root.gsea-dark .gsea-pheno-panel,
+.gsea-root.gsea-dark .gsea-detail-pane {
+    -fx-background-color: #2b2d30;
+    -fx-border-color: #5f6368;
+}
+
+.gsea-root.gsea-dark .gsea-pheno-panel-pos {
+    -fx-border-color: #7f1d1d;
+}
+
+.gsea-root.gsea-dark .gsea-pheno-panel-neg {
+    -fx-border-color: #1e3a8a;
+}
+
+.gsea-root.gsea-dark .gsea-stat-value {
+    -fx-text-fill: #e8eaed;
+}
+
+.gsea-root.gsea-dark .gsea-stat-label {
+    -fx-text-fill: #9aa0a6;
+}
+
+.gsea-root.gsea-dark .gsea-pheno-pos {
+    -fx-text-fill: #f28b82;
+}
+
+.gsea-root.gsea-dark .gsea-pheno-neg {
+    -fx-text-fill: #8ab4f8;
+}
+
+.gsea-root.gsea-dark .gsea-pheno-badge {
+    -fx-background-color: #3c4043;
+}
+
+.gsea-root.gsea-dark .gsea-pheno-badge.gsea-pheno-pos {
+    -fx-background-color: #5c2b2b;
+}
+
+.gsea-root.gsea-dark .gsea-pheno-badge.gsea-pheno-neg {
+    -fx-background-color: #1e3a5f;
+}
+
+.gsea-root.gsea-dark .gsea-enrichment-table .column-header-background {
+    -fx-background-color: #323438;
+}
+

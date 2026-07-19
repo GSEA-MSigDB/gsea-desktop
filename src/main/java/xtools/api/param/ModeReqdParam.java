@@ -3,7 +3,6 @@
  */
 package xtools.api.param;
 
-import java.awt.event.ActionListener;
 
 /**
  * Object to capture commandline params</p>
@@ -11,7 +10,7 @@ import java.awt.event.ActionListener;
  * @author Aravind Subramanian
  * @version %I%, %G%
  */
-public class ModeReqdParam extends StringReqdParam implements ActionListener {
+public class ModeReqdParam extends StringReqdParam {
 
     public ModeReqdParam(String name, String nameEnglish, String desc, String[] def_and_hints) {
         super(name, nameEnglish, desc, def_and_hints);

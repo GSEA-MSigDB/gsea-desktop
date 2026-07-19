@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Decompiled with CFR 0.152.
  */
 package edu.mit.broad.genome.objects;
 
@@ -7,315 +7,237 @@ import edu.mit.broad.genome.NotImplementedException;
 import edu.mit.broad.genome.math.ColorSchemes;
 import edu.mit.broad.genome.math.Matrix;
 import edu.mit.broad.genome.math.ScaleMode;
+import edu.mit.broad.genome.objects.Annot;
+import edu.mit.broad.genome.objects.ColorDataset;
+import edu.mit.broad.genome.objects.ColorDatasetImpl;
+import edu.mit.broad.genome.objects.ColorMap;
+import edu.mit.broad.genome.objects.Dataset;
+import edu.mit.broad.genome.objects.DefaultDataset;
+import edu.mit.broad.genome.objects.FeatureAnnot;
+import edu.mit.broad.genome.objects.SampleAnnot;
+import edu.mit.broad.genome.objects.Template;
+import java.awt.Color;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import org.genepattern.data.expr.IExpressionData;
 import org.genepattern.heatmap.ColorScheme;
 import org.genepattern.heatmap.image.FeatureAnnotator;
 import org.genepattern.heatmap.image.SampleAnnotator;
 
-import javax.swing.JComponent;
-import javax.swing.JScrollPane;
-import javax.swing.JTable;
-import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.DefaultTableModel;
-
-import java.awt.Color;
-import java.awt.Component;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
-/**
- * @author Aravind Subramanian
- */
 public class GPWrappers {
-
     private GPWrappers() {
     }
 
     public static ColorScheme createColorScheme_for_lev_with_score(final Dataset ds) {
+        return new ColorScheme(){
+            ColorDataset cds;
+            {
+                this.cds = new ColorDatasetImpl(ds, ScaleMode.REL_MEAN_ZERO_OMITTED, new ColorSchemes.BroadCancer());
+            }
 
-        return new ColorScheme() {
-
-            ColorDataset cds = new ColorDatasetImpl(ds, ScaleMode.REL_MEAN_ZERO_OMITTED, new ColorSchemes.BroadCancer());
-
+            @Override
             public Color getColor(int row, int column) {
-                return cds.getColor(row, column);
+                return this.cds.getColor(row, column);
             }
 
-            public void setDataset(final IExpressionData d) {
-                //cds = new ColorDatasetImpl(cr)
-                //throw new NotImplementedException();
-            }
-
-            public Component getLegend() {
-                return null;
-            }
-        };
-
-    }
-
-    public static ColorScheme createColorScheme(final Dataset ds,
-                                                final edu.mit.broad.genome.math.ColorSchemes.ColorScheme csIn) {
-
-        return new ColorScheme() {
-            ColorDataset cds = new ColorDatasetImpl(ds, csIn);
-
-            public Color getColor(int row, int column) {
-                return cds.getColor(row, column);
-            }
-
-            public void setDataset(final IExpressionData d) {
-                //cds = new ColorDatasetImpl(cr)
-                //throw new NotImplementedException();
-            }
-
-            JComponent legend;
-
-            public Component getLegend() {
-                if (legend == null) {
-                    legend = new JScrollPane(new LegendTable(csIn));
-                }
-
-                return legend;
+            @Override
+            public void setDataset(IExpressionData d) {
             }
         };
     }
 
-    static class LegendTable extends JTable {
-
-        LegendTable(final edu.mit.broad.genome.math.ColorSchemes.ColorScheme colorScheme) {
-
-            DefaultTableModel model = new DefaultTableModel(2, colorScheme.getNumColors());
-            String[] ss = new String[colorScheme.getNumColors()];
-            String[] ss_values = new String[colorScheme.getNumColors()];
-
-
-            for (int i = 0; i < colorScheme.getNumColors(); i++) {
-                ss[i] = "";
-                ss_values[i] = colorScheme.getValue(i);
-
+    public static ColorScheme createColorScheme(final Dataset ds, final ColorSchemes.ColorScheme csIn) {
+        return new ColorScheme(){
+            ColorDataset cds;
+            {
+                this.cds = new ColorDatasetImpl(ds, csIn);
             }
 
-            model.addRow(ss);
-            model.addRow(ss_values);
-            this.setModel(model);
+            @Override
+            public Color getColor(int row, int column) {
+                return this.cds.getColor(row, column);
+            }
 
-            this.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
-                public Component getTableCellRendererComponent(final JTable table,
-                                                               final Object value,
-                                                               final boolean isSelected,
-                                                               final boolean hasFocus,
-                                                               final int row,
-                                                               final int col) {
-                    super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, col);
+            @Override
+            public void setDataset(IExpressionData d) {
+            }
+        };
+    }
 
-                    if (row == 0) {
-                        this.setBackground(colorScheme.getColor(col));
-                    } else {
-                        this.setBackground(Color.WHITE);
-                    }
-                    return this;
-                }
-            });
-        }
-
-    } // End class LegendTable
-
-
-    public static IExpressionData createIExpressionData(final Dataset ds) {
+    public static IExpressionData createIExpressionData(Dataset ds) {
         return new IExpressionDataAdaptor(ds);
     }
 
-    // @todo improve to use an adaptor rather than cloning
-    public static Dataset createDataset(final IExpressionData ied, final Annot annot_opt) {
-
-        //klog.debug(">>> " + ied.getRowCount() + " " + ied.getColumnCount());
-
-        final Matrix m = new Matrix(ied.getRowCount(), ied.getColumnCount());
-
-        final String[] rowNames = new String[ied.getRowCount()];
-        for (int r = 0; r < ied.getRowCount(); r++) {
+    public static Dataset createDataset(IExpressionData ied, Annot annot_opt) {
+        Matrix m = new Matrix(ied.getRowCount(), ied.getColumnCount());
+        String[] rowNames = new String[ied.getRowCount()];
+        for (int r = 0; r < ied.getRowCount(); ++r) {
             rowNames[r] = ied.getRowName(r);
         }
-
-        final String[] colNames = new String[ied.getColumnCount()];
-        for (int c = 0; c < ied.getColumnCount(); c++) {
+        String[] colNames = new String[ied.getColumnCount()];
+        for (int c = 0; c < ied.getColumnCount(); ++c) {
             colNames[c] = ied.getColumnName(c);
         }
-
-        for (int r = 0; r < ied.getRowCount(); r++) {
-            for (int c = 0; c < ied.getColumnCount(); c++) {
-                m.setElement(r, c, (float) ied.getValue(r, c));
+        for (int r = 0; r < ied.getRowCount(); ++r) {
+            for (int c = 0; c < ied.getColumnCount(); ++c) {
+                m.setElement(r, c, (float)ied.getValue(r, c));
             }
         }
-
         Annot synched_annot = null;
         if (annot_opt != null) {
             synched_annot = new Annot(annot_opt.getFeatureAnnot(), annot_opt.getSampleAnnot_synched(colNames));
         }
-
         return new DefaultDataset("conv", m, rowNames, colNames, synched_annot);
     }
 
-    public static FeatureAnnotator createFeatureAnnotator(final Dataset ds) {
-        return createFeatureAnnotator(ds.getAnnot().getFeatureAnnot());
+    public static FeatureAnnotator createFeatureAnnotator(Dataset ds) {
+        return GPWrappers.createFeatureAnnotator(ds.getAnnot().getFeatureAnnot());
     }
 
     public static FeatureAnnotator createFeatureAnnotator(final FeatureAnnot fa) {
-
         if (fa == null) {
             throw new IllegalArgumentException("Param fa cannot be null");
         }
+        return new FeatureAnnotator(){
 
-        return new FeatureAnnotator() {
-
-            public String getAnnotation(final String feature, final int j) {
-
-                String s;
-                if (j == 0) {
-                    s = fa.getGeneSymbol(feature);
-                } else {
-                    s = fa.getGeneTitle(feature);
-                }
-
+            @Override
+            public String getAnnotation(String feature, int j) {
+                String s = j == 0 ? fa.getGeneSymbol(feature) : fa.getGeneTitle(feature);
                 if (s == null || s.equalsIgnoreCase("NULL")) {
                     return "";
-                } else {
-                    return s.trim();
                 }
+                return s.trim();
             }
 
-            // This is the count for the getAnnotation method  and not the GIN grid)
-            // // The count is NOT including the feature name field
+            @Override
             public int getColumnCount() {
-                return 2; // symbol and title
+                return 2;
             }
 
-            public List<Color> getColors(final String featureName) {
+            @Override
+            public List<Color> getColors(String featureName) {
                 return Collections.emptyList();
             }
         };
     }
 
     public static SampleAnnotator createSampleAnnotator(final Dataset ds, final Template t_opt) {
-
         if (ds == null) {
             throw new IllegalArgumentException("Param ds cannot be null");
         }
+        return new SampleAnnotator(){
 
-        return new SampleAnnotator() {
-
-            public Color getPhenotypeColor(final String sampleName) {
+            @Override
+            public Color getPhenotypeColor(String sampleName) {
                 if (t_opt != null) {
                     return t_opt.getItemColor(ds.getColumnIndex(sampleName));
-                } else {
-                    return Color.WHITE;
                 }
+                return Color.WHITE;
             }
 
+            @Override
             public boolean hasPhenotypeColors() {
                 return true;
             }
 
+            @Override
             public String getLabel(int i) {
                 if (ds.getAnnot() == null || ds.getAnnot().getSampleAnnot_global() == null) {
                     return "";
                 }
-
                 return ds.getAnnot().getSampleAnnot_global().getColorMap().getRowName(i);
             }
 
-            // the colors for the sample at the given column
-            public List<Color> getColors(final String sampleName) {
-
+            @Override
+            public List<Color> getColors(String sampleName) {
                 if (ds.getAnnot() == null || ds.getAnnot().getSampleAnnot_global() == null) {
                     return new ArrayList<Color>();
                 }
-
-                List<Color> list = new ArrayList<Color>();
+                ArrayList<Color> list = new ArrayList<Color>();
                 SampleAnnot sa = ds.getAnnot().getSampleAnnot_global();
-
                 ColorMap.Columns cm = sa.getColorMap();
-
-                for (int r = 0; r < cm.getNumRow(); r++) {
+                for (int r = 0; r < cm.getNumRow(); ++r) {
                     list.add(cm.getColor(cm.getRowName(r), sampleName));
                 }
-
                 return list;
             }
         };
     }
 
-    /**
-     * Inner class implementing a IExpressionData
-     */
-    static class IExpressionDataAdaptor implements IExpressionData {
-
+    static class IExpressionDataAdaptor
+    implements IExpressionData {
         private Dataset fDataset;
 
-
+        @Override
         public String getDataName(int index) {
             return null;
         }
 
+        @Override
         public int getDataCount() {
             return 0;
         }
 
-        /**
-         * Class constructor
-         *
-         * @param ds
-         */
-        public IExpressionDataAdaptor(final Dataset ds) {
+        public IExpressionDataAdaptor(Dataset ds) {
             if (ds == null) {
                 throw new IllegalArgumentException("Param ds cannot be null");
             }
-
             this.fDataset = ds;
         }
 
-        public double getValue(final int i, final int i1) {
-            return fDataset.getElement(i, i1);
+        @Override
+        public double getValue(int i, int i1) {
+            return this.fDataset.getElement(i, i1);
         }
 
-        public java.lang.String getRowName(final int i) {
-            return fDataset.getRowName(i);
+        @Override
+        public String getRowName(int i) {
+            return this.fDataset.getRowName(i);
         }
 
+        @Override
         public int getRowCount() {
-            return fDataset.getNumRow();
+            return this.fDataset.getNumRow();
         }
 
+        @Override
         public int getColumnCount() {
-            return fDataset.getNumCol();
+            return this.fDataset.getNumCol();
         }
 
-        public java.lang.String getColumnName(final int i) {
-            return fDataset.getColumnName(i);
+        @Override
+        public String getColumnName(int i) {
+            return this.fDataset.getColumnName(i);
         }
 
+        @Override
         public int getRowIndex(String pmid) {
-            return fDataset.getRowIndex(pmid);
+            return this.fDataset.getRowIndex(pmid);
         }
 
-        public int getColumnIndex(final String pmid) {
-            return fDataset.getColumnIndex(pmid);
+        @Override
+        public int getColumnIndex(String pmid) {
+            return this.fDataset.getColumnIndex(pmid);
         }
 
-        public String getValueAsString(final int i, final int i1) {
-            return Double.toString(getValue(i, i1));
+        @Override
+        public String getValueAsString(int i, int i1) {
+            return Double.toString(this.getValue(i, i1));
         }
 
-        public Object getData(final int row, final int column, final String name) {
+        @Override
+        public Object getData(int row, int column, String name) {
             throw new NotImplementedException();
         }
 
-        public String getRowMetadata(final int row, final String name) {
+        @Override
+        public String getRowMetadata(int row, String name) {
             return null;
         }
 
-        public String getColumnMetadata(final int column, final String name) {
+        @Override
+        public String getColumnMetadata(int column, String name) {
             return null;
         }
     }

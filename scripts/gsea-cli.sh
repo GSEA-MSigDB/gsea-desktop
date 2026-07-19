@@ -15,27 +15,25 @@ else
     java -version
 fi
 
-if [ -e "${prefix}/modules/disable-prefs.jar" ]; then
-    # Running in a context with Preferences disabled (probably as a GP Module)
-    PREFS_PROP=-Djava.util.prefs.PreferencesFactory=com.allaboutbalance.articles.disableprefs.DisabledPreferencesFactory
-else
-    PREFS_PROP=
-fi;
+MODULE_PATH="${prefix}/modules"
+if [ -d "${prefix}/javafx-modules" ]; then
+    MODULE_PATH="${MODULE_PATH}:${prefix}/javafx-modules"
+fi
 
 # Check if there is a user-specified Java arguments file
 # For more info, see the README at 
 # https://raw.githubusercontent.com/GSEA-MSigDB/gsea-desktop/master/scripts/readme.txt
 if [ -e "$HOME/.gsea/java_arguments" ]; then
-    exec java --module-path="${prefix}/modules" -Xmx4g \
+    exec java --module-path="${MODULE_PATH}" -Xmx4g \
         @"${prefix}/gsea.args" \
-        -Djava.awt.headless=true $PREFS_PROP \
+        -Djava.awt.headless=true \
         -Djava.util.logging.config.file="${prefix}/logging.properties" \
         @"$HOME/.gsea/java_arguments" \
         --module=org.gsea_msigdb.gsea/xapps.gsea.CLI "$@"
 else
-    exec java --module-path="${prefix}/modules" -Xmx4g \
+    exec java --module-path="${MODULE_PATH}" -Xmx4g \
         @"${prefix}/gsea.args" \
-        -Djava.awt.headless=true $PREFS_PROP \
+        -Djava.awt.headless=true \
         -Djava.util.logging.config.file="${prefix}/logging.properties" \
         --module=org.gsea_msigdb.gsea/xapps.gsea.CLI "$@"
 fi

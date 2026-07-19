@@ -17,11 +17,8 @@ import edu.mit.broad.xbench.heatmap.GramImagerImpl;
 
 import org.apache.ecs.StringElement;
 import org.apache.ecs.html.*;
-import org.genepattern.gsea.GeneHistogram;
 import org.genepattern.gsea.HCLAlgorithm;
-import org.genepattern.gsea.JaccardHistogram;
 import org.genepattern.gsea.LeadingEdgeAnalysis;
-import org.genepattern.heatmap.HeatMapComponent;
 import org.genepattern.heatmap.image.HeatMap;
 import org.genepattern.io.ImageUtil;
 
@@ -33,7 +30,6 @@ import xtools.api.param.Param;
 import xtools.api.param.StringInputParam;
 import xtools.api.param.StringMultiInputParam;
 
-import java.awt.Dimension;
 import java.io.File;
 import java.util.Properties;
 
@@ -54,9 +50,6 @@ public class LeadingEdgeTool extends AbstractTool {
 
     private StringInputParam fImageFormat = new StringInputParam("imgFormat", "image format", 
             "File format to use for generated images: png (default), svg (will be GZ compressed), or jpg", "png", false);
-
-    private BooleanParam fCreateExtraPlotsParam = new BooleanParam("extraPlots", 
-            "create extra LEV plots", false, false);
 
     private final BooleanParam fMakeZippedReportParam = AbstractTool.createZipReportParam(false);
 
@@ -123,7 +116,6 @@ public class LeadingEdgeTool extends AbstractTool {
         if (fGeneSetNamesParam.isSpecified()) {
             gsetNames = fGeneSetNamesParam.getStrings();
         }
-        boolean createExtraPlots = fCreateExtraPlotsParam.isSpecified() && fCreateExtraPlotsParam.isTrue();
         String imgFormat = (fImageFormat.isSpecified()) ? fImageFormat.getValue().toString() : "png";
         EnrichmentResult[] enrichmentResults = null;
         GeneSet[] gsets = null;
@@ -163,43 +155,13 @@ public class LeadingEdgeTool extends AbstractTool {
         } catch (Throwable t) {
             fReport.addError("Trouble clustering", t);
         }
-        
-        if (createExtraPlots) {
-            // TODO: Some duplicate work happening here, no doubt.  Reduce that later.
-            // - Attempts to pull out and use the clusteredDataset from the analysis object fail.
-            LeadingEdgeAnalysis analysis = LeadingEdgeAnalysis.runAnalysis(edb, gsetNames, null);
-    
-            JaccardHistogram jaccardHistogram = analysis.getJaccardHistogram();
-            // Hard-code the preferred size to match our legacy plots; these changed with JFreeChart 1.5.0
-            jaccardHistogram.getChartPanel().setPreferredSize(new Dimension(680, 420));
-            File jaccardHistFile = fReport.createFile("jaccard_histogram." + imgFormat, "Jaccard Histogram");
-            jaccardHistFile = ImageUtil.saveReportPlotImage(jaccardHistogram.getChartPanel(), jaccardHistFile, imgFormat);
-            
-            GeneHistogram geneHistogram = analysis.getGeneHistogram();
-            geneHistogram.getChartPanel().setPreferredSize(new Dimension(680, 420));
-            File geneHistFile = fReport.createFile("gene_histogram." + imgFormat, "Gene Histogram");
-            geneHistFile = ImageUtil.saveReportPlotImage(geneHistogram.getChartPanel(), geneHistFile, imgFormat);
-            
-            HeatMapComponent geneSetSimilarityHeatmap = analysis.getGeneSetSimilarityHeatmap();
-            File geneSetSimFile = fReport.createFile("gene_set_similarity_heatmap." + imgFormat, 
-                    "Gene Set Similarity Heatmap");
-            geneSetSimFile = ImageUtil.saveReportPlotImage(geneSetSimilarityHeatmap.getHeatMap(), geneSetSimFile, imgFormat);
-        
-            HeatMapComponent leadingEdgeHeatmap = analysis.getLeadingEdgePanel().getHeatMapComponent();
-            File leHeatmapFile = fReport.createFile("leading_edge_heatmap." + imgFormat, "Leading Edge Heatmap");
-            leHeatmapFile = ImageUtil.saveReportPlotImage(leadingEdgeHeatmap.getHeatMap(), leHeatmapFile, imgFormat);
-        }
 
         // -------------------------------------------------------------------------------------------- //
         // Make the Reports
         final HtmlReportIndexPage reportIndexPage = fReport.getIndexPage();
 
-        Div div = new Div();
-        H2 h2 = new H2("Leading edge results for enrichment database: <b>" + edb.getName() + "</b>");
-        div.addElement(h2);
-
-        // -------------------------------------------------------------------------------------------- //
-        div = new Div();
+        Div div = HtmlFormat.Divs.reportSection();
+        div.addElement(new H2("Leading edge results for enrichment database: <b>" + edb.getName() + "</b>"));
         div.addElement(new H4("Leading edge analysis: Clustered results"));
         UL ul = new UL();
         ul.addElement(new LI("There were " + enrichmentResults.length + " gene sets used in the leading edge analysis (see below for details)"));
@@ -213,12 +175,13 @@ public class LeadingEdgeTool extends AbstractTool {
         ul.addElement(new LI(line3));
         div.addElement(ul);
 
-        reportIndexPage.addBlock(div, true);
+        reportIndexPage.addBlock(div);
 
         // -------------------------------------------------------------------------------------------- //
 
         // Then add details on the gene sets used in the lea
         Table table = new Table();
+        table.setBorder(0);
         TH th = new TH();
         th.addElement(new TD("# members"));
         th.addElement(new TD("# members<br>in signal"));
@@ -243,14 +206,14 @@ public class LeadingEdgeTool extends AbstractTool {
             table.addElement(tr);
         }
 
-        div = new Div();
+        div = HtmlFormat.Divs.dataTable();
         div.addElement(new H4("Details of gene sets and signals used in this analysis"));
         div.addElement(table);
-        reportIndexPage.addBlock(div, true);
+        reportIndexPage.addBlock(div);
 
         // -------------------------------------------------------------------------------------------- //
 
-        div = new Div();
+        div = HtmlFormat.Divs.reportSection();
         div.addElement(new H4("Leading edge analysis: other files made"));
         ul = new UL();
         final File lev_ds_clustered_file = fReport.savePage(lev_ds_clustered, false);
@@ -272,16 +235,16 @@ public class LeadingEdgeTool extends AbstractTool {
 
         div.addElement(ul);
 
-        reportIndexPage.addBlock(div, true);
+        reportIndexPage.addBlock(div);
 
         // -------------------------------------------------------------------------------------------- //
         // Other
-        div = new Div();
+        div = HtmlFormat.Divs.reportSection();
         ul = new UL();
         div.addElement(new H4("Other"));
         ul.addElement(new LI(HtmlFormat.Links.hyper("Parameters", fReport.getParamsFile(), "used for this analysis", fReport.getReportDir())));
         div.addElement(ul);
-        reportIndexPage.addBlock(div, false);
+        reportIndexPage.addBlock(div);
 
         reportIndexPage.setAddBrowseFooter(false); // turn off the little browse footer
 
@@ -304,7 +267,6 @@ public class LeadingEdgeTool extends AbstractTool {
         fParamSet.addParam(fAltDelimParam);
         fParamSet.addParam(fGeneSetNamesParam);
         fParamSet.addParam(fImageFormat);
-        fParamSet.addParam(fCreateExtraPlotsParam);
         fParamSet.addParam(fMakeZippedReportParam);
     }
 
@@ -318,11 +280,7 @@ public class LeadingEdgeTool extends AbstractTool {
         try {
             if (dirp.isSpecified()) {
                 String dpn = dirp.getDir().getName();
-                StringBuilder buf = new StringBuilder();
-                buf.append("<div id=\"footer\" style=\"width: 905; height: 35\">\n").append(
-                        "<h3 style=\"text-align: left\"><font color=\"#808080\">Leading edge report for ").append(
-                        "GSEA result folder: ").append(dpn).append("</font></h3>\n").append("</div>");
-                return buf.toString();
+                return HtmlFormat.reportHeader("Leading edge report for GSEA result folder: " + dpn);
             }
         } catch (Throwable t) {
             t.printStackTrace();

@@ -4,6 +4,7 @@
 package edu.mit.broad.genome.alg.gsea;
 
 import java.util.Arrays;
+import java.util.concurrent.CancellationException;
 
 import edu.mit.broad.genome.math.Vector;
 import edu.mit.broad.genome.math.XMath;
@@ -17,7 +18,16 @@ import gnu.trove.TFloatArrayList;
  * @author Aravind Subramanian, David Eby
  */
 public class KSCore {
+    private static final int CANCEL_CHECK_MASK = 0x3F; // every 64 ranked-list rows
+
     public KSCore() { }
+
+    private static void throwIfCancelled() {
+        if (Thread.currentThread().isInterrupted()) {
+            Thread.currentThread().interrupt();
+            throw new CancellationException("GSEA scoring canceled");
+        }
+    }
 
     // The common (gsea) way
     public EnrichmentScore[] calculateKSScore(final GeneSetCohort gcoh, final boolean storeDeep) {
@@ -111,6 +121,9 @@ public class KSCore {
         
         final int rlSize = rl.getSize();
         for (int r = 0; r < rlSize; r++) {
+            if ((r & CANCEL_CHECK_MASK) == 0) {
+                throwIfCancelled();
+            }
             final boolean isLastRun = r == (rlSize - 1);
 
             String rowName = rl.getRankName(r);

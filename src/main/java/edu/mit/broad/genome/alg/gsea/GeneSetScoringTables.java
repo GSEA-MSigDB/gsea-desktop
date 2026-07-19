@@ -3,11 +3,12 @@
  */
 package edu.mit.broad.genome.alg.gsea;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import edu.mit.broad.genome.math.XMath;
 import edu.mit.broad.genome.objects.GeneSet;
 import edu.mit.broad.genome.objects.RankedList;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * @author Aravind Subramanian, David Eby
@@ -334,7 +335,7 @@ public class GeneSetScoringTables {
             this.miss_neg_score = nhNeg_by_nh * (1 / (numNegScores - nhNegActual));
 
             if (cnt % 250 == 0) {
-                System.out.println("xover: " + maxPosRealRank + " nhPos_by_nh: " + nhPos_by_nh + " nhNeg_by_nh: " + nhNeg_by_nh);
+                klog.debug("xover={} nhPos_by_nh={} nhNeg_by_nh={}", maxPosRealRank, nhPos_by_nh, nhNeg_by_nh);
             }
             cnt++;
 
@@ -501,7 +502,7 @@ public class GeneSetScoringTables {
             this.miss_neg_score = nhNeg_by_nh * (1 / (numNegScores - nhNegActual));
 
             if (cnt % 250 == 0) {
-                System.out.println("xover: " + maxPosRealRank + " nhPos_by_nh: " + nhPos_by_nh + " nhNeg_by_nh: " + nhNeg_by_nh);
+                klog.debug("xover={} nhPos_by_nh={} nhNeg_by_nh={}", maxPosRealRank, nhPos_by_nh, nhNeg_by_nh);
             }
             cnt++;
 

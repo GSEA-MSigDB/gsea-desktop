@@ -29,7 +29,7 @@ public class ZipUtility {
     private static final Logger klog = LoggerFactory.getLogger(ZipUtility.class);
 
     /**
-     * A method for unzipping of a directory archive; see org.genepattern.gsea.LeadingEdgeWidget.main This supports GenePattern Module
+     * Unzip a directory archive into a target folder.
      * GSEALeadingEdgeViewer.
      * 
      * @author Chet Birger, David Eby

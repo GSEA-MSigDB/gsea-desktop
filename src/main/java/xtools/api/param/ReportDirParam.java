@@ -3,8 +3,6 @@
  *******************************************************************************/
 package xtools.api.param;
 
-import edu.mit.broad.genome.swing.fields.GDirFieldPlusChooser;
-import edu.mit.broad.genome.swing.fields.GFieldPlusChooser;
 import edu.mit.broad.xbench.core.api.Application;
 
 import java.io.File;
@@ -48,23 +46,5 @@ public class ReportDirParam extends DirParam {
      *
      * @return
      */
-    public GFieldPlusChooser getSelectionComponent() {
-
-        if (fChooser == null) {
-            fChooser = new GDirFieldPlusChooser();
-            if (getValue() != null) {
-                // set the value to specified
-                fChooser.setValue(getValue());
-
-            } else { // cancelled
-                fChooser.setValue(getDefault());
-            }
-
-            ParamHelper.addDocumentListener(fChooser.getTextField(), this);
-
-        }
-
-        return fChooser;
-    }
 
 }    // End class AnalysisDirParam

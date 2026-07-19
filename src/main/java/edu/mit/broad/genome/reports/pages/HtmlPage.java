@@ -242,6 +242,7 @@ public class HtmlPage implements Page {
      */
     public void addTable(final String title, final KeyValTable keyValTable) {
         Table table = keyValTable.getTable();
+        table.setClass("gsea-table gsea-table-keyval");
         String stitle = _noNull(title);
         table.addElement(HtmlFormat.Titles.table(stitle));
         Div div = HtmlFormat.Divs.keyValTable();
@@ -250,6 +251,7 @@ public class HtmlPage implements Page {
     }
 
     public void addTable(final String title, final Table table) {
+        table.setClass("gsea-table gsea-table-data");
         Div div = HtmlFormat.Divs.dataTable();
         table.addElement(HtmlFormat.Titles.table(title));
         div.addElement(table);
@@ -260,6 +262,7 @@ public class HtmlPage implements Page {
     // row name is NOT the same as row numbering
     public void addTable(final RichDataframe rdf, final String plainTxtFileName, final boolean showRowNameCol) {
         Table table = new Table();
+        table.setClass("gsea-table gsea-table-rich");
         table.setBorder(1);
 
         int ncols = rdf.getNumCol();
@@ -270,25 +273,45 @@ public class HtmlPage implements Page {
         // Likewise for names
         if (showRowNameCol) { ncols++; }
 
-        table.setCols(ncols);
+        final boolean[] compactCols = inferCompactCols(rdf);
+        final String[] colAlign = inferColumnAlign(rdf);
 
-        table.addElement(HtmlFormat.THs.richTable(""));
+        table.setCols(ncols);
+        // Keep header cells in an explicit row so browsers lay out columns consistently.
+        TR headerRow = new TR();
+        TH rowNumHeader = HtmlFormat.THs.richTable("");
+        rowNumHeader.addAttribute("data-col-kind", "compact");
+        rowNumHeader.addAttribute("data-col-align", "right");
+        headerRow.addElement(rowNumHeader);
 
         if (showRowNameCol) {
-            table.addElement(HtmlFormat.THs.richTable(Constants.NAME));
+            TH rowNameHeader = HtmlFormat.THs.richTable(Constants.NAME);
+            rowNameHeader.addAttribute("data-col-kind", "text");
+            rowNameHeader.addAttribute("data-col-align", "left");
+            headerRow.addElement(rowNameHeader);
         }
 
         // add the col names
         for (int c = 0; c < rdf.getNumCol(); c++) {
-            table.addElement(HtmlFormat.THs.richTable(rdf.getColumnName(c)));
+            TH th = HtmlFormat.THs.richTable(rdf.getColumnName(c));
+            th.addAttribute("data-col-kind", compactCols[c] ? "compact" : "text");
+            th.addAttribute("data-col-align", colAlign[c]);
+            headerRow.addElement(th);
         }
+        table.addElement(headerRow);
 
         for (int r = 0; r < rdf.getNumRow(); r++) {
             TR tr = new TR(); // start a new row
-            tr.addElement(HtmlFormat.TDs.lessen(Integer.toString(r + 1)));
+            TD rowNumTd = HtmlFormat.TDs.lessen(Integer.toString(r + 1));
+            rowNumTd.addAttribute("data-col-kind", "compact");
+            rowNumTd.addAttribute("data-col-align", "right");
+            tr.addElement(rowNumTd);
 
             if (showRowNameCol) {
-                tr.addElement(HtmlFormat._td(rdf.getRowName(r)));
+                TD rowNameTd = HtmlFormat._td(rdf.getRowName(r));
+                rowNameTd.addAttribute("data-col-kind", "text");
+                rowNameTd.addAttribute("data-col-align", "left");
+                tr.addElement(rowNameTd);
             }
 
             for (int c = 0; c < rdf.getNumCol(); c++) {
@@ -309,6 +332,9 @@ public class HtmlPage implements Page {
                 } else {
                     td = new TD(); // empty to keep the synch up
                 }
+
+                td.addAttribute("data-col-kind", compactCols[c] ? "compact" : "text");
+                td.addAttribute("data-col-align", colAlign[c]);
 
                 tr.addElement(td);
             }
@@ -331,6 +357,181 @@ public class HtmlPage implements Page {
         Div div = HtmlFormat.Divs.richTable();
         div.addElement(table);
         this.addBlock(div);
+    }
+
+    private static boolean[] inferCompactCols(final RichDataframe rdf) {
+        final int cols = rdf.getNumCol();
+        final int rows = rdf.getNumRow();
+        final boolean[] compact = new boolean[cols];
+
+        for (int c = 0; c < cols; c++) {
+            final String colName = rdf.getColumnName(c);
+            final boolean headerSuggestsCompact = isLikelyCompactColumnName(colName);
+            int seen = 0;
+            int compactLike = 0;
+            int maxLen = 0;
+
+            for (int r = 0; r < rows; r++) {
+                final Object obj = rdf.getElementObj(r, c);
+                if (obj == null) {
+                    continue;
+                }
+
+                final String s = obj.toString().trim();
+                if (s.length() == 0) {
+                    continue;
+                }
+
+                seen++;
+                if (s.length() > maxLen) {
+                    maxLen = s.length();
+                }
+                if (isCompactValue(s)) {
+                    compactLike++;
+                }
+            }
+
+            if (headerSuggestsCompact) {
+                compact[c] = true;
+            } else {
+                final int minCompact = Math.max(1, (int) Math.ceil(seen * 0.95d));
+                compact[c] = seen > 0 && compactLike >= minCompact && maxLen <= 16;
+            }
+        }
+
+        return compact;
+    }
+
+    private static String[] inferColumnAlign(final RichDataframe rdf) {
+        final int cols = rdf.getNumCol();
+        final int rows = rdf.getNumRow();
+        final String[] align = new String[cols];
+
+        for (int c = 0; c < cols; c++) {
+            final String colName = rdf.getColumnName(c);
+
+            if (isIdentityColumnName(colName)) {
+                align[c] = "left";
+                continue;
+            }
+
+            if (isLikelyNumericColumnName(colName)) {
+                align[c] = "right";
+                continue;
+            }
+
+            int seen = 0;
+            int numericLike = 0;
+            for (int r = 0; r < rows; r++) {
+                final Object obj = rdf.getElementObj(r, c);
+                if (obj == null) {
+                    continue;
+                }
+
+                final String s = obj.toString().trim();
+                if (s.length() == 0) {
+                    continue;
+                }
+
+                seen++;
+                if (isNumericValue(s)) {
+                    numericLike++;
+                }
+            }
+
+            if (seen > 0 && numericLike >= Math.max(1, (int) Math.ceil(seen * 0.9d))) {
+                align[c] = "right";
+            } else {
+                align[c] = "center";
+            }
+        }
+
+        return align;
+    }
+
+    private static boolean isIdentityColumnName(final String colName) {
+        if (colName == null) {
+            return false;
+        }
+
+        final String n = colName.trim().toUpperCase();
+        if (n.length() == 0) {
+            return false;
+        }
+
+        return n.equals("SYMBOL")
+                || n.equals("TITLE")
+                || n.equals("NAME")
+                || n.startsWith("GS")
+                || n.contains("GENE SET");
+    }
+
+    private static boolean isLikelyNumericColumnName(final String colName) {
+        if (colName == null) {
+            return false;
+        }
+
+        final String n = colName.trim().toUpperCase();
+        if (n.length() == 0) {
+            return false;
+        }
+
+        return n.equals("SIZE")
+                || n.equals("ES")
+                || n.equals("NES")
+                || n.startsWith("NOM")
+                || n.startsWith("FDR")
+                || n.startsWith("FWER")
+                || n.contains("P-VAL")
+                || n.contains("RANK")
+                || n.contains("SCORE")
+                || n.contains("RUNNING ES");
+    }
+
+    private static boolean isLikelyCompactColumnName(final String colName) {
+        if (colName == null) {
+            return false;
+        }
+
+        final String n = colName.trim().toUpperCase();
+        if (n.length() == 0) {
+            return false;
+        }
+
+        if (n.equals("CORE ENRICHMENT") || n.equals("RANK IN GENE LIST") || n.equals("RANK AT MAX")) {
+            return true;
+        }
+
+        return n.equals("SIZE")
+                || n.equals("ES")
+                || n.equals("NES")
+                || n.startsWith("NOM")
+                || n.startsWith("FDR")
+                || n.startsWith("FWER")
+                || n.contains("P-VAL")
+                || n.contains("SCORE")
+                || n.contains("RUNNING ES");
+    }
+
+    private static boolean isCompactValue(final String s) {
+        if (s == null) {
+            return false;
+        }
+
+        final String t = s.trim();
+        if (t.length() == 0) {
+            return false;
+        }
+
+        if (t.equalsIgnoreCase("yes") || t.equalsIgnoreCase("no") || t.equalsIgnoreCase("na") || t.equals("-")) {
+            return true;
+        }
+
+        return isNumericValue(t);
+    }
+
+    private static boolean isNumericValue(final String s) {
+        return s != null && s.matches("[+-]?(?:\\d+|\\d*\\.\\d+)(?:[eE][+-]?\\d+)?%?");
     }
 
     private String _noNull(final String s) {

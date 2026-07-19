@@ -6,8 +6,6 @@ package xtools.api.param;
 import org.apache.commons.lang3.StringUtils;
 
 import edu.mit.broad.genome.parsers.ParseUtils;
-import edu.mit.broad.genome.swing.fields.GFieldPlusChooser;
-import edu.mit.broad.genome.swing.fields.GStringsInputFieldPlusChooser;
 
 /**
  * entry 1 or more string
@@ -17,7 +15,6 @@ import edu.mit.broad.genome.swing.fields.GStringsInputFieldPlusChooser;
  * @imp enters in a text are not a list chooser
  */
 public class StringMultiInputParam extends AbstractParam {
-    private GStringsInputFieldPlusChooser fChooser;
     private static final String DEFAULT_PARSE_WS_DELIMS = "\t\n";
     private static final String PARSE_DELIMS = "," + DEFAULT_PARSE_WS_DELIMS;// dont parse on spaces
 
@@ -169,24 +166,6 @@ public class StringMultiInputParam extends AbstractParam {
         return buf.toString();
     }
 
-    public GFieldPlusChooser getSelectionComponent() {
-        if (fChooser == null) {
-            String text = this.getValueStringRepresentation(false);
-            if (text == null) {
-                text = format((String[]) getDefault());
-            }
-
-            if (text == null) {
-                text = "";
-            }
-
-            fChooser = new GStringsInputFieldPlusChooser(text);
-            ParamHelper.addDocumentListener(fChooser.getTextField(), this);
-        }
-
-        return fChooser;
-
-    }
 
     public boolean isFileBased() {
         return false;

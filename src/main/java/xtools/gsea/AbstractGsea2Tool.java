@@ -64,7 +64,7 @@ public abstract class AbstractGsea2Tool extends AbstractGseaTool {
 
     protected void doAdditionalParams() {
         fParamSet.addParam(fDatasetParam);
-        fParamSet.addParamPseudoReqd(fTemplateParam);
+        fParamSet.addParam(fTemplateParam);
         fParamSet.addParamBasic(fMetricParam);
         fParamSet.addParamBasic(fOrderParam);
         fParamSet.addParamBasic(fSortParam);

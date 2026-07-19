@@ -73,9 +73,6 @@ public class GeneSetCohort {
 			//      // print message
 			//      nextLogPoint += 500
 			//   }
-		    if (g1 >= 500 && g1 % 500 == 0) {
-		        System.out.println("GeneSetCohorted: " + (g1 + 1) + " / " + fGeneSets.length);
-		    }
 		}
 		
 		if (!atleastonewithits) {
@@ -104,9 +101,6 @@ public class GeneSetCohort {
         	//      // print message
         	//      nextLogPoint += 500
         	//   }
-            if (g >= 500 && g % 500 == 0) {
-                System.out.println("GeneSetCohorted_scored: " + (g + 1) + " / " + fGeneSets.length);
-            }
         }
     }
 
@@ -163,12 +157,12 @@ public class GeneSetCohort {
         public GeneSetCohort createGeneSetCohort(final RankedList rl, final GeneSet[] gsets, final boolean realRl) {
             GeneToGeneSetMap g2gsetMap = GeneToGeneSetMap.generateGeneToGenesetMap(gsets);
             if (realRl && origTable instanceof GeneSetScoringTables.WeightedDoubleSidedAs) {
-                log.warn("### SETTING REAL RL: " + rl.getName());
+                log.debug("Setting real ranked list: {}", rl.getName());
                 ((GeneSetScoringTables.WeightedDoubleSidedAs) origTable).setReal(rl);
             }
 
             if (realRl && origTable instanceof GeneSetScoringTables.WeightedDoubleSidedAs1) {
-                log.warn("### SETTING REAL RL: " + rl.getName());
+                log.debug("Setting real ranked list: {}", rl.getName());
                 ((GeneSetScoringTables.WeightedDoubleSidedAs1) origTable).setReal(rl);
             }
 

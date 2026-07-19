@@ -1,23 +1,14 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2026 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California. All rights reserved.
+ */
 package edu.mit.broad.xbench.core.api;
 
-import edu.mit.broad.genome.TraceUtils;
-import xapps.api.frameworks.fiji.StatusBarAppender;
-
-import java.awt.*;
-
 /**
- * Factory method for an application
- * <p/>
- * This should be like a POB because only 1 version of it exists (for junit)
+ * Application services facade.
  */
 public class Application {
 
     private static Handler kAppHandler;
-
-    public static Dimension DEFAULT_MODAL_WIDGET_RUNNER_DIALOG = new Dimension(575, 500);
 
     private Application() {
     }
@@ -30,17 +21,12 @@ public class Application {
         if (appHandler == null) {
             throw new IllegalArgumentException("Param appHandler cannot be null");
         }
-
         kAppHandler = appHandler;
     }
 
     private static void _check() {
         if (kAppHandler == null) {
-            // Dont because that could trigger a recursive call
-            //Application.getWindowManager().showError("No Application handler set");
-            TraceUtils.showTrace();
-            // @todo return a default handler
-            throw new IllegalStateException("No Application handler set yet: " + kAppHandler);
+            throw new IllegalStateException("No Application handler set yet");
         }
     }
 
@@ -59,24 +45,18 @@ public class Application {
         return kAppHandler.getVdbManager();
     }
 
-    public static WindowManager getWindowManager() throws HeadlessException {
+    public static WindowManager getWindowManager() {
         _check();
         return kAppHandler.getWindowManager();
     }
 
     public interface Handler {
+        ToolManager getToolManager();
 
-        public StatusBarAppender getStatusBarAppender() throws HeadlessException;
+        FileManager getFileManager();
 
-        public ToolManager getToolManager();
+        VdbManager getVdbManager();
 
-        public FileManager getFileManager();
-
-        public VdbManager getVdbManager();
-
-        public WindowManager getWindowManager() throws HeadlessException;
-
-    } // End interface Handler
-
-
-} // End class Application
+        WindowManager getWindowManager();
+    }
+}

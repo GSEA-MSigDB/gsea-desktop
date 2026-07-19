@@ -3,20 +3,14 @@
  */
 package xtools.api.param;
 
-import edu.mit.broad.genome.swing.fields.GComboBoxField;
-import edu.mit.broad.genome.swing.fields.GFieldPlusChooser;
 
-import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 /**
  * Object to capture a boolean parameter
  *
  * @author Aravind Subramanian
  */
-public class BooleanParam extends AbstractParam implements ActionListener {
-    private GComboBoxField cbOptions;
+public class BooleanParam extends AbstractParam {
 
     public BooleanParam(String name, String desc, boolean reqd) {
         super(name, Boolean.class, desc, reqd, // the default
@@ -88,18 +82,5 @@ public class BooleanParam extends AbstractParam implements ActionListener {
         } else {
             return true;
         }
-    }
-
-    public GFieldPlusChooser getSelectionComponent() {
-        if (cbOptions == null) {
-            cbOptions = ParamHelper.createActionListenerBoundHintsComboBox(false, this, this);
-            ParamHelper.safeSelectValueDefaultOrNone(cbOptions.getComboBox(), this);
-        }
-
-        return cbOptions;
-    }
-
-    public void actionPerformed(ActionEvent evt) {
-        this.setValue(((JComboBox) cbOptions.getComponent()).getSelectedItem());
     }
 }

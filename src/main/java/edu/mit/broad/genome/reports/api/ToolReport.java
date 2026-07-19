@@ -312,9 +312,7 @@ public class ToolReport implements Report {
         } else if (SystemUtils.isPropertyTrue("GSEA")) {
             klog.info("Suppressing display reports as gsea app");
         } else {
-            klog.info("Displaying reports ...");
-            ToolReportDisplay display = new ToolReportDisplay(this);
-            display.show();
+            klog.info("Suppressing Swing report display; open the report index in a browser if needed");
         }
     }
 

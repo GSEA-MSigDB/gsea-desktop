@@ -11,6 +11,7 @@ import edu.mit.broad.genome.parsers.DataFormat;
 import edu.mit.broad.genome.reports.RichDataframe;
 import edu.mit.broad.genome.reports.api.ReportIndexState;
 import edu.mit.broad.genome.reports.api.ToolReport;
+import edu.mit.broad.genome.reports.pages.HtmlFormat;
 import edu.mit.broad.genome.reports.pages.HtmlReportIndexPage;
 import edu.mit.broad.genome.reports.web.LinkedFactory;
 import edu.mit.broad.vdb.map.Chip2ChipMapper;
@@ -49,11 +50,7 @@ public class Chip2Chip extends AbstractTool {
     private final BooleanParam fMakeZippedReportParam = AbstractTool.createZipReportParam(false);
 
     public static String createHeader() {
-        StringBuffer buf = new StringBuffer();
-        buf.append("<div id=\"footer\" style=\"width: 905; height: 35\">\n").append(
-                "<h3 style=\"text-align: left\"><font color=\"#808080\">Chip2Chip Report").append("</font></h3>\n").append("</div>");
-    
-        return buf.toString();
+        return HtmlFormat.reportHeader("Chip2Chip Report");
     }
 
     private static void doMapping(final Chip2ChipMapper mapper,

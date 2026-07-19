@@ -6,13 +6,12 @@ package xtools.api.param;
 import edu.mit.broad.genome.objects.Dataset;
 import xtools.api.AbstractTool;
 
-import java.awt.event.ActionListener;
 
 /**
  * @author Aravind Subramanian
  * @version %I%, %G%
  */
-public class DatasetReqdParam extends PobParam implements ActionListener {
+public class DatasetReqdParam extends PobParam {
     /**
      * Class constructor
      */

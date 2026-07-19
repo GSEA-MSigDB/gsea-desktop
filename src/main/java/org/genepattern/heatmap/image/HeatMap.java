@@ -115,6 +115,46 @@ public class HeatMap {
     public int getHeightWithHeader() {
         return height + header.height;
     }
+
+    /** Pixel height of the column-name / annotation header above the matrix. */
+    public int getHeaderHeight() {
+        return header != null ? header.height : 0;
+    }
+
+    public int getElementWidth() {
+        return elementSize.width;
+    }
+
+    public int getElementHeight() {
+        return elementSize.height;
+    }
+
+    public int getLeftBorder() {
+        return leftBorder;
+    }
+
+    public IExpressionData getData() {
+        return data;
+    }
+
+    /**
+     * Map a point in a full heatmap snapshot (header + matrix) to a data cell, or {@code null}.
+     */
+    public int[] cellAtSnapshotPoint(int x, int y) {
+        if (data == null || elementSize.width <= 0 || elementSize.height <= 0) {
+            return null;
+        }
+        int matrixY = y - getHeaderHeight();
+        if (matrixY < 0) {
+            return null;
+        }
+        int col = (x - leftBorder) / elementSize.width;
+        int row = matrixY / elementSize.height;
+        if (row < 0 || row >= data.getRowCount() || col < 0 || col >= data.getColumnCount()) {
+            return null;
+        }
+        return new int[] { row, col };
+    }
     
     public static HeatMap createHeatMap(IExpressionData data,
                                         DisplaySettings ds, FeatureAnnotator fa, SampleAnnotator sa) {
@@ -412,6 +452,22 @@ public class HeatMap {
     public void setElementSize(int width, int height) {
         elementSize.width = width;
         elementSize.height = height;
+    }
+
+    /**
+     * Recalculate layout after {@link #setElementSize} or DisplaySettings flag changes.
+     */
+    public void recalculateSize() {
+        BufferedImage bi = new BufferedImage(100, 100, BufferedImage.TYPE_3BYTE_BGR);
+        Graphics2D g = bi.createGraphics();
+        updateSize(g);
+        header.updateSize(contentWidth, elementSize.width, g);
+        g.dispose();
+    }
+
+    /** Mutable display settings for this heatmap (cell size, grid, names). */
+    public DisplaySettings getDisplaySettings() {
+        return ds;
     }
 
     int getMaxGeneNamesWidth(Graphics2D g) {

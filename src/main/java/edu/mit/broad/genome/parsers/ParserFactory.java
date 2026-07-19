@@ -11,7 +11,6 @@ import edu.mit.broad.genome.objects.esmatrix.db.EnrichmentDb;
 import edu.mit.broad.genome.reports.api.Report;
 import edu.mit.broad.genome.utils.FileUtils;
 import edu.mit.broad.vdb.chip.Chip;
-import edu.mit.broad.xbench.core.api.Application;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,16 +32,6 @@ import java.util.*;
  * @author Aravind Subramanian, David Eby
  */
 public class ParserFactory implements Constants {
-    
-    // These probably belong elsewhere if we make a broader file cache than just for special CHIPs
-    private static final File fileCacheDir = new File(Application.getVdbManager().getRuntimeHomeDir(), "file_cache");
-    private static final File chipCacheDir = new File(fileCacheDir, "chip");
-    static {
-        // Make sure the cache dirs exist.
-        if (!chipCacheDir.exists()) {
-            chipCacheDir.mkdirs();
-        }
-    }
     
     private static final Logger klog = LoggerFactory.getLogger(ParserFactory.class);
 
@@ -666,8 +655,6 @@ public class ParserFactory implements Constants {
         }
 
         if (add2Cache) {
-            _getCache().sortModel(GeneSet.class);
-            // @todo fix me
             _getCache().hackAddAuxSets(gmx);
         }
 
@@ -735,8 +722,9 @@ public class ParserFactory implements Constants {
     public static PersistentObject read(final String path, final InputStream is) throws Exception {
         return read(path, is, true);
     }
-    
-    private static PersistentObject read(final String path, final InputStream is, boolean useCache) throws Exception {
+
+    /** Same as {@link #read(String, InputStream)} with explicit cache control (e.g. force-reload). */
+    public static PersistentObject read(final String path, final InputStream is, boolean useCache) throws Exception {
 
         try {
             if (path == null) {

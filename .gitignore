@@ -9,3 +9,12 @@
 /build_java11
 /.gradle
 /logs
+/javafx-modules/
+# Local scratch / generated analysis artifacts
+__pycache__/
+*.pyc
+/myplots/
+/tmp-compare/
+/_audit*/
+gsea_bubble_*.png
+gsea_enrichment_bubble_significance.png

@@ -15,8 +15,7 @@ public class ClassUtils {
 
     /**
      * @return The short name of clazz by stripping off the package name.
-     *         For example: the short name of javax.swing.JTable.class
-     *         is "JTable"
+     *         For example: the short name of {@code java.util.ArrayList} is {@code "ArrayList"}.
      */
     public static String shorten(Class clazz) {
         return shorten(clazz.getName());

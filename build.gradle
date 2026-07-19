@@ -1,17 +1,31 @@
 // Copyright (c) 2003-2026 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents 
 // of the University of California. All rights reserved.
-apply plugin: 'java'
+plugins {
+    id 'java'
+    id 'org.openjfx.javafxplugin' version '0.1.0'
+}
 import org.apache.tools.ant.filters.ReplaceTokens
 
 ext.moduleName = 'org.gsea_msigdb.gsea'
 ext.mainClassName = 'xapps.gsea.GSEA'
+ext.javafxVersion = '21.0.6'
 
 repositories {
+    mavenCentral()
     flatDir { dirs 'modules' }
+}
+
+javafx {
+    version = javafxVersion
+    modules = [ 'javafx.controls', 'javafx.graphics', 'javafx.web', 'javafx.swing' ]
 }
 
 dependencies {
     implementation fileTree(dir: 'modules', include: '*.jar')
+    // Canvas-backed Graphics2D for JFreeChart in the FX shell (also synced into javafx-modules/).
+    implementation 'org.jfree:org.jfree.fxgraphics2d:2.1.5'
+    // Windows dark title-bar (DwmSetWindowAttribute); unused on macOS/Linux.
+    implementation 'net.java.dev.jna:jna:5.14.0'
 }
 
 tasks.withType(JavaCompile) {
@@ -58,6 +72,48 @@ compileJava {
     }
 }
 
+tasks.register('syncJavaFxToModules', Copy) {
+    group = 'distribution'
+    description = 'Copy OpenJFX and FXGraphics2D jars into javafx-modules/ for script launches'
+    from configurations.runtimeClasspath
+    into 'javafx-modules'
+    include '**/javafx-*.jar'
+    include '**/fxgraphics2d-*.jar'
+    include '**/org.jfree.fxgraphics2d-*.jar'
+    include '**/jna-*.jar'
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
+    // Drop prior OpenJFX versions so module-path does not see two javafx.* jars.
+    doFirst {
+        def dest = file('javafx-modules')
+        if (dest.directory) {
+            dest.eachFile { f ->
+                if (f.name.startsWith('javafx-') && f.name.endsWith('.jar')) {
+                    f.delete()
+                }
+            }
+        }
+    }
+}
+
+tasks.register('runGseaFx', JavaExec) {
+    group = 'application'
+    description = 'Launch GSEA with the JavaFX UI'
+    dependsOn jar, syncJavaFxToModules
+    mainModule = moduleName
+    mainClass = mainClassName
+    classpath = files(jar.archiveFile) + files('modules') + files('javafx-modules') + sourceSets.main.runtimeClasspath
+    jvmArgs = [
+        '--module-path', classpath.asPath,
+        '--add-opens', 'javafx.graphics/com.sun.javafx.stage=org.gsea_msigdb.gsea',
+        '-Dgsea.ui=javafx',
+        '-Djava.awt.headless=false',
+        '-Xmx4g'
+    ]
+    doFirst {
+        classpath = files()
+    }
+}
+
 task createDist(type: Copy, dependsOn: jar)  {
     from ("src/main/resources/edu/mit/broad/genome/resources/icon_64x64.png")
     from ('scripts') {
@@ -71,11 +127,23 @@ task createDist(type: Copy, dependsOn: jar)  {
     with copySpec {
         from ("${buildDir}/libs")
         from ("modules")
+        from ("javafx-modules")
         from (configurations.runtimeClasspath)
         into "modules"
     }
     into "${buildDir}/GSEA-dist"
+
+    doLast {
+        // Ensure OpenJFX + FXGraphics2D jars from Maven are present beside flatDir modules
+        copy {
+            from configurations.runtimeClasspath
+            into "${buildDir}/GSEA-dist/modules"
+            include '**/javafx-*.jar'
+        }
+    }
 }
+
+createDist.dependsOn syncJavaFxToModules
 
 task createDistZip(type: Zip, dependsOn: createDist) {
     archiveBaseName = "GSEA"
@@ -118,7 +186,9 @@ task createMacAppDist(type: Copy, dependsOn: createDist) {
         into "GSEA_${version}.app/Contents"
     }
     with copySpec {
+        // Native MacOS launchers embed -Xdock:icon=Resources/icon_64.png
         from ("src/main/resources/edu/mit/broad/genome/resources/icon_64x64.png")
+        rename { 'icon_64.png' }
         into "GSEA_${version}.app/Contents/Resources"
     }
     with copySpec {

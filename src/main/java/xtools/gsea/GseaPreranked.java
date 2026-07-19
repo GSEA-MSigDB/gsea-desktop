@@ -14,6 +14,7 @@ import edu.mit.broad.genome.objects.strucs.CollapsedDetails;
 import edu.mit.broad.genome.parsers.EdbFolderParser;
 import edu.mit.broad.genome.reports.EnrichmentReports;
 import edu.mit.broad.genome.reports.api.ReportIndexState;
+import edu.mit.broad.genome.reports.pages.HtmlFormat;
 import edu.mit.broad.genome.reports.pages.HtmlReportIndexPage;
 import edu.mit.broad.vdb.chip.Chip;
 import edu.mit.broad.vdb.chip.FeatureAnnotChip;
@@ -210,12 +211,7 @@ public class GseaPreranked extends AbstractGseaTool {
         try {
             if (dsr.isSpecified()) {
                 RankedList rl = dsr.getRankedList();
-                StringBuilder buf = new StringBuilder();
-                buf.append("<div id=\"footer\" style=\"width: 905; height: 35\">\n").append(
-                        "<h3 style=\"text-align: left\"><font color=\"#808080\">GSEA Report for ").append(
-                        "Dataset ").append(rl.getName()).append("</font></h3>\n").append("</div>");
-
-                return buf.toString();
+                return HtmlFormat.reportHeader("GSEA Report for Dataset " + rl.getName());
             }
         } catch (Throwable t) {
             t.printStackTrace();

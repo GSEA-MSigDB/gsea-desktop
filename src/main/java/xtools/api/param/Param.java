@@ -4,7 +4,6 @@
 package xtools.api.param;
 
 import edu.mit.broad.genome.Constants;
-import edu.mit.broad.genome.swing.fields.GFieldPlusChooser;
 
 /**
  * 4 kinds of parameters:
@@ -77,17 +76,8 @@ public interface Param {
     public boolean isFileBased();
 
     /**
-     * component which represents the choices allowed for this Param
-     * should be selectable
-     *
-     * @return
-     */
-    public GFieldPlusChooser getSelectionComponent();
-
-    /**
      * CONSTANTS FOR PARAM NAMES AND DESCS
      */
-
     public static final String DF_FILE = "df_file";
     public static final String DF_FILE_DESC = "Path to the File containing the Dataframe ";
 

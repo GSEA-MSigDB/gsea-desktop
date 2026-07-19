@@ -25,7 +25,6 @@ import edu.mit.broad.genome.reports.api.Report;
 import edu.mit.broad.genome.reports.api.ToolReport;
 import edu.mit.broad.genome.reports.pages.*;
 import edu.mit.broad.genome.reports.web.LinkedFactory;
-import edu.mit.broad.genome.swing.GuiHelper;
 import edu.mit.broad.xbench.heatmap.GramImagerImpl;
 import gnu.trove.TIntFloatHashMap;
 import gnu.trove.TIntIntHashMap;
@@ -1422,7 +1421,7 @@ public class EnrichmentReports {
         plot = (XYPlot) chart.getPlot();
         IntervalMarker target = new IntervalMarker(0, 0.25);
         target.setLabelAnchor(RectangleAnchor.LEFT);
-        target.setPaint(GuiHelper.COLOR_LIGHT_YELLOW);
+        target.setPaint(new Color(255, 255, 210));
         plot.addRangeMarker(target, Layer.BACKGROUND);
 
         XYItemRenderer renderer = plot.getRenderer();

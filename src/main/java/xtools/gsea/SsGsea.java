@@ -54,6 +54,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
+import java.util.concurrent.CancellationException;
 
 /**
  * Single-sample GSEA (ssGSEA): per-sample enrichment scores for each gene set,
@@ -64,6 +65,13 @@ import java.util.Set;
  * use {@code roc_plots} / {@code roc_plot_n} only to control optional ROC PNGs.
  */
 public class SsGsea extends AbstractTool {
+
+    private static void throwIfCancelled() {
+        if (Thread.currentThread().isInterrupted()) {
+            Thread.currentThread().interrupt();
+            throw new CancellationException("ssGSEA run canceled");
+        }
+    }
 
     private final DatasetReqdParam fDatasetParam = new DatasetReqdParam();
     private final ChipOptParam fChipParam = new ChipOptParam(false);
@@ -170,6 +178,7 @@ public class SsGsea extends AbstractTool {
 
     @Override
     public void execute() throws Exception {
+        throwIfCancelled();
         startExec();
         final long runStartMs = System.currentTimeMillis();
 
@@ -234,6 +243,9 @@ public class SsGsea extends AbstractTool {
         float[][] matrix = new float[nr][nc];
         String[] rowNames = new String[nr];
         for (int r = 0; r < nr; r++) {
+            if ((r & 0x3F) == 0) {
+                throwIfCancelled();
+            }
             rowNames[r] = work.getRowName(r);
             for (int c = 0; c < nc; c++) {
                 matrix[r][c] = work.getElement(r, c);
@@ -259,6 +271,7 @@ public class SsGsea extends AbstractTool {
         }
         List<GsScoreRow> scored = new ArrayList<GsScoreRow>();
         for (GeneSet gs : origGeneSets) {
+            throwIfCancelled();
             int nMem = gs.getNumMembers();
             if (nMem < minSz || nMem > maxSz) {
                 continue;
@@ -270,6 +283,9 @@ public class SsGsea extends AbstractTool {
             Set<Integer> rowIx = SsGseaProjection.rowsForOverlap(rowNames, overlap);
             float[] colScores = new float[nc];
             for (int c = 0; c < nc; c++) {
+                if ((c & 0x0F) == 0) {
+                    throwIfCancelled();
+                }
                 colScores[c] = SsGseaProjection.enrichmentScore(matrix, c, rowIx, weight);
             }
             String desc = gs.getNameEnglish() != null ? gs.getNameEnglish() : "";
@@ -286,6 +302,9 @@ public class SsGsea extends AbstractTool {
         List<String> outRowNames = new ArrayList<String>();
         List<String> outDesc = new ArrayList<String>();
         for (int r = 0; r < outputRows.size(); r++) {
+            if ((r & 0x3F) == 0) {
+                throwIfCancelled();
+            }
             GsScoreRow row = outputRows.get(r);
             outRowNames.add(row.name);
             outDesc.add(row.desc);
@@ -487,7 +506,7 @@ public class SsGsea extends AbstractTool {
                 && coiClassNameOpt != null
                 && otherClassNameOpt != null;
 
-        Div d1 = new Div();
+        Div d1 = HtmlFormat.Divs.reportSection();
         d1.addElement(new H4("ssGSEA results"));
         UL u1 = new UL();
         u1.addElement(new LI(HtmlFormat.Links.hyper("ssGSEA scores (GCT)", mainGct,
@@ -498,7 +517,7 @@ public class SsGsea extends AbstractTool {
         fReport.getIndexPage().addBlock(d1, false);
 
         if (gseaLayoutRoc) {
-            Div dCmp = new Div();
+            Div dCmp = HtmlFormat.Divs.reportSection();
             dCmp.addElement(new H4("Phenotype labels (CLS)"));
             final UL uCmp = new UL();
             uCmp.addElement(new LI("Template: " + clsTemplateOpt.getName()));
@@ -514,7 +533,7 @@ public class SsGsea extends AbstractTool {
                 nNeg = mccPheno.nMccNeg;
                 nZ = mccPheno.nMccZero;
             }
-            final Div dCoi = new Div();
+            final Div dCoi = HtmlFormat.Divs.reportSection();
             dCoi.addElement(new H4("ROC in phenotype: " + coiClassNameOpt + " (MCC &gt; 0)"));
             final UL uCoi = new UL();
             if (nScored > 0) {
@@ -546,7 +565,7 @@ public class SsGsea extends AbstractTool {
             dCoi.addElement(uCoi);
             fReport.getIndexPage().addBlock(dCoi, false);
 
-            final Div dOth = new Div();
+            final Div dOth = HtmlFormat.Divs.reportSection();
             dOth.addElement(new H4("ROC in phenotype: " + otherClassNameOpt + " (MCC &lt; 0)"));
             final UL uOth = new UL();
             if (nScored > 0) {
@@ -574,7 +593,7 @@ public class SsGsea extends AbstractTool {
             dOth.addElement(uOth);
             fReport.getIndexPage().addBlock(dOth, false);
 
-            final Div dGlob = new Div();
+            final Div dGlob = HtmlFormat.Divs.reportSection();
             dGlob.addElement(new H4("Global statistics and tables"));
             final UL uGl = new UL();
             uGl.addElement(new LI(HtmlFormat.Links.hyper("Detailed", "ROC and AUC for all gene sets (TSV)", rocAucTsv,
@@ -590,7 +609,7 @@ public class SsGsea extends AbstractTool {
             fReport.getIndexPage().addBlock(dGlob, false);
         }
 
-        Div dDs = new Div();
+        Div dDs = HtmlFormat.Divs.reportSection();
         dDs.addElement(new H4("Dataset details"));
         UL uDs = new UL();
         if (cd != null) {
@@ -607,7 +626,7 @@ public class SsGsea extends AbstractTool {
         fReport.getIndexPage().addBlock(dDs, false);
 
         if (etiologyTsv != null) {
-            final Div dE = new Div();
+            final Div dE = HtmlFormat.Divs.reportSection();
             dE.addElement(new H4("Probe → gene (collapse)"));
             final UL uE = new UL();
             uE.addElement(new LI(HtmlFormat.Links.hyper("Chip mapping / etiology", etiologyTsv, "(as in the GSEA tool)", rdir)));
@@ -615,7 +634,7 @@ public class SsGsea extends AbstractTool {
             fReport.getIndexPage().addBlock(dE, false);
         }
 
-        final Div dP = new Div();
+        final Div dP = HtmlFormat.Divs.reportSection();
         dP.addElement(new H4(gseaLayoutRoc ? "Visualizations" : "Visualizations and tables"));
         final UL uP = new UL();
         if (globalHeatMapHtml != null) {
@@ -669,7 +688,7 @@ public class SsGsea extends AbstractTool {
         fReport.getIndexPage().addBlock(dP, false);
 
         if (clsTemplateOpt != null && !gseaLayoutRoc) {
-            final Div dC = new Div();
+            final Div dC = HtmlFormat.Divs.reportSection();
             dC.addElement(new H4("Phenotype (CLS)"));
             final UL uCl = new UL();
             uCl.addElement(new LI("2-class template: " + clsTemplateOpt.getName() + " (sample bar in the heat map when provided)."));
@@ -677,7 +696,7 @@ public class SsGsea extends AbstractTool {
             fReport.getIndexPage().addBlock(dC, false);
         }
 
-        final Div dO = new Div();
+        final Div dO = HtmlFormat.Divs.reportSection();
         dO.addElement(new H4("Other"));
         final UL uO = new UL();
         final File pfile = fReport.getParamsFile();

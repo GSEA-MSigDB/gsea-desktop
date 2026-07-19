@@ -1,18 +1,15 @@
 /*
- * Copyright (c) 2003-2026 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2026 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California. All rights reserved.
  */
 package xapps.gsea;
 
 import java.util.Arrays;
 
-import org.genepattern.modules.Chip2ChipWrapper;
-import org.genepattern.modules.CollapseDatasetWrapper;
-import org.genepattern.modules.GseaPrerankedWrapper;
-import org.genepattern.modules.GseaWrapper;
-import org.genepattern.modules.LeadingEdgeToolWrapper;
-
+/**
+ * Headless CLI entry. Dispatches to {@code xtools.*} tool mains (no GenePattern wrappers).
+ */
 public class CLI {
-    
+
     private static final String USAGE_MESSAGE = "Usage: operationName followed by operation-specific arguments "
             + "where operationName is one of GSEA, GSEAPreranked, ssGSEA, CollapseDataset, Chip2Chip, or LeadingEdgeTool";
 
@@ -23,20 +20,19 @@ public class CLI {
         }
         String operationName = args[0];
         String[] operationArgs = (args.length == 1) ? new String[]{} : Arrays.copyOfRange(args, 1, args.length);
-        
-        // TODO: Consider an enum here, if usage ever extends beyond this one location
+
         if ("GSEA".equalsIgnoreCase(operationName)) {
-            GseaWrapper.main(operationArgs);
+            xtools.gsea.Gsea.main(operationArgs);
         } else if ("GSEAPreranked".equalsIgnoreCase(operationName)) {
-            GseaPrerankedWrapper.main(operationArgs);
+            xtools.gsea.GseaPreranked.main(operationArgs);
         } else if ("ssGSEA".equalsIgnoreCase(operationName) || "SsGsea".equalsIgnoreCase(operationName)) {
             xtools.gsea.SsGsea.main(operationArgs);
         } else if ("CollapseDataset".equalsIgnoreCase(operationName)) {
-            CollapseDatasetWrapper.main(operationArgs);
+            xtools.munge.CollapseDataset.main(operationArgs);
         } else if ("Chip2Chip".equalsIgnoreCase(operationName)) {
-            Chip2ChipWrapper.main(operationArgs);
+            xtools.chip2chip.Chip2Chip.main(operationArgs);
         } else if ("LeadingEdgeTool".equalsIgnoreCase(operationName)) {
-            LeadingEdgeToolWrapper.main(operationArgs);
+            xtools.gsea.LeadingEdgeTool.main(operationArgs);
         } else {
             throw new Exception("Usage: unrecognized operationName " + operationName + "\n" + USAGE_MESSAGE);
         }

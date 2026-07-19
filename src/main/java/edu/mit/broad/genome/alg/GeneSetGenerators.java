@@ -72,7 +72,7 @@ public class GeneSetGenerators {
 
             // TODO: eval for performance.  See notes in GeneSetCohort(GeneSetScoringTable, RankedList, GeneSet[], GeneToGeneSetMap)
             if (i != 0 && i % 500 == 0) {
-                System.out.println("Done removeGeneSetsSmallerThan: " + cutoff + " for: " + (i + 1) + " / " + ogsets.length);
+                klog.debug("Gene set min-size filter progress: cutoff={} {}/{}", cutoff, i + 1, ogsets.length);
             }
         }
 
@@ -90,7 +90,7 @@ public class GeneSetGenerators {
 
             // TODO: eval for performance.  See notes in GeneSetCohort(GeneSetScoringTable, RankedList, GeneSet[], GeneToGeneSetMap)
             if (i != 0 && i % 500 == 0) {
-                System.out.println("Done removeGeneSetsLargerThan " + (i + 1) + " / " + ogsets.length);
+                klog.debug("Gene set max-size filter progress: {}/{}", i + 1, ogsets.length);
             }
         }
 

@@ -7,17 +7,13 @@ import edu.mit.broad.genome.objects.*;
 import edu.mit.broad.genome.parsers.AuxUtils;
 import edu.mit.broad.genome.parsers.ParseUtils;
 import edu.mit.broad.genome.parsers.ParserFactory;
-import edu.mit.broad.genome.swing.fields.GFieldPlusChooser;
 import edu.mit.broad.vdb.chip.Chip;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
 
 import xapps.gsea.GseaWebResources;
-import xtools.api.ui.GeneSetMatrixChooserUI;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.*;
 import java.util.List;
@@ -26,10 +22,7 @@ import java.util.List;
  * @author Aravind Subramanian, David Eby
  */
 public class GeneSetMatrixMultiChooserParam extends AbstractParam {
-    private MyPobActionListener fAl;
-    private GeneSetMatrixChooserUI fChooser;
-
-    // Delimiter to use in separating gene sets when represented as Strings.
+// Delimiter to use in separating gene sets when represented as Strings.
     private String delimiter = ",";
 
     public GeneSetMatrixMultiChooserParam(boolean reqd) {
@@ -227,31 +220,7 @@ public class GeneSetMatrixMultiChooserParam extends AbstractParam {
         return buf.toString();
     }
 
-    private ActionListener getActionListener() {
-        if (fAl == null) {
-            this.fAl = new MyPobActionListener(this);
-        }
-        return fAl;
-    }
-
     public boolean isFileBased() { return true; }
-
-    private static class MyPobActionListener implements ActionListener {
-        GeneSetMatrixMultiChooserParam ownerParam;
-
-        public MyPobActionListener(GeneSetMatrixMultiChooserParam ownerParam) {
-            this.ownerParam = ownerParam;
-        }
-
-        public void actionPerformed(ActionEvent e) {
-            if (ownerParam.fChooser == null) { return; }
-
-            final String[] selectedPaths = ownerParam.fChooser.getJListWindow().showDirectlyWithModels();
-            if ((selectedPaths != null) && (selectedPaths.length >  0)) {
-                ownerParam.fChooser.setText(String.join(ownerParam.delimiter, selectedPaths));
-            }
-        }
-    }
 
     // have to make the strs into paths
     public String getValueStringRepresentation(final boolean full) {
@@ -267,22 +236,5 @@ public class GeneSetMatrixMultiChooserParam extends AbstractParam {
         } else {
             return format(new Object[]{val});
         }
-    }
-
-    public GFieldPlusChooser getSelectionComponent() {
-        if (fChooser == null) {
-            // do in 2 stages, as the al needs a valid (non-null) chooser at its construction
-            fChooser = new GeneSetMatrixChooserUI();
-            fChooser.setCustomActionListener(getActionListener());
-            String text = this.getValueStringRepresentation(false);
-            if (text == null) {
-                text = format((Object[]) getDefault());
-            }
-
-            fChooser.setText(text);
-            ParamHelper.addDocumentListener(fChooser.getTextField(), this);
-        }
-
-        return fChooser;
     }
 }

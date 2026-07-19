@@ -6,15 +6,11 @@ package xtools.api.param;
 import edu.mit.broad.genome.Constants;
 import edu.mit.broad.genome.JarResources;
 import edu.mit.broad.genome.objects.PersistentObject;
-import edu.mit.broad.genome.swing.GuiHelper;
 import edu.mit.broad.genome.utils.ClassUtils;
-import edu.mit.broad.xbench.actions.ext.BrowserAction;
-import xapps.gsea.GseaWebResources;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.swing.*;
 
 /**
  * Object to capture commandline params / params that a Tool accepts/needs
@@ -295,12 +291,6 @@ public abstract class AbstractParam implements Param {
     public String getName() {
         return fName;
     }
-
-    protected Action createHelpAction() {
-        return new BrowserAction("GSEA documentation", "Online documentation of the GSEA algorithm and software",
-                GuiHelper.ICON_HELP16, GseaWebResources.getGseaHelpURL());
-    }
-
     public Param.Type getType() {
         if (fType != null) {
             return fType;

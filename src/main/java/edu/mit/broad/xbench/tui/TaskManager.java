@@ -1,84 +1,56 @@
 /*
- * Copyright (c) 2003-2026 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2026 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California. All rights reserved.
  */
 package edu.mit.broad.xbench.tui;
 
-import edu.mit.broad.genome.JarResources;
-import edu.mit.broad.genome.reports.api.Report;
-import edu.mit.broad.genome.reports.api.ToolReport;
-import edu.mit.broad.genome.swing.GuiHelper;
-import edu.mit.broad.xbench.actions.XDCAction;
-import edu.mit.broad.xbench.core.JObjectsList;
-import edu.mit.broad.xbench.core.api.Application;
-import gnu.trove.TIntObjectHashMap;
+import java.io.File;
+import java.lang.reflect.Constructor;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import edu.mit.broad.genome.reports.api.Report;
+import edu.mit.broad.genome.reports.api.ToolReport;
 import xtools.api.CanceledException;
 import xtools.api.Tool;
 import xtools.api.param.ParamSet;
 
-import javax.swing.*;
-import javax.swing.table.AbstractTableModel;
-import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.TableCellEditor;
-import javax.swing.table.TableColumn;
-
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.io.IOException;
-import java.lang.reflect.Constructor;
-import java.net.URI;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Properties;
-
 /**
- * Singleton
- * Runs tools on diff threads and keep their status & records their params / ouytput
- * Available as a table to use in a widget
- * <p/>
- * Placed the createTable method in here as easier to handle updates etc.
- *
- * @author Aravind Subramanian, David Eby
+ * Runs tools on background threads and notifies listeners of status changes.
+ * Each invocation has a unique {@code runId} so concurrent runs of the same tool
+ * stay distinct (Swing {@code List<ToolRunnable>} identity parity).
  */
 public class TaskManager {
     private static final Logger klog = LoggerFactory.getLogger(TaskManager.class);
 
     /**
-     * Column headers for table model
+     * Listener for tool status updates. {@code reportDir} is non-null when a report
+     * directory is available. {@code runId} uniquely identifies the invocation;
+     * {@code name} is the display name ({@link Tool#getName()}).
      */
-    private static final String[] COL_HEADERS = new String[]{" ", "Name", "Status"};
+    @FunctionalInterface
+    public interface StatusListener {
+        void onStatus(String runId, String name, String status, File reportDir);
+    }
 
-    /**
-     * @maint keep in synch with col names above
-     */
-    private static final int COL_NUM = 0;
-    private static final int COL_NAME = 1;
-    private static final int COL_STATUS = 2;
-    private final Model fModel;
-
-    private JTable fTaskTable;
-
-    private boolean fOnClickShowResultsInBrowserOnly; // false by default
-
-    /**
-     * The singleton instance
-     */
     private static TaskManager kInstance;
+    private final List<ToolRunnable> fToolRunnables = new ArrayList<>();
+    private final List<StatusListener> statusListeners = new CopyOnWriteArrayList<>();
+    private final Map<String, File> reportDirsByRunId = new ConcurrentHashMap<>();
+    private final Map<String, URI> reportIndexByRunId = new ConcurrentHashMap<>();
+    private final Map<String, ToolRunnable> runningByRunId = new ConcurrentHashMap<>();
+    private final Map<String, Throwable> lastErrorByRunId = new ConcurrentHashMap<>();
+    private final java.util.Set<String> paramErrorRunIds = ConcurrentHashMap.newKeySet();
 
-    /**
-     * Holds ToolRunnable objects
-     */
-    private final List<ToolRunnable> fToolRunnables;
-
-    /**
-     * @return Get a ref to the singleton
-     */
     public static TaskManager getInstance() {
-
         if (kInstance == null) {
             synchronized (TaskManager.class) {
                 if (kInstance == null) {
@@ -86,38 +58,88 @@ public class TaskManager {
                 }
             }
         }
-
         return kInstance;
     }
 
-    /**
-     * Privatized Class Constructor.
-     * Use getInstance to get a ref to the singleton
-     */
     private TaskManager() {
-        fToolRunnables = new ArrayList<ToolRunnable>();
-
-        // must be made now - cant be done lazily
-        fModel = new Model();
     }
 
-    public void setOnClickShowResultsInBrowserOnly(boolean value) {
-        this.fOnClickShowResultsInBrowserOnly = value;
+    public void addStatusListener(StatusListener listener) {
+        if (listener != null) {
+            statusListeners.add(listener);
+        }
+    }
+
+    public void removeStatusListener(StatusListener listener) {
+        if (listener != null) {
+            statusListeners.remove(listener);
+        }
+    }
+
+    /** Report directory for a specific run, if any. */
+    public File getReportDir(String runId) {
+        return runId != null ? reportDirsByRunId.get(runId) : null;
+    }
+
+    /** Swing {@code report.getReportIndex()} for a specific run, if any. */
+    public URI getReportIndex(String runId) {
+        return runId != null ? reportIndexByRunId.get(runId) : null;
+    }
+
+    /** Most recent error for a specific run, if any. */
+    public Throwable getLastError(String runId) {
+        return runId != null ? lastErrorByRunId.get(runId) : null;
     }
 
     /**
-     * Runs tool on a thread.
-     * specified Tool is just a "template" -> reflection invoked another tool
-     * and that is filled with specified paramset
-     * Will throw exception if the Tool barfs.
-     * Adds tool to the ones it manages
+     * Request cancellation of a running tool by {@code runId}.
      *
-     * @param tool
-     * @throws Exception
+     * @return true if a running tool with that runId was found
      */
-    public Tool run(Tool tool, ParamSet pset, int priority) throws Exception {
-        //TODO: do we need priority here?  No longer allowing it to change
+    public boolean cancel(String runId) {
+        if (runId == null) {
+            return false;
+        }
+        ToolRunnable runnable = runningByRunId.get(runId);
+        if (runnable == null) {
+            return false;
+        }
+        runnable.requestCancel();
+        // Surface cancellation intent immediately for long-running/non-interruptible work.
+        notifyStatus(runId, runnable.tool.getName(), "Canceled (requested)", null);
+        return true;
+    }
 
+    /** Whether a tool thread is currently executing for this {@code runId}. */
+    public boolean isRunning(String runId) {
+        return runId != null && runningByRunId.containsKey(runId);
+    }
+
+    /**
+     * True when {@link #run} failed during tool construction (Swing {@code PARAM_ERROR} /
+     * {@code createParamErrorToolState}) — a table row exists but no worker was started.
+     */
+    public boolean isParamConstructionError(String runId) {
+        return runId != null && paramErrorRunIds.contains(runId);
+    }
+
+    private void notifyStatus(String runId, String name, String status, File reportDir) {
+        if (reportDir != null) {
+            reportDirsByRunId.put(runId, reportDir);
+        }
+        for (StatusListener listener : statusListeners) {
+            try {
+                listener.onStatus(runId, name, status, reportDir);
+            } catch (Exception e) {
+                klog.debug("Status listener failed", e);
+            }
+        }
+    }
+
+    /**
+     * @return unique run id for this invocation (for UI cancel / status correlation)
+     */
+    public String run(Tool tool, ParamSet pset, int priority) throws Exception {
         if (tool == null) {
             throw new IllegalArgumentException("Param tool cannot be null");
         }
@@ -125,502 +147,152 @@ public class TaskManager {
             throw new IllegalArgumentException("Param pset cannot be null");
         }
 
-        // errors here are propagated right away
-        // -- tool NOT added to table
-        // no task created
+        String runId = UUID.randomUUID().toString();
         Tool clonedTool;
-
         try {
             clonedTool = createTool(tool, pset);
         } catch (Exception t) {
-            ToolRunnable pstate = ToolRunnable.createParamErrorToolState(tool, pset, t);    // @note adding tool skeleton directly
-            fToolRunnables.add(pstate);
-            kInstance.updateTable();
-            throw t;
+            // Swing createParamErrorToolState: keep a table row with tool+pset for Name-click relaunch.
+            // Return runId (do not throw) so callers can attachSnapshot before showing the error.
+            lastErrorByRunId.put(runId, t);
+            paramErrorRunIds.add(runId);
+            // Swing ExecState.PARAM_ERROR.name == "Invalid Param(s)" (message is on throwable only).
+            notifyStatus(runId, tool.getName(), "Invalid Param(s)", null);
+            return runId;
         }
 
-        ToolRunnable trunnable = new ToolRunnable(clonedTool);
-        fToolRunnables.add(trunnable);
-        kInstance.updateTable();
+        ToolRunnable trunnable = new ToolRunnable(runId, clonedTool);
+        synchronized (fToolRunnables) {
+            fToolRunnables.add(trunnable);
+        }
+        runningByRunId.put(runId, trunnable);
+        // Swing ToolRunnable starts as ExecState.WAITING before the worker thread sets RUNNING.
+        notifyStatus(runId, clonedTool.getName(), "Waiting", null);
 
-        Thread t = new Thread(trunnable);
+        Thread t = new Thread(trunnable, "gsea-tool-" + clonedTool.getName() + "-" + runId.substring(0, 8));
+        trunnable.ownerThread = t;
         t.setPriority(priority);
-        trunnable.owner_thread = t;
-
         t.start();
-        klog.debug("Started executing Tool: {} priority: {}", clonedTool.getClass().getName(), priority);
-        return clonedTool;
+        klog.debug("Started executing Tool: {} runId={} priority: {}",
+                clonedTool.getClass().getName(), runId, priority);
+        return runId;
     }
 
-    // unbelievably wierd problems with Tool  - class is NULL  -throws npe
-    // format: test(xtools.gsea.Gsea)
-    // maybe coz class discoverer is used??
-    // Creates a NEW Tool -> spec one used as skeleton only
-    // New Tool made is NOT run
-    // Exceptions are all reflection related + if any params are not set
-
     public static Tool createTool(final Tool tool, final ParamSet pset) throws Exception {
-        String toolName = tool.getClass().getName();
-        Class toolClass = Class.forName(toolName);
-        klog.debug("toolClass: {} pset: {}", toolClass, pset);
-        Class[] initArgsClass = new Class[]{Properties.class};    // reqd to have a ParamSet constructor
-        Constructor initArgsConstructor = toolClass.getConstructor(initArgsClass);
-        klog.debug("{}", initArgsConstructor);
+        Class<?> toolClass = Class.forName(tool.getClass().getName());
+        Constructor<?> ctor = toolClass.getConstructor(Properties.class);
         Properties prp = pset.toProperties();
-        prp.remove("help"); // @note imp else produces usage!!
-        Properties[] initArgs = new Properties[]{prp};
-        System.out.println(">> " + prp);
-        return (Tool) initArgsConstructor.newInstance((Object[])initArgs);
+        prp.remove("help");
+        return (Tool) ctor.newInstance(prp);
     }
 
     public static Tool createTool(final String toolName) throws Exception {
-        Class toolClass = Class.forName(toolName);
-        //klog.debug("ToolName: " + toolName + " class: " + toolClass);
-        Class[] initArgsClass = new Class[]{};
-        Constructor initArgsConstructor = toolClass.getConstructor(initArgsClass);
-        return (Tool) initArgsConstructor.newInstance(new Object[]{});
+        Class<?> toolClass = Class.forName(toolName);
+        return (Tool) toolClass.getConstructor().newInstance();
     }
 
-    private void updateTable() {
-        // ToolRunnable invokes this from a worker thread; all model/table updates
-        // must run on the EDT to keep column model and header paint in sync.
-        Runnable refresh = () -> {
-            if (fTaskTable == null) {
+    private class ToolRunnable implements Runnable {
+        private final String runId;
+        private final Tool tool;
+        private volatile Thread ownerThread;
+        private volatile boolean cancelRequested;
+
+        private ToolRunnable(String runId, Tool tool) {
+            this.runId = runId;
+            this.tool = tool;
+        }
+
+        void requestCancel() {
+            cancelRequested = true;
+            Thread t = ownerThread;
+            if (t != null) {
+                t.interrupt();
+            }
+        }
+
+        @Override
+        public void run() {
+            if (cancelRequested || Thread.currentThread().isInterrupted()) {
+                notifyStatus(runId, tool.getName(), "Canceled", null);
                 return;
             }
-            // it does a a jig, but thats ok as visual indicator of a change in state
-            fModel.fireTableStructureChanged(); // needed for consistent updates
-            fTaskTable.repaint();
-            fTaskTable.revalidate();
-            setColNumWidth(fTaskTable);
-        };
-        if (SwingUtilities.isEventDispatchThread()) {
-            refresh.run();
-        } else {
-            SwingUtilities.invokeLater(refresh);
-        }
-    }
-
-    /**
-     * Inner class
-     *
-     * @author Aravind Subramanian
-     */
-    private class Model extends AbstractTableModel {
-        private TIntObjectHashMap fRowToolButtonMap;
-        private TIntObjectHashMap fRowReportButtonMap;
-
-        private Model() {
-            fRowToolButtonMap = new TIntObjectHashMap();
-            fRowReportButtonMap = new TIntObjectHashMap();
-        }
-
-        public int getRowCount() {
-            return fToolRunnables.size();
-        }
-
-        public int getColumnCount() {
-            return COL_HEADERS.length;
-        }
-
-        /*
-        * JTable uses this method to determine the default renderer/
-        * editor for each cell.  If we didn't implement this method,
-        * then the components dont show up.
-        */
-        public Class getColumnClass(int col) {
-            // synched with the Editor
-            return Object.class;
-        }
-
-        public String getColumnName(int col) {
-            return COL_HEADERS[col];
-        }
-
-        public boolean isCellEditable(int row, int col) {
-            return col != COL_NUM;
-        }
-
-        /**
-         * dont bother with setValueAt() ->> let the renderer here take care of things
-         * <p/>
-         * NO! Have to do it here as the Editor gets data from getValueAt
-         * Let the renderer handle ->> always return the pstate
-         *
-         * @return object value at specified row and column.
-         * <p/>
-         * NO! Have to do it here as the Editor gets data from getValueAt
-         * Let the renderer handle ->> always return the pstate
-         * @return object value at specified row and column.
-         */
-
-        /**
-         * NO! Have to do it here as the Editor gets data from getValueAt
-         * Let the renderer handle ->> always return the pstate
-         *
-         * @return object value at specified row and column.
-         */
-
-        private final Icon LHS_TOOL_ICON = JarResources.getIcon("dirty_ov.gif");
-
-        public Object getValueAt(int row, int col) {
-            ToolRunnable trunnable = (ToolRunnable) fToolRunnables.get(row);
-
-            if (col == COL_NUM) {
-                return row + 1;
-            } else if (col == COL_NAME) {
-                JButton but;
-                if (fRowToolButtonMap.get(row) == null) {
-                    //klog.debug("Making new button for row: " + row);
-                    but = new JButton();
-                    but.setBorderPainted(false);
-                    but.setFocusPainted(false);
-                    fRowToolButtonMap.put(row, but);
-                } else {
-                    but = (JButton) fRowToolButtonMap.get(row);
-                }
-
-                // @todo clone tool
-                Tool tool = trunnable.tool;
-                SingleToolLauncherAction action = new SingleToolLauncherAction(tool, trunnable.pset, null);
-                but.setAction(action);
-                but.setIcon(LHS_TOOL_ICON);
-                return but;
-            } else if (col == COL_STATUS) {
-                JButton but;
-                if (fRowReportButtonMap.get(row) == null) {
-                    but = new JButton();
-                    but.setBorderPainted(false);
-                    but.setFocusPainted(false);
-                    fRowReportButtonMap.put(row, but);
-                } else {
-                    but = (JButton) fRowReportButtonMap.get(row);
-                }
-
-                ToolRunnableStateAction action = new ToolRunnableStateAction(trunnable, fOnClickShowResultsInBrowserOnly);
-                but.setAction(action);
-
-                if (trunnable.state == ExecState.SUCCESS) {
-                    Report report = trunnable.tool.getReport();
-                    if (report == null) {
-                        but.setText("No Report Produced");
-                    } else {
-                        int len = report.getNumPagesMade();
-                        if (len == 0) {
-                            but.setText("0 Result Objects");
-                        } else {
-                            but.setForeground(Color.GREEN);
-                            but.setText("<html><body><font color=green>Success</font></body></html>");
-                            but.setIcon(GuiHelper.ICON_ELLIPSIS);
-                            but.setVerticalTextPosition(JButton.TOP);
-                            but.setToolTipText(but.getText());
-                        }
-                    }
-                } else {
-                    but.setText(trunnable.state.name);
-                }
-
-                but.setHorizontalAlignment(SwingConstants.CENTER);
-                but.setForeground(trunnable.state.color);
-                but.setBorderPainted(false);
-
-                return but;
-
-            }
-            //add a button to launch Enrichmentmaps in cytoscape (which is placed in the options column)
-            //   maybe more options will become available later so try and make it more generic
-            else {
-                return "Bad col: " + col;
-            }
-        }
-    }
-
-    /**
-     * A custom renderer for table cells that works in conjunction with the table
-     * and the Model to display the components corerectly
-     *
-     * @author Aravind Subramanian
-     */
-    private class Renderer extends DefaultTableCellRenderer {
-        public Component getTableCellRendererComponent(JTable table, Object value,
-                                                       boolean isSelected, boolean hasFocus, int row, int column) {
-
-            super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-            //klog.debug("rendering value: " + value);
-            if (value instanceof Component) {
-                return (Component) value;
-            } else {
-                return this;
-            }
-        }
-    }
-
-    /**
-     * Object that represents a Tool and its ExecState
-     *
-     * @author Aravind Subramanian
-     */
-    static class ToolRunnable implements Runnable {
-        private Tool tool;
-
-        // may NOT be same as Tool pset!! esp when creation failed
-        // see createParamErrorToolState
-        private ParamSet pset;
-        private ExecState state;
-        private Throwable throwable;
-
-        private Thread owner_thread;
-
-        private boolean wasKilled;
-
-        /**
-         * creates a new ToolState
-         */
-        private ToolRunnable(Tool p) {
-            if (p == null) { throw new IllegalArgumentException("Param p cannot be null"); }
-
-            this.tool = p;
-            this.pset = p.getParamSet();    // same one -- instantiated correctly
-            this.state = ExecState.WAITING;
-            this.throwable = null;
-        }
-
-        private static ToolRunnable createParamErrorToolState(Tool p, ParamSet pset, Throwable throwable) {
-            if (pset == null) { throw new IllegalArgumentException("Param pset cannot be null"); }
-
-            ToolRunnable ps = new ToolRunnable(p);
-
-            ps.state = ExecState.PARAM_ERROR;
-            ps.throwable = throwable;
-            ps.pset = pset;    // change it to specified one
-
-            return ps;
-        }
-
-        public void run() {
+            notifyStatus(runId, tool.getName(), "Running", null);
             try {
-                this.state = ExecState.RUNNING;
-
-                kInstance.updateTable();
-                this.tool.execute();
-                ToolReport report = (ToolReport)this.tool.getReport();
-                if (report == null) {
-                    this.state = ExecState.EXEC_ERROR;
-                } else if (wasKilled) {
-                    this.state = ExecState.KILLED;
-                } else if (report.getToolWarnings().isEmpty()) {
-                    this.state = ExecState.SUCCESS;
-                } else {
-                    this.state = ExecState.SUCCESS_WARN;
+                if (cancelRequested || Thread.currentThread().isInterrupted()) {
+                    throw new CanceledException("Canceled before start");
                 }
+                tool.execute();
+                if (cancelRequested || Thread.currentThread().isInterrupted()) {
+                    throw new CanceledException("Canceled");
+                }
+                File reportDir = null;
+                Report report = tool.getReport();
+                String doneStatus;
+                if (report == null) {
+                    // Swing ToolRunnable: null report → EXEC_ERROR; status text is ExecState name "Error!".
+                    // throwable is left null (click still opens error dialog with null throwable).
+                    doneStatus = "Error!";
+                } else {
+                    reportDir = report.getReportDir();
+                    URI index = report.getReportIndex();
+                    if (index != null) {
+                        reportIndexByRunId.put(runId, index);
+                    }
+                    // Swing: SUCCESS_WARN takes state precedence over zero-page SUCCESS text.
+                    boolean hasWarnings = report instanceof ToolReport
+                            && !((ToolReport) report).getToolWarnings().isEmpty();
+                    if (hasWarnings) {
+                        doneStatus = "Success (with warnings)";
+                    } else if (report.getNumPagesMade() == 0) {
+                        doneStatus = "0 Result Objects";
+                    } else {
+                        doneStatus = "Success";
+                    }
+                }
+                notifyStatus(runId, tool.getName(), doneStatus, reportDir);
+                // Swing TaskManager does not auto-open the report; user clicks Status.
             } catch (CanceledException ce) {
-                this.state = ExecState.CANCELED;
+                notifyStatus(runId, tool.getName(), "Canceled", null);
             } catch (Throwable t) {
-                this.state = ExecState.EXEC_ERROR;
-                this.throwable = t;
-                klog.error("Tool exec error", t);
-                if (tool != null && tool.getReport() != null) {
-                    tool.getReport().setErroredOut();
+                if (isCancellationFailure(t)) {
+                    notifyStatus(runId, tool.getName(), "Canceled", null);
+                } else {
+                    lastErrorByRunId.put(runId, t);
+                    File reportDir = null;
+                    try {
+                        Report report = tool.getReport();
+                        if (report != null) {
+                            // Swing: rename report dir to error_* and drop from cache.
+                            report.setErroredOut();
+                            reportDir = report.getReportDir();
+                        }
+                    } catch (Throwable ignored) {
+                        // Keep original error as the status failure.
+                    }
+                    // Swing status cell shows ExecState.EXEC_ERROR.name == "Error!" only.
+                    notifyStatus(runId, tool.getName(), "Error!", reportDir);
+                    klog.error("Tool failed: {} runId={}", tool.getName(), runId, t);
                 }
             } finally {
-                kInstance.updateTable();
-            }
-        }
-    }
-
-    /**
-     * IMP: the taskmanager doesnt handle updates to its datamodel well --> "repaint"
-     * doesnt get fired and found it easier to just place the table making stuff in here
-     * so that we have access and can handle the repaints.
-     *
-     * @return A JTable holding data represented by the task managers model
-     */
-    public JTable createTable() {
-        this.fTaskTable = new JTable(fModel);
-
-        // table visual properties
-        fTaskTable.setRowSelectionAllowed(false);
-        fTaskTable.setColumnSelectionAllowed(false);
-        fTaskTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-
-        fTaskTable.setShowVerticalLines(true);
-        fTaskTable.setGridColor(Color.black);
-        fTaskTable.setAutoResizeMode(JTable.AUTO_RESIZE_SUBSEQUENT_COLUMNS);
-        fTaskTable.getTableHeader().setReorderingAllowed(false);
-        fTaskTable.setDefaultRenderer(Object.class, new Renderer());
-
-        TableCellEditor ed = new Editor();
-
-        fTaskTable.setDefaultEditor(Object.class, ed);
-
-        // we know what the columns are so set their size explicitly
-        setColNumWidth(fTaskTable);
-
-        return fTaskTable;
-    }
-
-    private static final Icon RESULTS_ICON = JarResources.getIcon("Results.gif");
-
-    private static final String OS_NAME = System.getProperty("os.name", "").toLowerCase();
-
-    // needs to be called after every fire structure changed
-    // else its ok at first, and then after first fire, it changes back to default width
-    private void setColNumWidth(JTable table) {
-        TableColumn column = table.getColumnModel().getColumn(COL_NUM);
-
-        column.setMinWidth(0);
-        column.setMaxWidth(20);
-        column.setPreferredWidth(20);
-    }
-
-    private static boolean isWslEnvironment() {
-        return System.getenv("WSL_DISTRO_NAME") != null || System.getenv("WSL_INTEROP") != null;
-    }
-
-    private static boolean tryLaunch(String... command) {
-        try {
-            new ProcessBuilder(command).start();
-            return true;
-        } catch (IOException ioe) {
-            klog.debug("Could not launch command: {}", command[0], ioe);
-            return false;
-        }
-    }
-
-    private static void openUrlInBrowser(URL url) throws Exception {
-        URI uri = url.toURI();
-        String uriText = uri.toString();
-
-        if (Desktop.isDesktopSupported()) {
-            Desktop desktop = Desktop.getDesktop();
-            if (desktop.isSupported(Desktop.Action.BROWSE)) {
-                desktop.browse(uri);
-                return;
+                runningByRunId.remove(runId, this);
             }
         }
 
-        // Desktop integration is often unavailable in WSL/headless sessions.
-        if (isWslEnvironment()) {
-            if (tryLaunch("wslview", uriText)) {
-                return;
+        private boolean isCancellationFailure(Throwable error) {
+            if (cancelRequested || Thread.currentThread().isInterrupted()) {
+                return true;
             }
-            if (tryLaunch("cmd.exe", "/c", "start", "", uriText)) {
-                return;
-            }
-            if (tryLaunch("powershell.exe", "-NoProfile", "-Command", "Start-Process '" + uriText + "'")) {
-                return;
-            }
-        }
 
-        if (OS_NAME.contains("win")) {
-            if (tryLaunch("cmd", "/c", "start", "", uriText)) {
-                return;
-            }
-        } else if (OS_NAME.contains("mac")) {
-            if (tryLaunch("open", uriText)) {
-                return;
-            }
-        } else {
-            if (tryLaunch("xdg-open", uriText)) {
-                return;
-            }
-        }
-
-        throw new UnsupportedOperationException("Unable to open browser for URL on this platform: " + uriText);
-    }
-
-    /**
-     * Display a window depending on what status the tools state is
-     * Error, Param error -> display of the stack trace
-     */
-    private class ToolRunnableStateAction extends XDCAction {
-        private final ToolRunnable trunnable;
-        private final ToolRunnableStateAction fTrsaInstance = this;
-        private boolean fDoBrowser;
-
-        private ToolRunnableStateAction(final ToolRunnable trunnable, final boolean doBrowser) {
-            super("ToolStateAction", "Tool State", "Details on the Tools State", null);
-
-            this.trunnable = trunnable;
-            this.fDoBrowser = doBrowser;
-        }
-
-        public void actionPerformed(final ActionEvent evt) {
-            if (fOnlyDoubleClick) { // respond only to double clicks
-                return;
-            }
-            klog.debug("running ToolRunnableStateAction");
-
-            if (trunnable.state == ExecState.WAITING) {
-                Application.getWindowManager().showMessage("Waiting for: " + trunnable.tool.getClass().getName());
-            } else if (trunnable.state == ExecState.CANCELED) {
-                Application.getWindowManager().showMessage("This job was canceled by the user");
-            } else if (trunnable.state == ExecState.PARAM_ERROR) {
-                kInstance.updateTable();
-                Application.getWindowManager().showError("One or more parameter(s) were not specified",
-                        trunnable.throwable);
-            } else if (trunnable.state == ExecState.EXEC_ERROR) {
-                kInstance.updateTable();
-                Application.getWindowManager().showError("Tool execution error", trunnable.throwable);
-            } else if ((trunnable.state == ExecState.RUNNING) || (trunnable.state == ExecState.PAUSED)) {
-                kInstance.updateTable();
-                
-                // TODO: track down meaning & usage of PAUSED and see if we can drop it.
-                
-                // TODO: also need to look at Thread priority setting mechanism.
-
-            } else if ((trunnable.state == ExecState.SUCCESS) || (trunnable.state == ExecState.SUCCESS_WARN) || (trunnable.state == ExecState.KILLED)) {
-                kInstance.updateTable();
-                // TODO: track down meaning and usage of KILLED.  Can a Thread still get into this state?  How?
-                Report report = trunnable.tool.getReport();
-                if (report == null) {
-                    fTrsaInstance.setEnabled(false);// not clickable
-                    Application.getWindowManager().showMessage("No report data produced");
-                } else {
-                			if (fDoBrowser) {
-                				try {
-                					URL url = report.getReportIndex().toURL();
-                					if (url != null) {
-                						openUrlInBrowser(url);
-                					} else {
-                						Application.getWindowManager().showMessage("No report produced");
-                					}
-                				} catch (Throwable t) {
-                					Application.getWindowManager().showError(t);
-                				}
-                			} else {                				
-                				JObjectsList jol = new JObjectsList(report.getFilesProduced());
-                				JObjectsList.displayInWindow("Results for: " + trunnable.tool.getClass().getName(), RESULTS_ICON, jol);
-                			}               		
+            Throwable current = error;
+            while (current != null) {
+                if (current instanceof CanceledException
+                        || current instanceof InterruptedException
+                        || current instanceof java.util.concurrent.CancellationException) {
+                    return true;
                 }
-            } else {
-                kInstance.updateTable();
-                Application.getWindowManager().showMessage("No actions defined for this state " + trunnable.state + " " + trunnable.tool.getClass().getName());
+                current = current.getCause();
             }
-        }
-    }
-
-    private class Editor extends AbstractCellEditor implements TableCellEditor {
-        private Object currVal;
-
-        /**
-         * TableCellEditor impl.
-         * The core method to implement to acheive desired effect.
-         */
-        public Component getTableCellEditorComponent(JTable table, Object value,
-                                                     boolean isSelected, int row, int column) {
-            currVal = value;
-
-            if (value instanceof Component) {
-                return (Component) value;
-            } else {
-                currVal = new JLabel(value.toString());
-                return (JLabel) currVal;
-            }
-        }
-
-        public Object getCellEditorValue() {
-            return currVal;
+            return false;
         }
     }
 }

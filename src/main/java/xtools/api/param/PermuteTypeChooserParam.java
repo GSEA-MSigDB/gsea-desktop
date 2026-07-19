@@ -4,12 +4,7 @@
 package xtools.api.param;
 
 import edu.mit.broad.genome.alg.Metric;
-import edu.mit.broad.genome.swing.fields.GComboBoxField;
-import edu.mit.broad.genome.swing.fields.GFieldPlusChooser;
 
-import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 /**
  * Object to capture choices gene set, template
@@ -17,11 +12,8 @@ import java.awt.event.ActionListener;
  * @author Aravind Subramanian
  * @version %I%, %G%
  */
-public class PermuteTypeChooserParam extends AbstractParam implements ActionListener {
-
-    private GComboBoxField cbOptions;
-
-    public static final String BOTH = "both";
+public class PermuteTypeChooserParam extends AbstractParam {
+public static final String BOTH = "both";
     public static final String GENE_SET = "gene_set";
     public static final String PHENOTYPE = "phenotype";
 
@@ -62,22 +54,6 @@ public class PermuteTypeChooserParam extends AbstractParam implements ActionList
             return false;
         }
     }
-
-    public GFieldPlusChooser getSelectionComponent() {
-
-        if (cbOptions == null) {
-            cbOptions = ParamHelper.createActionListenerBoundHintsComboBox(false, this, this);
-            ParamHelper.safeSelectValueDefaultByString(cbOptions.getComboBox(), this);
-        }
-
-        return cbOptions;
-
-    }
-
-    public void actionPerformed(ActionEvent evt) {
-        this.setValue(((JComboBox) cbOptions.getComponent()).getSelectedItem());
-    }
-
     public boolean isFileBased() {
         return false;
     }

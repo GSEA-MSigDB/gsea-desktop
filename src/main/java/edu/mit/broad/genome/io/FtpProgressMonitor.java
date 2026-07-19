@@ -1,11 +1,9 @@
 /*
- * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2026 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California. All rights reserved.
  */
 package edu.mit.broad.genome.io;
 
 import java.io.IOException;
-
-import javax.swing.ProgressMonitor;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,64 +12,95 @@ import com.enterprisedt.net.ftp.EventAdapter;
 import com.enterprisedt.net.ftp.EventListener;
 import com.enterprisedt.net.ftp.FTPException;
 
+import javafx.stage.Window;
+import xapps.gsea.fx.FxFtpProgressDialog;
+import xapps.gsea.fx.shell.FxWorkspaceWindowManager;
+import xapps.gsea.fx.shell.GseaFxShell;
 import edu.mit.broad.xbench.core.api.Application;
+import edu.mit.broad.xbench.core.api.WindowManager;
 
-public class FtpProgressMonitor extends ProgressMonitor implements EventListener {
+/**
+ * FTP transfer progress listener with optional JavaFX progress/cancel dialog
+ * (Swing {@code ProgressMonitor} parity for the OpenJFX shell).
+ */
+public class FtpProgressMonitor implements EventListener {
     private static final Logger klog = LoggerFactory.getLogger(FtpProgressMonitor.class);
 
-    // Default handler for EventListener events (other than those we care about)
     private final EventAdapter eventDelegate = new EventAdapter();
-
     private final FtpSingleUrlTransferCommand ftpCommand;
-    private long size = 1l;
+    private long size = 1L;
+    private volatile boolean canceled;
+    private FxFtpProgressDialog fxDialog;
 
     public FtpProgressMonitor(FtpSingleUrlTransferCommand ftpCommand) {
-        super(Application.getWindowManager().getRootFrame(), "Retrieving file "
-                + ftpCommand.getFileName(), "Initializing connection...", 0, 100);
         this.ftpCommand = ftpCommand;
+        tryAttachFxDialog();
+    }
+
+    private void tryAttachFxDialog() {
+        try {
+            WindowManager wm = Application.getWindowManager();
+            Window owner = null;
+            if (wm instanceof FxWorkspaceWindowManager) {
+                GseaFxShell shell = ((FxWorkspaceWindowManager) wm).getShell();
+                if (shell != null) {
+                    owner = shell.getStage();
+                }
+            }
+            fxDialog = new FxFtpProgressDialog(ftpCommand, this, owner);
+            fxDialog.show();
+        } catch (Throwable t) {
+            klog.debug("No FX FTP progress UI: {}", t.toString());
+            fxDialog = null;
+        }
     }
 
     public void initSize(long size) {
-        this.size = size;
+        this.size = size > 0 ? size : 1L;
     }
 
-    // This is the only EventListener method which seems to have a direct
-    // bearing on our operations. Most of them are never invoked at all, even
-    // the ones that you would expect to be (downloadStarted/downloadCompleted).
-    // Thus, our workflow around the use of this component is structured
-    // explicitly around the way it actually behaves:
-    // - Set up the client for download
-    // - Create this ProgressMonitor
-    // - Start the download; this PM will watch the xfer and update to reflect
-    // the progress.
+    public void setNote(String note) {
+        klog.debug("FTP: {}", note);
+        if (fxDialog != null) {
+            fxDialog.setProgress(-1, note);
+        }
+    }
+
+    public void close() {
+        if (fxDialog != null) {
+            fxDialog.close();
+            fxDialog = null;
+        }
+    }
+
+    public boolean isCanceled() {
+        return canceled;
+    }
+
+    public void cancel() {
+        this.canceled = true;
+    }
+
     @Override
     public void bytesTransferred(String connId, String remoteFilename, long count) {
         eventDelegate.bytesTransferred(connId, remoteFilename, count);
         if (this.isCanceled()) {
-            klog.info("Cancelling...");
+            klog.info("Cancelling FTP transfer...");
             ftpCommand.getClient().cancelAllTransfers();
-            // The above cancellation does not seem to be enough to actually
-            // stop the transfer. Totally disconnect instead.
             try {
                 ftpCommand.getClient().disconnect(true);
-            } catch (IOException ie) {
-                // Log and suppress this exception. We'll allow the client to
-                // become completely undone in the main workflow and handle it
-                // there.
-                klog.error(ie.getMessage(), ie);
-            } catch (FTPException fe) {
-                // Ditto.
-                klog.error(fe.getMessage(), fe);
+            } catch (IOException | FTPException e) {
+                klog.error(e.getMessage(), e);
             }
         } else {
-            int progressPercent = Math.round(100 * count / size);
-            this.setProgress(progressPercent);
-            this.setNote(progressPercent + "% complete");
+            int progressPercent = (int) Math.round(100.0 * count / size);
+            if (fxDialog != null) {
+                fxDialog.setProgress(progressPercent, progressPercent + "% complete");
+            } else if (progressPercent % 10 == 0) {
+                klog.debug("FTP {}% complete", progressPercent);
+            }
         }
     }
-
-    // None of the following EventListener methods have any impact on our
-    // workflow, as stated above. Simply pass these on to the delegate adapter.
 
     @Override
     public void commandSent(String connId, String cmd) {

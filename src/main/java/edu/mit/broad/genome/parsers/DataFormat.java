@@ -4,19 +4,15 @@
 package edu.mit.broad.genome.parsers;
 
 import edu.mit.broad.genome.Constants;
-import edu.mit.broad.genome.JarResources;
 import edu.mit.broad.genome.NamingConventions;
 import edu.mit.broad.genome.math.Matrix;
 import edu.mit.broad.genome.objects.*;
 import edu.mit.broad.genome.objects.esmatrix.db.EnrichmentDb;
 import edu.mit.broad.genome.reports.api.Report;
-import edu.mit.broad.genome.utils.SystemUtils;
 import edu.mit.broad.vdb.chip.Chip;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.swing.*;
-import javax.swing.filechooser.FileView;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.util.HashMap;
@@ -37,72 +33,72 @@ public class DataFormat extends DataType implements Constants {
 
     public static final DataFormat XLS_FORMAT = new DataFormat(ExtFormat.class, "Excel",
             "Microsoft Excel", Constants.XLS,
-            JarResources.getIcon("Xls.gif"), null);
+            null);
     public static final DataFormat TXT_FORMAT = new DataFormat(ExtFormat.class, "Text",
             "Plain Text", "txt",
-            JarResources.getIcon("Txt.gif"), null);
+            null);
     public static final DataFormat XML_FORMAT = new DataFormat(ExtFormat.class, "XML",
             "Extensible Markup Language", Constants.XML,
-            JarResources.getIcon("Xml.gif"), null);
+            null);
     public static final DataFormat TSV_FORMAT = new DataFormat(ExtFormat.class, "TSV",
             "Tab-separated values", Constants.TSV,
-            JarResources.getIcon("Xls.gif"), null);
+            null);
 
     /**
      * BROAD CANCER res format for datasets
      */
     public static final DataFormat RES_FORMAT = new DataFormat(Dataset.class, "Dataset",
             "MIT Format for a Dataset with P-Calls", RES,
-            JarResources.getIcon("Res16.gif"), ResParser.class);
+            ResParser.class);
     public static final DataFormat GCT_FORMAT = new DataFormat(Dataset.class, "Dataset",
             "MIT Format for a Dataset", GCT,
-            JarResources.getIcon("Gct16.gif"), GctParser.class);
+            GctParser.class);
 
     public static final DataFormat TXT_DATASET_FORMAT = new DataFormat(Dataset.class, "Dataset",
             "generic Txt Format for Datasets", TXT,
-            JarResources.getIcon("Txt.gif"), TxtDatasetParser.class);
+            TxtDatasetParser.class);
 
     public static final DataFormat PCL_FORMAT = new DataFormat(Dataset.class, "Dataset",
             "Stanford Format for a Dataset", "pcl",
-            JarResources.getIcon("Pcl.gif"), PclParser.class);
+            PclParser.class);
 
     /**
      * MIT cls format for class vectors
      */
     public static final DataFormat CLS_FORMAT = new DataFormat(Template.class, "Template",
             "MIT Format for Class Labels", CLS,
-            JarResources.getIcon("Cls.gif"), ClsParser.class);
+            ClsParser.class);
 
 
     public static final DataFormat GRP_FORMAT = new DataFormat(GeneSet.class, "GeneSet",
             "MIT GeneSet Format", GRP,
-            JarResources.getIcon("Grp.gif"), GeneSetParser.class);
+            GeneSetParser.class);
 
     public static final DataFormat RNK_FORMAT = new DataFormat(RankedList.class, "RankedList",
             "MIT RankedList Format", RNK,
-            JarResources.getIcon("Rnk.png"), RankedListParser.class);
+            RankedListParser.class);
 
     public static final DataFormat GMX_FORMAT = new DataFormat(GeneSetMatrix.class, "GeneSetMatrix",
             "MIT format for a Matrix of Gene Sets",
-            Constants.GMX, JarResources.getIcon("Gmx.png"), GmxParser.class);
+            Constants.GMX, GmxParser.class);
 
     public static final DataFormat GMT_FORMAT = new DataFormat(GeneSetMatrix.class,
             "GeneSetMatrix_Transposed",
             "MIT format for a Matrix of Gene Sets",
-            Constants.GMT, JarResources.getIcon("Gmt.png"), GmtParser.class);
+            Constants.GMT, GmtParser.class);
 
     public static final DataFormat EDB_FORMAT = new DataFormat(EnrichmentDb.class,
             "Enrichment-Database",
             "MIT format for an enrichment database",
-            Constants.EDB, JarResources.getIcon("Edb.png"), EdbFolderParser.class);
+            Constants.EDB, EdbFolderParser.class);
 
     public static final DataFormat RPT_FORMAT = new DataFormat(Report.class, "Report",
             "Report for a program",
-            Constants.RPT, JarResources.getIcon("Rpt.gif"), ReportParser.class);
+            Constants.RPT, ReportParser.class);
 
     public static final DataFormat CHIP_FORMAT = new DataFormat(Chip.class, "Chip",
             "Chip",
-            Constants.CHIP, JarResources.getIcon("Chip16.png"), ChipParser.class);
+            Constants.CHIP, ChipParser.class);
 
     /**
      * @maint manually keep in synch with declared formats
@@ -129,38 +125,6 @@ public class DataFormat extends DataType implements Constants {
     public static final DataFormat[] ALL_GENESETMATRIX_FORMATS = new DataFormat[]
             {GMX_FORMAT, GMT_FORMAT};  // Seems like GRP should be here...
 
-    static class ParsableFileView extends FileView {
-
-        /**
-         * Custom icons for file types that have associated actions.
-         */
-        public Icon getIcon(final File file) {
-            return DataFormat.getIconOrNull(file);
-        }
-
-        /**
-         * Default handling.
-         * Let the L&F FileView figure this out.
-         */
-        public String getTypeDescription(final File file) {
-            return null;
-        }
-
-        /**
-         * Default handling.
-         * Let the L&F FileView figure this out.
-         */
-        public String getDescription(final File file) {
-            return DataFormat.getDesc(file);
-        }
-
-    }    // End class ParsableFileView
-
-
-    public static FileView getParsableFileView() {
-        return new ParsableFileView();
-    }
-
 
     /**
      * key -> Class (one of the pobs), value -> string ext
@@ -171,12 +135,6 @@ public class DataFormat extends DataType implements Constants {
      * key -> ext, value -> DataFormat that represents that ext
      */
     private static final Map<String, DataFormat> kExtDfMap = new HashMap<String, DataFormat>();
-
-    /**
-     * key -> classname, value -> icon to represent the class
-     */
-    private static final Map<Class, Icon> kClassIconMap = new HashMap<Class, Icon>();
-
     /**
      * key -> class, value->corresp dataformats name
      */
@@ -203,9 +161,6 @@ public class DataFormat extends DataType implements Constants {
                 if (!kClassExtMap.containsKey(repClass)) {
                     kClassExtMap.put(repClass, ALL[i].getExtension());
                 }
-                if (!kClassIconMap.containsKey(repClass)) {
-                    kClassIconMap.put(repClass, ALL[i].getIcon());
-                }
             }
         }
     }
@@ -215,7 +170,6 @@ public class DataFormat extends DataType implements Constants {
      */
     private String fName;
     private String fDesc;
-    private Icon fIcon;
     private String fExt;
     // TODO: remove this apparently unused field, clean up.
     // It should be safe to do so, but I have a small fear that it's somehow used by reflection.
@@ -243,7 +197,7 @@ public class DataFormat extends DataType implements Constants {
      * @throws java.lang.IllegalArgumentException
      *          on invalid ext and bad input params
      */
-    public DataFormat(Class repClass, String name, String desc, String ext, Icon icon, Class parserClass)
+    public DataFormat(Class repClass, String name, String desc, String ext, Class parserClass)
             throws IllegalArgumentException {
 
         super(repClass, ext);
@@ -256,9 +210,6 @@ public class DataFormat extends DataType implements Constants {
             throw new IllegalArgumentException("Param desc cannot be null");
         }
 
-        if (!SystemUtils.isHeadless() && icon == null) {
-            throw new IllegalArgumentException("Param icon cannot be null");
-        }
 
         if (ext == null) {
             throw new IllegalArgumentException("Null extension is not allowed: " + ext);
@@ -276,7 +227,6 @@ public class DataFormat extends DataType implements Constants {
         // parser can be null
 
         this.fExt = ext;
-        this.fIcon = icon;
         this.fName = name;
         this.fDesc = desc;
         this.fParserClass = parserClass;
@@ -321,12 +271,6 @@ public class DataFormat extends DataType implements Constants {
         return fExt;
     }
 
-    /**
-     * @return Icon standard for this DataFormat
-     */
-    public Icon getIcon() {
-        return fIcon;
-    }
 
     /**
      * @return
@@ -440,35 +384,6 @@ public class DataFormat extends DataType implements Constants {
         }
     }
 
-    /**
-     * @param ext
-     * @return standard Icon for specified ext, if known.
-     *         Else JarResources.ICON_NOT_FOUND.
-     */
-    public static Icon getIcon(final String ext) {
-
-        //log.info("Getting getIcon for ext: " + ext);
-        DataFormat df = getDataFormat(ext);
-
-        if (df != null) {
-            return df.getIcon();
-        } else {
-            return JarResources.ICON_UNKNOWN_DATA_FORMAT;
-        }
-    }
-
-    public static Icon getIconOrNull(final String ext) {
-
-        //log.info("Getting getIcon for ext: " + ext);
-        DataFormat df = getDataFormat(ext);
-
-        if (df != null) {
-            return df.getIcon();
-        } else {
-            return null;
-        }
-    }
-
     public static String getDesc(File file) {
 
         //log.info("Getting getIcon for ext: " + ext);
@@ -508,31 +423,6 @@ public class DataFormat extends DataType implements Constants {
         return pobClass; // cant do anything
     }
 
-    /**
-     * @param obj
-     * @return
-     */
-    public static Icon getIcon(final Object obj) {
-        if (obj == null) {
-            return JarResources.ICON_NOT_FOUND;
-        } else if (obj instanceof File) {
-            return getIcon(NamingConventions.getExtension((File) obj));
-        } else if (obj instanceof String) {
-            return getIcon(NamingConventions.getExtension(obj.toString()));
-        } else {
-            Object ic = kClassIconMap.get(obj.getClass());
-            if (ic == null && obj instanceof PersistentObject) {
-                Class repcl = getRepresentationClass((PersistentObject) obj);
-                ic = kClassIconMap.get(repcl);
-            }
-
-            if (ic == null) {
-                return JarResources.ICON_NOT_FOUND;
-            } else {
-                return (Icon) ic;
-            }
-        }
-    }
 
     /**
      * The class that represent specified object
@@ -576,20 +466,6 @@ public class DataFormat extends DataType implements Constants {
         } else {
             throw new IllegalArgumentException("Unknown object: " + pob);
         }
-    }
-
-    /**
-     * @param file
-     * @return
-     */
-    public static Icon getIcon(final File file) {
-        String ext = NamingConventions.getExtension(file);
-        return getIcon(ext);
-    }
-
-    public static Icon getIconOrNull(final File file) {
-        String ext = NamingConventions.getExtension(file).toLowerCase();
-        return getIconOrNull(ext);
     }
 
 

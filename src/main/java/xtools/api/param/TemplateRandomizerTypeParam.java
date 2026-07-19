@@ -4,12 +4,7 @@
 package xtools.api.param;
 
 import edu.mit.broad.genome.objects.strucs.TemplateRandomizerType;
-import edu.mit.broad.genome.swing.fields.GComboBoxField;
-import edu.mit.broad.genome.swing.fields.GFieldPlusChooser;
 
-import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 /**
  * Object to capture RandomizerType in commandline params</p>
@@ -17,11 +12,8 @@ import java.awt.event.ActionListener;
  * @author Aravind Subramanian
  * @version %I%, %G%
  */
-public class TemplateRandomizerTypeParam extends AbstractParam implements ActionListener {
-
-    private GComboBoxField cbOptions;
-
-    /**
+public class TemplateRandomizerTypeParam extends AbstractParam {
+/**
      * Class constructor
      *
      * @param def
@@ -58,24 +50,6 @@ public class TemplateRandomizerTypeParam extends AbstractParam implements Action
 
         return (TemplateRandomizerType) val;
     }
-
-
-    public GFieldPlusChooser getSelectionComponent() {
-
-        if (cbOptions == null) {
-            cbOptions = ParamHelper.createActionListenerBoundHintsComboBox(false, this, this);
-            ParamHelper.safeSelectValueDefaultByString(cbOptions.getComboBox(), this);
-        }
-
-        return cbOptions;
-
-    }
-
-    public void actionPerformed(ActionEvent evt) {
-        this.setValue((TemplateRandomizerType) ((JComboBox) cbOptions.getComponent()).getSelectedItem());
-
-    }
-
     public boolean isFileBased() {
         return false;
     }

@@ -11,6 +11,7 @@ import edu.mit.broad.genome.objects.GeneSet;
 import edu.mit.broad.genome.objects.Template;
 import edu.mit.broad.genome.objects.strucs.CollapsedDetails;
 import edu.mit.broad.genome.reports.api.ReportIndexState;
+import edu.mit.broad.genome.reports.pages.HtmlFormat;
 import xtools.api.AbstractTool;
 import xtools.api.param.*;
 
@@ -160,12 +161,7 @@ public class Gsea extends AbstractGsea2Tool {
         try {
             if (dsr.isSpecified()) {
                 Dataset ds = dsr.getDataset();
-                StringBuffer buf = new StringBuffer();
-                buf.append("<div id=\"footer\" style=\"width: 905; height: 35\">\n").append(
-                        "<h3 style=\"text-align: left\"><font color=\"#808080\">GSEA Report for ").append(
-                        "Dataset ").append(ds.getName()).append("</font></h3>\n").append("</div>");
-
-                return buf.toString();
+                return HtmlFormat.reportHeader("GSEA Report for Dataset " + ds.getName());
             }
         } catch (Throwable t) {
             t.printStackTrace();

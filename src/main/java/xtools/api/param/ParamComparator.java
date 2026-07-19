@@ -24,9 +24,14 @@ public class ParamComparator implements Comparator {
         kSortOrder = new ArrayList();
 
         kSortOrder.add(Param.RES);
+        kSortOrder.add(Param.RNK);
         kSortOrder.add(Param.CLS);
         kSortOrder.add(Param.GRP);
         kSortOrder.add(Param.GMX);
+
+        kSortOrder.add(Param.PERMUTE);
+        kSortOrder.add("nperm");
+        kSortOrder.add(Param.FEATURE_SPACE);
 
         kSortOrder.add(Param.OUT); // keep these together  -> last reqd
         kSortOrder.add(Param.RPT); // keep me together -> 1st optional

@@ -1,11 +1,7 @@
 /*
- * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California. All
- * rights reserved.
+ * Copyright (c) 2003-2026 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California. All rights reserved.
  */
 module org.gsea_msigdb.gsea {
-    exports edu.mit.broad.cytoscape;
-    exports edu.mit.broad.cytoscape.action;
-    exports edu.mit.broad.cytoscape.view;
     exports edu.mit.broad.genome;
     exports edu.mit.broad.genome.alg;
     exports edu.mit.broad.genome.alg.distrib;
@@ -25,66 +21,44 @@ module org.gsea_msigdb.gsea {
     exports edu.mit.broad.genome.reports.api;
     exports edu.mit.broad.genome.reports.pages;
     exports edu.mit.broad.genome.reports.web;
-    exports edu.mit.broad.genome.swing;
-    exports edu.mit.broad.genome.swing.dnd;
-    exports edu.mit.broad.genome.swing.fields;
-    exports edu.mit.broad.genome.swing.image;
-    exports edu.mit.broad.genome.swing.windows;
     exports edu.mit.broad.genome.utils;
-    exports edu.mit.broad.genome.viewers;
     exports edu.mit.broad.vdb;
     exports edu.mit.broad.vdb.chip;
     exports edu.mit.broad.vdb.map;
     exports edu.mit.broad.vdb.meg;
-    exports edu.mit.broad.xbench;
-    exports edu.mit.broad.xbench.actions;
-    exports edu.mit.broad.xbench.actions.ext;
-    exports edu.mit.broad.xbench.actions.misc_actions;
-    exports edu.mit.broad.xbench.core;
+    exports edu.mit.broad.cytoscape;
     exports edu.mit.broad.xbench.core.api;
-    exports edu.mit.broad.xbench.explorer.filemgr;
-    exports edu.mit.broad.xbench.explorer.objmgr;
     exports edu.mit.broad.xbench.heatmap;
     exports edu.mit.broad.xbench.prefs;
-    exports edu.mit.broad.xbench.searchers;
     exports edu.mit.broad.xbench.tui;
-    exports edu.mit.broad.xbench.xchoosers;
     exports org.broad.gsea.ui;
-    exports org.genepattern.annotation;
     exports org.genepattern.data.expr;
     exports org.genepattern.data.matrix;
     exports org.genepattern.gsea;
+    exports org.genepattern.heatmap;
     exports org.genepattern.heatmap.image;
     exports org.genepattern.io;
     exports org.genepattern.io.expr;
     exports org.genepattern.io.expr.cls;
     exports org.genepattern.io.expr.gct;
     exports org.genepattern.io.expr.res;
-    exports org.genepattern.heatmap;
-    exports org.genepattern.menu;
-    exports org.genepattern.menu.jfree;
-    exports org.genepattern.module;
-    exports org.genepattern.modules;
-    exports org.genepattern.plot;
-    exports org.genepattern.table;
-    exports org.genepattern.uiutil;
-    exports xapps.api;
-    exports xapps.api.frameworks;
-    exports xapps.api.frameworks.fiji;
-    exports xapps.api.vtools;
     exports xapps.gsea;
     exports xtools.api;
     exports xtools.api.param;
-    exports xtools.api.ui;
     exports xtools.chip2chip;
     exports xtools.gsea;
     exports xtools.munge;
+    exports org.gsea_msigdb.gsea.ui.api;
+    exports xapps.gsea.fx;
+    exports xapps.gsea.fx.shell;
+    exports xapps.gsea.fx.params;
+    exports xapps.gsea.fx.tui;
+    exports xapps.gsea.fx.viewers;
 
     requires algorithms;
     requires batik.awt.util;
     requires batik.dom;
     requires batik.svggen;
-    requires commons.cli;
     requires commons.compress;
     requires commons.io;
     requires commons.lang3;
@@ -92,7 +66,6 @@ module org.gsea_msigdb.gsea {
     requires dom4j.full;
     requires ecs;
     requires edtftpj;
-    requires forms;
     requires httpclient;
     requires httpcore;
     requires java.datatransfer;
@@ -100,16 +73,23 @@ module org.gsea_msigdb.gsea {
     requires java.logging;
     requires transitive java.prefs;
     requires java.xml;
-    requires transitive jcommon;
+    requires javafx.base;
+    requires javafx.controls;
+    requires javafx.graphics;
+    requires javafx.swing;
+    requires javafx.web;
+    requires jcommon;
     requires jdk.xml.dom;
-    requires transitive jfreechart;
-    requires jgoodies.uif.lite;
+    requires jfreechart;
+    requires org.jfree.fxgraphics2d;
+    requires com.sun.jna;
     requires json.simple;
-    requires looks;
     requires maven.artifact;
     requires org.slf4j;
     requires org.slf4j.jul;
-    requires SGLayout;
     requires trove;
     requires ujmp.complete;
+
+    opens xapps.gsea.fx to javafx.graphics;
+    opens xapps.gsea.fx.shell to javafx.graphics;
 }

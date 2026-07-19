@@ -3,16 +3,11 @@
  */
 package xtools.api.param;
 
-import edu.mit.broad.genome.swing.fields.GFieldPlusChooser;
-import edu.mit.broad.genome.swing.fields.GSafeCharsField;
 
 /**
  * @author Aravind Subramanian
  */
 public class StringInputParam extends AbstractParam {
-
-    private GSafeCharsField tfName;
-
     private char[] addSafe;
 
     public StringInputParam(String name, String nameEnglish, String desc, String def_andonly_hint, boolean reqd) {
@@ -27,6 +22,11 @@ public class StringInputParam extends AbstractParam {
         super(name, nameEnglish, String.class, desc, new String[]{def_andonly_hint}, reqd);
         this.addSafe = addSafeChars;
         setType(type);
+    }
+
+    /** Extra characters allowed by {@code GSafeCharsField#addSafeChars} (may be null). */
+    public char[] getAdditionalSafeChars() {
+        return addSafe;
     }
 
     public void setValue(Object value) {
@@ -58,29 +58,6 @@ public class StringInputParam extends AbstractParam {
         return (value == null) ? "" : value.toString();
     }
     
-    public GFieldPlusChooser getSelectionComponent() {
-        if (tfName == null) {
-            Object t = this.getValue();
-
-            if (t == null) {
-                t = this.getDefault();
-            }
-
-            if (t != null) {
-                tfName = new GSafeCharsField(t.toString());
-            } else {
-                tfName = new GSafeCharsField();
-            }
-
-            if (addSafe != null) {
-                tfName.addSafeChars(addSafe);
-            }
-
-            ParamHelper.addDocumentListener(tfName, this);
-        }
-
-        return tfName;
-    }
 
     public boolean isFileBased() {
         return false;

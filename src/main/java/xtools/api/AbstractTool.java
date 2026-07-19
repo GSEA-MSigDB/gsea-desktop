@@ -191,10 +191,7 @@ public abstract class AbstractTool implements Tool {
     }
 
     protected String getHeader() {
-        StringBuilder buf = new StringBuilder();
-        buf.append("<div id=\"footer\" style=\"width: 905; height: 35\">\n").append(
-                "<h3 style=\"text-align: left\"><font color=\"#808080\">Report for: ").append(getClass().getName()).append("</font></h3>\n").append("</div>");
-        return buf.toString();
+        return HtmlFormat.reportHeader("Report for: " + getClass().getName());
     }
 
     protected void startExec(final String optHeader) throws IOException {
@@ -203,7 +200,7 @@ public abstract class AbstractTool implements Tool {
 
     // @note this is the core start report method
     protected void startExec(final ReportIndexState indexState) throws IOException {
-        UpdateChecker.oneTimeGseaUpdateCheck(null);
+        UpdateChecker.oneTimeGseaUpdateCheck();
         fTimer.start();
         fReport = new ToolReport(this, true, indexState);
         //log.info("Running " + getName() + " with reports: " + fRptLabelParam.getReportLabel() + " folder: " + fReport.getReportDir() + " indexState: " + indexState.toString());
@@ -231,7 +228,7 @@ public abstract class AbstractTool implements Tool {
 
         if (!fReport.getToolComments().isEmpty()) {
             if (fReport.getIndexPage() != null) {
-                Div div = new Div();
+                Div div = HtmlFormat.Divs.reportSection();
                 H4 h4 = new H4("Comments");
                 div.addElement(h4);
                 div.addElement(fReport.getToolComments().toHTML());
@@ -241,9 +238,8 @@ public abstract class AbstractTool implements Tool {
         
         if (!fReport.getToolWarnings().isEmpty()) {
             if (fReport.getIndexPage() != null) {
-                Div div = new Div();
+                Div div = HtmlFormat.Divs.reportSectionWarn();
                 H4 h4 = new H4("Warnings");
-                h4.addAttribute("style", "color: magenta;");
                 div.addElement(h4);
                 div.addElement(fReport.getToolWarnings().toHTML());
                 fReport.getIndexPage().addBlock(div, false);
@@ -251,7 +247,7 @@ public abstract class AbstractTool implements Tool {
         }
         
         if (fReport.getIndexPage() != null) {
-            Div div = new Div();
+            Div div = HtmlFormat.Divs.reportSection();
             H4 h4 = new H4("Citing GSEA and MSigDB");
             div.addElement(h4);
             P citingGsea = new P();

@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CancellationException;
 
 /**
  * Kolmogorov-Smirnov Enrichment Test related methods
@@ -76,6 +77,13 @@ public class KSTests {
         this.core = new KSCore();
     }
 
+    private static void throwIfCancelled() {
+        if (Thread.currentThread().isInterrupted()) {
+            Thread.currentThread().interrupt();
+            throw new CancellationException("GSEA run canceled");
+        }
+    }
+
     public void setDeseq2DiagnosticOutputFile(final File outputFile) {
         this.deseq2DiagnosticOutputFile = outputFile;
     }
@@ -85,6 +93,7 @@ public class KSTests {
     		final Map<String, Boolean> mps, final GeneSetCohort.Generator gcohgen, final boolean permuteTemplate, 
         final int numMarkers, final List<RankedList> store_rnd_ranked_lists_here_opt,
                         final boolean useDeseq2LikeCountModel) throws Exception {
+        throwIfCancelled();
         final Dataset ds = dt.getDataset(false);
         final Template t = dt.getTemplate();
 		log.debug("!!!! Executing for: {} # samples: {}", ds.getName(), ds.getNumCol());
@@ -149,6 +158,7 @@ public class KSTests {
 
     public EnrichmentDb executeGsea(final RankedList rl_real, final GeneSet[] origGeneSets, final int nperm, 
     		final RandomSeedGenerator rst, final Chip chip,final GeneSetCohort.Generator gcohgen) throws Exception {
+                throwIfCancelled();
         log.debug("!!!! Executing for: {} # features: {}", rl_real.getName(), rl_real.getSize());
 
         final GeneSet[] gsets = gcohgen.filterGeneSetsByMembersAndSize(rl_real, origGeneSets);
@@ -239,6 +249,7 @@ public class KSTests {
         final int totalPerm = rndTemplates.length;
         final long permLoopStartNanos = System.nanoTime();
         for (int c = 0; c < totalPerm; c++) {
+            throwIfCancelled();
             ScoredDataset rndRl;
             GeneSetCohort gcohRnd;
             if (deseq2LikeCountModel != null) {
@@ -385,6 +396,7 @@ public class KSTests {
 
         // The make rnd gene sets for every real one
         for (int g = 0; g < gsetsReal.length; g++) {
+            throwIfCancelled();
         	// TODO: eval for performance.
         	// Could use sout.print() instead, to avoid String concat.  Could also try to avoid the modulo call:
         	//   int nextLogPoint = LOG_FREQ; // outside loop
@@ -404,6 +416,7 @@ public class KSTests {
                 rndEss = new Vector(rndgsets.length);
                 final EnrichmentScore[] rnds = core.calculateKSScore(gcohRnd, false); // never store deep for rnds
                 for (int r = 0; r < rndgsets.length; r++) {
+                    throwIfCancelled();
                     rndEss.setElement(r, rnds[r].getES());
                 }
             } else {
