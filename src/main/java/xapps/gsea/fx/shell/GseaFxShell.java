@@ -68,6 +68,8 @@ import xapps.gsea.fx.viewers.FxConsoleViewer;
 import xapps.gsea.fx.viewers.FxEnrichmentMapPane;
 import xapps.gsea.fx.viewers.FxHomePane;
 import xapps.gsea.fx.viewers.FxLeadingEdgePane;
+import xapps.gsea.fx.viewers.coremap.CoreMapWorkspace;
+import xapps.gsea.fx.viewers.coremap.FxCoreMapPane;
 import xapps.gsea.fx.viewers.FxLoadDataPane;
 import xapps.gsea.fx.viewers.FxPreferencesPane;
 import org.broad.gsea.ui.DesktopIntegration;
@@ -99,6 +101,7 @@ public class GseaFxShell implements Workspace, Application.Handler {
     private FxLoadDataPane loadDataPage;
     private FxLeadingEdgePane leadingEdgePage;
     private FxEnrichmentMapPane enrichmentMapPage;
+    private FxCoreMapPane coreMapPage;
     private FxAnalysisHistoryPane analysisHistoryPage;
     private FxToolLauncherPane gseaPage;
     private FxToolLauncherPane gseaPrerankedPage;
@@ -117,6 +120,12 @@ public class GseaFxShell implements Workspace, Application.Handler {
         FxConsoleViewer.installLogHandler();
         FxConsoleViewer.installSystemStreamCapture();
         tabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.ALL_TABS);
+        // So Report Explorer can reuse the sidebar CoreMap workspace.
+        CoreMapWorkspace.registerWorkspace(() -> {
+            ensureCoreMapPage();
+            openOrReselect(coreMapPage);
+            return coreMapPage;
+        });
     }
 
     public void show() {
@@ -370,35 +379,32 @@ public class GseaFxShell implements Workspace, Application.Handler {
         return item;
     }
 
-    /** Vertical tool groups: Steps in GSEA analysis, Tools, Analysis history. */
+    /** Vertical tool groups: Enrichment Methods, Post-Analysis, Additional Tools, Analysis History. */
     private Node buildLeftToolRail() {
-        VBox steps = titledToolGroup("Steps in GSEA analysis",
-                toolButton("Load data", "LocalFileExplorerWidget32.gif",
-                        this::openLoadData),
-                toolButton("Run GSEA", "GseaApp24.gif",
-                        this::openGsea),
-                toolButton("Leading edge analysis", "Lev32.gif",
+        VBox enrichment = titledToolGroup("Enrichment Methods",
+                toolButton("GSEA", "GseaApp24.gif", this::openGsea),
+                toolButton("GSEAPreranked", "GseaApp24.gif", this::openGseaPreranked),
+                toolButton("single-sample GSEA", "GseaApp24.gif", this::openSsGsea)
+        );
+        VBox postAnalysis = titledToolGroup("Post-Analysis",
+                toolButton("CoreMap (Network Integration)", "coremap_logo.png", this::openCoreMap),
+                toolButton("Leading Edge Analysis (Classic LEA)", "Lev32.gif",
                         this::openLeadingEdge),
                 toolButton("Enrichment Map Visualization", "enrichmentmap_logo.gif",
                         this::openEnrichmentMap)
         );
-        VBox tools = titledToolGroup("Tools",
-                toolButton("Run GSEAPreranked", "GseaApp24.gif",
-                        this::openGseaPreranked),
-                toolButton("Run ssGSEA", "GseaApp24.gif",
-                        this::openSsGsea),
+        VBox additional = titledToolGroup("Additional Tools",
                 toolButton("Collapse Dataset", "ProjectSpecific16.png",
                         this::openCollapseDataset),
-                toolButton("Chip2Chip mapping", "Chip2Chip24_b.gif",
-                        this::openChip2Chip)
+                toolButton("Chip2Chip", "Chip2Chip24_b.gif", this::openChip2Chip)
         );
         VBox history = new VBox(8,
-                toolButton("Analysis history", "past_analysis32.gif",
+                toolButton("Analysis History", "past_analysis32.gif",
                         this::openAnalysisHistory));
         history.getStyleClass().add("gsea-tool-group");
         history.setPadding(new Insets(8, 6, 8, 6));
 
-        VBox rail = new VBox(10, steps, tools, history);
+        VBox rail = new VBox(10, enrichment, postAnalysis, additional, history);
         rail.setPadding(new Insets(6));
         // Wide enough for multi-word rail labels + 32px icons without ellipsis.
         rail.setPrefWidth(200);
@@ -463,6 +469,18 @@ public class GseaFxShell implements Workspace, Application.Handler {
             enrichmentMapPage = new FxEnrichmentMapPane();
         }
         openOrReselect(enrichmentMapPage);
+    }
+
+    private void openCoreMap() {
+        ensureCoreMapPage();
+        openOrReselect(coreMapPage);
+    }
+
+    private FxCoreMapPane ensureCoreMapPage() {
+        if (coreMapPage == null) {
+            coreMapPage = new FxCoreMapPane();
+        }
+        return coreMapPage;
     }
 
     private void openAnalysisHistory() {

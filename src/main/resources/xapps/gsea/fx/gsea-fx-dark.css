@@ -377,6 +377,10 @@
     -fx-background-color: #1e1f22;
 }
 
+.gsea-root.gsea-dark .gsea-enplot-tabs > .tab-header-area {
+    -fx-background-color: #25262a;
+}
+
 .gsea-root.gsea-dark .gsea-report-header,
 .gsea-root.gsea-dark .gsea-report-action-bar {
     -fx-background-color: #2b2d30;

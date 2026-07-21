@@ -4,7 +4,6 @@
 package edu.mit.broad.xbench.core.api;
 
 import edu.mit.broad.genome.NamingConventions;
-import edu.mit.broad.genome.utils.SystemUtils;
 import edu.mit.broad.xbench.prefs.XPreferencesFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,9 +39,9 @@ public class VdbManagerImpl implements VdbManager {
     }
 
     public File getDefaultOutputDir() {
-        File pwd = SystemUtils.getPwd();
+        File out = _mkdir(XPreferencesFactory.kDefaultReportsOutputDir.getDir(false));
         String dn = NamingConventions.createNiceEnglishDate_for_dirs();
-        return _mkdir(new File(pwd, dn));
+        return _mkdir(new File(out, dn));
     }
 
     private static File _mkdir(File dir) {

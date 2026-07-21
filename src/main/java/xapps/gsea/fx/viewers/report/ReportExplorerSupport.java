@@ -223,6 +223,14 @@ public final class ReportExplorerSupport {
         }
     }
 
+    /** Zoomable viewer for an in-memory JavaFX image (e.g. on-demand chart render). */
+    public static Node singleImage(Image image) {
+        if (image == null) {
+            return messagePane("No image available");
+        }
+        return zoomableImage(image);
+    }
+
     /**
      * Report heatmap / plot viewer: starts fitted to the viewport; Zoom In/Out, Fit, 100%,
      * Ctrl/Cmd+scroll to zoom, drag-pan when larger than the viewport.
@@ -421,6 +429,63 @@ public final class ReportExplorerSupport {
         } catch (Exception e) {
             Application.getWindowManager().showError("Could not open file", e);
         }
+    }
+
+    /**
+     * Tab whose content is built only when first selected (or immediately if already selected).
+     */
+    public static Tab lazyNodeTab(String title, java.util.function.Supplier<Node> content) {
+        BorderPane host = new BorderPane();
+        host.setCenter(messagePane("Select this tab to load…"));
+        Tab tab = fixedTab(title, host);
+        java.util.concurrent.atomic.AtomicBoolean started =
+                new java.util.concurrent.atomic.AtomicBoolean(false);
+        Runnable start = () -> {
+            if (!started.compareAndSet(false, true)) {
+                return;
+            }
+            try {
+                host.setCenter(content.get());
+            } catch (Throwable t) {
+                host.setCenter(messagePane("Could not load tab: "
+                        + (t.getMessage() != null ? t.getMessage() : t.getClass().getSimpleName())));
+            }
+        };
+        tab.selectedProperty().addListener((obs, was, isNow) -> {
+            if (Boolean.TRUE.equals(isNow)) {
+                start.run();
+            }
+        });
+        Platform.runLater(() -> {
+            if (tab.isSelected()) {
+                start.run();
+            }
+        });
+        return tab;
+    }
+
+    /**
+     * Lazy tab that loads only when the user selects it (never on initial layout).
+     * Use for heavy content nested under an already-selected parent tab.
+     */
+    public static Tab lazyNodeTabOnClick(String title, java.util.function.Supplier<Node> content) {
+        BorderPane host = new BorderPane();
+        host.setCenter(messagePane("Select this tab to load…"));
+        Tab tab = fixedTab(title, host);
+        java.util.concurrent.atomic.AtomicBoolean started =
+                new java.util.concurrent.atomic.AtomicBoolean(false);
+        tab.selectedProperty().addListener((obs, was, isNow) -> {
+            if (!Boolean.TRUE.equals(isNow) || !started.compareAndSet(false, true)) {
+                return;
+            }
+            try {
+                host.setCenter(content.get());
+            } catch (Throwable t) {
+                host.setCenter(messagePane("Could not load tab: "
+                        + (t.getMessage() != null ? t.getMessage() : t.getClass().getSimpleName())));
+            }
+        });
+        return tab;
     }
 
     /**

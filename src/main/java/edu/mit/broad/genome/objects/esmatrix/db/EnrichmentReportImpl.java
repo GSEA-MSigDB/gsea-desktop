@@ -12,16 +12,27 @@ public class EnrichmentReportImpl implements EnrichmentReport {
 
     private File fPlotFile;
 
+    private File fModernPlotFile;
+
     private File fHtmlFile;
 
     public EnrichmentReportImpl(final File htmlFile, final File plotFile) {
+        this(htmlFile, plotFile, null);
+    }
+
+    public EnrichmentReportImpl(final File htmlFile, final File plotFile, final File modernPlotFile) {
         this.fPlotFile = plotFile;
+        this.fModernPlotFile = modernPlotFile;
         this.fHtmlFile = htmlFile;
     }
 
 
     public File getESPlotFile() {
         return fPlotFile;
+    }
+
+    public File getModernESPlotFile() {
+        return fModernPlotFile;
     }
 
     public File getHtmlFile() {

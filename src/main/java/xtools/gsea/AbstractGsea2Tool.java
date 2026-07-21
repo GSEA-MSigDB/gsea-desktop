@@ -140,6 +140,13 @@ public abstract class AbstractGsea2Tool extends AbstractGseaTool {
     protected void execute_one_with_reporting(final CollapsedDetails.Data fullCd, final Template template, final GeneSet[] origGeneSets,
             final int showDetailsForTopXSets, final boolean makeZippedReport, final boolean makeGeneSetReports, final boolean createSvgs,
     		final boolean createGcts) throws Exception {
+        execute_one_with_reporting(fullCd, template, origGeneSets, showDetailsForTopXSets, makeZippedReport, makeGeneSetReports,
+                createSvgs, createGcts, false);
+    }
+
+    protected void execute_one_with_reporting(final CollapsedDetails.Data fullCd, final Template template, final GeneSet[] origGeneSets,
+            final int showDetailsForTopXSets, final boolean makeZippedReport, final boolean makeGeneSetReports, final boolean createSvgs,
+    		final boolean createGcts, final boolean createModernEnplots) throws Exception {
         List<RankedList> store_rnd_ranked_lists_here_opt = fSaveRndRankedListsParam.isTrue() ? new ArrayList<RankedList>() : null;
 
         final EnrichmentDb edb = execute_one(fullCd, template, origGeneSets, store_rnd_ranked_lists_here_opt);
@@ -157,7 +164,7 @@ public abstract class AbstractGsea2Tool extends AbstractGseaTool {
         
         // Make the report
         EnrichmentReports.Ret ret = EnrichmentReports.createGseaLikeReport(edb, getOutputStream(), fullCd, reportIndexPage, fReport, showDetailsForTopXSets, minSize, maxSize, 
-        		makeGeneSetReports, makeZippedReport, createSvgs, createGcts, origGeneSets, metric.getName(), fNormModeParam.getNormModeName());
+        		makeGeneSetReports, makeZippedReport, createSvgs, createGcts, createModernEnplots, origGeneSets, metric.getName(), fNormModeParam.getNormModeName());
 
         // Save the rnd ranked lists
         // Note: carrying this list through until after the algorithm completes has negative memory usage implications.

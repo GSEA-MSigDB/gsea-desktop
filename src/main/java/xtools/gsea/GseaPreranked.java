@@ -44,6 +44,8 @@ public class GseaPreranked extends AbstractGseaTool {
 
     // Push up to AbstractGseaTool
     private final BooleanParam fCreateSvgsParam = new BooleanParam("create_svgs", "Create SVG plot images", "Create SVG plot images along with PNGs (GZ compressed to save space as these are very large)", false, false, Param.ADVANCED);
+    private final BooleanParam fCreateModernEnplotsParam = new BooleanParam("create_enplot_v2", "Create EnPlot v2 outputs",
+            "Also create EnPlot v2 static images (enplot2_*) and interactive plot data (JSON) for use in the report explorer and HTML detail pages", false, false, Param.ADVANCED);
     private final StringInputParam fAltDelimParam = new StringInputParam("altDelim", "Alternate delimiter", 
             "Optional alternate delimiter character for gene set names instead of comma", null, false, new char[] { ';' }, Param.ADVANCED);
 
@@ -116,6 +118,7 @@ public class GseaPreranked extends AbstractGseaTool {
         final int maxSize = fGeneSetMaxSizeParam.getIValue();
         final GeneSetCohort.Generator gcohgen = fGcohGenReqdParam.createGeneSetCohortGenerator(minSize, maxSize);
         final boolean createSvgs = fCreateSvgsParam.isSpecified() && fCreateSvgsParam.isTrue();
+        final boolean createModernEnplots = fCreateModernEnplotsParam.isSpecified() && fCreateModernEnplotsParam.isTrue();
         RankedList rl = fullRL.getRankedList();
         Chip chip = null;
         FeatureAnnot fann = null;
@@ -146,7 +149,7 @@ public class GseaPreranked extends AbstractGseaTool {
 
         // Make the report
         EnrichmentReports.Ret ret = EnrichmentReports.createGseaLikeReport(edb, getOutputStream(), fullRL, reportIndexPage, fReport, topXSets, minSize, maxSize,
-                fMakeGeneSetReportsParam.isTrue(), fMakeZippedReportParam.isTrue(), createSvgs, origGeneSets, "PreRanked", fNormModeParam.getNormModeName(), fann);
+                fMakeGeneSetReportsParam.isTrue(), fMakeZippedReportParam.isTrue(), createSvgs, createModernEnplots, origGeneSets, "PreRanked", fNormModeParam.getNormModeName(), fann);
 
         // Make an edb folder thing
         new EdbFolderParser().export(ret.edb, ret.savedInDir);
@@ -154,7 +157,7 @@ public class GseaPreranked extends AbstractGseaTool {
     }
 
     protected Param[] getAdditionalParams() {
-        return new Param[]{fRankedListParam, fShowDetailsForTopXSetsParam, fMakeZippedReportParam, fMakeGeneSetReportsParam, fCreateSvgsParam, fAltDelimParam};
+        return new Param[]{fRankedListParam, fShowDetailsForTopXSetsParam, fMakeZippedReportParam, fMakeGeneSetReportsParam, fCreateSvgsParam, fCreateModernEnplotsParam, fAltDelimParam};
     }
 
     public String getDesc() {

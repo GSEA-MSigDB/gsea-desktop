@@ -14,6 +14,11 @@ public interface EnrichmentReport {
 
     public File getESPlotFile();
 
+    /** Optional EnPlot v2 image ({@code enplot2_*}); may be null. */
+    public default File getModernESPlotFile() {
+        return null;
+    }
+
     public File getHtmlFile();
 
     // @todo add more stuff??

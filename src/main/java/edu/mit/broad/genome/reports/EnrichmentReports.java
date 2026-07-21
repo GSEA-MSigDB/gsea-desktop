@@ -8,6 +8,7 @@ import edu.mit.broad.genome.NamingConventions;
 import edu.mit.broad.genome.NotImplementedException;
 import edu.mit.broad.genome.Printf;
 import edu.mit.broad.genome.alg.DatasetGenerators;
+import edu.mit.broad.genome.alg.gsea.GeneSetScoringTable;
 import edu.mit.broad.genome.alg.gsea.Norms;
 import edu.mit.broad.genome.alg.gsea.PValueCalculator;
 import edu.mit.broad.genome.alg.gsea.PValueCalculatorImpls;
@@ -464,6 +465,8 @@ public class EnrichmentReports {
     private static final int COL_FDR = 6;
     private static final int COL_FWER = 7;
     public static final String ENPLOT_ = "enplot_";
+    /** EnPlot v2 enrichment plot file prefix (PNG/SVG/JSON). */
+    public static final String ENPLOT2_ = "enplot2_";
     
     public static final Color CHART_FRAME_COLOR = new Color(0xf2, 0xf2, 0xf2);
 
@@ -473,34 +476,81 @@ public class EnrichmentReports {
         public File savedInDir;
     }
 
-    private static IntervalMarker[] _markers(final RankedList rl) {
-        // @note an optimization
-        // some heuristics
+    /** Color-bar / hit-plot interval markers for a ranked list (recreated per chart to avoid shared mutation). */
+    public static IntervalMarker[] colorBarMarkers(final RankedList rl) {
         int numRanges = (rl.getSize() < 100) ? rl.getSize() : 100;
-
-        // for the bg shading of the hit plot -- just needs to be made once for all sets on this rl
         return RankedListCharts.createIntervalMarkers(numRanges, rl);
+    }
+
+    private static IntervalMarker[] _markers(final RankedList rl) {
+        return colorBarMarkers(rl);
+    }
+
+    /**
+     * Build a classic or EnPlot v2 combo chart from an enrichment result (e.g. on-demand in the report viewer).
+     * Recreates hit-plot markers each call so charts do not share mutable {@link IntervalMarker} state.
+     * Recomputes the full rank-by-rank ES curve when it was not persisted in the EDB.
+     */
+    public static EnrichmentCharts createComboChart(final EnrichmentResult result,
+                                                    final boolean enplotV2,
+                                                    final String classAName_opt,
+                                                    final String classBName_opt,
+                                                    final GeneSetScoringTable scoring_opt) {
+        if (result == null) {
+            throw new IllegalArgumentException("result cannot be null");
+        }
+        RankedList rl = result.getRankedList();
+        if (rl == null) {
+            throw new IllegalArgumentException("result ranked list cannot be null");
+        }
+        EnrichmentScore score = result.getScore();
+        Vector hitVector = _hitIndices2Vector(rl.getSize(), score.getHitIndices());
+        IntervalMarker[] markers = _markers(rl);
+        String gsetName = result.getGeneSet().getName(true);
+        Vector fullEs = EnrichmentEsProfiles.fullEsProfile(result, scoring_opt);
+        if (enplotV2) {
+            return ModernEnrichmentCharts.createComboChart(gsetName, score.getESProfile(),
+                    fullEs, hitVector, rl,
+                    classAName_opt, classBName_opt, markers,
+                    score.getES(), score.getNES(), score.getFDR());
+        }
+        return _createComboChart(gsetName, score.getESProfile(),
+                fullEs, hitVector, rl,
+                classAName_opt, classBName_opt, markers);
     }
 
 
     public static Ret createGseaLikeReport(final EnrichmentDb edb_original, final PrintStream out, final CollapsedDetails cd, final HtmlPage reportIndexPage, final ToolReport report, 
     		final int topXSets, final int minSize, final int maxSize, final boolean makeGeneSetsReport, final boolean makeZippedFile, final boolean createSvgs, final boolean createGcts,
             final GeneSet[] origGeneSets_opt, final String metricName, final String normModeName) {
+        return createGseaLikeReport(edb_original, out, cd, reportIndexPage, report, topXSets, minSize, maxSize,
+                makeGeneSetsReport, makeZippedFile, createSvgs, createGcts, false, origGeneSets_opt, metricName, normModeName);
+    }
+
+    public static Ret createGseaLikeReport(final EnrichmentDb edb_original, final PrintStream out, final CollapsedDetails cd, final HtmlPage reportIndexPage, final ToolReport report, 
+    		final int topXSets, final int minSize, final int maxSize, final boolean makeGeneSetsReport, final boolean makeZippedFile, final boolean createSvgs, final boolean createGcts,
+    		final boolean createModernEnplots, final GeneSet[] origGeneSets_opt, final String metricName, final String normModeName) {
         FeatureAnnot fann = null;
         if (edb_original.getDataset() != null && edb_original.getDataset().getAnnot() != null) {
             fann = edb_original.getDataset().getAnnot().getFeatureAnnot();
         }
-
         return createGseaLikeReport(edb_original, out, cd, reportIndexPage, report.getReportDir(), report, topXSets, minSize, maxSize,
-                makeGeneSetsReport, makeZippedFile, createSvgs, createGcts, origGeneSets_opt, metricName, normModeName, fann);
+                makeGeneSetsReport, makeZippedFile, createSvgs, createGcts, createModernEnplots, origGeneSets_opt, metricName, normModeName, fann);
     }
 
+    /** Preranked / annotated entry (no GCT heatmaps). */
     public static Ret createGseaLikeReport(final EnrichmentDb edb_original, final PrintStream out, final CollapsedDetails cd, final HtmlPage reportIndexPage, final ToolReport report, 
     		final int topXSets, final int minSize, final int maxSize, final boolean makeGeneSetsReport, final boolean makeZippedFile, final boolean createSvgs, 
     		final GeneSet[] origGeneSets_opt, final String metricName, final String normModeName, final FeatureAnnot fann_opt) {
-        // Note we never create GCTs for this call; this corresponds to Preranked, which has no heatmaps in the report.
-        return createGseaLikeReport(edb_original, out, cd, reportIndexPage, report.getReportDir(), report, topXSets, minSize, maxSize,
+        return createGseaLikeReport(edb_original, out, cd, reportIndexPage, report, topXSets, minSize, maxSize,
                 makeGeneSetsReport, makeZippedFile, createSvgs, false, origGeneSets_opt, metricName, normModeName, fann_opt);
+    }
+
+    public static Ret createGseaLikeReport(final EnrichmentDb edb_original, final PrintStream out, final CollapsedDetails cd, final HtmlPage reportIndexPage, final ToolReport report, 
+    		final int topXSets, final int minSize, final int maxSize, final boolean makeGeneSetsReport, final boolean makeZippedFile, final boolean createSvgs,
+    		final boolean createModernEnplots, final GeneSet[] origGeneSets_opt, final String metricName, final String normModeName, final FeatureAnnot fann_opt) {
+        return createGseaLikeReport(edb_original, out, cd, reportIndexPage, report.getReportDir(), report, topXSets, minSize, maxSize,
+                makeGeneSetsReport, makeZippedFile, createSvgs, false, createModernEnplots, origGeneSets_opt, metricName, normModeName, fann_opt);
     }
 
     private static String _createPhenotypeName(EnrichmentDb edb) {
@@ -524,7 +574,7 @@ public class EnrichmentReports {
     // @note this is the CORE CORE CORE CORE report making method
     public static Ret createGseaLikeReport(final EnrichmentDb edb_original, final PrintStream out, final CollapsedDetails cd, final HtmlPage reportIndexPage, final File saveInThisDir, 
     		final ToolReport report, final int topXSets, final int minSize, final int maxSize, final boolean makeGeneSetsReport, final boolean makeZippedFile, final boolean createSvgs, 
-    		final boolean createGcts, final GeneSet[] origGeneSets_opt, final String metricName, final String normModeName, final FeatureAnnot fann_opt) {
+    		final boolean createGcts, final boolean createModernEnplots, final GeneSet[] origGeneSets_opt, final String metricName, final String normModeName, final FeatureAnnot fann_opt) {
         if (normModeName == null) {
             throw new IllegalArgumentException("Param normModeName cannot be null");
         }
@@ -722,12 +772,12 @@ public class EnrichmentReports {
         klog.info("Creating FDR reports ...");
         final EnrichmentResult[] results_pos = edb.getResults(true);
         final BasicReportStruc pos_basic = createReport(results_pos, name, phenotypeName, classA_name_opt, classB_name_opt, rlReal, template, fann_opt,
-                "Gene sets enriched in phenotype <b>" + classA_name_long + "<b>", topXSets, makeGeneSetsReport, createSvgs, createGcts, saveInThisDir);
+                "Gene sets enriched in phenotype <b>" + classA_name_long + "<b>", topXSets, makeGeneSetsReport, createSvgs, createGcts, createModernEnplots, saveInThisDir);
         klog.info("Done FDR reports for positive phenotype");
 
         final EnrichmentResult[] results_neg = edb.getResults(false);
         final BasicReportStruc neg_basic = createReport(results_neg, name, phenotypeName, classA_name_opt, classB_name_opt, rlReal, template, fann_opt,
-                "Gene sets enriched in phenotype <b>" + classB_name_long + "<b>", topXSets, makeGeneSetsReport, createSvgs, createGcts, saveInThisDir);
+                "Gene sets enriched in phenotype <b>" + classB_name_long + "<b>", topXSets, makeGeneSetsReport, createSvgs, createGcts, createModernEnplots, saveInThisDir);
         klog.info("Done FDR reports for negative phenotype");
 
         // Ok done calcs; begin formatting and outputting reports
@@ -1010,6 +1060,25 @@ public class EnrichmentReports {
                                                 final boolean createSvgs,
                                                 final boolean createGcts,
                                                 final File saveDetailFilesInDir) {
+        return createReport(results, dsName, phenotypeName, phenoClassAName_opt, phenoClassBName_opt, rl, template_opt, fannx,
+                title, showDetailsForTopXSets, makeDetailsPage, createSvgs, createGcts, false, saveDetailFilesInDir);
+    }
+
+    public static BasicReportStruc createReport(final EnrichmentResult[] results,
+                                                final String dsName,
+                                                final String phenotypeName,
+                                                final String phenoClassAName_opt,
+                                                final String phenoClassBName_opt,
+                                                final RankedList rl,
+                                                final Template template_opt,
+                                                final FeatureAnnot fannx,
+                                                final String title,
+                                                final int showDetailsForTopXSets,
+                                                final boolean makeDetailsPage,
+                                                final boolean createSvgs,
+                                                final boolean createGcts,
+                                                final boolean createModernEnplots,
+                                                final File saveDetailFilesInDir) {
 
         // check if there are *any* that are pos
         // actually assume that are are some
@@ -1020,6 +1089,29 @@ public class EnrichmentReports {
 
         // for the bg shading of the hit plot -- just needs to be made once for all sets on this rl
         final IntervalMarker[] markers = _markers(rl);
+
+        // EnPlot v2 interactive JSON for every gene set (not limited to plot_top_x).
+        if (createModernEnplots) {
+            ModernEnrichmentPlotJson.ensureViewerAssets(saveDetailFilesInDir);
+            for (int r = 0; r < results.length; r++) {
+                final EnrichmentResult result = results[r];
+                try {
+                    ModernEnrichmentPlotJson.writePayload(saveDetailFilesInDir,
+                            result.getGeneSet().getName(true), rl,
+                            result.getScore().getHitIndices(),
+                            result.getScore().getESProfile(),
+                            EnrichmentEsProfiles.fullEsProfile(result, null),
+                            phenoClassAName_opt, phenoClassBName_opt,
+                            result.getScore().getES(), result.getScore().getNES(),
+                            result.getScore().getNP(), result.getScore().getFDR(),
+                            result.getScore().getFWER(),
+                            markers);
+                } catch (Throwable jt) {
+                    klog.warn("Could not write EnPlot v2 JSON for {}: {}",
+                            result.getGeneSet().getName(true), jt.getMessage());
+                }
+            }
+        }
 
         List<EnrichmentReport> ereports = new ArrayList<EnrichmentReport>();
         for (int r = 0; r < results.length; r++) {
@@ -1032,11 +1124,12 @@ public class EnrichmentReports {
             if (makeDetailsPage && r < showDetailsForTopXSets) {
                 final EnrichmentResult dtg = results[r];
                 htmlPage = new HtmlPage(gsetNames[r], "Details for gene set " + gsetNames[r] + "[GSEA]");
+                final Vector fullEs = EnrichmentEsProfiles.fullEsProfile(dtg, null);
                 final MyEnrichmentReportImpl mer = createReport(dsName, phenotypeName, phenoClassAName_opt, phenoClassBName_opt, rl, 
                 		template_opt, dtg.getGeneSet(), dtg.getScore().getHitIndices(), dtg.getScore().getESProfile(), 
-                		dtg.getScore().getESProfile_point_by_point_opt(), result.getScore().getES(), result.getScore().getNES(), 
+                		fullEs, result.getScore().getES(), result.getScore().getNES(), 
                 		result.getScore().getNP(), result.getScore().getFDR(), result.getScore().getFWER(), dtg.getRndESS(), htmlPage, 
-                		fannx, createSvgs, createGcts, markers, saveDetailFilesInDir);
+                		fannx, createSvgs, createGcts, createModernEnplots, markers, saveDetailFilesInDir);
 
                 // dont do this as it saves the pages in memory
                 //report.savePage(pages[0]);
@@ -1048,9 +1141,10 @@ public class EnrichmentReports {
                             mer.fTsvPage.getName() + "." + Constants.TSV)));
                     PicFile[] pfs = htmlPage.getPicFiles();
                     File plotFile = pfs[0].getFile(); // because image write likes to rename stuff
+                    File modernPlotFile = mer.fModernPlotFile;
 
                     // @note IMP IMP dont re-use as want this to be light (just files)
-                    ereports.add(new EnrichmentReportImpl(htmlFile, plotFile));
+                    ereports.add(new EnrichmentReportImpl(htmlFile, plotFile, modernPlotFile));
                 } catch (Throwable thr) {
                     klog.error("Error making details: {}", gsetNames[r]);
                     klog.error(thr.getMessage(), thr);
@@ -1102,9 +1196,14 @@ public class EnrichmentReports {
                 a.setName("");
                 a.setHref(reports[index].getHtmlFile().getName()); // assume relative
                 IMG img = new IMG();
-                img.setSrc(reports[index].getESPlotFile().getName());
+                File plotFile = reports[index].getModernESPlotFile();
+                boolean modern = plotFile != null && plotFile.isFile();
+                if (!modern) {
+                    plotFile = reports[index].getESPlotFile();
+                }
+                img.setSrc(plotFile.getName());
                 img.setWidth(200);
-                img.setHeight(200);
+                img.setHeight(modern ? 213 : 200);
                 a.addElement(img);
                 TD td = new TD(a);
                 tr.addElement(td);
@@ -1140,8 +1239,9 @@ public class EnrichmentReports {
     private static MyEnrichmentReportImpl createReport(final String dsName, final String phenotypeName, final String classAName_opt, final String classBName_opt, 
     		final RankedList rl, final Template template_opt, final GeneSet gset, final int[] hitIndices, final Vector esProfile, final Vector esProfile_full_opt, 
     		float es, float nes, float np, final float fdr, final float fwer, final Vector rndEss, final HtmlPage htmlPage, final FeatureAnnot fann_opt, 
-    		boolean createSvgs, boolean createGcts, final IntervalMarker[] markers, File saveDetailFilesInDir) {
+    		boolean createSvgs, boolean createGcts, boolean createModernEnplots, final IntervalMarker[] markers, File saveDetailFilesInDir) {
         TsvPage tsvPage = null;
+        File modernPlotFile = null;
         try {
             String gsetName = gset.getName(true);
 
@@ -1173,9 +1273,36 @@ public class EnrichmentReports {
             htmlPage.addTable("GSEA Results Summary", table);
 
             // add main es plot image (on top -- roels request, makes sense)
+            final Vector hitVector = _hitIndices2Vector(rl.getSize(), hitIndices);
             EnrichmentCharts combo = _createComboChart(gsetName, esProfile, esProfile_full_opt, 
-            		_hitIndices2Vector(rl.getSize(), hitIndices), rl, classAName_opt, classBName_opt, markers);
+            		hitVector, rl, classAName_opt, classBName_opt, markers);
             htmlPage.addChart(combo.comboChart, 500, 500, saveDetailFilesInDir, createSvgs);
+
+            if (createModernEnplots) {
+                EnrichmentCharts modern = ModernEnrichmentCharts.createComboChart(gsetName, esProfile, esProfile_full_opt,
+                        hitVector, rl, classAName_opt, classBName_opt, markers, es, nes, fdr);
+                int picBefore = htmlPage.getPicFiles().length;
+                htmlPage.addChart(modern.comboChart, 900, 960, saveDetailFilesInDir, createSvgs);
+                PicFile[] pics = htmlPage.getPicFiles();
+                if (pics.length > picBefore) {
+                    modernPlotFile = pics[picBefore].getFile();
+                }
+                // JSON is written for all gene sets in createReport(...); boot .js for file:// HTML links.
+                File jsonFile = ModernEnrichmentPlotJson.jsonFile(saveDetailFilesInDir, gsetName);
+                if (jsonFile.isFile()) {
+                    try {
+                        File bootJs = ModernEnrichmentPlotJson.writeBootScript(saveDetailFilesInDir, gsetName, jsonFile);
+                        Div div = new Div();
+                        A link = new A();
+                        link.setHref(ModernEnrichmentPlotJson.sharedViewerHref(bootJs.getName()));
+                        link.addElement("Interactive EnPlot v2");
+                        div.addElement(link);
+                        htmlPage.addBlock(div, true);
+                    } catch (Throwable jt) {
+                        klog.warn("Could not write EnPlot v2 boot script for {}: {}", gsetName, jt.getMessage());
+                    }
+                }
+            }
 
             // add detailed report table
             htmlPage.addTable(rdf, tsvPage.getName() + "." + tsvPage.getExt(), false);
@@ -1210,6 +1337,7 @@ public class EnrichmentReports {
         MyEnrichmentReportImpl mer = new MyEnrichmentReportImpl();
         mer.fHtmlPage = htmlPage;
         mer.fTsvPage = tsvPage;
+        mer.fModernPlotFile = modernPlotFile;
         return mer;
     }
 
@@ -1375,11 +1503,13 @@ public class EnrichmentReports {
 
         if (markers != null && markers.length > 0) {
             for (int i = 0; i < markers.length; i++) {
-                markers[i].setAlpha(1.0f);
-                // Hide the IntervalMarker line
-                markers[i].setOutlineStroke(new BasicStroke(0.0f));
-                markers[i].setOutlinePaint(new Color(0, 0, 0, 0));
-                plot.addDomainMarker(0, markers[i], Layer.BACKGROUND); // @note add as background
+                // Clone so gene-set charts do not share mutable IntervalMarker instances.
+                IntervalMarker copy = new IntervalMarker(markers[i].getStartValue(), markers[i].getEndValue());
+                copy.setPaint(markers[i].getPaint());
+                copy.setAlpha(1.0f);
+                copy.setOutlineStroke(new BasicStroke(0.0f));
+                copy.setOutlinePaint(new Color(0, 0, 0, 0));
+                plot.addDomainMarker(0, copy, Layer.BACKGROUND);
             }
         }
 
@@ -1686,6 +1816,7 @@ public class EnrichmentReports {
     static class MyEnrichmentReportImpl implements EnrichmentReport {
 
         private File fPlotFile;
+        private File fModernPlotFile;
         private File fHtmlFile;
 
         private HtmlPage fHtmlPage;
@@ -1693,6 +1824,10 @@ public class EnrichmentReports {
 
         public File getESPlotFile() {
             return fPlotFile;
+        }
+
+        public File getModernESPlotFile() {
+            return fModernPlotFile;
         }
 
         public File getHtmlFile() {

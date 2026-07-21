@@ -18,27 +18,39 @@ public class ReportDirParam extends DirParam {
     /**
      * Class constructor
      *
-     * @param def
      * @param reqd
      */
     public ReportDirParam(final boolean reqd) {
-        super(OUT, OUT_ENGLISH, OUT_DESC, Application.getVdbManager().getDefaultOutputDir(), reqd);
+        // Default is resolved lazily from VdbManager so CLI/FX both honor Preferences
+        // and never freeze a one-time path from the process working directory.
+        super(OUT, OUT_ENGLISH, OUT_DESC, new File("."), reqd);
     }
 
     public boolean isFileBased() {
         return true;
     }
 
+    @Override
+    public Object getDefault() {
+        return Application.getVdbManager().getDefaultOutputDir();
+    }
+
+    @Override
+    public Object getValue() {
+        if (super.getValueRaw() != null) {
+            return super.getValue();
+        }
+        return getDefault();
+    }
+
     // DONT rename this getName. Duh!!
     public File getAnalysisDir() {
-
-        Object val = super.getValue();
-
+        Object val = getValue();
         if (val == null) {
             throw new NullPointerException("Null param value. Always check isSpecified() before calling");
         }
-
-        return (File) getValue();
+        File dir = val instanceof File ? (File) val : new File(val.toString());
+        return dir.getAbsoluteFile();
     }
 
     /**

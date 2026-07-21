@@ -35,6 +35,8 @@ public class Gsea extends AbstractGsea2Tool {
 
     // Push up to AbstractGseaTool
     private final BooleanParam fCreateSvgsParam = new BooleanParam("create_svgs", "Create SVG plot images", "Create SVG plot images along with PNGs (GZ compressed to save space as these are very large)", false, false, Param.ADVANCED);
+    private final BooleanParam fCreateModernEnplotsParam = new BooleanParam("create_enplot_v2", "Create EnPlot v2 outputs",
+            "Also create EnPlot v2 static images (enplot2_*) and interactive plot data (JSON) for use in the report explorer and HTML detail pages", false, false, Param.ADVANCED);
     private final StringInputParam fAltDelimParam = new StringInputParam("altDelim", "Alternate delimiter", 
             "Optional alternate delimiter character for gene set names instead of comma", null, false, new char[] { ';' }, Param.ADVANCED);
     private final BooleanParam fCreateGctsParam = new BooleanParam("create_gcts", "Create GCT files", "Create GCT files for the data backing the Gene Set Enrichment Heatmaps", false, false, Param.ADVANCED);
@@ -135,7 +137,8 @@ public class Gsea extends AbstractGsea2Tool {
 
         execute_one_with_reporting(cd, template, origGeneSets, fShowDetailsForTopXSetsParam.getIValue(), 
                 (fMakeZippedReportParam.isSpecified() && fMakeZippedReportParam.isTrue()), (fMakeGeneSetReportsParam.isSpecified() && fMakeGeneSetReportsParam.isTrue()), 
-                (fCreateSvgsParam.isSpecified() && fCreateSvgsParam.isTrue()), (fCreateGctsParam.isSpecified() && fCreateGctsParam.isTrue()));
+                (fCreateSvgsParam.isSpecified() && fCreateSvgsParam.isTrue()), (fCreateGctsParam.isSpecified() && fCreateGctsParam.isTrue()),
+                (fCreateModernEnplotsParam.isSpecified() && fCreateModernEnplotsParam.isTrue()));
 
         if (fMakeZippedReportParam.isTrue()) {
             // custom close before zipping
@@ -147,7 +150,7 @@ public class Gsea extends AbstractGsea2Tool {
     }
 
     protected Param[] getAdditionalParams() {
-        return new Param[]{fShowDetailsForTopXSetsParam, fMakeZippedReportParam, fMakeGeneSetReportsParam, fCreateSvgsParam, fCreateGctsParam, fAltDelimParam};
+        return new Param[]{fShowDetailsForTopXSetsParam, fMakeZippedReportParam, fMakeGeneSetReportsParam, fCreateSvgsParam, fCreateModernEnplotsParam, fCreateGctsParam, fAltDelimParam};
     }
 
     public String getDesc() { return "Set parameters and run enrichment tests"; }

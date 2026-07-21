@@ -280,6 +280,24 @@
     -fx-background-color: #f6f7f9;
 }
 
+.gsea-enplot-tabs {
+    -fx-background-color: transparent;
+}
+
+.gsea-enplot-tabs > .tab-header-area {
+    -fx-padding: 4 0 4 4;
+    -fx-background-color: #eef1f5;
+}
+
+.gsea-enplot-tabs > .tab-header-area > .headers-region > .tab {
+    -fx-padding: 8 12 8 12;
+    -fx-background-insets: 0;
+}
+
+.gsea-enplot-tabs > .tab-header-area > .headers-region > .tab .tab-label {
+    -fx-font-size: 12px;
+}
+
 .gsea-report-explorer,
 .gsea-enrichment-root {
     -fx-background-color: #f6f7f9;

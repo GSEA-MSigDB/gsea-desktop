@@ -1,0 +1,312 @@
+:root {
+  --bg: #f8fafc;
+  --panel: #ffffff;
+  --ink: #0f172a;
+  --muted: #64748b;
+  --teal: #0d9488;
+  --teal-fill: rgba(13, 148, 136, 0.18);
+  --hit: #334155;
+  --le: #0f766e;
+  --grid: #e2e8f0;
+  --pos: #dc2626;
+  --neg: #2563eb;
+  --metric: #94a3b8;
+}
+
+[data-theme="dark"] {
+  --bg: #1e1f22;
+  --panel: #2b2d30;
+  --ink: #f4f4f5;
+  --muted: #a1a1aa;
+  --teal: #2dd4bf;
+  --teal-fill: rgba(45, 212, 191, 0.15);
+  --hit: #94a3b8;
+  --le: #2dd4bf;
+  --grid: #3f3f46;
+  --pos: #f87171;
+  --neg: #60a5fa;
+  --metric: #71717a;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: "Segoe UI", "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+#app {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 420px;
+  padding: 12px 14px 8px;
+  gap: 8px;
+}
+
+.enplot-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 10px 16px;
+  flex: 0 0 auto;
+}
+
+.enplot-header h1 {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+.enplot-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.enplot-stats span {
+  background: var(--panel);
+  border: 1px solid var(--grid);
+  border-radius: 6px;
+  padding: 2px 8px;
+}
+
+.enplot-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  font-size: 0.82rem;
+  color: var(--muted);
+  flex: 0 0 auto;
+}
+
+.enplot-toolbar label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.enplot-toolbar button,
+.enplot-toolbar input[type="text"] {
+  appearance: none;
+  border: 1px solid var(--grid);
+  background: var(--panel);
+  color: var(--ink);
+  border-radius: 6px;
+  padding: 4px 10px;
+  font: inherit;
+}
+
+.enplot-toolbar button {
+  cursor: pointer;
+}
+
+.enplot-toolbar button:hover {
+  border-color: var(--teal);
+  color: var(--teal);
+}
+
+.enplot-search {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 4px;
+}
+
+.enplot-search input[type="text"] {
+  width: 140px;
+  min-width: 100px;
+}
+
+.enplot-search-status {
+  font-size: 0.78rem;
+  color: var(--muted);
+  min-width: 4em;
+}
+
+.enplot-search-status.is-miss {
+  color: #b91c1c;
+}
+
+.enplot-search-status.is-hit {
+  color: var(--le);
+}
+
+.enplot-size {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 4px;
+}
+
+.enplot-size input[type="number"] {
+  appearance: textfield;
+  -moz-appearance: textfield;
+  width: 72px;
+  min-width: 64px;
+  border: 1px solid var(--grid);
+  background: var(--panel);
+  color: var(--ink);
+  border-radius: 6px;
+  padding: 4px 8px;
+  font: inherit;
+}
+
+.enplot-size input[type="number"]::-webkit-outer-spin-button,
+.enplot-size input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.enplot-hint {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.enplot-stage-wrap {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 320px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  /* Plot frame stays light even when the app chrome is dark. */
+  --plot-panel: #ffffff;
+  --plot-grid: #e2e8f0;
+  --plot-handle: #e2e8f0;
+  --plot-handle-grip: #94a3b8;
+}
+
+.enplot-stage-wrap.is-sized {
+  flex: 0 1 auto;
+  width: max-content;
+  max-width: 100%;
+  align-items: flex-start;
+}
+
+.enplot-stage-row {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  flex: 1 1 auto;
+  min-height: 280px;
+  min-width: 0;
+}
+
+.enplot-stage-wrap.is-sized .enplot-stage-row {
+  flex: 0 0 auto;
+  align-items: flex-start;
+}
+
+.enplot-stage {
+  position: relative;
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 320px;
+  min-height: 280px;
+  background: var(--plot-panel);
+  border: 1px solid var(--plot-grid);
+  border-radius: 10px 0 0 0;
+  overflow: hidden;
+}
+
+.enplot-stage.is-sized {
+  flex: 0 0 auto;
+}
+
+.enplot-stage canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  cursor: crosshair;
+}
+
+.enplot-stage-wrap .enplot-resize-handle {
+  position: relative;
+  user-select: none;
+  touch-action: none;
+  border: 1px solid var(--plot-grid);
+  background: var(--plot-handle);
+}
+
+.enplot-stage-wrap .enplot-resize-handle::after {
+  content: "";
+  position: absolute;
+  border-radius: 2px;
+  background: var(--plot-handle-grip);
+}
+
+.enplot-stage-wrap .enplot-resize-handle:hover::after,
+.enplot-stage-wrap .enplot-resize-handle.is-active::after {
+  background: var(--teal);
+}
+
+.enplot-resize-width {
+  flex: 0 0 12px;
+  width: 12px;
+  height: auto;
+  align-self: stretch;
+  border-left: none;
+  border-radius: 0 10px 0 0;
+  background: linear-gradient(to right, #f8fafc, var(--plot-handle));
+  cursor: ew-resize;
+}
+
+.enplot-resize-width::after {
+  top: 50%;
+  left: 4px;
+  width: 3px;
+  height: 40px;
+  margin-top: -20px;
+}
+
+.enplot-resize-height {
+  flex: 0 0 12px;
+  width: 100%;
+  height: 12px;
+  align-self: flex-start;
+  border-top: none;
+  border-radius: 0 0 10px 10px;
+  background: linear-gradient(to bottom, #f8fafc, var(--plot-handle));
+  cursor: ns-resize;
+}
+
+.enplot-resize-height::after {
+  left: 50%;
+  top: 4px;
+  width: 40px;
+  height: 3px;
+  margin-left: -20px;
+}
+
+.enplot-tooltip {
+  position: absolute;
+  pointer-events: none;
+  display: none;
+  z-index: 5;
+  background: rgba(15, 23, 42, 0.92);
+  color: #f8fafc;
+  font-size: 0.75rem;
+  line-height: 1.35;
+  padding: 6px 8px;
+  border-radius: 6px;
+  max-width: 260px;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.25);
+}
+
+.enplot-error {
+  padding: 24px;
+  color: #b91c1c;
+  font-size: 0.9rem;
+}
