@@ -16,9 +16,7 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Window;
 
-/**
- * Shared modal progress + Cancel chrome (Swing {@code ProgressMonitor} stand-in).
- */
+/** Shared modal progress + Cancel chrome. */
 public final class FxCancellableProgressDialog {
 
     private final Dialog<Void> dialog = new Dialog<>();

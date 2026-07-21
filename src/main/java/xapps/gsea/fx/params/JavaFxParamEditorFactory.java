@@ -87,7 +87,6 @@ public class JavaFxParamEditorFactory implements ParamEditorFactory {
         }
         if (param instanceof TemplateSingleChooserParam) {
             TemplateMode mode = ((TemplateSingleChooserParam) param).getMode();
-            // Swing TemplateSingleChooserParam: restore fCurrSel; cancel wipes it.
             return new TemplateChooserEditor(param, mode);
         }
         if (param instanceof StringMultiInputParam) {
@@ -123,9 +122,8 @@ public class JavaFxParamEditorFactory implements ParamEditorFactory {
 
     /**
      * Display text for path-ish param values.
-     * Matches Swing {@code ParamSetDisplay.reset}: {@code Object[]} is joined with commas
-     * (empty array → blank). Never use {@code Object.toString()} on arrays
-     * ({@code [L…;@hash]}).
+     * Matches : {@code Object[]} is joined with commas
+     * (empty array → blank). Never use {@code Object.toString} on arrays
      */
     private static String displayText(Object v) {
         if (v == null) {
@@ -201,7 +199,7 @@ public class JavaFxParamEditorFactory implements ParamEditorFactory {
     }
 
     /**
-     * Path coloring matching Swing {@code GFieldUtils}: blue = good, red = bad;
+     * Path coloring: blue = good, red = bad;
      * URL schemes and comma-separated multi-paths supported.
      * Dir/ReportDir fields also get {@code gsea-dir-field} (light green).
      */
@@ -218,9 +216,6 @@ public class JavaFxParamEditorFactory implements ParamEditorFactory {
         FxPathFieldColors.attach(field);
     }
 
-    /**
-     * Swing param fields accept {@code PobTransferable} / file-list drops → fill path text.
-     */
     private static void attachFileOrPobDrop(TextField field) {
         field.setOnDragOver(e -> {
             if (e.getGestureSource() != field
@@ -291,9 +286,7 @@ public class JavaFxParamEditorFactory implements ParamEditorFactory {
             this.extraSafe = param instanceof StringInputParam
                     ? ((StringInputParam) param).getAdditionalSafeChars() : null;
             field.setText(paramDisplayText(param));
-            // Swing GTextField: empty until typed (label is beside the editor).
             field.setPromptText(null);
-            // Swing GSafeCharsField for StringInputParam (and report-label path uses separate checks).
             if (param instanceof StringInputParam) {
                 field.addEventFilter(javafx.scene.input.KeyEvent.KEY_TYPED, e -> {
                     String ch = e.getCharacter();
@@ -314,7 +307,6 @@ public class JavaFxParamEditorFactory implements ParamEditorFactory {
             if (Character.isLetterOrDigit(c) || Character.isISOControl(c)) {
                 return true;
             }
-            // Swing GSafeCharsField: '-' only when document length is 0.
             if (c == '-' && currentLength == 0) {
                 return true;
             }
@@ -386,7 +378,6 @@ public class JavaFxParamEditorFactory implements ParamEditorFactory {
 
         private BooleanEditor(Param param) {
             super(param);
-            // Swing BooleanParam: non-editable TRUE/FALSE GComboBoxField.
             combo.getItems().setAll(Boolean.TRUE, Boolean.FALSE);
             combo.setEditable(false);
             Object v = param.getValue() != null ? param.getValue() : param.getDefault();
@@ -437,7 +428,6 @@ public class JavaFxParamEditorFactory implements ParamEditorFactory {
                 }
             }
             Object value = unsetIfEmptyArray(param.getValue());
-            // Swing createActionListenerBoundHintsComboBox: keep orphan value not in hints.
             if (value != null && !value.getClass().isArray() && !containsByString(items, value)) {
                 items.add(value);
             }
@@ -448,7 +438,6 @@ public class JavaFxParamEditorFactory implements ParamEditorFactory {
         }
 
         private void selectByString(Object sel) {
-            // Swing ParamHelper.safeSelectValueDefaultByString after orphan may already be in items.
             sel = unsetIfEmptyArray(sel);
             if (sel == null) {
                 return;
@@ -514,8 +503,7 @@ public class JavaFxParamEditorFactory implements ParamEditorFactory {
     }
 
     /**
-     * Swing {@code FeatureSpaceReqdParam.MyListRenderer}: descriptive suffixes in the list.
-     * Stored value remains the MODES token ({@code Remap_Only}/{@code Collapse}/{@code No_Collapse}).
+     * descriptive suffixes in the list. Stored value remains the MODES token ({@code Remap_Only}/{@code Collapse}/{@code No_Collapse).
      */
     private static final class FeatureSpaceComboEditor extends AbstractBoundEditor {
         private static final String[] LABELS = {
@@ -541,7 +529,6 @@ public class JavaFxParamEditorFactory implements ParamEditorFactory {
                 items.add(value);
             }
             combo.setItems(FXCollections.observableArrayList(items));
-            // Swing MyListRenderer: long labels only when index >= 0 (dropdown); closed = raw token.
             combo.setCellFactory(lv -> featureSpaceCell(true));
             combo.setButtonCell(featureSpaceCell(false));
             selectByString(value != null ? value : unsetIfEmptyArray(param.getDefault()));
@@ -800,7 +787,6 @@ public class JavaFxParamEditorFactory implements ParamEditorFactory {
             super(param);
             field.setText(paramDisplayText(param));
             field.setPromptText(null);
-            // Swing multi-line chooser field starts empty (no invent prompt).
             Button ellipsis = xapps.gsea.fx.FxEllipsisButton.create();
             ellipsis.setOnAction(e -> {
                 javafx.scene.control.Dialog<String> dialog = new javafx.scene.control.Dialog<>();
@@ -858,7 +844,7 @@ public class JavaFxParamEditorFactory implements ParamEditorFactory {
 
     /**
      * HBox with a ComboBox listing cached objects of the requested Pob class (Dataset,
-     * RankedList, ...) — Swing {@code PobParam} has no browse control.
+     * RankedList..).
      */
     private static final class CachedObjectEditor extends AbstractBoundEditor {
         private final ComboBox<Object> combo = new ComboBox<>();
@@ -869,22 +855,18 @@ public class JavaFxParamEditorFactory implements ParamEditorFactory {
         private CachedObjectEditor(Param param, Class<?> pobClass, List<FileChooser.ExtensionFilter> filters) {
             super(param);
             this.pobClass = pobClass;
-            // filters unused: Swing PobParam has no FileChooser on the editor.
 
             combo.setMaxWidth(Double.MAX_VALUE);
             combo.setCellFactory(lv -> xapps.gsea.fx.FxPobListCells.pobNameQuickInfoCell());
             combo.setButtonCell(xapps.gsea.fx.FxPobListCells.pobNameQuickInfoCell());
             refreshItems();
 
-            // Swing ParamHelper.safeSelectPobValueDefaultOrFirst: value → default → first.
             applyInitialValue(unsetIfEmptyArray(param.getValue()), true);
 
-            // Swing PobParam: combo only (load files via Load Data / object cache).
             HBox.setHgrow(combo, Priority.ALWAYS);
             box.setAlignment(Pos.CENTER_LEFT);
             box.getChildren().add(combo);
             combo.getSelectionModel().selectedItemProperty().addListener((obs, o, n) -> fireChange());
-            // Live cache binding: refresh when the popup opens (Swing ObjectBindery parity).
             combo.setOnShowing(e -> refreshItems());
             try {
                 ParserFactory.getCache().addPathAdditionsListener(evt ->
@@ -913,8 +895,8 @@ public class JavaFxParamEditorFactory implements ParamEditorFactory {
         }
 
         /**
-         * @param tryDefaultAfterMiss when true, after value miss try {@code param.getDefault()}
-         *                            before selecting first (Swing safeSelectPobValueDefaultOrFirst).
+         * @param tryDefaultAfterMiss when true, after value miss try {@code param.getDefault}
+         * before selecting first.
          */
         private void applyInitialValue(Object v, boolean tryDefaultAfterMiss) {
             if (trySelect(v)) {
@@ -926,8 +908,6 @@ public class JavaFxParamEditorFactory implements ParamEditorFactory {
                     return;
                 }
             }
-            // Swing safeSelectPobValueDefaultOrFirst: select first if present; otherwise leave blank
-            // (do not use ComboBox promptText as a fake value — it shows as gray filler).
             combo.setPromptText(null);
             if (!combo.getItems().isEmpty()) {
                 combo.getSelectionModel().select(0);
@@ -1008,13 +988,11 @@ public class JavaFxParamEditorFactory implements ParamEditorFactory {
     }
 
     /**
-     * Swing {@code TemplateSingleChooserParam}: keep {@code fCurrSel} separately from the text
-     * field; cancel sets restore state to null while leaving the field text unchanged.
+     * keep {@code fCurrSel} separately from the text field; cancel sets restore state to null while leaving the field text unchanged.
      */
     private static final class TemplateChooserEditor extends AbstractBoundEditor {
         private final TextField field = new TextField();
         private final HBox box = new HBox(6);
-        /** Swing {@code fCurrSel} — wiped on cancel. */
         private String currSel;
 
         private TemplateChooserEditor(Param param, TemplateMode mode) {
@@ -1031,7 +1009,6 @@ public class JavaFxParamEditorFactory implements ParamEditorFactory {
                     field.setText(result.get());
                     currSel = result.get();
                 } else {
-                    // Swing: fCurrSel = bag when bag is null (cancel).
                     currSel = null;
                 }
             });
@@ -1085,7 +1062,6 @@ public class JavaFxParamEditorFactory implements ParamEditorFactory {
             box.setAlignment(Pos.CENTER_LEFT);
             box.getChildren().addAll(field, browse);
             if (param instanceof ReportDirParam || param instanceof DirParam) {
-                // Swing GDirFieldPlusChooser text field background #EAFFEA (kept under path coloring).
                 attachPathColorListener(field, true);
             } else {
                 attachPathColorListener(field);
@@ -1096,7 +1072,6 @@ public class JavaFxParamEditorFactory implements ParamEditorFactory {
 
         @Override
         public Object getValue() {
-            // Swing GDirFieldPlusChooser: blank text → new File("") (not null / not default).
             String t = field.getText();
             return new File(t != null ? t : "");
         }
@@ -1113,7 +1088,7 @@ public class JavaFxParamEditorFactory implements ParamEditorFactory {
     }
 
     /**
-     * Fixed columns approximating Swing FormLayout {@code 130dlu / 225dlu}.
+     * Fixed columns approximating {@code 130dlu / 225dlu}.
      * Keeps labels and ellipsis buttons aligned instead of stretching with the window.
      */
     public static final double LABEL_COL_WIDTH = 200;

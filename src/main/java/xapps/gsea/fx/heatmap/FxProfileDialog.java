@@ -26,9 +26,7 @@ import javafx.scene.layout.HBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 
-/**
- * FX Profile plot dialog (Swing {@code ProfilePlot} chart model).
- */
+/** FX Profile plot dialog. */
 public final class FxProfileDialog {
 
     private FxProfileDialog() {

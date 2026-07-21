@@ -374,3 +374,146 @@
     -fx-background-color: #f8fafc;
 }
 
+/* ---------- CoreMap explore accessories ---------- */
+
+.coremap-insight {
+    -fx-background-color: transparent;
+}
+
+.coremap-card-title {
+    -fx-font-weight: bold;
+    -fx-font-size: 12px;
+    -fx-text-fill: #1a2b3c;
+    -fx-wrap-text: true;
+}
+
+.coremap-meta,
+.coremap-help {
+    -fx-text-fill: #64748b;
+    -fx-font-size: 11px;
+    -fx-wrap-text: true;
+}
+
+.coremap-chip {
+    -fx-background-color: #ffedd5;
+    -fx-text-fill: #9a3412;
+    -fx-padding: 1 6 1 6;
+    -fx-background-radius: 8;
+    -fx-font-size: 10px;
+}
+
+.coremap-chip-assoc {
+    -fx-background-color: #e2e8f0;
+    -fx-text-fill: #475569;
+    -fx-padding: 1 6 1 6;
+    -fx-background-radius: 8;
+    -fx-font-size: 10px;
+}
+
+.coremap-list-cell {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+}
+
+.coremap-list-cell:selected,
+.coremap-list-cell:filled:selected {
+    -fx-background-color: transparent;
+}
+
+.coremap-card-selected {
+    -fx-background-color: #fff7ed;
+    -fx-border-color: #fb923c;
+    -fx-border-width: 0 0 0 3;
+}
+
+.coremap-legend {
+    -fx-background-color: #f8fafc;
+    -fx-border-color: #e2e8f0 transparent transparent transparent;
+    -fx-border-width: 1 0 0 0;
+}
+
+.coremap-legend-label {
+    -fx-text-fill: #475569;
+    -fx-font-size: 11px;
+}
+
+.coremap-selection-panel {
+    -fx-background-color: rgba(255, 255, 255, 0.96);
+    -fx-border-color: #d1d5db;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+}
+
+.coremap-selection-title {
+    -fx-font-weight: bold;
+    -fx-text-fill: #1a2b3c;
+}
+
+.coremap-card-heading {
+    -fx-font-weight: bold;
+    -fx-font-size: 13px;
+    -fx-text-fill: #1a2b3c;
+    -fx-wrap-text: true;
+}
+
+.coremap-card-section {
+    -fx-font-weight: bold;
+    -fx-font-size: 11px;
+    -fx-text-fill: #1a2b3c;
+    -fx-padding: 4 0 0 0;
+}
+
+.coremap-card-body {
+    -fx-font-size: 11px;
+    -fx-text-fill: #1a2b3c;
+    -fx-wrap-text: true;
+}
+
+.coremap-layer-frame {
+    -fx-border-color: #d1d5db;
+    -fx-border-radius: 4;
+    -fx-padding: 6;
+}
+
+.coremap-option-group {
+    -fx-border-color: #d1d5db;
+    -fx-border-radius: 4;
+    -fx-padding: 8 10 10 10;
+    -fx-background-color: rgba(248, 250, 252, 0.7);
+}
+
+.coremap-option-group-title {
+    -fx-font-weight: bold;
+    -fx-font-size: 12px;
+    -fx-text-fill: #1a2b3c;
+}
+
+.coremap-cascade-gene {
+    -fx-font-weight: bold;
+    -fx-fill: #111827;
+}
+
+.coremap-cascade-hop-up {
+    -fx-fill: #b45309;
+}
+
+.coremap-cascade-hop-down {
+    -fx-fill: #0e7490;
+}
+
+.coremap-cascade-hop {
+    -fx-fill: #64748b;
+}
+
+.coremap-hint {
+    -fx-text-fill: #64748b;
+    -fx-font-size: 11px;
+    -fx-wrap-text: true;
+}
+
+.coremap-resize-handle {
+    -fx-background-color: #94a3b8;
+    -fx-shape: "M 0 0 L 14 0 L 0 14 Z";
+    -fx-cursor: nw-resize;
+}
+

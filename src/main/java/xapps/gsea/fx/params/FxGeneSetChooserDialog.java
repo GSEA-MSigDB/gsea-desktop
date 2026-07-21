@@ -125,7 +125,6 @@ public final class FxGeneSetChooserDialog {
             tabs.getTabs().add(new Tab("Mouse Collection (MSigDB)", messageArea(FxFtpChooserSupport.OFFLINE_MESSAGE)));
         }
 
-        // Swing ObjectBindery: refresh cache tabs when selected (live listing).
         tabs.getSelectionModel().selectedItemProperty().addListener((obs, o, tab) -> {
             if (tab == null) {
                 return;
@@ -140,7 +139,6 @@ public final class FxGeneSetChooserDialog {
             }
         });
 
-        // Swing ObjectBindery: keep local cache lists live while the dialog is open.
         javafx.animation.Timeline cacheRefresh = new javafx.animation.Timeline(
                 new javafx.animation.KeyFrame(javafx.util.Duration.seconds(1), ev -> {
                     Tab sel = tabs.getSelectionModel().getSelectedItem();
@@ -161,7 +159,6 @@ public final class FxGeneSetChooserDialog {
         dialog.setOnHidden(e -> cacheRefresh.stop());
 
         TextArea taGenes = new TextArea();
-        // Swing GeneSetMatrixChooserWindow: TitledBorder always visible (not prompt-only).
         TitledPane textEntry = new TitledPane(
                 "Make an 'on-the-fly' gene set: Enter features below, one per line", taGenes);
         textEntry.setCollapsible(false);
@@ -172,7 +169,6 @@ public final class FxGeneSetChooserDialog {
         BorderPane root = new BorderPane(tabs);
         root.setPadding(new Insets(8));
         dialog.getDialogPane().setContent(root);
-        // Swing DialogDescriptor DD_SIZE_WIDER.
         dialog.getDialogPane().setPrefSize(800, 400);
         xapps.gsea.fx.FxTheme.apply(dialog);
         xapps.gsea.fx.FxButtons.stylePrimary(okButton);
@@ -305,8 +301,7 @@ public final class FxGeneSetChooserDialog {
     }
 
     /**
-     * Matches Swing GeneSetMatrixChooserWindow warningChecker: warn when known
-     * MSigDB versions disagree (unknowns and on-the-fly text soften "all known").
+     * warn when known MSigDB versions disagree (unknowns and on-the-fly text soften "all known").
      */
     private static boolean versionsOk(List<Versioned> selectedItems, boolean hasOnTheFlyText) {
         if (selectedItems.isEmpty()) {
@@ -337,7 +332,6 @@ public final class FxGeneSetChooserDialog {
     private static ListView<CachedPathItem> cachedObjectList(Class<?> type) {
         ListView<CachedPathItem> list = new ListView<>();
         list.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-        // Swing NonFTPGeneSetsRenderer: name [quickInfo], path tooltip.
         list.setCellFactory(lv -> new ListCell<>() {
             @Override
             protected void updateItem(CachedPathItem item, boolean empty) {
@@ -378,7 +372,6 @@ public final class FxGeneSetChooserDialog {
                 }
             }
             // Preserve selection by path so periodic refresh does not clear local picks
-            // (Swing ObjectBindery keeps a live model without replacing selection).
             List<String> selectedPaths = new ArrayList<>();
             for (CachedPathItem sel : list.getSelectionModel().getSelectedItems()) {
                 if (sel != null && sel.path != null) {

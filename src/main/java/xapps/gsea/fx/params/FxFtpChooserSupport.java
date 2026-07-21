@@ -51,8 +51,7 @@ public final class FxFtpChooserSupport {
     }
 
     /**
-     * List FTP files ending with {@code suffix}, attaching an {@link MSigDBVersion} parsed from each name
-     * (same logic as Swing {@code ChooserHelper.retrieveFTPFiles}).
+     * List FTP files ending with {@code suffix}, attaching an {@link MSigDBVersion} parsed from each name.
      */
     public static List<FTPFile> listFtpFiles(String suffix, MSigDBSpecies species, String ftpDir)
             throws Exception {
@@ -68,7 +67,6 @@ public final class FxFtpChooserSupport {
                 return files;
             }
             for (String ftpFileName : ftpFileNames) {
-                // Swing ChooserHelper.retrieveFTPFiles ignores the extension filter and lists all entries.
                 String versionId = NamingConventions.extractVersionFromFileName(ftpFileName, suffix);
                 files.add(new FTPFile(ftpList.host, ftpDir, ftpFileName, new MSigDBVersion(species, versionId)));
             }
@@ -92,10 +90,7 @@ public final class FxFtpChooserSupport {
         return Arrays.asList(arr);
     }
 
-    /**
-     * Style FTP list cells: bold rows whose name contains the highest MSigDB version id
-     * (same cue as Swing {@code FTPFileListCellRenderer}).
-     */
+    /** Style FTP list cells: bold rows whose name contains the highest MSigDB version id. */
     public static void applyLatestVersionBolding(javafx.scene.control.ListView<FTPFile> list,
             ComparatorFactory.FTPFileByVersionComparator comparator) {
         final String highest = comparator != null ? comparator.getHighestVersionId() : null;
@@ -109,7 +104,6 @@ public final class FxFtpChooserSupport {
                     setStyle("");
                     return;
                 }
-                // Swing FTPFileListCellRenderer: file name only + FTPFile.gif + bold latest.
                 setText(item.getName());
                 setGraphic(xapps.gsea.fx.FxFileIcons.forResource("FTPFile.gif"));
                 boolean latest = highest != null && item.getName() != null
@@ -130,10 +124,7 @@ public final class FxFtpChooserSupport {
                 + "Choose gene sets from other tabs.";
     }
 
-    /**
-     * Opens {@code url} in the platform browser, reporting failures through the window manager
-     * (same fallback behavior as Swing {@code JarResources.createDataFormatAction}/{@code createHelpAction}).
-     */
+    /** Opens {@code url} in the platform browser, reporting failures through the window manager. */
     public static void openUrl(String url) {
         try {
             xapps.gsea.fx.FxDesktopUtil.openUrl(url);
@@ -144,7 +135,7 @@ public final class FxFtpChooserSupport {
 
     /**
      * Adds non-closing Help (data-format anchor) and Info (arbitrary URL) buttons to a dialog's
-     * button bar, matching Swing choosers that pair {@code JarResources.createDataFormatAction}
+     * button bar {@code JarResources.createDataFormatAction}
      * with a {@code BrowserAction} info link.
      */
     public static void addHelpAndInfoButtons(Dialog<?> dialog, String dataFormatAnchor,
@@ -156,9 +147,6 @@ public final class FxFtpChooserSupport {
         wireNonClosingButton(dialog, infoType, () -> openUrl(infoUrl));
     }
 
-    /**
-     * Swing {@code DialogDescriptor(showLicenseButton=true)} — gene-set chooser only.
-     */
     public static void addMsigdbLicenseButton(Dialog<?> dialog) {
         ButtonType licenseType = new ButtonType("MSigDB License", ButtonBar.ButtonData.HELP);
         dialog.getDialogPane().getButtonTypes().add(0, licenseType);
@@ -177,7 +165,7 @@ public final class FxFtpChooserSupport {
 
     /**
      * Adds a single non-closing Help button that opens the User Guide at {@code ugAnchor}
-     * (e.g. {@code "#Phenotype-Select-Window"}), matching Swing {@code JarResources.createHelpAction}.
+     * (e.g. {@code "#Phenotype-Select-Window")
      */
     public static void addUserGuideHelpButton(Dialog<?> dialog, String ugAnchor) {
         ButtonType helpType = new ButtonType("Help", ButtonBar.ButtonData.HELP_2);
@@ -194,10 +182,7 @@ public final class FxFtpChooserSupport {
         });
     }
 
-    /**
-     * Makes double-clicking a list item act like clicking OK, matching Swing
-     * {@code DialogDescriptor.enableDoubleClickableJList}.
-     */
+    /** Makes double-clicking a list item act like clicking OK */
     public static void enableDoubleClickToFire(ListView<?> list, Button okButton) {
         list.setOnMouseClicked(e -> {
             if (e.getClickCount() == 2 && list.getSelectionModel().getSelectedItem() != null) {

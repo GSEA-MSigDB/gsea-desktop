@@ -18,7 +18,7 @@ import edu.mit.broad.genome.parsers.ParserFactory;
 import javafx.application.Platform;
 
 /**
- * JavaFX stand-in for Swing {@code ProgressMonitorInputStream}: modal progress dialog with Cancel
+ * JavaFX: modal progress dialog with Cancel
  * while parsing a single file on a background thread.
  */
 public final class FxProgressMonitorRead {

@@ -36,7 +36,7 @@ import xapps.gsea.fx.FxReportOpen;
 import xapps.gsea.fx.viewers.report.ReportExplorerSupport;
 
 /**
- * Analysis history browser matching Swing {@code ReportModel} / Past Analysis:
+ * Analysis history browser / Past Analysis:
  * Current Session + History grouped by day; selection opens the report viewer.
  */
 public class FxAnalysisHistoryPane implements ViewPage {
@@ -55,8 +55,6 @@ public class FxAnalysisHistoryPane implements ViewPage {
     public FxAnalysisHistoryPane(Consumer<ViewPage> openPage) {
         this.openPage = openPage != null ? openPage : page -> { };
 
-        // Swing ToolSelectorTree: root "Tools" hidden; Reports node (from ReportModel) is visible
-        // with Current Session / History beneath it.
         tree.setShowRoot(true);
         tree.setCellFactory(tv -> new javafx.scene.control.TreeCell<>() {
             @Override
@@ -68,7 +66,6 @@ public class FxAnalysisHistoryPane implements ViewPage {
                     setTooltip(null);
                     return;
                 }
-                // Swing ToolSelectorTree.Renderer: Rpt15 + name + gray [time]; Report tooltip=quickInfo.
                 if (item.report != null || item.stub != null) {
                     setGraphic(xapps.gsea.fx.FxFileIcons.reportStubIcon());
                     Label name = new Label(item.displayName != null ? item.displayName : item.label);
@@ -92,12 +89,10 @@ public class FxAnalysisHistoryPane implements ViewPage {
         });
         tree.getSelectionModel().selectedItemProperty().addListener((obs, o, n) -> updateDetail());
 
-        // Swing GuiHelper.createNaPlaceholder on empty RHS.
         detailPane.setCenter(naPlaceholder());
         VBox right = new VBox(detailPane);
         VBox.setVgrow(detailPane, Priority.ALWAYS);
 
-        // Swing ToolLauncherDefaultImpl: GseaSimpleInternalFrame("Analysis history") wraps tree only.
         javafx.scene.control.TitledPane treeFrame = new javafx.scene.control.TitledPane(
                 "Analysis history", tree);
         treeFrame.setCollapsible(false);
@@ -149,7 +144,6 @@ public class FxAnalysisHistoryPane implements ViewPage {
         rootItem.setExpanded(true);
 
         TreeItem<HistoryNode> session = new TreeItem<>(new HistoryNode("Current Session", null, null));
-        // Swing: no default expand of Session / History / day nodes (only restore prior expands).
         session.setExpanded(!expandedLabels.isEmpty() && expandedLabels.contains("Current Session"));
         try {
             @SuppressWarnings("unchecked")
@@ -163,7 +157,6 @@ public class FxAnalysisHistoryPane implements ViewPage {
             reports.sort(Comparator.comparingLong(Report::getTimestamp).reversed());
             for (Report rpt : reports) {
                 sessionReportNames.add(rpt.getName());
-                // Swing ToolSelectorTree.prettyFormat(Report): name [HHmin]
                 session.getChildren().add(new TreeItem<>(new HistoryNode(
                         rpt.getName(),
                         "[" + DateUtils.formatAsHourMin(rpt.getDate()) + "min]",
@@ -195,7 +188,6 @@ public class FxAnalysisHistoryPane implements ViewPage {
                 List<ReportStub> list = byDay.get(day);
                 list.sort(Comparator.comparingLong(ReportStub::getTimestamp).reversed());
                 for (ReportStub stub : list) {
-                    // Swing ToolSelectorTree.prettyFormat(ReportStub): name_without_ts [HH:MM]
                     dayNode.getChildren().add(new TreeItem<>(new HistoryNode(
                             stub.getName_without_ts(),
                             "[" + DateUtils.formatAsHourMin(stub.getDate()) + "]",
@@ -276,7 +268,6 @@ public class FxAnalysisHistoryPane implements ViewPage {
             detailPane.setCenter(ReportExplorerSupport.loadingPlaceholder("Loading report…"));
             Thread t = new Thread(() -> {
                 try {
-                    // Swing ToolLauncherDefaultImpl: getReport(false) — do not add stub into object cache.
                     Report report = stub.getReport(false);
                     Platform.runLater(() -> {
                         if (seq != detailLoadSeq) {
@@ -295,7 +286,6 @@ public class FxAnalysisHistoryPane implements ViewPage {
                             return;
                         }
                         Application.getWindowManager().showError("Bad reports file", err);
-                        // Swing ToolLauncherDefaultImpl: schedule corrupt stub for delete.
                         if (stub.getReportFile() != null) {
                             stub.getReportFile().deleteOnExit();
                         }

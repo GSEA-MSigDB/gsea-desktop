@@ -53,7 +53,7 @@ import xtools.api.param.ToolParamSet;
 import xtools.gsea.LeadingEdgeTool;
 
 /**
- * Interactive Leading Edge viewer matching Swing LeadingEdgeWidget:
+ * Interactive Leading Edge viewer:
  * load EDB, select ≥2 gene sets, run in-memory analysis (2×2 dashboard),
  * or build the HTML report via {@link LeadingEdgeTool}.
  * <p>
@@ -97,11 +97,8 @@ public class FxLeadingEdgePane implements ViewPage {
 
     public FxLeadingEdgePane() {
         LIVE.add(this);
-        // Swing DirParam is clearable; keep editable so users can delete the path for XOR recovery.
-        // Swing DirParam: label beside field; field itself has no prompt chrome.
         folderField.setEditable(true);
         HBox.setHgrow(folderField, Priority.ALWAYS);
-        // Swing DirParam → GDirFieldPlusChooser: #EAFFEA + path coloring + Ellipsis.png.
         if (!folderField.getStyleClass().contains("gsea-dir-field")) {
             folderField.getStyleClass().add("gsea-dir-field");
         }
@@ -111,15 +108,12 @@ public class FxLeadingEdgePane implements ViewPage {
                 "[ OR ] Locate a GSEA report folder from the file system");
         chooseFolder.setOnAction(e -> chooseFolder());
 
-        // Swing LeadingEdgeReportViewer: Load only (no Clear/Refresh chrome).
         Button load = new Button("Load GSEA Results");
         xapps.gsea.fx.FxButtons.stylePrimary(load);
         load.setOnAction(e -> loadGseaResults());
 
-        // Swing ReportCacheChooserParam → GOptionsFieldPlusChooser (field + ellipsis → list dialog).
         HBox.setHgrow(cacheChooser.getNode(), Priority.ALWAYS);
 
-        // Swing LeadingEdgeReportViewer: cache param row, then dir param row, then Load.
         HBox cacheRow = new HBox(8,
                 new Label("Select a GSEA result from the application cache"),
                 cacheChooser.getNode());
@@ -127,7 +121,6 @@ public class FxLeadingEdgePane implements ViewPage {
                 new Label("[ OR ] Locate a GSEA result folder from the file system"),
                 folderField, chooseFolder, load);
         folderRow.setPadding(new Insets(0, 0, 4, 0));
-        // Swing LeadingEdgeReportViewer: params + Load only (no in-form section header).
         VBox top = new VBox(8, cacheRow, folderRow);
         top.setPadding(new Insets(12, 12, 4, 12));
         mainTabs.setTabClosingPolicy(TabPane.TabClosingPolicy.ALL_TABS);
@@ -144,7 +137,7 @@ public class FxLeadingEdgePane implements ViewPage {
     }
 
     /**
-     * Equivalent of Swing's LeadingEdgeWidget.  Each loaded EDB owns its
+     * 's LeadingEdgeWidget. Each loaded EDB owns its
      * selection, filter, summary, and tool parameters so result tabs never
      * overwrite one another.
      */
@@ -198,23 +191,17 @@ public class FxLeadingEdgePane implements ViewPage {
 
     private void chooseFolder() {
         DirectoryChooser chooser = new DirectoryChooser();
-        // Swing GDirFieldPlusChooser → chooseDirByDialog (platform default title).
         FxFileChooserUtil.seedInitialDirectory(chooser, folderField.getText());
         File selected = chooser.showDialog(FxFileChooserUtil.windowOf(root));
         if (selected == null) {
             return;
         }
-        // Swing: browse only sets DirParam — do not clear cache selection (XOR checked on Load).
         gseaResultDir = selected;
         folderField.setText(selected.getAbsolutePath());
         FxFileChooserUtil.registerOpenedDir(selected);
     }
 
-    /**
-     * Swing LeadingEdgeReportViewer: cache XOR browsed directory before load.
-     */
     private void loadGseaResults() {
-        // Swing: cache XOR dir via isSpecified() on params (field text).
         boolean cacheSpecified = cacheChooser.isSpecified();
         boolean dirSpecified = folderField.getText() != null && !folderField.getText().isBlank();
         if (cacheSpecified && dirSpecified) {
@@ -233,7 +220,6 @@ public class FxLeadingEdgePane implements ViewPage {
             if (sel != null) {
                 dir = sel.edbDir;
             } else {
-                // Typed reportDir path not in cache — use path / nested edb like Swing getReportDir.
                 List<File> dirs = cacheChooser.getReportDirs();
                 dir = dirs.isEmpty() ? null : dirs.get(0);
                 if (dir != null) {
@@ -296,7 +282,6 @@ public class FxLeadingEdgePane implements ViewPage {
     }
 
     private static void applyPhenotypeLabels(EnrichmentDb loaded, Label positive, Label negative) {
-        // Swing LeadingEdgeWidget bug-compatible: positive stays "na pos"; negative is class 1.
         String pos = "na pos";
         String neg = "na neg";
         try {
@@ -355,7 +340,6 @@ public class FxLeadingEdgePane implements ViewPage {
     }
 
     private Button helpButton() {
-        // Swing JarResources.createHelpButton → "Help" + Help16_v2.gif.
         Button help = new Button("Help");
         help.setGraphic(xapps.gsea.fx.FxFileIcons.forResource("Help16_v2.gif"));
         xapps.gsea.fx.FxButtons.styleSecondary(help);
@@ -374,20 +358,15 @@ public class FxLeadingEdgePane implements ViewPage {
         analysisRun++;
 
         FxHeatMapView leHeat = new FxHeatMapView();
-        // Swing: rankedList != null → score ColorScheme; else white/yellow binary membership.
         boolean binaryMembership = result.getGeneScores() == null;
         leHeat.setData(result.getClusteredMorphed(), result.getLeadingEdgeColorScheme(), false,
                 binaryMembership);
-        // Swing LeadingEdgePanel: Gene Set / Gene; color scheme options hidden;
-        // setOptionsDialogOptions(false, false, false).
         leHeat.setUiNaming("Gene Set", "Gene", false);
-        // Swing LeadingEdgePanel createMenuBar(false,false,false,false) → no Profile/Legend.
         leHeat.setOptionsDialogOptions(false, false, false, false);
         leHeat.setHtmlLookupDir(result.getResultDirectory());
 
         FxHeatMapView simHeat = new FxHeatMapView();
         simHeat.setData(result.getSimilarityDataset(), result.getSimilarityColorScheme(), true);
-        // Swing GeneSetSimilarityPanel: Gene Set / Gene Set; color scheme options hidden.
         simHeat.setUiNaming("Gene Set", "Gene Set", false);
         simHeat.setOptionsDialogOptions(false, false, false, false);
         simHeat.setGeneSetsForTooltips(result.getReorderedGeneSets());
@@ -395,12 +374,10 @@ public class FxLeadingEdgePane implements ViewPage {
                 ? result.getSimilarityDataset().getNumCol() : 15;
         BorderPane simPane = new BorderPane(simHeat.getNode());
         Runnable refreshLegend = () -> {
-            // Swing GeneSetSimilarityPanel: width = columnCount * columnSize (no floor).
             int legendWidth = Math.max(1, numSimCols * simHeat.getCellSize());
             simPane.setTop(FxJaccardLegend.create(legendWidth));
         };
         refreshLegend.run();
-        // Swing GeneSetSimilarityPanel: legend preferred width tracks columnSize.
         simHeat.setOnCellSizeChanged(sz -> refreshLegend.run());
 
         BorderPane lePane = leHeat.getNode();
@@ -442,7 +419,6 @@ public class FxLeadingEdgePane implements ViewPage {
                     Application.getWindowManager().showMessage("Bin width must be between zero and one.");
                     return;
                 }
-                // Swing JaccardHistogram accepts zero but leaves the existing chart untouched.
                 if (bw == 0) {
                     return;
                 }

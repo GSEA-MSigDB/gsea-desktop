@@ -53,9 +53,9 @@ import javafx.stage.Modality;
 import javafx.stage.Window;
 
 /**
- * JavaFX phenotype (CLS) chooser with Swing-parity options: browse a .cls,
+ * JavaFX phenotype (CLS) chooser with options: browse a .cls,
  * on-the-fly sample-name phenotypes, gene-as-phenotype, and all-sources list.
- * Selection is single (matches {@code TemplateSingleChooserParam}).
+ * Selection is single (matches {@code TemplateSingleChooserParam).
  */
 public final class FxTemplateChooserDialog {
     private static final Logger klog = LoggerFactory.getLogger(FxTemplateChooserDialog.class);
@@ -64,7 +64,7 @@ public final class FxTemplateChooserDialog {
     }
 
     /**
-     * @return template path string (may include {@code #aux}), or empty if cancelled
+     * @return template path string (may include {@code #aux), or empty if cancelled
      */
     public static Optional<String> show(Window owner) {
         return show(owner, TemplateMode.ALL, null);
@@ -76,9 +76,9 @@ public final class FxTemplateChooserDialog {
 
     /**
      * @param mode restricts which phenotype shapes are offered (matches
-     *             {@code TemplateSingleChooserParam}'s mode); {@code null} means no restriction.
-     * @param previousSelection prior chooser result to restore (Swing {@code fCurrBag}), or null
-     * @return template path string (may include {@code #aux}), or empty if cancelled
+     * {@code TemplateSingleChooserParam}'s mode); {@code null} means no restriction.
+     * @param previousSelection prior chooser result to restore, or null
+     * @return template path string (may include {@code #aux), or empty if cancelled
      */
     public static Optional<String> show(Window owner, TemplateMode mode, String previousSelection) {
         final TemplateMode effectiveMode = mode != null ? mode : TemplateMode.ALL;
@@ -90,8 +90,6 @@ public final class FxTemplateChooserDialog {
         FxFtpChooserSupport.addHelpButton(dialog, "#cls");
         final Button okButton = (Button) dialog.getDialogPane().lookupButton(ButtonType.OK);
 
-        // Swing TemplateChooserUI: no CLS path / Browse — cache combo is the source selector.
-        // Keep clsPath as a hidden field so on-the-fly / gene Apply can still seed loadOptions.
         TextField clsPath = new TextField();
         clsPath.setManaged(false);
         clsPath.setVisible(false);
@@ -116,7 +114,6 @@ public final class FxTemplateChooserDialog {
                     setTextFill(null);
                 } else {
                     setText(item.getName(comboSourceMode[0], false));
-                    // Magenta = combo-sourced (Swing); otherwise inherit theme text color.
                     setTextFill(comboSourceMode[0] ? Color.MAGENTA : null);
                 }
             }
@@ -124,11 +121,8 @@ public final class FxTemplateChooserDialog {
         FxFtpChooserSupport.enableDoubleClickToFire(options, okButton);
 
         ComboBox<Template> cachedTemplateCombo = new ComboBox<>();
-        // Swing: TitledBorder "Select source file" on the combo (no prompt chrome).
         cachedTemplateCombo.setMaxWidth(Double.MAX_VALUE);
         cachedTemplateCombo.setItems(FXCollections.observableArrayList(nonAuxCachedTemplates()));
-        // Swing TemplateChooserUI uses a live cache ComboBoxModel; refresh when the dialog is shown
-        // and when the combo is about to expand so newly loaded phenotypes appear.
         dialog.setOnShowing(e -> refreshCachedTemplateCombo(cachedTemplateCombo));
         cachedTemplateCombo.setOnShowing(e -> refreshCachedTemplateCombo(cachedTemplateCombo));
         cachedTemplateCombo.setCellFactory(lv -> xapps.gsea.fx.FxPobListCells.pobCell());
@@ -149,7 +143,6 @@ public final class FxTemplateChooserDialog {
             try {
                 @SuppressWarnings("unchecked")
                 List<Template> all = ParserFactory.getCache().getCachedObjectsL(Template.class);
-                // onlyHashOnesForBiphasic=true for the combo/all-sources view
                 Template[] qualified = qualifyByTypeAndMode(
                         all.toArray(new Template[0]), true, effectiveMode);
                 List<TemplateDerivative> tds = new ArrayList<>();
@@ -171,7 +164,6 @@ public final class FxTemplateChooserDialog {
             }
         });
 
-        // Swing TemplateChooserUI button labels (ASCII " ...").
         Button bOnTheFly = new Button("Create an on-the-fly phenotype ...");
         bOnTheFly.setMaxWidth(Double.MAX_VALUE);
         xapps.gsea.fx.FxButtons.styleSecondary(bOnTheFly);
@@ -210,8 +202,6 @@ public final class FxTemplateChooserDialog {
         optionsPane.setCollapsible(false);
         optionsPane.setExpanded(true);
 
-        // Swing titled borders on combo / options list.
-        // TemplateSingleChooserParam → isMultiAllowed=false → "Select one phenotype)".
         TitledPane sourcePane = new TitledPane("Select source file", cachedTemplateCombo);
         sourcePane.setCollapsible(false);
         TitledPane phenotypeOptionsPane = new TitledPane("Select one phenotype)", options);
@@ -219,7 +209,6 @@ public final class FxTemplateChooserDialog {
         phenotypeOptionsPane.setMaxHeight(Double.MAX_VALUE);
         VBox.setVgrow(phenotypeOptionsPane, Priority.ALWAYS);
 
-        // Swing TemplateChooserUI: no CLS path/Browse — cache combo + options list only.
         VBox center = new VBox(10,
                 sourcePane,
                 phenotypeOptionsPane);
@@ -230,7 +219,6 @@ public final class FxTemplateChooserDialog {
         root.setCenter(center);
         root.setBottom(optionsPane);
         dialog.getDialogPane().setContent(root);
-        // Swing DialogDescriptor DD_SIZE.
         dialog.getDialogPane().setPrefSize(550, 400);
         xapps.gsea.fx.FxTheme.apply(dialog);
         xapps.gsea.fx.FxButtons.stylePrimary(okButton);
@@ -243,14 +231,12 @@ public final class FxTemplateChooserDialog {
             }
             TemplateDerivative sel = options.getSelectionModel().getSelectedItem();
             if (sel != null) {
-                // Combo / all-sources mode: full path. Normal aux mode: path#aux when applicable.
                 return sel.getName(false, true);
             }
             String path = clsPath.getText();
             return StringUtils.isBlank(path) ? "" : path.trim();
         });
 
-        // Swing TemplateSingleChooserParam.fCurrBag: restore prior file options + selection.
         if (previousSelection != null && !previousSelection.isBlank()) {
             File prior = StringUtils.isNotBlank(clsPath.getText())
                     ? new File(clsPath.getText().trim()) : null;
@@ -258,7 +244,6 @@ public final class FxTemplateChooserDialog {
                 loadOptions(prior, options, dialog, effectiveMode);
                 selectMatchingOption(options, previousSelection);
             } else {
-                // Cache-only / on-the-fly: try matching a cached Template by name / path string.
                 try {
                     @SuppressWarnings("unchecked")
                     List<Template> all = ParserFactory.getCache().getCachedObjectsL(Template.class);
@@ -391,7 +376,6 @@ public final class FxTemplateChooserDialog {
         VBox root = new VBox(10, classes, south);
         root.setPadding(new Insets(8));
         dialog.getDialogPane().setContent(root);
-        // Swing DialogDescriptor DD_SIZE.
         dialog.getDialogPane().setPrefSize(550, 400);
         xapps.gsea.fx.FxTheme.apply(dialog);
         dialog.setResultConverter(btn -> created[0]);
@@ -446,7 +430,6 @@ public final class FxTemplateChooserDialog {
             try {
                 String gene = geneList.getSelectionModel().getSelectedItem();
                 if (StringUtils.isBlank(gene)) {
-                    // Allow typed filter text if it exactly matches a gene
                     String typed = geneFilter.getText();
                     if (StringUtils.isNotBlank(typed) && allGenes.contains(typed.trim())) {
                         gene = typed.trim();
@@ -478,7 +461,6 @@ public final class FxTemplateChooserDialog {
             }
         });
 
-        // Swing GeneSearchList: "Selected Gene" + "Feature List" titled borders (no invent label).
         TitledPane selectedGene = new TitledPane("Selected Gene", geneFilter);
         selectedGene.setCollapsible(false);
         TitledPane featureList = new TitledPane("Feature List", geneList);
@@ -494,7 +476,6 @@ public final class FxTemplateChooserDialog {
         VBox.setVgrow(featureList, Priority.ALWAYS);
         root.setPadding(new Insets(8));
         dialog.getDialogPane().setContent(root);
-        // Swing DialogDescriptor DD_SIZE.
         dialog.getDialogPane().setPrefSize(550, 400);
         xapps.gsea.fx.FxTheme.apply(dialog);
         dialog.setResultConverter(btn -> created[0]);
@@ -503,7 +484,6 @@ public final class FxTemplateChooserDialog {
 
     private static ComboBox<Dataset> datasetCombo() {
         ComboBox<Dataset> cb = new ComboBox<>();
-        // Swing: TitledBorder "Dataset" wraps the combo at the call site.
         cb.setMaxWidth(Double.MAX_VALUE);
         try {
             @SuppressWarnings("unchecked")
@@ -528,8 +508,6 @@ public final class FxTemplateChooserDialog {
         }
         try {
             Template main = ParserFactory.readTemplate(clsFile, true, true, true);
-            // Browsing a specific file directly: onlyHashOnesForBiphasic=false (matches Swing
-            // showChooser's createTemplateOptions_safe(mainObj, false) for a browsed CLS file).
             Template[] tss = qualifyByTypeAndMode(
                     TemplateFactory.extractAllPossibleTemplates(main, true), false, mode);
             List<TemplateDerivative> tds = new ArrayList<>();
@@ -561,10 +539,6 @@ public final class FxTemplateChooserDialog {
         }
     }
 
-    /**
-     * Non-aux cached templates (continuous templates are always non-aux; categorical templates
-     * qualify only when {@code !isAux()}), matching Swing {@code TemplateNonAuxBoxModel}.
-     */
     private static List<Template> nonAuxCachedTemplates() {
         List<Template> result = new ArrayList<>();
         try {
@@ -590,12 +564,6 @@ public final class FxTemplateChooserDialog {
         }
     }
 
-    /**
-     * Populates {@code options} from a cached template source, matching Swing
-     * {@code TemplateChooserUI#doTemplateSelection} (onlyHashOnesForBiphasic=true for the
-     * categorical case; the continuous case ignores that flag, same as Swing
-     * {@code createTemplateOptions_file_cont}).
-     */
     private static void loadOptionsFromCachedTemplate(Template selected, ListView<TemplateDerivative> options,
             Dialog<?> dialog, TemplateMode mode) {
         options.getItems().clear();
@@ -629,9 +597,6 @@ public final class FxTemplateChooserDialog {
         }
     }
 
-    /**
-     * Direct port of Swing {@code TemplateChooserUI#qualifyByTypeAndMode} (git show HEAD).
-     */
     private static Template[] qualifyByTypeAndMode(Template[] tss, boolean onlyHashOnesForBiphasic, TemplateMode mode) {
         List<Template> list = new ArrayList<>();
         TemplateMode effective = mode != null ? mode : TemplateMode.ALL;

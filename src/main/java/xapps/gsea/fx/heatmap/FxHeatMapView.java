@@ -79,14 +79,10 @@ public class FxHeatMapView {
     private boolean drawColumnNames = true;
     private boolean drawRowDescriptions = false;
     private boolean globalColorScale = false;
-    /** Swing LE binary membership ColorScheme (white/yellow). */
     private boolean binaryMembershipMode = false;
-    /** Swing HeatMapComponent.featureUIString / sampleUIString. */
     private String featureUIString = "Feature";
     private String sampleUIString = "Sample";
-    /** Swing HeatMapComponent.showColorSchemeOptions — when false, hide Relative/Global. */
     private boolean showColorSchemeOptions = true;
-    /** Swing HeatMapComponent.setOptionsDialogOptions — which Options checkboxes are shown. */
     private boolean allowChangeColumnNameVisibility = true;
     private boolean allowChangeRowNameVisibility = true;
     private boolean allowChangeRowDescriptionsVisibility = true;
@@ -138,7 +134,6 @@ public class FxHeatMapView {
             rebuild();
         });
 
-        // Swing HeatMapComponent menu labels (ASCII ellipsis where present).
         Button displayOpts = new Button("Display Options...");
         displayOpts.setOnAction(e -> showDisplayOptions());
         legendButton = new Button("Legend");
@@ -155,7 +150,6 @@ public class FxHeatMapView {
         xapps.gsea.fx.FxButtons.styleToolbar(saveDs);
         xapps.gsea.fx.FxButtons.styleToolbar(profileButton);
 
-        // Swing createMenuBar: no Print control.
         HBox tools = xapps.gsea.fx.FxButtons.row(
                 new Label("Grid Size:"), sizeSlider, grid, toolbarRowNames, toolbarColNames, displayOpts, legendButton,
                 saveImg, saveDs, profileButton);
@@ -202,7 +196,6 @@ public class FxHeatMapView {
         this.colorScheme = colorScheme;
         this.similarityMode = similarityMode;
         this.binaryMembershipMode = binaryMembership && !similarityMode;
-        // Swing: LE HeatMapPanel defaults 8×8; GeneSetSimilarityPanel uses 12.
         this.cellSize = similarityMode ? 12 : 8;
         if (sizeSlider != null && (int) sizeSlider.getValue() != cellSize) {
             sizeSlider.setValue(cellSize);
@@ -217,10 +210,6 @@ public class FxHeatMapView {
         rebuild();
     }
 
-    /**
-     * Swing {@code HeatMapComponent#setFeatureUIString} / {@code setSampleUIString}
-     * and {@code setShowColorSchemeOptions}.
-     */
     public void setUiNaming(String featureUi, String sampleUi, boolean colorSchemeOptions) {
         if (featureUi != null && !featureUi.isBlank()) {
             this.featureUIString = featureUi;
@@ -247,7 +236,6 @@ public class FxHeatMapView {
         return cellSize;
     }
 
-    /** Swing GeneSetSimilarityPanel listens to columnSize PropertyChange for legend width. */
     public void setOnCellSizeChanged(java.util.function.IntConsumer listener) {
         this.cellSizeListener = listener;
     }
@@ -270,9 +258,6 @@ public class FxHeatMapView {
         return "Show " + featureUIString + " Descriptions";
     }
 
-    /**
-     * Swing HeatMapComponent.setOptionsDialogOptions / matching toolbar visibility.
-     */
     public void setOptionsDialogOptions(boolean allowChangeColumnNameVisibility,
             boolean allowChangeRowNameVisibility,
             boolean allowChangeRowDescriptionsVisibility) {
@@ -281,8 +266,8 @@ public class FxHeatMapView {
     }
 
     /**
-     * @param showProfileAndLegend Swing {@code createMenuBar(..., showViewMenu)} — when false,
-     *                             Profile/Legend chrome is hidden (LE / similarity panels).
+     * @param showProfileAndLegend — when false,
+     * Profile/Legend chrome is hidden (LE / similarity panels).
      */
     public void setOptionsDialogOptions(boolean allowChangeColumnNameVisibility,
             boolean allowChangeRowNameVisibility,
@@ -314,7 +299,6 @@ public class FxHeatMapView {
         }
     }
 
-    /** Swing HeatMapComponent Edit -> Display Options (live apply). */
     private void showDisplayOptions() {
         javafx.scene.control.Dialog<Void> dialog = new javafx.scene.control.Dialog<>();
         dialog.setTitle("Options");
@@ -469,7 +453,6 @@ public class FxHeatMapView {
         };
     }
 
-    /** Swing HeatMapComponent View → Legend. */
     private void showLegend() {
         javafx.scene.control.Dialog<Void> dialog = new javafx.scene.control.Dialog<>();
         dialog.setTitle("Legend");
@@ -595,12 +578,9 @@ public class FxHeatMapView {
     }
 
     private void installRowContextMenu() {
-        // Swing HeatMapComponent popup always has Profile (independent of View menubar).
         MenuItem profile = new MenuItem("Profile");
         profile.setOnAction(e -> runProfile());
         rowList.setContextMenu(new ContextMenu(profile));
-        // Swing LeadingEdgePanel feature-table: single-click gene-set name opens {name}.html.
-        // (No HTML item on the popup — click opens.)
         rowList.setOnMouseClicked(e -> {
             if (e.getButton() != MouseButton.PRIMARY || similarityMode || e.getClickCount() != 1) {
                 return;
@@ -649,7 +629,6 @@ public class FxHeatMapView {
             Application.getWindowManager().showMessage("No report directory available for gene-set HTML.");
             return;
         }
-        // Swing LeadingEdgePanel: row names are GeneSetSignalImpl names (…_signal); strip before lookup.
         String lookup = gsetName.replaceAll("_signal", "");
         File html = new File(htmlLookupDir, lookup + ".html");
         if (!html.exists()) {
@@ -726,7 +705,6 @@ public class FxHeatMapView {
         if (dataset == null) {
             return;
         }
-        // Swing HeatMapComponent.SaveDataset: instruction + Output File + Browse... + Save/Cancel.
         Window owner = root.getScene() != null ? root.getScene().getWindow() : null;
         Dialog<ButtonType> dialog = new Dialog<>();
         dialog.setTitle("Save Dataset");

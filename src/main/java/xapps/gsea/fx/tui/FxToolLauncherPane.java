@@ -56,7 +56,6 @@ public class FxToolLauncherPane implements ViewPage {
         this.showInitializedBanner = showInitializedBanner;
         this.form = new FxParamSetForm(tool.getParamSet());
 
-        // Swing ParamSetDisplay: light-blue gradient header with tool.getTitle() HTML + tool icon.
         HBox header = new HBox(10);
         header.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
         header.setPadding(new Insets(10, 12, 10, 12));
@@ -73,14 +72,12 @@ public class FxToolLauncherPane implements ViewPage {
             }
         } catch (Exception ignored) {
         }
-        // Swing ParamSetDisplay uses tool.getTitle() (HTML) in the gradient header — not the tab optTitle.
         Label titleLabel = new Label();
         titleLabel.setText(stripSimpleHtml(tool.getTitle()));
         titleLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 14px; -fx-text-fill: white;");
         header.getChildren().add(titleLabel);
 
         run.setDefaultButton(true);
-        // Swing GuiHelper.Button.createStartButton: Run + Run16.png.
         run.setGraphic(xapps.gsea.fx.FxFileIcons.forResource("Run16.png"));
         run.setOnAction(e -> runTool());
 
@@ -122,7 +119,6 @@ public class FxToolLauncherPane implements ViewPage {
         HBox actions = xapps.gsea.fx.FxButtons.actionBar(help, rhs);
 
         VBox top = new VBox(8);
-        // Swing SingleToolLauncher showTopBufferPanel: "Initialized to: <toolName>"
         if (showInitializedBanner) {
             Label initPrefix = new Label("Initialized to: ");
             Label initName = new Label(tool.getName());
@@ -144,7 +140,6 @@ public class FxToolLauncherPane implements ViewPage {
         refreshRunEnabled();
     }
 
-    /** Mirrors Swing {@code ToolRunnerControl#setEnabledControls}: Reset is never disabled. */
     private void refreshRunEnabled() {
         boolean ready;
         try {
@@ -158,7 +153,6 @@ public class FxToolLauncherPane implements ViewPage {
     }
 
     public static FxToolLauncherPane forTool(Tool tool, String title) {
-        // Swing SingleToolLauncherAction → ToolLauncher.gif + showTopBufferPanel=true.
         return forTool(tool, title, "ToolLauncher.gif", true);
     }
 
@@ -182,11 +176,9 @@ public class FxToolLauncherPane implements ViewPage {
             }
             // Record snapshot against the unique runId so concurrent same-tool runs stay distinct.
             String runId = TaskManager.getInstance().run(tool, pset, Thread.NORM_PRIORITY);
-            // Swing SingleToolLauncher.isRecordToolRun() == false: do not write kLastToolName.
             if (FxTaskTablePane.getInstance() != null) {
                 FxTaskTablePane.getInstance().attachSnapshot(runId, tool, pset.toProperties());
             }
-            // createTool failure: Invalid Param row (Swing createParamErrorToolState); Name can relaunch.
             if (TaskManager.getInstance().isParamConstructionError(runId)) {
                 Throwable paramErr = TaskManager.getInstance().getLastError(runId);
                 Application.getWindowManager().showError(
@@ -195,7 +187,6 @@ public class FxToolLauncherPane implements ViewPage {
                                 : new IllegalStateException("Invalid parameters"));
                 return;
             }
-            // Swing ToolRunnerControl Run: no toast — status is the process table only.
         } catch (Exception ex) {
             klog.error("Failed to run tool {}", tool.getName(), ex);
             Application.getWindowManager().showError("Failed to run " + tool.getName(), ex);
@@ -203,9 +194,7 @@ public class FxToolLauncherPane implements ViewPage {
     }
 
     /**
-     * Mirrors Swing {@code ToolRunnerControl}'s "Last" button: confirm, then
-     * {@link FxLoadToolTask} on a throwaway tool clone with {@code launchANewToolWindow=false}
-     * (cache side-effects only — live form unchanged).
+     * confirm, then {@link FxLoadToolTask} on a throwaway tool clone with {@code launchANewToolWindow=false} (cache side-effects only — live form unchanged).
      */
     private void loadLastRunParams() {
         last.setDisable(true);
@@ -268,7 +257,6 @@ public class FxToolLauncherPane implements ViewPage {
                 "Confirm reset parameters to defaults")) {
             return;
         }
-        // Swing ParamSetDisplay.resetParamSet: each param's declared getDefault().
         for (int i = 0; i < tool.getParamSet().getNumParams(); i++) {
             Param p = tool.getParamSet().getParam(i);
             Object def = p.getDefault();
@@ -289,7 +277,7 @@ public class FxToolLauncherPane implements ViewPage {
         refreshRunEnabled();
     }
 
-    /** Matches Swing {@code ToolRunnerControl#bCmd}: launcher script + tool name + args, with Copy. */
+    /** Show the launcher script command (tool name + args) with a Copy action. */
     private void showCommandLine() {
         form.commitAll();
         String launcherCmd = SystemUtils.IS_OS_WINDOWS ? "gsea-cli.bat" : "gsea-cli.sh";
@@ -301,10 +289,8 @@ public class FxToolLauncherPane implements ViewPage {
         area.setPrefRowCount(8);
 
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        // Swing ToolRunnerControl ApplicationDialog title (verbatim casing).
         alert.setTitle("Command Line for: " + tool.getName());
         alert.setHeaderText(null);
-        // Swing ApplicationDialog with Copy + Cancel.
         alert.getButtonTypes().setAll(ButtonType.APPLY, ButtonType.CANCEL);
         Button copyButton = (Button) alert.getDialogPane().lookupButton(ButtonType.APPLY);
         copyButton.setText("Copy");

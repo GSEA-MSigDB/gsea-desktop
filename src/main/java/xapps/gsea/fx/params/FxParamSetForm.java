@@ -210,8 +210,7 @@ public class FxParamSetForm {
     }
 
     /**
-     * Notify {@code listener} whenever any parameter editor fires a change (Swing-style immediate
-     * readiness updates). Editors already expose {@link ParamEditor#onChange(Runnable)}.
+     * Notify {@code listener} whenever any parameter editor fires a change. Editors already expose {@link ParamEditor#onChange(Runnable}}.
      */
     public void addChangeListener(Runnable listener) {
         if (listener == null) {

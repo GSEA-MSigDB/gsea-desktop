@@ -18,12 +18,12 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.input.TransferMode;
 
 /**
- * FX drag payload matching Swing {@code PobTransferable}:
+ * FX drag payload:
  * pob-list (in-JVM) + file list + path string.
  */
 public final class FxPobTransferSupport {
 
-    /** Marker format analogous to Swing {@code PobFlavor.pobListFlavor}. */
+    /** Marker format analogous to . */
     public static final DataFormat POB_LIST_FORMAT =
             new DataFormat("application/x-gsea-pob-list");
 
@@ -41,7 +41,6 @@ public final class FxPobTransferSupport {
         for (PersistentObject pob : snapshot) {
             try {
                 File f = ParserFactory.getCache().getSourceFile(pob);
-                // Swing PobTransferable: include source File even when missing on disk.
                 if (f != null) {
                     files.add(f);
                 }
@@ -54,11 +53,9 @@ public final class FxPobTransferSupport {
         ClipboardContent content = new ClipboardContent();
         content.put(POB_LIST_FORMAT, Integer.toString(snapshot.size()));
         if (!files.isEmpty()) {
-            // Swing FileTransferable: include missing source paths too.
             content.putString(pathsString(files));
             content.putFiles(files);
         } else {
-            // Still expose object names when no source files (Swing also carries pobs without files).
             StringBuilder names = new StringBuilder();
             for (PersistentObject pob : snapshot) {
                 names.append(pob.getName()).append('\n');

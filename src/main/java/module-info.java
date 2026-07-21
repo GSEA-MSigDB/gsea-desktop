@@ -27,6 +27,8 @@ module org.gsea_msigdb.gsea {
     exports edu.mit.broad.vdb.map;
     exports edu.mit.broad.vdb.meg;
     exports edu.mit.broad.cytoscape;
+    exports edu.mit.broad.coremap;
+    exports edu.mit.broad.coremap.providers;
     exports edu.mit.broad.xbench.core.api;
     exports edu.mit.broad.xbench.heatmap;
     exports edu.mit.broad.xbench.prefs;
@@ -54,6 +56,7 @@ module org.gsea_msigdb.gsea {
     exports xapps.gsea.fx.params;
     exports xapps.gsea.fx.tui;
     exports xapps.gsea.fx.viewers;
+    exports xapps.gsea.fx.viewers.coremap;
 
     requires algorithms;
     requires batik.awt.util;
@@ -78,6 +81,7 @@ module org.gsea_msigdb.gsea {
     requires javafx.graphics;
     requires javafx.swing;
     requires javafx.web;
+    requires jdk.jsobject;
     requires jcommon;
     requires jdk.xml.dom;
     requires jfreechart;
@@ -92,4 +96,5 @@ module org.gsea_msigdb.gsea {
 
     opens xapps.gsea.fx to javafx.graphics;
     opens xapps.gsea.fx.shell to javafx.graphics;
+    opens xapps.gsea.fx.viewers.coremap to javafx.web;
 }

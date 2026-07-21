@@ -13,8 +13,8 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 
 /**
- * Jaccard similarity legend matching Swing {@code GradientColorScheme} with
- * {@code setUseDoubleGradient(false)}: WHITE→GREEN bar, min/max labels only (no mid).
+ * Jaccard similarity legend
+ * {@code setUseDoubleGradient(false}}: WHITE→GREEN bar, min/max labels only (no mid).
  */
 public final class FxJaccardLegend {
 
@@ -22,9 +22,7 @@ public final class FxJaccardLegend {
     }
 
     public static VBox create(double preferredWidth) {
-        // Swing GeneSetSimilarityPanel overwrites legend preferred width with cols×cellSize (no floor).
         double w = Math.max(1, preferredWidth);
-        // Swing GradientColorScheme.Legend: bar height = 15.
         Canvas canvas = new Canvas(w, 15);
         paint(canvas.getGraphicsContext2D(), w, 15);
 
@@ -51,7 +49,6 @@ public final class FxJaccardLegend {
         }
     }
 
-    /** Swing single-gradient WHITE→GREEN across [0,1]. */
     static Color colorFor(float v) {
         if (v <= 0f) {
             return Color.WHITE;

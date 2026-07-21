@@ -25,10 +25,7 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.control.SeparatorMenuItem;
 import xapps.gsea.fx.FxFileIcons;
 
-/**
- * Type-specific actions for files / cached objects
- * (Swing {@code GseaActionRegistry} popup parity for the FX shell).
- */
+/** Type-specific actions for files / cached objects. */
 public final class FxFileActions {
     private static final Logger klog = LoggerFactory.getLogger(FxFileActions.class);
 
@@ -40,8 +37,7 @@ public final class FxFileActions {
     }
 
     /**
-     * Context menu for a produced/report/recent file
-     * (Swing {@code GseaActionRegistry#createPopup(File)}).
+     * Context menu for a produced/report/recent file).
      * Recent-list purge items are added by {@code FxLoadDataPane}, not here.
      */
     public static ContextMenu fileContextMenu(File file, Consumer<ViewPage> openPage, Runnable afterChange) {
@@ -53,7 +49,6 @@ public final class FxFileActions {
         Consumer<ViewPage> open = openPage != null ? openPage : page -> { };
         Runnable refresh = afterChange != null ? afterChange : () -> { };
 
-        // Swing: .def maps to COMMON_ACTIONS (Load + separator + OsExplorer).
         if (Constants.DEF.equals(ext)) {
             addCommonActions(menu, file, open);
             return menu;
@@ -69,7 +64,6 @@ public final class FxFileActions {
             return menu;
         }
 
-        // Swing _addCommon: customs, separator, LoadAction, separator, OsExplorerAction.
         menu.getItems().addAll(customs);
         menu.getItems().add(new SeparatorMenuItem());
         addCommonActions(menu, file, open);
@@ -84,9 +78,7 @@ public final class FxFileActions {
         menu.getItems().add(fileExplorerItem(file));
     }
 
-    /**
-     * Object-cache popup (Swing {@code GseaActionRegistry#createPopup(Object)}).
-     */
+    /** Object-cache context menu. */
     public static ContextMenu objectContextMenu(PersistentObject pob, Consumer<ViewPage> openPage,
             Runnable afterChange) {
         ContextMenu menu = new ContextMenu();
@@ -115,16 +107,13 @@ public final class FxFileActions {
     }
 
     /**
-     * Swing {@code GseaActionRegistry#runDefaultAction(File)}: html/tsv → browser;
-     * otherwise {@code ParserWorker} (progress + cancel + success/error toast, no viewer).
+     * html/tsv → browser; otherwise {@code ParserWorker} (progress + cancel + success/error toast, no viewer).
      */
     public static void runDefaultFileAction(File file, Consumer<ViewPage> openPage) {
         if (file == null) {
             return;
         }
         String lower = file.getName().toLowerCase(Locale.ROOT);
-        // Swing GseaActionRegistry#runDefaultAction: browser only for .html / .tsv
-        // (.htm falls through to ParserWorker).
         if (lower.endsWith(".html") || lower.endsWith(".tsv")) {
             try {
                 xapps.gsea.fx.FxDesktopUtil.openUri(file.toURI());
@@ -226,7 +215,6 @@ public final class FxFileActions {
         } else if (pob instanceof GeneSetMatrix gm) {
             items.add(item("GeneSetMatrixViewer2", "Gmx.png", () -> openObject(pob, open)));
             items.add(new SeparatorMenuItem());
-            // Swing FileObjectAction.setObject: operate on the live matrix, not a re-read of src.
             items.add(item("=> Extract GeneSets from the GeneSetMatrix", null,
                     () -> extractGeneSets(gm, refresh)));
             items.add(item("=> Convert the GeneSetMatrix into a single GeneSet", null,
@@ -239,7 +227,6 @@ public final class FxFileActions {
         return items;
     }
 
-    /** Swing {@code FileBrowserAction} name/icon by extension. */
     private static MenuItem launchFileItem(File file) {
         String ext = extensionOf(file);
         String label = "Launch File";
@@ -253,7 +240,6 @@ public final class FxFileActions {
         }
         return item(label, icon, () -> {
             try {
-                // Swing FileBrowserAction: Desktop.browse(+ empty-authority file URI).
                 xapps.gsea.fx.FxDesktopUtil.openUri(file.toURI());
             } catch (Exception ex) {
                 Application.getWindowManager().showError("Trouble launching File on path '" + file.getPath() + "'", ex);
@@ -304,7 +290,6 @@ public final class FxFileActions {
             }
             return;
         }
-        // Swing default open for .tsv is browser/OS; Force Reload (useCache=false) always parses.
         if (lower.endsWith(".tsv") && useCache) {
             try {
                 xapps.gsea.fx.FxDesktopUtil.openUri(file.toURI());
@@ -319,7 +304,6 @@ public final class FxFileActions {
                 if (useCache) {
                     Application.getFileManager().registerRecentlyOpenedFile(file);
                 } else {
-                    // Swing LoadAction force-reload: refresh LRU only.
                     Application.getFileManager().getRecentFilesStore().refresh(file.getPath());
                 }
                 if (openViewer && obj != null && openPage != null) {
@@ -331,7 +315,6 @@ public final class FxFileActions {
                         }
                     });
                 } else if (!useCache && !openViewer) {
-                    // Swing LoadAction: force reload + success toast, no viewer.
                     final Object reloaded = obj;
                     javafx.application.Platform.runLater(() -> {
                         if (reloaded instanceof PersistentObject pob) {
@@ -355,7 +338,6 @@ public final class FxFileActions {
     }
 
     private static void removeGeneSetDuplicates(File file, Runnable afterChange) {
-        // Swing GeneSetRemoveDuplicatesAction: .grp only.
         if (file == null || !file.getName().toLowerCase(Locale.ROOT).endsWith(".grp")) {
             Application.getWindowManager().showError(
                     "Only .grp files allowed - cannot perform this action on file: " + file);
@@ -382,7 +364,6 @@ public final class FxFileActions {
         worker.start();
     }
 
-    /** Swing {@code GeneSetMatrix2GeneSetsAction}: toast only, no viewer. */
     private static void extractGeneSets(Object fileOrMatrix, Runnable afterChange) {
         Thread worker = new Thread(() -> {
             try {
@@ -417,7 +398,6 @@ public final class FxFileActions {
         worker.start();
     }
 
-    /** Swing {@code GeneSetMatrix2GeneSetAction}: toast only, no viewer. */
     private static void convertMatrixToGeneSet(Object fileOrMatrix, Runnable afterChange) {
         Thread worker = new Thread(() -> {
             try {
@@ -456,7 +436,6 @@ public final class FxFileActions {
 
     private static void revealInOs(File file) {
         try {
-            // Swing OsExplorerAction → openInOsExplorer (browse + empty-authority URI; no exists gate).
             xapps.gsea.fx.FxDesktopUtil.openInOsExplorer(file);
         } catch (Exception e) {
             Application.getWindowManager().showError("Trouble launching File Explorer on path '" + file.getPath() + "'", e);

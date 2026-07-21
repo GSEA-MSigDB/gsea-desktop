@@ -12,10 +12,7 @@ import javafx.scene.control.ListCell;
 import javafx.scene.control.Tooltip;
 import javafx.scene.layout.HBox;
 
-/**
- * List/combo cells matching Swing {@code RendererFactory2.CommonLookListRenderer}
- * and {@code GeneSetMatrixChooserWindow.NonFTPGeneSetsRenderer}.
- */
+/** List/combo cells {@code GeneSetMatrixChooserWindow.NonFTPGeneSetsRenderer}. */
 public final class FxPobListCells {
 
     private FxPobListCells() {

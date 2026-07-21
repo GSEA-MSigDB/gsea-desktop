@@ -71,7 +71,6 @@ public final class FxChipChooserDialog {
 
         ListView<CachedChip> cachedChips = new ListView<>();
         cachedChips.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
-        // Swing Local Chips: Chip.toString() = name; path not shown in cell text.
         cachedChips.setCellFactory(lv -> new ListCell<>() {
             @Override
             protected void updateItem(CachedChip item, boolean empty) {
@@ -149,12 +148,10 @@ public final class FxChipChooserDialog {
 
         tabs.getSelectionModel().select(0);
 
-        // Swing: cross-tab multi-selection is preserved until OK validation (below).
 
         BorderPane root = new BorderPane(tabs);
         root.setPadding(new Insets(8));
         dialog.getDialogPane().setContent(root);
-        // Swing WChipChooserWindow → DialogDescriptor.setDisplayWider() → DD_SIZE_WIDER.
         dialog.getDialogPane().setPrefSize(800, 400);
         xapps.gsea.fx.FxTheme.apply(dialog);
         xapps.gsea.fx.FxButtons.stylePrimary(okButton);
@@ -246,7 +243,6 @@ public final class FxChipChooserDialog {
 
         @Override
         public String toString() {
-            // Swing Chip.toString / default JList: name only (path via tooltip in cell factory).
             return name;
         }
     }

@@ -89,7 +89,6 @@ public class GseaFxShell implements Workspace, Application.Handler {
 
     private final Stage stage;
     private final TabPane tabPane = new TabPane();
-    // Swing StatusBarAppender: empty JLabel until the first JUL message.
     private final Label statusLabel = new Label("");
     private final ToolManager toolManager = new ToolManagerImpl();
     private final VdbManager vdbManager = new VdbManagerForGsea(RPT_CACHE_BUILD_DATE);
@@ -97,7 +96,6 @@ public class GseaFxShell implements Workspace, Application.Handler {
     private final FxWorkspaceWindowManager windowManager;
     private final FxTaskTablePane taskTablePane;
 
-    // Swing App*Action / AppToolLauncherAction: one cached widget per LHS tool; reselect existing tab.
     private FxLoadDataPane loadDataPage;
     private FxLeadingEdgePane leadingEdgePage;
     private FxEnrichmentMapPane enrichmentMapPage;
@@ -116,7 +114,6 @@ public class GseaFxShell implements Workspace, Application.Handler {
         Application.registerHandler(this);
         this.fileManager = new FileManager();
         this.taskTablePane = new FxTaskTablePane(this::openPage);
-        // Swing SystemConsole redirects streams during construction (before the frame is shown).
         FxConsoleViewer.installLogHandler();
         FxConsoleViewer.installSystemStreamCapture();
         tabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.ALL_TABS);
@@ -152,7 +149,6 @@ public class GseaFxShell implements Workspace, Application.Handler {
         javafx.scene.layout.StackPane sceneRoot = new javafx.scene.layout.StackPane(root);
         xapps.gsea.fx.FxToast.setHost(sceneRoot);
 
-        // Swing makeVisible: use saved size as-is (no 800×600 floor here).
         int width = Math.max(1, XPreferencesFactory.kAppWidth.getInt());
         int height = Math.max(1, XPreferencesFactory.kAppHeight.getInt());
         Scene scene = new Scene(sceneRoot, width, height);
@@ -173,7 +169,6 @@ public class GseaFxShell implements Workspace, Application.Handler {
 
         Thread updateThread = new Thread(() -> {
             Optional<String> updateMsg = UpdateChecker.oneTimeGseaUpdateCheckMessage();
-            // Swing UIUtil.showMessageDialog: empty/null title (body only).
             updateMsg.ifPresent(msg -> Platform.runLater(() -> showMessage(null, msg)));
         }, "gsea-update-check");
         updateThread.setDaemon(true);
@@ -229,7 +224,6 @@ public class GseaFxShell implements Workspace, Application.Handler {
 
     private void restoreWindowBounds() {
         try {
-            // Swing makeVisible: Toolkit screen size; if either dim exceeds screen → 75% of screen.
             double x = XPreferencesFactory.kAppXPosition.getInt();
             double y = XPreferencesFactory.kAppYPosition.getInt();
             double w = stage.getWidth();
@@ -260,9 +254,7 @@ public class GseaFxShell implements Workspace, Application.Handler {
     private MenuBar buildMenuBar() {
         MenuBar bar = new MenuBar();
 
-        // Swing GseaFijiTabsApplicationFrame.createMenuBar: File / Downloads / Help only.
         Menu file = new Menu("File");
-        // Swing GseaPreferencesAction SHORT_DESCRIPTION + Preferences16.gif
         MenuItem prefs = menuItemWithTooltip("Preferences ...",
                 "View and modify application wide preferences", "Preferences16.gif");
         prefs.setOnAction(e -> FxPreferencesPane.showDialog(stage));
@@ -288,20 +280,15 @@ public class GseaFxShell implements Workspace, Application.Handler {
                         "Download example datasets for GSEA - expression data, phenotype labels and gene sets files",
                         GseaWebResources.getGseaExamplesURL(), false));
 
-        // Swing Help menu: site / docs / license / folders / contact / build info only.
-        // About and Check-for-updates are not Help items (About via DesktopIntegration on macOS).
         Menu help = new Menu("Help");
         String version = buildProps.getProperty("build.version", "[NO BUILD VERSION FOUND]");
         String buildNo = buildProps.getProperty("build.number", "Error loading build.properties!");
         String ts = buildProps.getProperty("build.timestamp", "");
-        // Swing formatBuildInfoForHelp always includes "[build: …]".
         MenuItem buildInfo = new MenuItem("GSEA v" + version + " [build: " + buildNo + "]");
-        // Swing createJMenu(String): plain enabled menu items (not disabled labels).
         MenuItem showHome = menuItemWithTooltip("Show GSEA home folder",
                 "Show runtime home directory of this application");
         showHome.setOnAction(e -> {
             File dir = XPreferencesFactory.kAppRuntimeHomeDir;
-            // Swing OsExplorerAction: silent return if path is null.
             if (dir == null) {
                 return;
             }
@@ -316,7 +303,6 @@ public class GseaFxShell implements Workspace, Application.Handler {
                 "Show output directory of this application");
         showOut.setOnAction(e -> {
             File dir = Application.getVdbManager().getDefaultOutputDir();
-            // Swing OsExplorerAction: silent return if path is null.
             if (dir == null) {
                 return;
             }
@@ -343,7 +329,6 @@ public class GseaFxShell implements Workspace, Application.Handler {
                         GseaWebResources.getGseaContactURL(), false),
                 new SeparatorMenuItem(),
                 buildInfo);
-        // Swing formatBuildTimestampForHelp returns null when blank → separator only.
         if (ts == null || ts.isBlank()) {
             help.getItems().add(new SeparatorMenuItem());
         } else {
@@ -472,7 +457,6 @@ public class GseaFxShell implements Workspace, Application.Handler {
 
     private void openEnrichmentMap() {
         if (enrichmentMapPage == null) {
-            // Swing EnrichmentMapInputPanelAction: confirm on first create.
             if (!showConfirm("Please confirm this action", FxEnrichmentMapPane.LAUNCH_MSG)) {
                 return;
             }
@@ -530,8 +514,6 @@ public class GseaFxShell implements Workspace, Application.Handler {
     private Button toolButton(String text, String iconResource, Runnable action) {
         Button b = new Button(text);
         xapps.gsea.fx.FxButtons.styleRail(b);
-        // Swing WorkspaceToolBar: icon left of text. Fill rail width and grow height so wrapped
-        // labels are not clipped with "...".
         b.setMaxWidth(Double.MAX_VALUE);
         b.setMinHeight(55);
         b.setPrefHeight(javafx.scene.layout.Region.USE_COMPUTED_SIZE);
@@ -556,7 +538,6 @@ public class GseaFxShell implements Workspace, Application.Handler {
     }
 
     private SplitPane buildCenter() {
-        // Swing: horizontal split — LHS (vertical tools + process) | workspace tabs.
         SplitPane left = new SplitPane();
         left.setOrientation(Orientation.VERTICAL);
         left.getItems().addAll(buildLeftToolRail(), taskTablePane.getNode());
@@ -625,7 +606,6 @@ public class GseaFxShell implements Workspace, Application.Handler {
         }
     }
 
-    /** Swing ClearFileHistoryAction: store clears; refresh the Load Data singleton even if tab closed. */
     private void refreshOpenLoadDataPanes() {
         if (loadDataPage != null) {
             loadDataPage.refreshRecentFiles();
@@ -822,7 +802,6 @@ public class GseaFxShell implements Workspace, Application.Handler {
         return result.get();
     }
 
-    /** Swing GseaFijiTabsApplicationFrame static: blank version/number get forced strings. */
     private void normalizeBuildProps() {
         String ver = buildProps.getProperty("build.version");
         if (ver == null || ver.isBlank()) {
@@ -845,7 +824,6 @@ public class GseaFxShell implements Workspace, Application.Handler {
         Label copy1 = new Label(
                 "Copyright (c) 2003-2025 Broad Institute, Inc., Massachusetts Institute of Technology, ");
         Label copy2 = new Label("and Regents of the University of California.  All rights reserved.");
-        // Swing formatBuildInfoForHelp + optional ", Built: …" on one line.
         String infoText = "GSEA v" + version + " [build: " + buildNo + "]";
         if (!ts.isEmpty()) {
             infoText += ", Built: " + ts;
@@ -856,7 +834,6 @@ public class GseaFxShell implements Workspace, Application.Handler {
         VBox body = new VBox(8, title, copy1, copy2, info);
         body.setPadding(new Insets(8, 4, 4, 4));
 
-        // Swing JOptionPane.PLAIN_MESSAGE — no default information icon.
         Alert alert = new Alert(Alert.AlertType.NONE);
         alert.setTitle("About GSEA");
         alert.setHeaderText(null);
@@ -886,7 +863,6 @@ public class GseaFxShell implements Workspace, Application.Handler {
      */
     private boolean requestQuit() {
         if (XPreferencesFactory.kAskBeforeAppShutdown.getBoolean()) {
-            // Swing AbstractWindowManager.showConfirm(msg): title "Please confirm this action".
             if (!showConfirm("Please confirm this action", "Exit the application?")) {
                 return false;
             }
@@ -905,7 +881,6 @@ public class GseaFxShell implements Workspace, Application.Handler {
 
     private void saveWindowBounds() {
         try {
-            // Swing always saves width/height/x/y even when maximized.
             XPreferencesFactory.kAppWidth.setValue((int) stage.getWidth());
             XPreferencesFactory.kAppHeight.setValue((int) stage.getHeight());
             XPreferencesFactory.kAppXPosition.setValue((int) stage.getX());

@@ -16,7 +16,7 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.input.TransferMode;
 
 /**
- * FX file drag-out and clipboard support matching Swing {@code FileTransferable}
+ * FX file drag-out and clipboard support
  * ({@code javaFileListFlavor} + path string).
  */
 public final class FxFileTransferSupport {
@@ -27,8 +27,6 @@ public final class FxFileTransferSupport {
     public static void copyFilesToClipboard(List<File> files) {
         List<File> all = nonNullFiles(files);
         ClipboardContent content = new ClipboardContent();
-        // Swing FileTransferable: every selected File (including missing) on both flavors;
-        // empty selection still places an empty file list.
         content.putString(pathsString(all));
         content.putFiles(all);
         Clipboard.getSystemClipboard().setContent(content);
@@ -42,7 +40,6 @@ public final class FxFileTransferSupport {
         Dragboard db = source.startDragAndDrop(TransferMode.COPY);
         ClipboardContent content = new ClipboardContent();
         content.putString(pathsString(all));
-        // Include missing paths so same-JVM drops match Swing FileTransferable.
         content.putFiles(all);
         db.setContent(content);
         event.consume();

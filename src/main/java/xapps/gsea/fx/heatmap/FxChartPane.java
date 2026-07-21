@@ -115,7 +115,6 @@ public class FxChartPane {
         root.setCenter(scroll);
 
         root.addEventFilter(javafx.scene.input.KeyEvent.KEY_PRESSED, e -> {
-            // Swing ViewMenu: menu-shortcut + ] / [
             if (!e.isShortcutDown()) {
                 return;
             }
@@ -242,9 +241,7 @@ public class FxChartPane {
         rangeBackup = plot.getRangeAxis().getRange();
     }
 
-    /**
-     * Domain-only rubber-band zoom (Swing {@code ChartPanel.setMouseZoomable(true, false)}).
-     */
+    /** Domain-only rubber-band zoom. */
     private void applyDomainDragZoom(double viewX0, double viewX1) {
         if (chart == null || !(chart.getPlot() instanceof XYPlot)) {
             return;
@@ -317,7 +314,7 @@ public class FxChartPane {
         refresh();
     }
 
-    /** Display Options: title, legend, axis labels/ranges (FX replacement for Swing ChartEditor). */
+    /** Display Options: title, legend, axis labels/ranges. */
     private void showDisplayOptions() {
         if (chart == null) {
             return;

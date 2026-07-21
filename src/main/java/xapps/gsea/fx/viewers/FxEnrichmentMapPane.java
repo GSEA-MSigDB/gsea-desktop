@@ -50,8 +50,7 @@ import xapps.gsea.fx.params.FxReportCacheSupport;
 import xtools.munge.CollapseDataset;
 
 /**
- * JavaFX Enrichment Map / Cytoscape launcher. Load stage mirrors Swing
- * {@code EnrichmentMapInputPanel} (report cache XOR directory → closable analysis tabs);
+ * JavaFX Enrichment Map / Cytoscape launcher. Load stage (report cache XOR directory → closable analysis tabs);
  * each analysis tab mirrors {@code EnrichmentMapParameterPanel}.
  */
 public class FxEnrichmentMapPane implements ViewPage {
@@ -88,11 +87,8 @@ public class FxEnrichmentMapPane implements ViewPage {
     }
 
     private VBox buildLoadPane() {
-        // Swing EnrichmentMapInputPanel has no section title on the load form.
 
-        // Swing EnrichmentMapInputPanel DirParam: label beside field; no field prompt.
         HBox.setHgrow(loadDirField, Priority.ALWAYS);
-        // Swing DirParam → GDirFieldPlusChooser: #EAFFEA + path coloring + Ellipsis.png.
         if (!loadDirField.getStyleClass().contains("gsea-dir-field")) {
             loadDirField.getStyleClass().add("gsea-dir-field");
         }
@@ -101,17 +97,14 @@ public class FxEnrichmentMapPane implements ViewPage {
                 "[ OR ] Locate a GSEA report folder from the file system");
         browseDir.setOnAction(e -> {
             DirectoryChooser chooser = new DirectoryChooser();
-            // Swing GDirFieldPlusChooser → chooseDirByDialog (platform default title).
             FxFileChooserUtil.seedInitialDirectory(chooser, loadDirField.getText());
             File selected = chooser.showDialog(FxFileChooserUtil.windowOf(root));
             if (selected != null) {
-                // Swing: browse only sets DirParam — do not clear cache (XOR checked on Load).
                 loadDirField.setText(selected.getAbsolutePath());
                 FxFileChooserUtil.registerOpenedDir(selected);
             }
         });
 
-        // Swing EnrichmentMapInputPanel: Clear + Load (no Refresh chrome).
         Button clear = new Button("Clear");
         xapps.gsea.fx.FxButtons.styleSecondary(clear);
         clear.setOnAction(e -> {
@@ -134,7 +127,6 @@ public class FxEnrichmentMapPane implements ViewPage {
     }
 
     private void loadGseaResults() {
-        // Swing: cache XOR dir via isSpecified() on params (field text).
         boolean hasCache = cacheChooser.isSpecified();
         String dirText = loadDirField.getText();
         boolean hasDir = dirText != null && !dirText.isBlank();
@@ -171,7 +163,6 @@ public class FxEnrichmentMapPane implements ViewPage {
             analysisCount++;
             Tab tab = new Tab("EM Analysis");
             tab.setClosable(true);
-            // Swing EnrichmentMapInputPanel wraps each analysis form in a JScrollPane.
             javafx.scene.control.ScrollPane scroll = new javafx.scene.control.ScrollPane(form.root);
             scroll.setFitToWidth(true);
             scroll.setFitToHeight(true);
@@ -202,13 +193,11 @@ public class FxEnrichmentMapPane implements ViewPage {
         private final RadioButton overlapRadio = new RadioButton("Overlap Coefficient");
         private final RadioButton jaccardRadio = new RadioButton("Jaccard Coefficient");
         private final RadioButton combinedRadio = new RadioButton("Jaccard+Overlap Combined");
-        /** Swing: format tip on GCT labels only (not on the path fields). */
         private Tooltip expressionFormatTip;
-        /** When false, metric switches rewrite the similarity cutoff to Swing defaults. */
+        /** When false, metric switches rewrite the similarity cutoff to */
         private boolean similarityCutOffChanged = false;
 
         AnalysisForm(String[] rawDatasets) {
-            // Matches Swing EnrichmentMapParameterPanel#createDatasetPanel: sort alphabetically
             // before populating the dataset combos.
             String[] datasets = rawDatasets == null ? null : rawDatasets.clone();
             if (datasets != null) {
@@ -258,7 +247,6 @@ public class FxEnrichmentMapPane implements ViewPage {
             HBox.setHgrow(expressionField, Priority.ALWAYS);
             HBox.setHgrow(expression2Field, Priority.ALWAYS);
 
-            // Swing selectGCTFileButton: "..."
             Button browseExpr = xapps.gsea.fx.FxEllipsisButton.create();
             browseExpr.setOnAction(e -> chooseExpressionFile(expressionField, resultDirField));
             Button browseExpr2 = xapps.gsea.fx.FxEllipsisButton.create();
@@ -268,7 +256,6 @@ public class FxEnrichmentMapPane implements ViewPage {
             jaccardRadio.setToggleGroup(metricGroup);
             overlapRadio.setToggleGroup(metricGroup);
             combinedRadio.setToggleGroup(metricGroup);
-            // Swing EnrichmentMapParameters ctor: SM_OVERLAP @ 0.5
             overlapRadio.setSelected(true);
             overlapRadio.setTooltip(new Tooltip(
                     "Overlap Coefficient = [size of (A intersect B)] / [size of (minimum( A , B))]"));
@@ -276,7 +263,6 @@ public class FxEnrichmentMapPane implements ViewPage {
                     "Jaccard Coefficient = [size of (A intersect B)] / [size of (A union B)]"));
             combinedRadio.setTooltip(new Tooltip(
                     "Combined Constant = k; Combined Coefficient = (k * Overlap) + ((1-k) * Jaccard)"));
-            // Swing EnrichmentMapParameterPanel tip strings (verbatim).
             String pTip = "Sets the p-value cutoff \nonly genesets with a p-value less than \nthe cutoff will be included.";
             String qTip = "Sets the FDR q-value cutoff \n"
                     + "only genesets with a FDR q-value less than \n"
@@ -326,8 +312,6 @@ public class FxEnrichmentMapPane implements ViewPage {
             form.setHgap(8);
             form.setVgap(8);
             int row = 0;
-            // Swing createDatasetPanel: Dataset 1 always; Dataset 2 only when length > 1.
-            // Result folders are chosen via combos (no free-text browse on the analysis form).
             boolean dual = datasets != null && datasets.length > 1;
             Label ds1Sep = new Label("Dataset 1");
             ds1Sep.setStyle("-fx-font-weight: bold;");
@@ -359,8 +343,6 @@ public class FxEnrichmentMapPane implements ViewPage {
             form.add(qvalueField, 1, row++);
             wireCutoffValidation();
 
-            // Swing CollapsiblePanel("Advanced Options") — collapsed by default.
-            // Radio order: Jaccard → Overlap → Combined (EnrichmentMapParameterPanel).
             VBox advancedContent = new VBox(8,
                     new Label("Similarity Cutoff:"),
                     similarityField,
@@ -378,7 +360,6 @@ public class FxEnrichmentMapPane implements ViewPage {
             prerankedNote.setWrapText(true);
             prerankedNote.setStyle("-fx-font-style: italic;");
 
-            // Swing createBottomPanel: Build Enrichment Map only (no Clear / Refresh port / Status).
             Button launch = new Button("Build Enrichment Map");
             xapps.gsea.fx.FxButtons.stylePrimary(launch);
             launch.setOnAction(e -> launchEnrichmentMap());
@@ -386,7 +367,6 @@ public class FxEnrichmentMapPane implements ViewPage {
             VBox box = new VBox(12, form, prerankedNote,
                     xapps.gsea.fx.FxButtons.row(launch));
             box.setPadding(new Insets(16));
-            // Swing EnrichmentMapParameterPanel: TitledBorder("Enrichment Map Parameters").
             TitledPane titled = new TitledPane("Enrichment Map Parameters", box);
             titled.setCollapsible(false);
             titled.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
@@ -441,9 +421,6 @@ public class FxEnrichmentMapPane implements ViewPage {
 
         private void chooseExpressionFile(TextField target, TextField resultDirField) {
             FileChooser chooser = new FileChooser();
-            // Swing FileDialog uses platform default title (no custom string).
-            // Swing EnrichmentMapParameterPanel: FileDialog.setDirectory(params.getEdbdir())
-            // which is resultDir/edb after setEdbdir.
             String seed = null;
             String rd = resultDirField != null ? resultDirField.getText() : null;
             if (rd != null && !rd.isBlank()) {
@@ -459,7 +436,6 @@ public class FxEnrichmentMapPane implements ViewPage {
             File selected = chooser.showOpenDialog(FxFileChooserUtil.windowOf(root));
             if (selected != null) {
                 target.setText(selected.getAbsolutePath());
-                // Swing: GCTFileName*TextField.setToolTipText(file.getAbsolutePath())
                 target.setTooltip(new Tooltip(selected.getAbsolutePath()));
                 FxFileChooserUtil.registerOpened(selected);
             }
@@ -550,8 +526,6 @@ public class FxEnrichmentMapPane implements ViewPage {
 
             if (!validatePvalueField() || !validateQvalueField()
                     || !validateSimilarityField() || !validateCombinedField()) {
-                // Swing FormattedTextFieldAction: silently reset invalid values (dialog commented out).
-                // Continue launch with last-valid cutoffs — do not abort.
             }
 
             double pvalue = lastValidPvalue;
@@ -577,7 +551,6 @@ public class FxEnrichmentMapPane implements ViewPage {
             Thread worker = new Thread(() -> {
                 CytoscapeCyrest cyto = new CytoscapeCyrest(params);
                 try {
-                    // Swing BuildActionPerformed: confirm if inactive, then re-check before create.
                     if (!cyto.CytoscapeRestActive()) {
                         klog.info(LAUNCH_MSG);
                         if (!Application.getWindowManager().showConfirm(LAUNCH_MSG)) {
@@ -590,9 +563,7 @@ public class FxEnrichmentMapPane implements ViewPage {
                                     "An Enrichment map was successfully loaded and created in cytoscape.  "
                                             + "Please navigate to cytoscape to view results"));
                         }
-                        // createEM_get false → Swing silent no-op
                     }
-                    // REST up but !EM commands → Swing silent no-op
                 } catch (java.io.IOException e) {
                     klog.error("Unable to communicate with cytoscape: {}", e.getMessage());
                     klog.error(LAUNCH_MSG);
@@ -621,7 +592,7 @@ public class FxEnrichmentMapPane implements ViewPage {
     }
 
     /**
-     * Port of Swing {@code EnrichmentMapParameterPanel#getExpressionFile}: resolve the expression
+     * resolve the expression
      * or rank file from the GSEA result folder's {@code .rpt}, collapsing when needed, else fall
      * back to the {@code edb/*.rnk} file.
      */
@@ -711,8 +682,6 @@ public class FxEnrichmentMapPane implements ViewPage {
 
             File[] edbRnk = edbdir.listFiles((FilenameFilter) (dir, name) ->
                     name.toLowerCase().endsWith(".rnk"));
-            // Swing EnrichmentMapParameterPanel bug-compatible: checks rpt `files.length`
-            // (not edbRnk) and returns the .rpt path when length==1.
             if (edbRnk != null && rptFiles.length == 1) {
                 return rptFiles[0].getAbsolutePath();
             }

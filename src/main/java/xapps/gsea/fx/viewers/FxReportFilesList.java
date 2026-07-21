@@ -20,7 +20,7 @@ import javafx.scene.control.SelectionMode;
 import xapps.gsea.fx.FxFileTransferSupport;
 
 /**
- * Report / results file list with Swing {@code JObjectsList} parity: double-click open,
+ * Report / results file list with : double-click open,
  * full registry-style context menu, and drag-out.
  */
 public final class FxReportFilesList {
@@ -31,13 +31,11 @@ public final class FxReportFilesList {
     public static ListView<File> create(File[] files, Consumer<ViewPage> openPage) {
         List<File> produced = new ArrayList<>();
         if (files != null) {
-            // Swing JObjectsList: preserve report-provided order (do not re-sort).
             produced.addAll(Arrays.asList(files));
         }
         ListView<File> list = new ListView<>(FXCollections.observableArrayList(produced));
         list.setPlaceholder(new Label(""));
         list.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-        // Swing JObjectsList: select first item when non-empty.
         if (!produced.isEmpty()) {
             list.getSelectionModel().select(0);
         }
@@ -51,7 +49,6 @@ public final class FxReportFilesList {
                     setTooltip(null);
                     return;
                 }
-                // Swing CommonLookListRenderer default: absolute path + DataFormat icon + path tooltip.
                 setText(item.getAbsolutePath());
                 setGraphic(xapps.gsea.fx.FxFileIcons.forFile(item));
                 setTooltip(new javafx.scene.control.Tooltip(item.getAbsolutePath()));
@@ -61,7 +58,6 @@ public final class FxReportFilesList {
             if (e.getClickCount() == 2) {
                 File selected = list.getSelectionModel().getSelectedItem();
                 if (selected != null) {
-                    // Swing ReportViewer JObjectsList double-click → runDefaultAction (not force-open viewer).
                     FxFileActions.runDefaultFileAction(selected, openPage);
                 }
             }
@@ -79,7 +75,6 @@ public final class FxReportFilesList {
             List<File> selected = new ArrayList<>();
             for (File f : list.getSelectionModel().getSelectedItems()) {
                 if (f != null) {
-                    // Swing transferable includes every selected path (including missing).
                     selected.add(f);
                 }
             }

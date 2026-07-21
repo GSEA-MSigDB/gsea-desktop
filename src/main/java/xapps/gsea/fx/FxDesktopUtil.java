@@ -13,7 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Platform open helpers matching Swing {@code TaskManager.openUrlInBrowser} fallbacks:
+ * Platform open helpers:
  * Desktop → WSL ({@code wslview} / {@code cmd.exe} / PowerShell) → Win {@code cmd} /
  * Mac {@code open} / {@code xdg-open}.
  */
@@ -42,8 +42,6 @@ public final class FxDesktopUtil {
         if (uri == null) {
             throw new IllegalArgumentException("URI is null");
         }
-        // Swing FileBrowserAction / OsExplorerAction: empty-authority rewrite so macOS
-        // Desktop.browse accepts local file:// URIs (file:/path → file:///path).
         if ("file".equalsIgnoreCase(uri.getScheme()) && uri.getPath() != null) {
             uri = new URI(uri.getScheme(), "", uri.getPath(), null, null);
         }
@@ -106,8 +104,7 @@ public final class FxDesktopUtil {
     }
 
     /**
-     * Swing {@code OsExplorerAction}: open directory, or parent of a file / missing path
-     * ({@code isDirectory()} is false when the path does not exist → {@code getParentFile()}).
+     * open directory, or parent of a file / missing path ({@code isDirectory()} is false when the path does not exist → {@code getParentFile()}.
      */
     public static void openInOsExplorer(File file) throws Exception {
         if (file == null) {

@@ -74,7 +74,6 @@ public class FxLoadDataPane implements ViewPage {
         statusArea.setWrapText(true);
         statusArea.setPrefRowCount(8);
 
-        // Swing ParserWorker uses ProgressMonitorInputStream (progress + Cancel).
         loadProgress.setMaxWidth(Double.MAX_VALUE);
         loadProgress.setPrefWidth(280);
         cancelLoad.setDisable(true);
@@ -94,7 +93,6 @@ public class FxLoadDataPane implements ViewPage {
         xapps.gsea.fx.FxButtons.sizeToContent(browse);
         browse.setMaxWidth(Double.MAX_VALUE);
         browse.setOnAction(e -> browseAndLoad());
-        // Swing: titled border directly on Method 1/2 buttons.
         javafx.scene.control.TitledPane method1 = new javafx.scene.control.TitledPane("Method 1:", browse);
         method1.setCollapsible(false);
         method1.setMaxWidth(Double.MAX_VALUE);
@@ -114,7 +112,6 @@ public class FxLoadDataPane implements ViewPage {
         xapps.gsea.fx.FxButtons.styleSecondary(formatHelp);
         xapps.gsea.fx.FxButtons.sizeToContent(formatHelp);
         formatHelp.setOnAction(e -> openUrl(GseaWebResources.getGseaDataFormatsHelpURL()));
-        // Swing AppDataLoaderWidget: HTML JLabel with maroon italic extensions (TextFlow collapses in HBox).
         VBox formatsList = supportedFormatsBox();
         VBox formatsContent = new VBox(10, formatsList, formatHelp);
         formatsContent.setPadding(new Insets(6));
@@ -130,9 +127,7 @@ public class FxLoadDataPane implements ViewPage {
         Label dropHint = new Label("Method 3: drag and drop files here");
         dropHint.setStyle("-fx-font-weight: bold;");
         stagedList.setPrefHeight(80);
-        // Swing MyTextArea starts empty (no placeholder chrome).
         stagedList.setPlaceholder(new Label(""));
-        // Swing AppDataLoaderWidget.MyTextArea: display basename; keep full path as item + tooltip.
         stagedList.setCellFactory(lv -> new ListCell<>() {
             @Override
             protected void updateItem(String path, boolean empty) {
@@ -165,15 +160,12 @@ public class FxLoadDataPane implements ViewPage {
                 return;
             }
             loadFiles(new ArrayList<>(stagedFiles), false);
-            // Swing ParserWorker leaves the staged text area intact after load.
         });
         HBox stagedActions = xapps.gsea.fx.FxButtons.row(clearStaged, loadStaged);
         javafx.scene.layout.VBox method3 = new javafx.scene.layout.VBox(8, dropHint, stagedList, stagedActions);
         method3.setPadding(new Insets(8));
         method3.getStyleClass().add("gsea-panel-border");
 
-        // Swing AppDataLoaderWidget.createLoadPanel (SRLayout 3 cols):
-        // col0 = Method1+Method2 stacked; col1 = Method3 dnd; col2 = formats.
         VBox method12 = new VBox(8, method1, method2);
         HBox methods = new HBox(12, method12, method3, formatsBox);
         HBox.setHgrow(method3, Priority.ALWAYS);
@@ -196,7 +188,6 @@ public class FxLoadDataPane implements ViewPage {
                     return;
                 }
                 File file = new File(path);
-                // Swing JRecentFilesList: short ../parent/file, type icon, full-path tooltip, red if missing.
                 setText(shortRecentPath(file));
                 setGraphic(xapps.gsea.fx.FxFileIcons.forFile(file));
                 setTooltip(new javafx.scene.control.Tooltip(path));
@@ -225,7 +216,6 @@ public class FxLoadDataPane implements ViewPage {
             if (e.getClickCount() == 2) {
                 String path = recentList.getSelectionModel().getSelectedItem();
                 if (path != null) {
-                    // Swing JRecentFilesList → runDefaultAction then RecentFilesStore.refresh(item).
                     File file = new File(path);
                     FxFileActions.runDefaultFileAction(file, openPage);
                     try {
@@ -242,7 +232,6 @@ public class FxLoadDataPane implements ViewPage {
                 if (path == null) {
                     continue;
                 }
-                // Swing FileTransferable: every selected path, including missing files.
                 files.add(new File(path));
             }
             if (!files.isEmpty()) {
@@ -263,7 +252,6 @@ public class FxLoadDataPane implements ViewPage {
         root.setCenter(main);
 
         enableFileDrop(stagedList);
-        // Swing AppDataLoaderWidget: only Method 3 text area is a DndTarget.
 
         refreshRecentFiles();
     }
@@ -282,14 +270,11 @@ public class FxLoadDataPane implements ViewPage {
             Dragboard db = e.getDragboard();
             boolean success = false;
             List<File> incoming = new ArrayList<>();
-            // Swing AppDataLoaderWidget accepts only javaFileListFlavor. Object-cache drags expose
-            // both POB + file-list; consume one payload to avoid double-staging the same paths.
             if (xapps.gsea.fx.FxPobTransferSupport.hasPobList(db)) {
                 for (edu.mit.broad.genome.objects.PersistentObject pob :
                         xapps.gsea.fx.FxPobTransferSupport.takeDragPobs(e)) {
                     try {
                         File src = ParserFactory.getCache().getSourceFile(pob);
-                        // Swing stages the source path even when the file no longer exists.
                         if (src != null) {
                             incoming.add(src);
                         }
@@ -302,7 +287,6 @@ public class FxLoadDataPane implements ViewPage {
                 incoming.addAll(xapps.gsea.fx.FxFileTransferSupport.filesFromDragboard(db));
             }
             if (!incoming.isEmpty()) {
-                // Swing AppDataLoaderWidget appends every drop; dedupe happens later at load time.
                 for (File f : incoming) {
                     stagedFiles.add(f);
                     stagedList.getItems().add(f.getAbsolutePath());
@@ -328,7 +312,7 @@ public class FxLoadDataPane implements ViewPage {
         loadFiles(files, true);
     }
 
-    /** Swing JRecentFilesList multi-select popup: Import N / Purge N / Copy / Purge all. */
+    /** Import N / Purge N / Copy / Purge all. */
     private ContextMenu multiRecentFileMenu(List<String> paths) {
         ContextMenu menu = new ContextMenu();
         List<File> files = new ArrayList<>();
@@ -337,7 +321,6 @@ public class FxLoadDataPane implements ViewPage {
         }
         MenuItem importSel = new MenuItem("Import data from " + files.size() + " selected files");
         importSel.setOnAction(e -> {
-            // Swing ImportFilesAction: refresh LRU immediately, then parse.
             for (File f : files) {
                 try {
                     Application.getFileManager().getRecentFilesStore().refresh(f.getPath());
@@ -359,9 +342,6 @@ public class FxLoadDataPane implements ViewPage {
         return menu;
     }
 
-    /**
-     * Swing single-select: registry popup + Copy + Purge Selected File + Purge All Files.
-     */
     private ContextMenu singleRecentFileMenu(String path) {
         File file = new File(path);
         ContextMenu menu = FxFileActions.fileContextMenu(file, openPage, this::refreshRecentFiles);
@@ -419,19 +399,17 @@ public class FxLoadDataPane implements ViewPage {
             if (path == null) {
                 continue;
             }
-            // Swing JRecentFilesList.getTransferable: every selected path, including missing files.
             files.add(new File(path));
         }
         copyRecentFiles(files);
     }
 
     private static void copyRecentFiles(List<File> files) {
-        // Swing CopyFilesAction + FileTransferable: always set clipboard (empty list OK).
         xapps.gsea.fx.FxFileTransferSupport.copyFilesToClipboard(
                 files != null ? files : java.util.Collections.emptyList());
     }
 
-    /** Swing JRecentFilesList cell text: ../parent/file when possible. */
+    /** ../parent/file when possible. */
     private static String shortRecentPath(File file) {
         if (file == null) {
             return "";
@@ -456,7 +434,6 @@ public class FxLoadDataPane implements ViewPage {
                 }
                 edu.mit.broad.genome.reports.api.Report report = rs.getReport(true);
                 java.util.Properties params = report.getParametersUsed();
-                // Swing AppDataLoaderWidget: fill the *producer* tool's ParamSet, not always Gsea.
                 xtools.api.Tool fillTool;
                 Class<?> producer = report.getProducer();
                 if (producer != null) {
@@ -465,7 +442,6 @@ public class FxLoadDataPane implements ViewPage {
                     fillTool = new xtools.gsea.Gsea();
                 }
                 ParamSet.FoundMissingFile fmf = fillTool.getParamSet().fileCheckingFill(params);
-                // Swing: blocking confirm first, then load found files (WM blocks off-FX).
                 final File[] missing = fmf.missingFiles;
                 if (missing != null && missing.length != 0) {
                     if (!confirmMissingFiles(missing)) {
@@ -473,14 +449,12 @@ public class FxLoadDataPane implements ViewPage {
                         return;
                     }
                 }
-                // Swing AppDataLoaderWidget: announce load as soon as history is found.
                 Application.getWindowManager().showMessage(
                         "Data from the last run of this tool is being automagically loaded. "
                                 + "They will soon be available as parameter options");
                 List<File> toLoad = new ArrayList<>();
                 if (fmf.foundFiles != null) {
                     for (File f : fmf.foundFiles) {
-                        // Swing createLoadToolTask: silently skip non-files.
                         if (f != null && f.isFile()) {
                             toLoad.add(f);
                         }
@@ -488,8 +462,6 @@ public class FxLoadDataPane implements ViewPage {
                 }
                 if (!toLoad.isEmpty()) {
                     appendStatus("Loading files from last analysis: " + rs.getName());
-                    // Swing createLoadToolTask(launchANewToolWindow=false): progress/errors only —
-                    // no "Load complete" success toast (announce already shown above).
                     loadFiles(toLoad, false, false);
                 } else {
                     appendStatus("Last analysis (" + rs.getName() + ") had no loadable files on disk.");
@@ -530,7 +502,6 @@ public class FxLoadDataPane implements ViewPage {
         List<File> files = chooser.showOpenMultipleDialog(
                 root.getScene() != null ? root.getScene().getWindow() : null);
         if (files != null && !files.isEmpty()) {
-            // Swing FileOpenAction: register non-aux files immediately on browse (before parse).
             for (File file : files) {
                 if (!edu.mit.broad.genome.parsers.AuxUtils.isAuxFile(file)) {
                     try {
@@ -550,9 +521,7 @@ public class FxLoadDataPane implements ViewPage {
     }
 
     private void loadFiles(List<File> files, boolean forceReload, boolean showCompletionDialog) {
-        // Swing AppDataLoaderWidget.getFiles(): dedupe only at load time (HashSet).
         final List<File> unique = new ArrayList<>(new java.util.LinkedHashSet<>(files));
-        // Swing ParserWorker: overlapping loads allowed (no in-flight guard).
         loadCancelled = false;
         loadInProgress = true;
         int total = unique.size();
@@ -582,7 +551,6 @@ public class FxLoadDataPane implements ViewPage {
                     loadProgressLabel.setText("Loading " + idx + " / " + total + ": " + file.getName());
                 });
                 if (loadCancelled) {
-                    // Swing ParserWorker: cancel is per-file; remaining files still load.
                     fail++;
                     errors.append(file.getName()).append(": cancelled\n");
                     appendStatus("Load cancelled at: " + file.getName());
@@ -602,7 +570,6 @@ public class FxLoadDataPane implements ViewPage {
                     Object obj;
                     long fileLen = Math.max(1L, file.length());
                     final int fileIndex = done;
-                    // Always use cancellable stream (Swing ProgressMonitorInputStream).
                     // forceReload → useCache=false like ParserFactory.read(file, false).
                     try (java.io.InputStream in = new CancellableFileInputStream(file, bytesRead -> {
                         double frac = (fileIndex + Math.min(1.0, bytesRead / (double) fileLen)) / total;
@@ -624,11 +591,8 @@ public class FxLoadDataPane implements ViewPage {
                         continue;
                     }
                     if (forceReload) {
-                        // Swing LoadAction: refresh LRU only (do not add if absent).
                         fm.getRecentFilesStore().refresh(file.getPath());
                     } else if (showCompletionDialog) {
-                        // Swing AppDataLoaderWidget Method 1/3: register on successful load.
-                        // Method 2 / createLoadToolTask (showCompletionDialog=false): no register.
                         fm.registerRecentlyOpenedFile(file);
                     }
                     String type = obj != null ? obj.getClass().getSimpleName() : "unknown";
@@ -688,12 +652,10 @@ public class FxLoadDataPane implements ViewPage {
                         + (warnedFinal > 0 ? ", with warnings: " + warnedFinal : ""));
                 loadProgressLabel.setText(okFinal + " / " + totalFinal + " loaded"
                         + (failFinal > 0 ? " (" + failFinal + " failed)" : ""));
-                // Swing createLoadToolTask(false): errors only — no success toast.
                 if (!showDialog && !cancelledFinal && failFinal == 0) {
                     return;
                 }
                 if (cancelledFinal) {
-                    // Swing ParserWorker: cancel entries go through Errors → showError.
                     Application.getWindowManager().showError(
                             "Load cancelled after " + okFinal + " / " + totalFinal + " files."
                                     + (okFinal > 0 ? "\n\nLoaded before cancel:\n" + loadedText : ""));
@@ -702,7 +664,6 @@ public class FxLoadDataPane implements ViewPage {
                             "Some files failed to load (" + failFinal + " of " + totalFinal + "):\n" + errText
                                     + (okFinal > 0 ? "\nLoaded OK:\n" + loadedText : ""));
                 } else {
-                    // Swing ParserWorker success HTML.
                     StringBuilder buf = new StringBuilder("<html>Loading ... ")
                             .append(totalFinal).append(" files<br><br>");
                     buf.append(loadedText.replace(" • ", "").replace("\n", "<br>"));
@@ -726,7 +687,6 @@ public class FxLoadDataPane implements ViewPage {
         recentItems.clear();
         try {
             XStore store = Application.getFileManager().getRecentFilesStore();
-            // Swing JRecentFilesList: setModel(store) → FileExt ascending order (index 0..n-1).
             for (int i = 0; i < store.getSize(); i++) {
                 recentItems.add(store.getElementAt(i));
             }
@@ -754,8 +714,7 @@ public class FxLoadDataPane implements ViewPage {
     }
 
     /**
-     * Swing {@code AppDataLoaderWidget} HTML JLabel content: categories + maroon italic extensions.
-     * Built as Label/HBox rows (TextFlow preferred-size is unreliable in an HBox column).
+     * categories + maroon italic extensions. Built as Label/HBox rows (TextFlow preferred-size is unreliable in an HBox column).
      */
     private static VBox supportedFormatsBox() {
         final String indent = "               ";
@@ -792,7 +751,7 @@ public class FxLoadDataPane implements ViewPage {
     }
 
     /**
-     * Approximate Swing ProgressMonitorInputStream: abort mid-read when cancelled,
+     * Approximate : abort mid-read when cancelled,
      * and report byte progress for the current file.
      */
     private final class CancellableFileInputStream extends java.io.FilterInputStream {
@@ -807,8 +766,6 @@ public class FxLoadDataPane implements ViewPage {
 
         private void checkCancelled() throws java.io.IOException {
             if (loadCancelled) {
-                // Swing ProgressMonitorInputStream throws InterruptedIOException on cancel;
-                // ParserFactory.read maps that to null.
                 throw new java.io.InterruptedIOException("Load cancelled");
             }
         }

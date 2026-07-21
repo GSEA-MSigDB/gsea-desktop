@@ -20,7 +20,7 @@ import xtools.api.Tool;
 import xtools.api.param.ParamSet;
 
 /**
- * Relaunch a tool from a past report's parameters (Swing ReportViewer "Show in ToolRunner"),
+ * Relaunch a tool from a past report's parameters,
  * or from a saved {@link ParamSet} (FX process table Name-column click).
  */
 public final class FxToolRelaunch {
@@ -29,10 +29,6 @@ public final class FxToolRelaunch {
     private FxToolRelaunch() {
     }
 
-    /**
-     * Swing ReportViewer → {@code ToolRunnerControl.createLoadToolTask(..., launchANewToolWindow=true)}:
-     * tab title = report name; toast after open.
-     */
     public static void showInToolRunner(Report report, boolean loadData, Consumer<ViewPage> openPage) {
         if (report == null) {
             Application.getWindowManager().showError("No report selected");
@@ -63,10 +59,7 @@ public final class FxToolRelaunch {
         xapps.gsea.fx.FxWorkers.start(task, "gsea-tool-relaunch");
     }
 
-    /**
-     * Process-table Name column — Swing {@code SingleToolLauncherAction(tool, pset, null)}:
-     * silent open; tab title = {@code tool.getName()}.
-     */
+    /** Process-table Name column.getName}. */
     public static void showInToolRunner(Tool sourceTool, Properties paramSnapshot, Consumer<ViewPage> openPage) {
         if (sourceTool == null || paramSnapshot == null) {
             Application.getWindowManager().showError("No saved parameters available for this run");
@@ -93,8 +86,8 @@ public final class FxToolRelaunch {
     }
 
     /**
-     * @param tabTitleOpt custom tab title (report name), or null → {@code tool.getName()}
-     * @param showToast   Swing ReportViewer toast vs silent process-table relaunch
+     * @param tabTitleOpt custom tab title (report name), or null → {@code tool.getName}
+     * @param showToast toast vs silent process-table relaunch
      */
     private static void relaunch(Tool tool, Properties params, String tabTitleOpt, boolean loadData,
             boolean showToast, Consumer<ViewPage> openPage) throws Exception {
@@ -110,7 +103,6 @@ public final class FxToolRelaunch {
         }
 
         final String missingText = missing.toString();
-        // Swing ToolRunnerControl: confirm missing files before loading found files / opening tool.
         if (!missingText.isEmpty()) {
             boolean proceed = Application.getWindowManager().showConfirm("Some Files Missing",
                     "Some parameter files were not found:\n" + missingText
@@ -128,8 +120,6 @@ public final class FxToolRelaunch {
                 }
                 try {
                     klog.debug("Loading file from report params: {}", f);
-                    // Swing ToolRunnerControl.createLoadToolTask: ParserFactory.read only —
-                    // do not registerRecentlyOpenedFile.
                     FxProgressMonitorRead.read(f);
                 } catch (Throwable t) {
                     klog.warn("Could not load {}", f, t);
@@ -142,12 +132,10 @@ public final class FxToolRelaunch {
             }
         }
 
-        // Swing SingleToolLauncher.getAssociatedTitle: custom title or tool.getName().
         final String tabTitle = tabTitleOpt != null ? tabTitleOpt : tool.getName();
         Platform.runLater(() -> {
             openPage.accept(FxToolLauncherPane.forTool(tool, tabTitle));
             if (showToast) {
-                // Swing ToolRunnerControl when launchANewToolWindow=true.
                 Application.getWindowManager().showMessage(
                         "Created a new ToolRunner with parameters from the earlier run. "
                                 + "Data files (when found) were automagically imported");

@@ -22,7 +22,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 
 /**
- * FX legends matching Swing {@code GPWrappers.LegendTable}, binary LE membership,
+ * FX legends, binary LE membership,
  * and {@code LegendPanel} (RowColorScheme Relative/Absolute).
  */
 public final class FxHeatMapLegend {
@@ -30,7 +30,6 @@ public final class FxHeatMapLegend {
     private FxHeatMapLegend() {
     }
 
-    /** Swing {@code GPWrappers.LegendTable} for BroadCancer (LE score heatmaps). */
     public static Node broadCancer() {
         ColorSchemes.BroadCancer scheme = new ColorSchemes.BroadCancer();
         java.awt.Color[] awt = new java.awt.Color[scheme.getNumColors()];
@@ -42,7 +41,7 @@ public final class FxHeatMapLegend {
         return discrete(awt, labels, null);
     }
 
-    /** White / yellow membership legend (Swing LE binary ColorScheme). */
+    /** White / yellow membership legend. */
     public static Node binaryMembership() {
         return discrete(
                 new java.awt.Color[] { java.awt.Color.WHITE, java.awt.Color.YELLOW },
@@ -50,10 +49,6 @@ public final class FxHeatMapLegend {
                 "Membership");
     }
 
-    /**
-     * Swing {@code LegendPanel#setRelativeGrid} / {@code setAbsoluteGrid} for
-     * {@link RowColorScheme}.
-     */
     public static Node rowColorScheme(RowColorScheme scheme, boolean globalScale) {
         if (scheme == null) {
             return new Label("No legend available.");
@@ -112,7 +107,6 @@ public final class FxHeatMapLegend {
             HBox.setHgrow(cell, Priority.ALWAYS);
             swatches.getChildren().add(cell);
         }
-        // Swing LegendPanel may show one extra value label past the last color.
         if (labels != null && labels.length > n) {
             Label extra = new Label(labels[labels.length - 1]);
             extra.setStyle("-fx-font-size: 10px;");

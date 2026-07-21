@@ -439,3 +439,70 @@
     -fx-background-color: #323438;
 }
 
+/* ---------- CoreMap explore accessories (dark) ---------- */
+
+.gsea-root.gsea-dark .coremap-card-title,
+.gsea-root.gsea-dark .coremap-card-heading,
+.gsea-root.gsea-dark .coremap-card-section,
+.gsea-root.gsea-dark .coremap-card-body,
+.gsea-root.gsea-dark .coremap-selection-title {
+    -fx-text-fill: #e8eaed;
+}
+
+.gsea-root.gsea-dark .coremap-meta,
+.gsea-root.gsea-dark .coremap-help,
+.gsea-root.gsea-dark .coremap-hint,
+.gsea-root.gsea-dark .coremap-legend-label {
+    -fx-text-fill: #9aa0a6;
+}
+
+.gsea-root.gsea-dark .coremap-chip {
+    -fx-background-color: #5c3d1e;
+    -fx-text-fill: #fdba74;
+}
+
+.gsea-root.gsea-dark .coremap-chip-assoc {
+    -fx-background-color: #3c4043;
+    -fx-text-fill: #bdc1c6;
+}
+
+.gsea-root.gsea-dark .coremap-card-selected {
+    -fx-background-color: #3d2e1f;
+    -fx-border-color: #fb923c;
+}
+
+.gsea-root.gsea-dark .coremap-legend {
+    -fx-background-color: #25262a;
+    -fx-border-color: #5f6368 transparent transparent transparent;
+}
+
+.gsea-root.gsea-dark .coremap-selection-panel {
+    -fx-background-color: rgba(43, 45, 48, 0.96);
+    -fx-border-color: #5f6368;
+}
+
+.gsea-root.gsea-dark .coremap-layer-frame {
+    -fx-border-color: #5f6368;
+}
+
+.gsea-root.gsea-dark .coremap-option-group {
+    -fx-border-color: #5f6368;
+    -fx-background-color: rgba(43, 45, 48, 0.55);
+}
+
+.gsea-root.gsea-dark .coremap-option-group-title {
+    -fx-text-fill: #e8eaed;
+}
+
+.gsea-root.gsea-dark .coremap-cascade-gene {
+    -fx-fill: #e8eaed;
+}
+
+.gsea-root.gsea-dark .coremap-cascade-hop {
+    -fx-fill: #9aa0a6;
+}
+
+.gsea-root.gsea-dark .coremap-resize-handle {
+    -fx-background-color: #80868b;
+}
+

@@ -48,7 +48,6 @@ public class FxRankedListViewer implements ViewPage {
 
         ObservableList<Row> rows = FXCollections.observableArrayList();
         for (int i = 0; i < rankedList.getSize(); i++) {
-            // Swing RankedListModel uses 1-based ranks (row + 1).
             rows.add(new Row(rankedList.getRankName(i), Integer.toString(i + 1), Float.toString(rankedList.getScore(i))));
         }
         table.setItems(rows);

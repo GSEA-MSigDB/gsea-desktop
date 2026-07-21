@@ -15,7 +15,7 @@ import xtools.api.Tool;
 import xtools.api.param.ParamSet;
 
 /**
- * Port of Swing {@code ToolRunnerControl#createLoadToolTask} for FX (cache side-effects only when
+ * (cache side-effects only when
  * {@code launchANewToolWindow} is false — does not open a new launcher or mutate a live form).
  */
 public final class FxLoadToolTask {
@@ -48,7 +48,6 @@ public final class FxLoadToolTask {
                                 klog.debug("Trying to parse: {} for param: {}", path,
                                         fmf.foundFilesParamNames != null
                                                 ? fmf.foundFilesParamNames[i] : "?");
-                                // Swing: ProgressMonitorInputStream + ParserFactory.read(path, pis)
                                 FxProgressMonitorRead.read(fmf.foundFiles[i]);
                             }
                         } catch (Throwable t) {
@@ -70,7 +69,6 @@ public final class FxLoadToolTask {
 
                 if (launchANewToolWindow) {
                     // FX shell does not open a second ToolRunner window; callers that need a new
-                    // launcher should open one themselves. Keep message for Swing parity when used.
                     Application.getWindowManager().showMessage(
                             "Created a new ToolRunner with parameters from the earlier run. "
                                     + "Data files (when found) were automagically imported");

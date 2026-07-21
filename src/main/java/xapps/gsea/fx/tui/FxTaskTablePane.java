@@ -162,10 +162,9 @@ public class FxTaskTablePane {
         instance = this;
         TaskManager.getInstance().addStatusListener((runId, name, status, reportDir) ->
                 javafx.application.Platform.runLater(() -> updateStatus(runId, name, status, reportDir)));
-        Label header = new Label("Processes: click status for results · Cancel stops a run");
+        Label header = new Label("Processes: click status for results");
         header.getStyleClass().add("gsea-section-header");
 
-        // Swing createProcessForToolBar: header north, table center, Show results folder south.
         HBox top = new HBox(12, header);
         top.setPadding(new Insets(4, 8, 4, 8));
 
@@ -209,9 +208,7 @@ public class FxTaskTablePane {
         table.getColumns().add(statusCol);
         table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
         table.setPlaceholder(new Label(""));
-        // Swing TaskManager.createTable: row selection disabled; status/name cells handle clicks.
         table.getSelectionModel().setSelectionMode(javafx.scene.control.SelectionMode.SINGLE);
-        // Swing createTable: row/column selection disabled — clear any highlight immediately.
         table.getSelectionModel().selectedIndexProperty().addListener((obs, o, n) -> {
             if (n != null && n.intValue() >= 0) {
                 Platform.runLater(() -> table.getSelectionModel().clearSelection());
@@ -226,7 +223,6 @@ public class FxTaskTablePane {
         root.setTop(north);
         root.setCenter(table);
         root.setBottom(south);
-        // Swing createProcessForToolBar preferred height 350.
         root.setPrefHeight(350);
         root.setMinHeight(280);
         root.getStyleClass().addAll("gsea-task-table", "gsea-task-chrome");
@@ -251,9 +247,7 @@ public class FxTaskTablePane {
                 setText(item);
                 // Let CSS supply the default text color (dark/light); status column uses semantic colors.
                 setTextFill(null);
-                // Swing TaskManager name column: dirty_ov.gif on the tool button.
                 setGraphic(xapps.gsea.fx.FxFileIcons.forResource("dirty_ov.gif"));
-                // Swing SingleToolLauncherAction SHORT_DESCRIPTION.
                 setTooltip(new javafx.scene.control.Tooltip(
                         "Set Parameters and Launch Analysis Tools"));
             }
@@ -281,7 +275,6 @@ public class FxTaskTablePane {
                 TaskRow row = getTableRow().getItem();
                 setText(item);
                 getStyleClass().add(styleClassFor(row.getStateKind()));
-                // Swing SUCCESS with pages sets ICON_ELLIPSIS; otherwise plain status text.
                 if (row.getStateKind() == StateKind.SUCCESS && "Success".equals(item)) {
                     setGraphic(xapps.gsea.fx.FxFileIcons.forResource("Ellipsis.png"));
                 } else {
@@ -353,7 +346,6 @@ public class FxTaskTablePane {
                 return;
             }
         }
-        // Status event may not have arrived yet — insert Waiting (Swing ExecState.WAITING).
         String name = tool != null ? tool.getName() : "Tool";
         rows.add(new TaskRow(runId, name, "Waiting", null, tool, paramSnapshot));
     }
@@ -380,10 +372,9 @@ public class FxTaskTablePane {
                 name != null ? name : "Tool", status, reportDir));
     }
 
-    /** "Show results folder" — Swing ShowDefaultOutputDirAction → OsExplorerAction. */
+    /** "Show results folder". */
     private static void openResultsFolder() {
         File dir = Application.getVdbManager().getDefaultOutputDir();
-        // Swing OsExplorerAction: silent return if path is null.
         if (dir == null) {
             return;
         }

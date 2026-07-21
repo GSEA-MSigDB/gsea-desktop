@@ -22,9 +22,7 @@ import edu.mit.broad.vdb.chip.Chip;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 
-/**
- * File / object type icons matching Swing {@code DataFormat.getIcon} resources.
- */
+/** File / object type icons */
 public final class FxFileIcons {
 
     private FxFileIcons() {
@@ -34,7 +32,6 @@ public final class FxFileIcons {
         return view(iconResourceForFile(file));
     }
 
-    /** Swing {@code ObjectTreeRenderer}: class icons from {@code DataFormat.getIcon(POB)}, not source-file ext. */
     public static ImageView forObject(Object obj) {
         if (obj instanceof File) {
             return forFile((File) obj);
@@ -79,7 +76,6 @@ public final class FxFileIcons {
             case "gct" -> "Gct16.gif";
             case "res" -> "Res16.gif";
             case "pcl" -> "Pcl.gif";
-            // Swing DataFormat.ALL: txt→Txt; csv/html/htm not registered → UnknownDataFormat16.
             case "txt" -> "Txt.gif";
             case "tsv", "xls" -> "Xls.gif";
             case "xml" -> "Xml.gif";
@@ -95,10 +91,6 @@ public final class FxFileIcons {
         };
     }
 
-    /**
-     * Swing {@code DataFormat} kClassIconMap: first registered format wins
-     * (Dataset→Res16, GeneSetMatrix→Gmt).
-     */
     private static String iconResourceForPersistentObject(PersistentObject pob) {
         try {
             Class<?> rep = DataFormat.getRepresentationClass(pob);
@@ -126,7 +118,6 @@ public final class FxFileIcons {
             if (rep == Report.class) {
                 return "Rpt.gif";
             }
-            // Swing DataFormat: SampleAnnot not in kClassIconMap → IconNotFound.gif.
         } catch (Throwable ignored) {
             // Fall through.
         }

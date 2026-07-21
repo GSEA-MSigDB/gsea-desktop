@@ -26,6 +26,12 @@ dependencies {
     implementation 'org.jfree:org.jfree.fxgraphics2d:2.1.5'
     // Windows dark title-bar (DwmSetWindowAttribute); unused on macOS/Linux.
     implementation 'net.java.dev.jna:jna:5.14.0'
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
 }
 
 tasks.withType(JavaCompile) {

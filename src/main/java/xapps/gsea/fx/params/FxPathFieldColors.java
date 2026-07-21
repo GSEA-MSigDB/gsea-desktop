@@ -11,7 +11,7 @@ import javafx.css.PseudoClass;
 import javafx.scene.control.TextInputControl;
 
 /**
- * Path-field good/bad coloring matching Swing {@code GFieldUtils}
+ * Path-field good/bad coloring
  * (blue = good, red = bad; URL schemes; comma-separated multi-paths; AuxUtils).
  */
 public final class FxPathFieldColors {
@@ -44,7 +44,6 @@ public final class FxPathFieldColors {
         if (pathOrPaths == null) {
             return false;
         }
-        // Match Swing getFileFieldColor outer checks (no trim before scheme check).
         if (pathOrPaths.startsWith("http") || pathOrPaths.startsWith("ftp")
                 || pathOrPaths.startsWith("gseaftp")) {
             return true;
@@ -56,7 +55,6 @@ public final class FxPathFieldColors {
         if (pathOrPaths.indexOf(',') == -1) {
             return isGoodSingle(pathOrPaths);
         }
-        // Swing does not trim multipath tokens.
         StringTokenizer tok = new StringTokenizer(pathOrPaths, ",");
         while (tok.hasMoreTokens()) {
             if (!isGoodSingle(tok.nextToken())) {

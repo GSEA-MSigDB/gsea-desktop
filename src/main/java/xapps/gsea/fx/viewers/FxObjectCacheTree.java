@@ -81,8 +81,6 @@ public class FxObjectCacheTree {
                     setTooltip(null);
                     return;
                 }
-                // Swing ObjectTreeRenderer: icon + name + gray [quickInfo] + path tooltip.
-                // Category (String) nodes keep DefaultTreeCellRenderer folder icons.
                 javafx.scene.image.ImageView icon = null;
                 if (item.payload instanceof PersistentObject) {
                     icon = xapps.gsea.fx.FxFileIcons.forObject(item.payload);
@@ -90,7 +88,6 @@ public class FxObjectCacheTree {
                     setTooltip(new Tooltip(src != null ? src.getAbsolutePath() : "Unknown path for object"));
                 } else if (item.payload == null && item.label != null
                         && !item.label.startsWith("Objects in memory")) {
-                    // Category folder: Swing ObjectTreeRenderer leaves icon null → L&F folder.
                     // Do not invent Open16.gif; text-only matches "renderer did not set icon".
                     icon = null;
                     setTooltip(null);
@@ -117,7 +114,6 @@ public class FxObjectCacheTree {
 
         treeView.setOnMouseClicked(e -> {
             if (e.getButton() == MouseButton.PRIMARY && e.isShiftDown()) {
-                // Swing ObjectTreePopup.isRootExpandClick: shift-click only when root is selected.
                 TreeItem<CacheNode> sel = treeView.getSelectionModel().getSelectedItem();
                 if (sel != null && sel == treeView.getRoot()) {
                     expandAll();
@@ -152,7 +148,6 @@ public class FxObjectCacheTree {
         treeView.setContextMenu(null);
 
         treeView.setOnDragDetected(e -> {
-            // Swing ObjectTree.getTransferable → PobTransferable(pobs).
             List<PersistentObject> pobs = selectedPobs();
             if (!pobs.isEmpty()) {
                 xapps.gsea.fx.FxPobTransferSupport.startPobDrag(treeView, pobs, e);
@@ -161,14 +156,12 @@ public class FxObjectCacheTree {
         treeView.setOnDragDone(e -> xapps.gsea.fx.FxPobTransferSupport.clear());
         treeView.setOnKeyPressed(e -> {
             if (e.isControlDown() && e.getCode() == javafx.scene.input.KeyCode.C) {
-                // Swing CopyFilesAction: always FileTransferable (may be empty).
                 copySelectedFiles();
                 e.consume();
             }
         });
 
         VBox.setVgrow(treeView, Priority.ALWAYS);
-        // Swing ObjectTree: centered titled border on the tree itself.
         treeView.getStyleClass().add("gsea-panel-border");
         Label borderHint = new Label("Double-click to view · right-click for more options");
         borderHint.setMaxWidth(Double.MAX_VALUE);
@@ -191,7 +184,6 @@ public class FxObjectCacheTree {
     }
 
     public void refresh() {
-        // Swing ObjectCache updates in place; preserve FX multi-selection + category expansion.
         List<Object> previouslySelected = new ArrayList<>();
         for (TreeItem<CacheNode> item : new ArrayList<>(treeView.getSelectionModel().getSelectedItems())) {
             if (item != null && item.getValue() != null && item.getValue().payload != null) {
@@ -213,7 +205,6 @@ public class FxObjectCacheTree {
         rootItem.setExpanded(true);
 
         ObjectCache cache = ParserFactory.getCache();
-        // Swing ObjectCache: category nodes in first-seen representation-class order.
         for (Class<?> cl : cache.getCachedRepresentationClasses()) {
             @SuppressWarnings("unchecked")
             List<Object> objs = cache.getCachedObjectsL(cl);
@@ -260,7 +251,6 @@ public class FxObjectCacheTree {
 
     private static String friendlyCategoryLabel(Class<?> cl) {
         String txt = cl.getSimpleName();
-        // Swing ObjectTreeRenderer category string hacks.
         if ("FSet".equals(txt)) {
             return "GeneSet"; // gray [grp] attached via CacheNode.quickInfo in addCategory
         }
@@ -313,11 +303,9 @@ public class FxObjectCacheTree {
             ObjectCache cache, java.util.Set<String> expandedCategories) {
         @SuppressWarnings("unchecked")
         List<Object> objs = cache.getCachedObjectsL(type);
-        // Swing ObjectTreeRenderer: FSet category is "GeneSet" + gray "[grp]".
         String quickInfo = "FSet".equals(type.getSimpleName()) ? "grp" : null;
         TreeItem<CacheNode> cat = new TreeItem<>(new CacheNode(label, null, quickInfo));
         // Preserve prior expansion when known; otherwise expand nonempty categories (first paint).
-        // Swing ObjectCache: new category nodes stay collapsed; only restore prior expansions.
         if (expandedCategories != null) {
             cat.setExpanded(expandedCategories.contains(label));
         } else {
@@ -348,7 +336,6 @@ public class FxObjectCacheTree {
         parent.getChildren().add(cat);
     }
 
-    /** Swing ObjectTreeRenderer: name + gray [quickInfo] when present. */
     private static CacheNode leafNode(Object obj) {
         if (!(obj instanceof PersistentObject pob)) {
             return new CacheNode(String.valueOf(obj), obj, null);
@@ -397,7 +384,7 @@ public class FxObjectCacheTree {
         }
     }
 
-    /** Re-parse the object's source file, bypassing the object cache (Swing LoadAction parity). */
+    /** Re-parse the object's source file, bypassing the object cache. */
     private void forceReloadSelected() {
         Object pob = selectedObject();
         File src = sourceFileOf(pob);
@@ -409,11 +396,9 @@ public class FxObjectCacheTree {
         Thread worker = new Thread(() -> {
             try {
                 ParserFactory.read(file, false);
-                // Swing LoadAction: refresh LRU only (do not add if absent).
                 Application.getFileManager().getRecentFilesStore().refresh(file.getPath());
                 javafx.application.Platform.runLater(() -> {
                     refresh();
-                    // Swing LoadAction: reload + message only (no auto-open viewer).
                     Application.getWindowManager().showMessage(
                             "<html><body><b>Successfully reloaded: "
                                     + (pob instanceof PersistentObject
@@ -451,7 +436,6 @@ public class FxObjectCacheTree {
                 continue;
             }
             File src = sourceFileOf(item.getValue().payload);
-            // Swing transferable/copy: include source File even when missing on disk.
             if (src != null) {
                 files.add(src);
             }
@@ -461,7 +445,6 @@ public class FxObjectCacheTree {
 
     private void copySelectedFiles() {
         List<File> files = selectedSourceFiles();
-        // Swing CopyFilesAction: put FileTransferable even when the selection has no source files.
         xapps.gsea.fx.FxFileTransferSupport.copyFilesToClipboard(files);
     }
 

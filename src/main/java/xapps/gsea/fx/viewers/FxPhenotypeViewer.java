@@ -21,10 +21,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 
-/**
- * Phenotype / template viewer: class-level structure, cls-format text, and summary info
- * (parity with the Swing PhenotypeViewer).
- */
+/** Phenotype / template viewer: class-level structure, cls-format text, and summary info. */
 public class FxPhenotypeViewer implements ViewPage {
 
     private final Template template;
@@ -39,7 +36,6 @@ public class FxPhenotypeViewer implements ViewPage {
         title.getStyleClass().add("gsea-section-header");
 
         TabPane tabs = new TabPane();
-        // Swing PhenotypeViewer: JTabbedPane.BOTTOM
         tabs.setSide(javafx.geometry.Side.BOTTOM);
         tabs.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
 

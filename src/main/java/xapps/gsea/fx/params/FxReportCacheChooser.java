@@ -25,7 +25,7 @@ import javafx.stage.Window;
 import xapps.gsea.fx.FxEllipsisButton;
 
 /**
- * FX stand-in for Swing {@code GOptionsFieldPlusChooser} used by
+ * FX
  * {@code ReportCacheChooserParam}: path/text field + ellipsis → list dialog.
  */
 public final class FxReportCacheChooser {
@@ -36,12 +36,8 @@ public final class FxReportCacheChooser {
 
     private FxReportCacheChooser(boolean multiInterval) {
         this.multiInterval = multiInterval;
-        // Swing GOptionsFieldPlusChooser: editable text field (clear / typed paths).
         field.setEditable(true);
-        // Swing GOptionsFieldPlusChooser: empty field (no prompt chrome).
         field.textProperty().addListener((obs, o, n) -> {
-            // Swing ParamHelper.addDocumentListener: every edit updates the param value.
-            // Any non-matching edit invalidates the sticky chooser selection.
             if (n == null || n.isBlank()) {
                 selected = new ArrayList<>();
                 field.setTooltip(null);
@@ -113,15 +109,11 @@ public final class FxReportCacheChooser {
         field.setTooltip(null);
     }
 
-    /** Swing Param.isSpecified(): non-blank field text. */
     public boolean isSpecified() {
         String t = field.getText();
         return t != null && !t.isBlank();
     }
 
-    /**
-     * Swing ReportCacheChooserParam field value: comma-separated report directories.
-     */
     public List<File> getReportDirs() {
         String t = field.getText();
         if (t == null || t.isBlank()) {
@@ -145,12 +137,10 @@ public final class FxReportCacheChooser {
         dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
 
         ListView<FxReportCacheSupport.CachedReport> list = new ListView<>();
-        // Swing DialogDescriptor DD_SIZE for option list.
         list.setPrefSize(550, 400);
         list.setPlaceholder(new Label(""));
         list.getSelectionModel().setSelectionMode(
                 multiInterval ? SelectionMode.MULTIPLE : SelectionMode.SINGLE);
-        // Swing ReportCacheChooserParam: SINGLE_INTERVAL_SELECTION for multi.
         if (multiInterval) {
             final boolean[] enforcing = { false };
             list.getSelectionModel().getSelectedIndices().addListener(
@@ -211,7 +201,6 @@ public final class FxReportCacheChooser {
                 setTooltip(item.reportDir != null ? new Tooltip(item.reportDir.getPath()) : null);
             }
         });
-        // Swing refreshes hints when the chooser opens.
         List<FxReportCacheSupport.CachedReport> reports = FxReportCacheSupport.listGseaReportsWithEdb();
         list.setItems(FXCollections.observableArrayList(reports));
         // Restore prior selection when possible.
@@ -239,12 +228,10 @@ public final class FxReportCacheChooser {
             if (btn == ButtonType.OK) {
                 List<FxReportCacheSupport.CachedReport> sels =
                         new ArrayList<>(list.getSelectionModel().getSelectedItems());
-                // Swing MyActionListener: empty/cancel selection leaves prior field text.
                 if (sels.isEmpty()) {
                     return;
                 }
                 selected = sels;
-                // Swing ReportCacheChooserParam.format: comma-separated reportDir paths.
                 List<String> paths = new ArrayList<>();
                 for (FxReportCacheSupport.CachedReport s : selected) {
                     if (s.reportDir != null) {

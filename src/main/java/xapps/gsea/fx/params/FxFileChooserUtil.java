@@ -45,8 +45,7 @@ public final class FxFileChooserUtil {
     }
 
     /**
-     * Swing {@code FileManager.chooseDirByDialog}: prefer {@code preferredPath} (JFileChooser walks
-     * parents when the path is not an existing directory); blank → last-accessed dir.
+     * prefer {@code preferredPath} (JFileChooser walks parents when the path is not an existing directory); blank → last-accessed dir.
      */
     public static void seedInitialDirectory(DirectoryChooser chooser, String preferredPath) {
         File seed = resolveSeedDir(preferredPath);

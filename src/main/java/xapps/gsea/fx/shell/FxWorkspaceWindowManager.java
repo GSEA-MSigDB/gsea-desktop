@@ -38,7 +38,7 @@ import xapps.gsea.GseaWebResources;
  *
  * <p>Error alerts support an expandable stack-trace "Details" section, a "Copy" button to put
  * those details on the clipboard, and (when the underlying exception is a
- * {@link StandardException}) a "Help" button that opens the matching User Guide anchor.
+ * {@link StandardException) a "Help" button that opens the matching User Guide anchor.
  * Confirmation dialogs always run on the JavaFX Application Thread and block the calling thread
  * until the user responds. Message bodies that begin with {@code <html>} are rendered as HTML.</p>
  */
@@ -84,7 +84,6 @@ public class FxWorkspaceWindowManager implements WindowManager {
 
     @Override
     public boolean showConfirm(String msg) {
-        // Swing AbstractWindowManager.showConfirm(msg).
         return showConfirm("Please confirm this action", msg);
     }
 

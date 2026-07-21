@@ -20,6 +20,7 @@ public final class ReportExplorerRegistry {
         EXPLORERS.put(ReportKind.GSEA_PRERANKED, gsea);
         EXPLORERS.put(ReportKind.SSGSEA, new SsGseaReportExplorer());
         EXPLORERS.put(ReportKind.LEADING_EDGE, new LeadingEdgeReportExplorer());
+        EXPLORERS.put(ReportKind.COREMAP, new CoreMapReportExplorer());
         EXPLORERS.put(ReportKind.COLLAPSE_DATASET, new CollapseDatasetReportExplorer());
         EXPLORERS.put(ReportKind.CHIP2CHIP, new Chip2ChipReportExplorer());
         EXPLORERS.put(ReportKind.UNKNOWN, FALLBACK);

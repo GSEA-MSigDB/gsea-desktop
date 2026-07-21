@@ -29,7 +29,7 @@ import xtools.gsea.SsGsea;
 import xtools.munge.CollapseDataset;
 
 /**
- * Tool tree organized by {@link ToolCategory} (Swing {@code ToolSelectorTree} parity).
+ * Tool tree organized by {@link ToolCategory}.
  * Used when a catalog browser is needed; the main GSEA shell uses the vertical toolbar.
  */
 public class FxToolSelectorTree {
@@ -128,7 +128,6 @@ public class FxToolSelectorTree {
                 selectTool(last);
             }
         } catch (Throwable t) {
-            // Safe init — ignore like Swing.
         }
     }
 

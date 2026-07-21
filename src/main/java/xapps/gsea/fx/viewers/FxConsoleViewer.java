@@ -65,7 +65,6 @@ public class FxConsoleViewer implements ViewPage {
             content.putString(area.getText());
             Clipboard.getSystemClipboard().setContent(content);
         });
-        // Swing SystemConsoleViewer: FlowLayout.RIGHT for Clear/Copy.
         HBox actions = xapps.gsea.fx.FxButtons.row(clear, copy);
         actions.setAlignment(javafx.geometry.Pos.CENTER_RIGHT);
         actions.setPadding(new Insets(8));
@@ -88,8 +87,6 @@ public class FxConsoleViewer implements ViewPage {
                 if (!isLoggable(record)) {
                     return;
                 }
-                // Swing StatusBarAppender: JUL → status bar only (not SystemConsole).
-                // Magenta only for Level.WARNING (not SEVERE). Do not trim — Swing shows full formatter text.
                 String line = formatter.format(record);
                 publishStatus(line, record.getLevel() == Level.WARNING);
             }
@@ -109,7 +106,7 @@ public class FxConsoleViewer implements ViewPage {
     }
 
     /**
-     * Redirect System.out / System.err into the console (Swing SystemConsole parity).
+     * Redirect System.out / System.err into the console.
      * Safe to call multiple times.
      */
     public static synchronized void installSystemStreamCapture() {
@@ -159,10 +156,7 @@ public class FxConsoleViewer implements ViewPage {
         }
     }
 
-    /**
-     * Append raw stream text (Swing {@code SystemConsole} appends chunks as read — no retention cap,
-     * no forced newlines between chunks).
-     */
+    /** Append raw stream text. */
     public static void appendText(String chunk) {
         if (chunk == null || chunk.isEmpty()) {
             return;
@@ -203,7 +197,6 @@ public class FxConsoleViewer implements ViewPage {
     }
 
     private static final class ConsoleOutputStream extends OutputStream {
-        // Swing SystemConsole: InputStreamReader decodes with a persistent charset state.
         private final java.nio.charset.CharsetDecoder decoder = StandardCharsets.UTF_8
                 .newDecoder()
                 .onMalformedInput(java.nio.charset.CodingErrorAction.REPLACE)

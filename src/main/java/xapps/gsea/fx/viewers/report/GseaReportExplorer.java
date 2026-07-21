@@ -39,6 +39,8 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import xapps.gsea.fx.viewers.FxEnrichmentMapPane;
 import xapps.gsea.fx.viewers.FxLeadingEdgePane;
+import xapps.gsea.fx.viewers.coremap.CoreMapWorkspace;
+import xapps.gsea.fx.viewers.coremap.FxCoreMapPane;
 
 /**
  * Native GSEA / GSEAPreranked explorer: side-by-side phenotype panels, summary stats,
@@ -117,7 +119,11 @@ public final class GseaReportExplorer implements ReportExplorer {
         xapps.gsea.fx.FxButtons.styleSecondary(openEm);
         openEm.setOnAction(e -> openEnrichmentMap(data.reportDir(), openPage));
 
-        HBox toolbar = new HBox(10, filter, openLe, openEm);
+        Button openCm = new Button("Open in CoreMap");
+        xapps.gsea.fx.FxButtons.styleSecondary(openCm);
+        openCm.setOnAction(e -> openCoreMap(leDir, openPage));
+
+        HBox toolbar = new HBox(10, filter, openLe, openEm, openCm);
         toolbar.setPadding(new Insets(0, 0, 8, 0));
 
         BorderPane detail = new BorderPane();
@@ -479,6 +485,14 @@ public final class GseaReportExplorer implements ReportExplorer {
             }
         } catch (Throwable t) {
             Application.getWindowManager().showError("Could not open Enrichment Map", t);
+        }
+    }
+
+    private static void openCoreMap(File edbOrReportDir, Consumer<ViewPage> openPage) {
+        try {
+            CoreMapWorkspace.openFromReport(edbOrReportDir, FxCoreMapPane::new, openPage);
+        } catch (Throwable t) {
+            Application.getWindowManager().showError("Could not open CoreMap", t);
         }
     }
 }

@@ -24,7 +24,7 @@ import javafx.scene.layout.VBox;
 
 /**
  * Gene set matrix viewer: full membership matrix (one column per gene set) plus summary
- * info (parity with the Swing GeneSetMatrixViewer2).
+ * info.
  */
 public class FxGeneSetMatrixViewer implements ViewPage {
 
@@ -39,7 +39,6 @@ public class FxGeneSetMatrixViewer implements ViewPage {
         title.getStyleClass().add("gsea-section-header");
 
         TabPane tabs = new TabPane();
-        // Swing GeneSetMatrixViewer2: JTabbedPane.BOTTOM
         tabs.setSide(javafx.geometry.Side.BOTTOM);
         tabs.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
 

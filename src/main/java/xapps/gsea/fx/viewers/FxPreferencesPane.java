@@ -27,12 +27,11 @@ import xapps.gsea.fx.params.FxFileChooserUtil;
 
 /**
  * JavaFX preferences form backed by {@link XPreferencesFactory}.
- * Shown as a modal OK/Cancel dialog (Swing {@code GseaPreferencesDialog} parity).
+ * Shown as a modal OK/Cancel dialog.
  */
 public class FxPreferencesPane implements ViewPage {
 
     private final BorderPane root = new BorderPane();
-    // Swing Application/Algorithm panels: JLabel + bare checkbox (not checkbox-with-name).
     private final CheckBox askBeforeShutdown = new CheckBox();
     private final CheckBox onlineMode = new CheckBox();
     private final CheckBox updateCheck = new CheckBox();
@@ -46,14 +45,11 @@ public class FxPreferencesPane implements ViewPage {
     public FxPreferencesPane() {
         loadFromPrefs();
 
-        // Swing GseaPreferencesDialog.OptionsPanel order:
-        // Report settings → Program settings → Application preferences → Algorithm defaults.
         GridPane reportForm = new GridPane();
         reportForm.setHgap(12);
         reportForm.setVgap(10);
         reportForm.setPadding(new Insets(8));
         Label outLabel = new Label("Default output folder");
-        // Swing GDirFieldPlusChooser: icon-only Ellipsis button (no "Browse…" text).
         Button browse = xapps.gsea.fx.FxEllipsisButton.create("Browse for folder");
         browse.setOnAction(e -> chooseOutputDir());
         HBox outRow = new HBox(8, outputDirField, browse);
@@ -111,7 +107,7 @@ public class FxPreferencesPane implements ViewPage {
         root.setCenter(center);
     }
 
-    /** Modal preferences dialog with Help / OK / Cancel (Swing parity). @return true if OK saved. */
+    /** Modal preferences dialog with Help / OK / Cancel. @return true if OK saved. */
     public static boolean showDialog(javafx.stage.Window owner) {
         FxPreferencesPane pane = new FxPreferencesPane();
         javafx.scene.control.Dialog<Boolean> dialog = new javafx.scene.control.Dialog<>();
@@ -120,7 +116,6 @@ public class FxPreferencesPane implements ViewPage {
         dialog.setResizable(true);
         dialog.getDialogPane().setContent((javafx.scene.Node) pane.getContent());
         xapps.gsea.fx.FxTheme.apply(dialog);
-        // Swing createButtonPanel: Help west; Cancel then OK east.
         javafx.scene.control.ButtonType helpType =
                 new javafx.scene.control.ButtonType("Help", javafx.scene.control.ButtonBar.ButtonData.LEFT);
         javafx.scene.control.ButtonType cancelType = javafx.scene.control.ButtonType.CANCEL;
@@ -145,7 +140,6 @@ public class FxPreferencesPane implements ViewPage {
             openPrefsHelp();
             e.consume();
         });
-        // Swing GDirFieldPlusChooser / GFileField: path validity color on the output dir field.
         pane.wireOutputDirColors();
         dialog.setResultConverter(bt -> bt == okType);
         boolean[] saved = { false };
@@ -186,7 +180,6 @@ public class FxPreferencesPane implements ViewPage {
 
     private void chooseOutputDir() {
         DirectoryChooser chooser = new DirectoryChooser();
-        // Swing GDirFieldPlusChooser → chooseDirByDialog (platform default title).
         FxFileChooserUtil.seedInitialDirectory(chooser, outputDirField.getText());
         File selected = chooser.showDialog(root.getScene() != null ? root.getScene().getWindow() : null);
         if (selected != null) {
@@ -211,7 +204,6 @@ public class FxPreferencesPane implements ViewPage {
             }
             XPreferencesFactory.kUiAppearance.setValue(appearanceSel);
             String outPath = outputDirField.getText().trim();
-            // Swing DirPreference saves the chooser value unconditionally (including blank).
             XPreferencesFactory.kDefaultReportsOutputDir.setValue(new File(outPath));
             XPreferencesFactory.kCytoscapeRESTPort.setValue(cytoscapePortField.getText().trim());
             XPreferencesFactory.kMedian.setValue(median.isSelected());

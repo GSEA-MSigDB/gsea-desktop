@@ -8,8 +8,7 @@ import edu.mit.broad.genome.io.FtpSingleUrlTransferCommand;
 import javafx.stage.Window;
 
 /**
- * JavaFX progress/cancel UI for FTP downloads, replacing Swing {@code ProgressMonitor}
- * chrome while reusing {@link FtpProgressMonitor}'s cancel/disconnect behavior.
+ * JavaFX progress/cancel UI for FTP downloads {@link FtpProgressMonitor}'s cancel/disconnect behavior.
  */
 public final class FxFtpProgressDialog {
 
@@ -20,7 +19,6 @@ public final class FxFtpProgressDialog {
         this.monitor = monitor;
         String title = "Retrieving file "
                 + (command != null && command.getFileName() != null ? command.getFileName() : "");
-        // Swing ProgressMonitor note (ASCII ellipsis).
         ui = new FxCancellableProgressDialog(title, "Initializing connection...", owner, this::cancelTransfer);
     }
 

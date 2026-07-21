@@ -17,6 +17,7 @@ public enum ReportKind {
     GSEA_PRERANKED("GSEA Preranked"),
     SSGSEA("ssGSEA"),
     LEADING_EDGE("Leading Edge"),
+    COREMAP("CoreMap"),
     COLLAPSE_DATASET("Collapse Dataset"),
     CHIP2CHIP("Chip2Chip"),
     UNKNOWN("Report");
@@ -78,6 +79,9 @@ public enum ReportKind {
         if (n.endsWith(".leadingedgetool") || n.equals("leadingedgetool")) {
             return LEADING_EDGE;
         }
+        if (n.endsWith(".coremaptool") || n.equals("coremaptool")) {
+            return COREMAP;
+        }
         if (n.endsWith(".collapsedataset") || n.equals("collapsedataset")) {
             return COLLAPSE_DATASET;
         }
@@ -103,6 +107,9 @@ public enum ReportKind {
         }
         if (n.contains(".leadingedgetool.")) {
             return LEADING_EDGE;
+        }
+        if (n.contains(".coremaptool.") || n.contains(".coremap.")) {
+            return COREMAP;
         }
         if (n.contains(".collapsedataset.")) {
             return COLLAPSE_DATASET;
@@ -131,6 +138,10 @@ public enum ReportKind {
         }
         if (LeadingEdgeOutputs.hasHeatMapArtifacts(reportDir)) {
             return LEADING_EDGE;
+        }
+        if (new File(reportDir, "coremap-job.json").isFile()
+                || new File(reportDir, "coremap-result.json").isFile()) {
+            return COREMAP;
         }
         File[] mapped = reportDir.listFiles((d, name) -> name.toLowerCase(Locale.ROOT).contains("_mapped_to_"));
         if (mapped != null && mapped.length > 0) {

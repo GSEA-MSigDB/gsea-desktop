@@ -6,9 +6,6 @@ package xapps.gsea.fx;
 import javafx.scene.control.Button;
 import javafx.scene.control.Tooltip;
 
-/**
- * Swing {@code GuiHelper.ICON_ELLIPSIS} browse/choose buttons (icon only, no "Browse…" text).
- */
 public final class FxEllipsisButton {
 
     private FxEllipsisButton() {
