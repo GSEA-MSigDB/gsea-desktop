@@ -43,10 +43,6 @@
     -fx-background-color: #2b2d30;
 }
 
-.gsea-root.gsea-dark .gsea-status {
-    -fx-text-fill: #9aa0a6;
-}
-
 .gsea-root.gsea-dark .menu-bar,
 .gsea-root.gsea-dark .menu-bar .label {
     -fx-background-color: #2b2d30;
@@ -173,9 +169,8 @@
     -fx-background-color: #3f51b5;
 }
 
-.gsea-root.gsea-dark .gsea-task-table,
-.gsea-root.gsea-dark .gsea-task-table .table-view,
-.gsea-root.gsea-dark .gsea-task-chrome {
+.gsea-root.gsea-dark .gsea-jobs-pane,
+.gsea-root.gsea-dark .gsea-jobs-root {
     -fx-background-color: #2b2d30;
     -fx-border-color: #5f6368;
 }
@@ -308,34 +303,39 @@
     -fx-background-color: #323438;
 }
 
-/* Preserve process status semantics in dark mode as well. */
-.gsea-root.gsea-dark .gsea-task-table .table-cell.gsea-task-status-running {
+/* Job status semantics in dark mode. */
+.gsea-root.gsea-dark .gsea-job-status-running,
+.gsea-root.gsea-dark .gsea-job-status-canceling {
     -fx-text-fill: #8ab4f8;
 }
 
-.gsea-root.gsea-dark .gsea-task-table .table-cell.gsea-task-status-paused {
-    -fx-text-fill: #f6c177;
+.gsea-root.gsea-dark .gsea-job-log-toggle-bar {
+    -fx-background-color: #323438;
+    -fx-border-color: #3c4043;
 }
 
-.gsea-root.gsea-dark .gsea-task-table .table-cell.gsea-task-status-success {
+.gsea-root.gsea-dark .gsea-job-log-toggle {
+    -fx-text-fill: #e8eaed;
+}
+
+.gsea-root.gsea-dark .gsea-job-status-success {
     -fx-text-fill: #7ee787;
 }
 
-.gsea-root.gsea-dark .gsea-task-table .table-cell.gsea-task-status-success-warn,
-.gsea-root.gsea-dark .gsea-task-table .table-cell.gsea-task-status-killed {
+.gsea-root.gsea-dark .gsea-job-status-success-warn {
     -fx-text-fill: #ff9de1;
 }
 
-.gsea-root.gsea-dark .gsea-task-table .table-cell.gsea-task-status-error {
+.gsea-root.gsea-dark .gsea-job-status-error {
     -fx-text-fill: #f28b82;
 }
 
-.gsea-root.gsea-dark .gsea-task-table .table-cell.gsea-task-status-invalid-param,
-.gsea-root.gsea-dark .gsea-task-table .table-cell.gsea-task-status-canceled {
+.gsea-root.gsea-dark .gsea-job-status-invalid-param,
+.gsea-root.gsea-dark .gsea-job-status-canceled {
     -fx-text-fill: #c58f8f;
 }
 
-.gsea-root.gsea-dark .gsea-task-table .table-cell.gsea-task-status-waiting {
+.gsea-root.gsea-dark .gsea-job-status-waiting {
     -fx-text-fill: #9aa0a6;
 }
 

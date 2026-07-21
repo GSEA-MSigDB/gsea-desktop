@@ -3,6 +3,7 @@
  */
 package xapps.gsea.fx.tui;
 
+import java.util.Objects;
 import java.util.Properties;
 
 import org.apache.commons.lang3.SystemUtils;
@@ -12,7 +13,7 @@ import org.slf4j.LoggerFactory;
 
 import edu.mit.broad.xbench.core.api.Application;
 import edu.mit.broad.xbench.tui.ReportStub;
-import edu.mit.broad.xbench.tui.TaskManager;
+import edu.mit.broad.xbench.tui.ToolFactory;
 import javafx.geometry.Insets;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
@@ -25,6 +26,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import xapps.gsea.fx.jobs.JobRuntime;
 import xapps.gsea.fx.params.FxParamSetForm;
 import xtools.api.Tool;
 import xtools.api.param.Param;
@@ -41,6 +43,7 @@ public class FxToolLauncherPane implements ViewPage {
     private final String title;
     private final String iconResourceId;
     private final boolean showInitializedBanner;
+    private final JobRuntime jobRuntime;
     private final BorderPane root = new BorderPane();
     private final FxParamSetForm form;
     private final Button run = new Button("Run");
@@ -48,12 +51,13 @@ public class FxToolLauncherPane implements ViewPage {
     private final Button last = new Button("Last");
 
     private FxToolLauncherPane(Tool tool, String title, String iconResourceId,
-            boolean showInitializedBanner) {
+            boolean showInitializedBanner, JobRuntime jobRuntime) {
         this.tool = tool;
         this.title = title != null ? title : tool.getTitle();
         this.iconResourceId = iconResourceId != null && !iconResourceId.isBlank()
                 ? iconResourceId : "Gsea_app16_v2.png";
         this.showInitializedBanner = showInitializedBanner;
+        this.jobRuntime = Objects.requireNonNull(jobRuntime, "jobRuntime");
         this.form = new FxParamSetForm(tool.getParamSet());
 
         HBox header = new HBox(10);
@@ -153,17 +157,28 @@ public class FxToolLauncherPane implements ViewPage {
     }
 
     public static FxToolLauncherPane forTool(Tool tool, String title) {
-        return forTool(tool, title, "ToolLauncher.gif", true);
+        return forTool(tool, title, "ToolLauncher.gif", true, JobRuntime.require());
     }
 
     public static FxToolLauncherPane forTool(Tool tool, String title, String iconResourceId) {
         // LHS tool openers: tool-specific icon, no "Initialized to" banner.
-        return forTool(tool, title, iconResourceId, false);
+        return forTool(tool, title, iconResourceId, false, JobRuntime.require());
+    }
+
+    public static FxToolLauncherPane forTool(Tool tool, String title, String iconResourceId,
+            JobRuntime jobRuntime) {
+        return forTool(tool, title, iconResourceId, false, jobRuntime);
     }
 
     public static FxToolLauncherPane forTool(Tool tool, String title, String iconResourceId,
             boolean showInitializedBanner) {
-        return new FxToolLauncherPane(tool, title, iconResourceId, showInitializedBanner);
+        return forTool(tool, title, iconResourceId, showInitializedBanner, JobRuntime.require());
+    }
+
+    public static FxToolLauncherPane forTool(Tool tool, String title, String iconResourceId,
+            boolean showInitializedBanner, JobRuntime jobRuntime) {
+        return new FxToolLauncherPane(tool, title, iconResourceId, showInitializedBanner,
+                Objects.requireNonNull(jobRuntime, "jobRuntime"));
     }
 
     private void runTool() {
@@ -174,19 +189,8 @@ public class FxToolLauncherPane implements ViewPage {
                 Application.getWindowManager().showError("Please fill all required parameters before running.");
                 return;
             }
-            // Record snapshot against the unique runId so concurrent same-tool runs stay distinct.
-            String runId = TaskManager.getInstance().run(tool, pset, Thread.NORM_PRIORITY);
-            if (FxTaskTablePane.getInstance() != null) {
-                FxTaskTablePane.getInstance().attachSnapshot(runId, tool, pset.toProperties());
-            }
-            if (TaskManager.getInstance().isParamConstructionError(runId)) {
-                Throwable paramErr = TaskManager.getInstance().getLastError(runId);
-                Application.getWindowManager().showError(
-                        "One or more parameter(s) were not specified",
-                        paramErr != null ? paramErr
-                                : new IllegalStateException("Invalid parameters"));
-                return;
-            }
+            String runId = jobRuntime.start(tool, pset, Thread.NORM_PRIORITY);
+            jobRuntime.showParamErrorIfNeeded(runId);
         } catch (Exception ex) {
             klog.error("Failed to run tool {}", tool.getName(), ex);
             Application.getWindowManager().showError("Failed to run " + tool.getName(), ex);
@@ -219,7 +223,7 @@ public class FxToolLauncherPane implements ViewPage {
                     Thread parseWorker = new Thread(() -> {
                         try {
                             Properties props = rs.getReport(true).getParametersUsed();
-                            Tool fillTool = TaskManager.createTool(tool.getClass().getName());
+                            Tool fillTool = ToolFactory.createTool(tool.getClass().getName());
                             FxLoadToolTask.create(fillTool, rs.getName(), true, props, false).run();
                             javafx.application.Platform.runLater(() -> {
                                 refreshRunEnabled();

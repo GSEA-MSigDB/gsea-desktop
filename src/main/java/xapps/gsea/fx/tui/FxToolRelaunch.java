@@ -13,15 +13,16 @@ import org.slf4j.LoggerFactory;
 
 import edu.mit.broad.genome.reports.api.Report;
 import edu.mit.broad.xbench.core.api.Application;
-import edu.mit.broad.xbench.tui.TaskManager;
+import edu.mit.broad.xbench.tui.ToolFactory;
 import javafx.application.Platform;
 import xapps.gsea.fx.FxProgressMonitorRead;
+import xapps.gsea.fx.jobs.JobRuntime;
 import xtools.api.Tool;
 import xtools.api.param.ParamSet;
 
 /**
  * Relaunch a tool from a past report's parameters,
- * or from a saved {@link ParamSet} (FX process table Name-column click).
+ * or from a saved {@link ParamSet} (Jobs panel Relaunch).
  */
 public final class FxToolRelaunch {
     private static final Logger klog = LoggerFactory.getLogger(FxToolRelaunch.class);
@@ -45,7 +46,7 @@ public final class FxToolRelaunch {
                 if (producer == null) {
                     throw new IllegalStateException("Report has no producer tool class");
                 }
-                Tool tool = TaskManager.createTool(producer.getName());
+                Tool tool = ToolFactory.createTool(producer.getName());
                 Properties params = report.getParametersUsed();
                 relaunch(tool, params, report.getName(), loadData, true, openPage);
                 return null;
@@ -59,7 +60,7 @@ public final class FxToolRelaunch {
         xapps.gsea.fx.FxWorkers.start(task, "gsea-tool-relaunch");
     }
 
-    /** Process-table Name column.getName}. */
+    /** Jobs panel Relaunch with a saved parameter snapshot. */
     public static void showInToolRunner(Tool sourceTool, Properties paramSnapshot, Consumer<ViewPage> openPage) {
         if (sourceTool == null || paramSnapshot == null) {
             Application.getWindowManager().showError("No saved parameters available for this run");
@@ -72,7 +73,7 @@ public final class FxToolRelaunch {
         javafx.concurrent.Task<Void> task = new javafx.concurrent.Task<>() {
             @Override
             protected Void call() throws Exception {
-                Tool tool = TaskManager.createTool(sourceTool.getClass().getName());
+                Tool tool = ToolFactory.createTool(sourceTool.getClass().getName());
                 relaunch(tool, paramSnapshot, null, false, false, openPage);
                 return null;
             }
@@ -134,7 +135,8 @@ public final class FxToolRelaunch {
 
         final String tabTitle = tabTitleOpt != null ? tabTitleOpt : tool.getName();
         Platform.runLater(() -> {
-            openPage.accept(FxToolLauncherPane.forTool(tool, tabTitle));
+            openPage.accept(FxToolLauncherPane.forTool(tool, tabTitle, "ToolLauncher.gif", true,
+                    JobRuntime.require()));
             if (showToast) {
                 Application.getWindowManager().showMessage(
                         "Created a new ToolRunner with parameters from the earlier run. "

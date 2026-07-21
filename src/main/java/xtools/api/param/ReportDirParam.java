@@ -8,7 +8,10 @@ import edu.mit.broad.xbench.core.api.Application;
 import java.io.File;
 
 /**
- * To capture the dir in which to place the file(s) produced by an analysis
+ * To capture the dir in which to place the file(s) produced by an analysis.
+ * Default is the Preferences output folder plus today's dated subfolder
+ * ({@link Application#getVdbManager()}.{@code getDefaultOutputDir()}), resolved lazily
+ * so it follows Preferences and does not freeze a process working-directory path.
  *
  * @author Aravind Subramanian
  * @version %I%, %G%
@@ -21,9 +24,8 @@ public class ReportDirParam extends DirParam {
      * @param reqd
      */
     public ReportDirParam(final boolean reqd) {
-        // Default is resolved lazily from VdbManager so CLI/FX both honor Preferences
-        // and never freeze a one-time path from the process working directory.
-        super(OUT, OUT_ENGLISH, OUT_DESC, new File("."), reqd);
+        // Empty hints: default comes from {@link #getDefault()} (prefs + dated folder).
+        super(OUT, OUT_ENGLISH, OUT_DESC, reqd);
     }
 
     public boolean isFileBased() {
@@ -43,6 +45,22 @@ public class ReportDirParam extends DirParam {
         return getDefault();
     }
 
+    @Override
+    public void setValue(File dir) {
+        super.setValue(dir != null ? dir.getAbsoluteFile() : null);
+    }
+
+    @Override
+    public String getValueStringRepresentation(boolean full) {
+        Object val = getValue();
+        if (val == null) {
+            return null;
+        }
+        File file = val instanceof File ? (File) val : new File(val.toString());
+        // Always absolute so FX/CLI never treat a bare dated folder name as relative to cwd.
+        return file.getAbsolutePath();
+    }
+
     // DONT rename this getName. Duh!!
     public File getAnalysisDir() {
         Object val = getValue();
@@ -52,11 +70,5 @@ public class ReportDirParam extends DirParam {
         File dir = val instanceof File ? (File) val : new File(val.toString());
         return dir.getAbsoluteFile();
     }
-
-    /**
-     * Override so that we can add a make this my default button
-     *
-     * @return
-     */
 
 }    // End class AnalysisDirParam

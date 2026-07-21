@@ -120,12 +120,13 @@
     -fx-padding: 6 12 10 12;
 }
 
-.gsea-status {
-    -fx-text-fill: #475569;
+.gsea-jobs-pane {
+    -fx-background-color: #f8fafc;
 }
 
-.gsea-task-table {
-    -fx-background-color: #eef1f5;
+.gsea-jobs-root {
+    -fx-border-color: #cbd5e1;
+    -fx-border-width: 1 0 0 0;
 }
 
 .gsea-tool-group {
@@ -147,43 +148,56 @@
     -fx-background-color: #9696FF;
 }
 
-.gsea-task-chrome {
-    -fx-background-color: #d3d3d3;
-    -fx-border-color: #a0a0a0;
-    -fx-border-width: 1;
-    -fx-selection-bar: transparent;
-    -fx-selection-bar-non-focused: transparent;
+.gsea-job-name {
+    -fx-font-weight: bold;
 }
 
-/* Process status colors (matches Swing ExecState palette). */
-.gsea-task-table .table-cell.gsea-task-status-running {
-    -fx-text-fill: #0000ff;
+.gsea-job-status {
+    -fx-font-size: 11px;
 }
 
-.gsea-task-table .table-cell.gsea-task-status-paused {
-    -fx-text-fill: #ffa500;
+.gsea-job-log {
+    -fx-font-family: "Consolas", "Menlo", "Courier New", monospace;
+    -fx-font-size: 11px;
 }
 
-.gsea-task-table .table-cell.gsea-task-status-success {
-    -fx-text-fill: #00ff00;
+.gsea-job-log-toggle-bar {
+    -fx-background-color: #eef2f7;
+    -fx-border-color: #cbd5e1;
+    -fx-border-width: 1 0 0 0;
 }
 
-.gsea-task-table .table-cell.gsea-task-status-success-warn,
-.gsea-task-table .table-cell.gsea-task-status-killed {
-    -fx-text-fill: #ff00ff;
+.gsea-job-log-toggle {
+    -fx-text-fill: #475569;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
 }
 
-.gsea-task-table .table-cell.gsea-task-status-error {
-    -fx-text-fill: #ff0000;
+/* Job status colors — readable theme tokens (not Swing neon). */
+.gsea-job-status-running,
+.gsea-job-status-canceling {
+    -fx-text-fill: #2563eb;
 }
 
-.gsea-task-table .table-cell.gsea-task-status-invalid-param,
-.gsea-task-table .table-cell.gsea-task-status-canceled {
-    -fx-text-fill: #804040;
+.gsea-job-status-success {
+    -fx-text-fill: #15803d;
 }
 
-.gsea-task-table .table-cell.gsea-task-status-waiting {
-    -fx-text-fill: #808080;
+.gsea-job-status-success-warn {
+    -fx-text-fill: #a21caf;
+}
+
+.gsea-job-status-error {
+    -fx-text-fill: #dc2626;
+}
+
+.gsea-job-status-invalid-param,
+.gsea-job-status-canceled {
+    -fx-text-fill: #9a3412;
+}
+
+.gsea-job-status-waiting {
+    -fx-text-fill: #64748b;
 }
 
 .gsea-na-placeholder {

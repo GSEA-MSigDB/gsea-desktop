@@ -437,7 +437,7 @@ public class FxLoadDataPane implements ViewPage {
                 xtools.api.Tool fillTool;
                 Class<?> producer = report.getProducer();
                 if (producer != null) {
-                    fillTool = edu.mit.broad.xbench.tui.TaskManager.createTool(producer.getName());
+                    fillTool = edu.mit.broad.xbench.tui.ToolFactory.createTool(producer.getName());
                 } else {
                     fillTool = new xtools.gsea.Gsea();
                 }

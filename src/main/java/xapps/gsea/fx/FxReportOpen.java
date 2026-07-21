@@ -16,11 +16,11 @@ import org.slf4j.LoggerFactory;
 import edu.mit.broad.genome.reports.api.Report;
 import edu.mit.broad.xbench.core.api.Application;
 import edu.mit.broad.xbench.tui.ReportStub;
-import edu.mit.broad.xbench.tui.TaskManager;
+import xapps.gsea.fx.jobs.JobRecord;
 import xapps.gsea.fx.viewers.FxReportViewer;
 
 /**
- * Shared report opening for the process table, home, and analysis history.
+ * Shared report opening for the Jobs panel, home, and analysis history.
  * All report kinds open {@link FxReportViewer}; Results content is kind-specific
  * via {@link xapps.gsea.fx.viewers.report.ReportExplorerRegistry}.
  */
@@ -61,18 +61,21 @@ public final class FxReportOpen {
     }
 
     /**
-     * Process-table path: prefer in-app viewer when an {@code .rpt} can be loaded;
+     * Jobs panel path: prefer in-app viewer when an {@code .rpt} can be loaded;
      * otherwise open the HTML index in the browser.
      */
-    public static void openFromRun(String runId, File reportDir, Consumer<ViewPage> openPage) {
+    public static void openFromJob(JobRecord job, Consumer<ViewPage> openPage) {
+        if (job == null) {
+            Application.getWindowManager().showMessage("No report produced");
+            return;
+        }
         try {
-            File dir = reportDir != null ? reportDir : TaskManager.getInstance().getReportDir(runId);
-            Report report = tryLoadReport(dir);
+            Report report = tryLoadReport(job.getReportDir());
             if (report != null && openPage != null) {
                 openInApp(report, openPage);
                 return;
             }
-            URI index = TaskManager.getInstance().getReportIndex(runId);
+            URI index = job.getReportIndex();
             if (index != null) {
                 FxDesktopUtil.openUri(index);
                 return;

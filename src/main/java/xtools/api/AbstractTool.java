@@ -89,6 +89,11 @@ public abstract class AbstractTool implements Tool {
         return fOut;
     }
 
+    /** Override the default {@link System#out} sink (e.g. per-job log capture). */
+    public void setOutputStream(PrintStream out) {
+        this.fOut = out;
+    }
+
     // Dont call declareParams()  - class vars arent yet inited
     // constructed using instantiation and npe is thrown.
     protected AbstractTool(final String toolName) {

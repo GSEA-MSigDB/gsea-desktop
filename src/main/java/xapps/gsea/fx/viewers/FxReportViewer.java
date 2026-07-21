@@ -95,7 +95,7 @@ public class FxReportViewer implements ViewPage {
         HBox toolbar = new HBox(10, loadDataCheck, spacer, showInToolRunner, openHtml);
         toolbar.getStyleClass().add("gsea-report-action-bar");
         toolbar.setAlignment(Pos.CENTER_LEFT);
-        toolbar.setPadding(new Insets(0, 14, 10, 14));
+        toolbar.setPadding(new Insets(8, 14, 8, 14));
 
         Node results = ReportExplorerRegistry.forKind(kind).create(report, this.openPage);
         if (results instanceof javafx.scene.layout.Region region) {

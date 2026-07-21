@@ -7,7 +7,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Locale;
+import java.util.Objects;
 import java.util.Set;
 import java.util.WeakHashMap;
 import java.util.stream.Collectors;
@@ -22,7 +22,6 @@ import edu.mit.broad.genome.objects.esmatrix.db.EnrichmentDb;
 import edu.mit.broad.genome.objects.esmatrix.db.EnrichmentResult;
 import edu.mit.broad.genome.parsers.ParserFactory;
 import edu.mit.broad.xbench.core.api.Application;
-import edu.mit.broad.xbench.tui.TaskManager;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
@@ -42,13 +41,14 @@ import xapps.gsea.GseaWebResources;
 import xapps.gsea.fx.heatmap.FxChartPane;
 import xapps.gsea.fx.heatmap.FxHeatMapView;
 import xapps.gsea.fx.heatmap.FxJaccardLegend;
+import xapps.gsea.fx.jobs.JobRuntime;
 import xapps.gsea.fx.params.FxFileChooserUtil;
 import xapps.gsea.fx.params.FxReportCacheChooser;
 import xapps.gsea.fx.params.FxReportCacheSupport;
-import xapps.gsea.fx.tui.FxTaskTablePane;
 import xapps.gsea.fx.viewers.report.EnrichmentResultRow;
 import xapps.gsea.fx.viewers.report.EnrichmentResultTable;
 import xapps.gsea.fx.viewers.report.LeadingEdgeOutputs;
+import xtools.api.Tool;
 import xtools.api.param.ToolParamSet;
 import xtools.gsea.LeadingEdgeTool;
 
@@ -57,46 +57,54 @@ import xtools.gsea.LeadingEdgeTool;
  * load EDB, select ≥2 gene sets, run in-memory analysis (2×2 dashboard),
  * or build the HTML report via {@link LeadingEdgeTool}.
  * <p>
- * Completed HTML report reopen (history / process table) uses
+ * Completed HTML report reopen (history / Jobs panel) uses
  * {@link xapps.gsea.fx.viewers.FxReportViewer} + {@link xapps.gsea.fx.viewers.report.LeadingEdgeReportExplorer}.
  */
 public class FxLeadingEdgePane implements ViewPage {
 
     private static final Logger klog = LoggerFactory.getLogger(FxLeadingEdgePane.class);
 
-    /** Weak set so closed workspace tabs do not leak via TaskManager listeners. */
+    /** Weak set so closed workspace tabs do not leak via JobRuntime listeners. */
     private static final Set<FxLeadingEdgePane> LIVE =
             Collections.newSetFromMap(new WeakHashMap<>());
-    private static final TaskManager.StatusListener SHARED_STATUS = (runId, name, status, reportDir) -> {
-        if (name == null || !name.toLowerCase(Locale.ROOT).contains("leadingedge")) {
+    private static final JobRuntime.JobListener SHARED_STATUS = job -> {
+        if (job == null || !isLeadingEdgeJob(job)) {
             return;
         }
-        if (status == null || !status.startsWith("Success") || reportDir == null || !reportDir.isDirectory()) {
+        if (!job.getState().isSuccess() || job.getReportDir() == null || !job.getReportDir().isDirectory()) {
             return;
         }
-        Platform.runLater(() -> {
-            for (FxLeadingEdgePane pane : LIVE) {
-                // Only panes still attached to a scene (open workspace tabs).
-                if (pane.root.getScene() != null) {
-                    pane.showLeadingEdgeOutputs(reportDir);
-                }
+        File reportDir = job.getReportDir();
+        for (FxLeadingEdgePane pane : LIVE) {
+            if (pane.root.getScene() != null) {
+                pane.showLeadingEdgeOutputs(reportDir);
             }
-        });
+        }
     };
+    /** Runtime the shared listener is currently registered on (null if none). */
+    private static volatile JobRuntime listenerRuntime;
 
-    static {
-        TaskManager.getInstance().addStatusListener(SHARED_STATUS);
+    private static boolean isLeadingEdgeJob(xapps.gsea.fx.jobs.JobRecord job) {
+        Tool tool = job.getTool();
+        return tool != null && tool.getClass().getName().contains("LeadingEdge");
     }
 
     private final BorderPane root = new BorderPane();
     private final TabPane mainTabs = new TabPane();
     private final TextField folderField = new TextField();
     private final FxReportCacheChooser cacheChooser = FxReportCacheChooser.single();
+    private final JobRuntime jobRuntime;
     private File gseaResultDir;
     private int analysisRun = 0;
 
     public FxLeadingEdgePane() {
+        this(JobRuntime.require());
+    }
+
+    public FxLeadingEdgePane(JobRuntime jobRuntime) {
+        this.jobRuntime = Objects.requireNonNull(jobRuntime, "jobRuntime");
         LIVE.add(this);
+        ensureSharedListener();
         folderField.setEditable(true);
         HBox.setHgrow(folderField, Priority.ALWAYS);
         if (!folderField.getStyleClass().contains("gsea-dir-field")) {
@@ -186,6 +194,17 @@ public class FxLeadingEdgePane implements ViewPage {
             boolean enabled = n >= 2;
             runAnalysisButton.setDisable(!enabled);
             buildHtmlButton.setDisable(!enabled);
+        }
+    }
+
+    private void ensureSharedListener() {
+        synchronized (FxLeadingEdgePane.class) {
+            if (listenerRuntime != null && listenerRuntime != jobRuntime) {
+                listenerRuntime.removeListener(SHARED_STATUS);
+            }
+            listenerRuntime = jobRuntime;
+            // Idempotent: re-binds after JobRuntime.dispose() cleared listeners.
+            jobRuntime.addListener(SHARED_STATUS);
         }
     }
 
@@ -471,18 +490,9 @@ public class FxLeadingEdgePane implements ViewPage {
                 paramSet.getParam("gsets").setValue(StringUtils.join(names, ";"));
                 paramSet.getParam("dir").setValue(view.edb.getEdbDir());
 
-                String runId = TaskManager.getInstance().run(tool, paramSet, Thread.MIN_PRIORITY);
+                String runId = jobRuntime.start(tool, paramSet, Thread.MIN_PRIORITY);
                 Platform.runLater(() -> {
-                    if (FxTaskTablePane.getInstance() != null) {
-                        FxTaskTablePane.getInstance().attachSnapshot(
-                                runId, tool, paramSet.toProperties());
-                    }
-                    if (TaskManager.getInstance().isParamConstructionError(runId)) {
-                        Throwable err = TaskManager.getInstance().getLastError(runId);
-                        Application.getWindowManager().showError(
-                                "One or more parameter(s) were not specified",
-                                err != null ? err : new IllegalStateException("Invalid parameters"));
-                    }
+                    jobRuntime.showParamErrorIfNeeded(runId);
                     view.updateSelectionUi();
                 });
             } catch (Throwable t) {

@@ -146,6 +146,14 @@ public class XPreferencesFactory {
     public static final BooleanPreference kAppMaximized = new BooleanPreference("app was maximized", "dummy", false,
             false, true);
 
+    /** Main shell: left rail vs. tabs (0–100 percent). */
+    public static final IntPreference kShellHorizontalDivider = new IntPreference(
+            "Shell horizontal divider percent", "Dont change me", 22, false, true);
+
+    /** Main shell: tools vs. jobs within the left rail (0–100 percent). */
+    public static final IntPreference kShellLeftVerticalDivider = new IntPreference(
+            "Shell left vertical divider percent", "Dont change me", 55, false, true);
+
     public static final BooleanPreference kMedian = new BooleanPreference(
             "Use median instead of mean for class metrics",
             "Median or mean for distance metrics (such as s2n)", false, false, false);

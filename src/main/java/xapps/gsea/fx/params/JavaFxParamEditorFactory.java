@@ -1084,7 +1084,10 @@ public class JavaFxParamEditorFactory implements ParamEditorFactory {
 
         private DirectoryEditor(Param param) {
             super(param);
-            field.setText(paramDisplayText(param));
+            // DirParam.getValueStringRepresentation(false) returns only the last segment
+            // (e.g. "jul21"); committing that resolves under the process cwd. Always show
+            // an absolute path for directory params.
+            field.setText(absoluteDirText(param));
             field.setPromptText(null);
             Button browse = xapps.gsea.fx.FxEllipsisButton.create("Browse");
             browse.setOnAction(e -> {
@@ -1109,15 +1112,35 @@ public class JavaFxParamEditorFactory implements ParamEditorFactory {
             field.textProperty().addListener((obs, o, n) -> fireChange());
         }
 
+        private static String absoluteDirText(Param param) {
+            Object v = param.getValue() != null ? param.getValue() : param.getDefault();
+            return absoluteDirDisplay(v);
+        }
+
+        private static String absoluteDirDisplay(Object value) {
+            if (value == null) {
+                return "";
+            }
+            File file = value instanceof File ? (File) value : new File(value.toString().trim());
+            String path = file.getPath();
+            if (path == null || path.isBlank()) {
+                return "";
+            }
+            return file.getAbsolutePath();
+        }
+
         @Override
         public Object getValue() {
             String t = field.getText();
-            return new File(t != null ? t : "");
+            if (t == null || t.isBlank()) {
+                return new File("");
+            }
+            return new File(t.trim()).getAbsoluteFile();
         }
 
         @Override
         public void setValue(Object value) {
-            field.setText(value == null ? "" : displayText(value));
+            field.setText(absoluteDirDisplay(value));
         }
 
         @Override

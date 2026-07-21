@@ -29,6 +29,8 @@ import edu.mit.broad.xbench.core.api.VdbManager;
 import edu.mit.broad.xbench.core.api.WindowManager;
 import edu.mit.broad.xbench.prefs.XPreferencesFactory;
 import javafx.application.Platform;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
@@ -61,7 +63,9 @@ import xapps.gsea.GseaWebResources;
 import xapps.gsea.UpdateChecker;
 import xapps.gsea.VdbManagerForGsea;
 import xapps.gsea.fx.FxFileIcons;
-import xapps.gsea.fx.tui.FxTaskTablePane;
+import xapps.gsea.fx.jobs.ApplicationLog;
+import xapps.gsea.fx.jobs.FxJobsPane;
+import xapps.gsea.fx.jobs.JobRuntime;
 import xapps.gsea.fx.tui.FxToolLauncherPane;
 import xapps.gsea.fx.viewers.FxAnalysisHistoryPane;
 import xapps.gsea.fx.viewers.FxConsoleViewer;
@@ -91,12 +95,25 @@ public class GseaFxShell implements Workspace, Application.Handler {
 
     private final Stage stage;
     private final TabPane tabPane = new TabPane();
-    private final Label statusLabel = new Label("");
     private final ToolManager toolManager = new ToolManagerImpl();
     private final VdbManager vdbManager = new VdbManagerForGsea(RPT_CACHE_BUILD_DATE);
     private final FileManager fileManager;
     private final FxWorkspaceWindowManager windowManager;
-    private final FxTaskTablePane taskTablePane;
+    private final ApplicationLog applicationLog;
+    private final JobRuntime jobRuntime;
+    private final FxJobsPane jobsPane;
+    private javafx.stage.Stage consolePopup;
+
+    /** Left rail (tools + jobs) vs. main tabs. */
+    private SplitPane shellHorizontalSplit;
+    /** Tools vs. jobs within the left rail. */
+    private SplitPane shellLeftVerticalSplit;
+
+    /** Last non-maximized / non-iconified window bounds (for prefs while quit maximized). */
+    private double normalX = Double.NaN;
+    private double normalY = Double.NaN;
+    private double normalWidth = Double.NaN;
+    private double normalHeight = Double.NaN;
 
     private FxLoadDataPane loadDataPage;
     private FxLeadingEdgePane leadingEdgePage;
@@ -116,9 +133,10 @@ public class GseaFxShell implements Workspace, Application.Handler {
         // Register before FileManager: its ctor touches ParserFactory, which needs VdbManager via Application.
         Application.registerHandler(this);
         this.fileManager = new FileManager();
-        this.taskTablePane = new FxTaskTablePane(this::openPage);
-        FxConsoleViewer.installLogHandler();
-        FxConsoleViewer.installSystemStreamCapture();
+        this.applicationLog = new ApplicationLog();
+        this.jobRuntime = new JobRuntime(applicationLog);
+        this.jobsPane = new FxJobsPane(jobRuntime, this::openPage);
+        this.jobRuntime.installCapture();
         tabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.ALL_TABS);
         // So Report Explorer can reuse the sidebar CoreMap workspace.
         CoreMapWorkspace.registerWorkspace(() -> {
@@ -134,15 +152,6 @@ public class GseaFxShell implements Workspace, Application.Handler {
         stage.setTitle("GSEA " + version + " (Gene set enrichment analysis)");
         installStageIcons();
 
-        FxConsoleViewer.addStatusListener(() -> {
-            String line = FxConsoleViewer.getLastStatusLine();
-            boolean warn = FxConsoleViewer.isLastStatusWarning();
-            Platform.runLater(() -> {
-                statusLabel.setText(line);
-                statusLabel.setStyle(warn ? "-fx-text-fill: #FF00FF;" : "");
-            });
-        });
-
         MenuBar menuBar = buildMenuBar();
         if (SystemUtils.IS_OS_MAC) {
             menuBar.setUseSystemMenuBar(true);
@@ -153,7 +162,6 @@ public class GseaFxShell implements Workspace, Application.Handler {
         root.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
         root.setTop(menuBar);
         root.setCenter(buildCenter());
-        root.setBottom(buildBottom());
 
         javafx.scene.layout.StackPane sceneRoot = new javafx.scene.layout.StackPane(root);
         xapps.gsea.fx.FxToast.setHost(sceneRoot);
@@ -168,7 +176,10 @@ public class GseaFxShell implements Workspace, Application.Handler {
             e.consume();
             exitApplication();
         });
+        trackNormalWindowBounds();
         stage.show();
+        bringStageToFront();
+        restoreShellDividers();
 
         DesktopIntegration.installHandlers(this::showAbout, this::requestQuit);
 
@@ -235,22 +246,36 @@ public class GseaFxShell implements Workspace, Application.Handler {
         try {
             double x = XPreferencesFactory.kAppXPosition.getInt();
             double y = XPreferencesFactory.kAppYPosition.getInt();
-            double w = stage.getWidth();
-            double h = stage.getHeight();
-            Rectangle2D bounds = Screen.getPrimary().getBounds();
-            if (w > bounds.getWidth() || h > bounds.getHeight()) {
-                w = bounds.getWidth() * 3.0 / 4.0;
-                h = bounds.getHeight() * 3.0 / 4.0;
-                stage.setWidth(w);
-                stage.setHeight(h);
+            // Stage width/height are NaN until shown — use prefs (Scene was built from the same values).
+            double w = Math.max(1, XPreferencesFactory.kAppWidth.getInt());
+            double h = Math.max(1, XPreferencesFactory.kAppHeight.getInt());
+
+            Screen screen = screenForPoint(x, y);
+            if (screen == null) {
+                screen = Screen.getPrimary();
             }
-            if (x > bounds.getWidth() || x < 0 || y > bounds.getHeight() || y < 0) {
-                stage.setX((bounds.getWidth() - stage.getWidth()) / 2.0);
-                stage.setY((bounds.getHeight() - stage.getHeight()) / 2.0);
-            } else {
-                stage.setX(x);
-                stage.setY(y);
+            Rectangle2D vis = screen.getVisualBounds();
+
+            if (w > vis.getWidth() || h > vis.getHeight()) {
+                w = Math.max(1, vis.getWidth() * 3.0 / 4.0);
+                h = Math.max(1, vis.getHeight() * 3.0 / 4.0);
             }
+            stage.setWidth(w);
+            stage.setHeight(h);
+
+            Rectangle2D proposed = new Rectangle2D(x, y, w, h);
+            if (!intersectsAnyScreen(proposed)) {
+                x = vis.getMinX() + (vis.getWidth() - w) / 2.0;
+                y = vis.getMinY() + (vis.getHeight() - h) / 2.0;
+            }
+            stage.setX(x);
+            stage.setY(y);
+
+            normalX = x;
+            normalY = y;
+            normalWidth = w;
+            normalHeight = h;
+
             if (XPreferencesFactory.kAppMaximized.getBoolean()) {
                 stage.setMaximized(true);
             }
@@ -258,6 +283,72 @@ public class GseaFxShell implements Workspace, Application.Handler {
             klog.debug("Window restore: {}", e.toString());
             stage.centerOnScreen();
         }
+    }
+
+    private void trackNormalWindowBounds() {
+        Runnable capture = this::captureNormalBoundsFromStage;
+        stage.xProperty().addListener((o, a, b) -> capture.run());
+        stage.yProperty().addListener((o, a, b) -> capture.run());
+        stage.widthProperty().addListener((o, a, b) -> capture.run());
+        stage.heightProperty().addListener((o, a, b) -> capture.run());
+        stage.iconifiedProperty().addListener((o, a, b) -> capture.run());
+        // When unmaximizing, re-read bounds after the toolkit restores them.
+        stage.maximizedProperty().addListener((o, wasMax, isMax) -> {
+            if (wasMax && !isMax) {
+                Platform.runLater(this::captureNormalBoundsFromStage);
+            }
+        });
+    }
+
+    private void captureNormalBoundsFromStage() {
+        if (stage.isMaximized() || stage.isIconified()) {
+            return;
+        }
+        double w = stage.getWidth();
+        double h = stage.getHeight();
+        double x = stage.getX();
+        double y = stage.getY();
+        if (Double.isNaN(w) || Double.isNaN(h) || w <= 1 || h <= 1
+                || Double.isNaN(x) || Double.isNaN(y)) {
+            return;
+        }
+        normalX = x;
+        normalY = y;
+        normalWidth = w;
+        normalHeight = h;
+    }
+
+    private void bringStageToFront() {
+        stage.setIconified(false);
+        stage.toFront();
+        stage.requestFocus();
+        // Theme/native chrome may apply on a later pulse; re-raise once so we stay on top.
+        Platform.runLater(() -> {
+            if (!stage.isShowing()) {
+                return;
+            }
+            stage.setIconified(false);
+            stage.toFront();
+            stage.requestFocus();
+        });
+    }
+
+    private static Screen screenForPoint(double x, double y) {
+        for (Screen screen : Screen.getScreens()) {
+            if (screen.getVisualBounds().contains(x, y)) {
+                return screen;
+            }
+        }
+        return null;
+    }
+
+    private static boolean intersectsAnyScreen(Rectangle2D window) {
+        for (Screen screen : Screen.getScreens()) {
+            if (screen.getVisualBounds().intersects(window)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private MenuBar buildMenuBar() {
@@ -322,6 +413,9 @@ public class GseaFxShell implements Workspace, Application.Handler {
                 showError("Trouble launching File Explorer on path '" + dir.getPath() + "'", ex);
             }
         });
+        MenuItem appMessages = menuItemWithTooltip("Application messages",
+                "Show unattributed application messages (not tied to a job)");
+        appMessages.setOnAction(e -> showApplicationMessages());
         help.getItems().addAll(
                 browseMenuItem("GSEA web site", "Open the GSEA website in a web browser",
                         GseaWebResources.getGseaBaseURL(), true),
@@ -333,6 +427,7 @@ public class GseaFxShell implements Workspace, Application.Handler {
                 new SeparatorMenuItem(),
                 showHome,
                 showOut,
+                appMessages,
                 new SeparatorMenuItem(),
                 browseMenuItem("Contact Us", "Contact Us",
                         GseaWebResources.getGseaContactURL(), false),
@@ -431,7 +526,7 @@ public class GseaFxShell implements Workspace, Application.Handler {
     private void openGseaPreranked() {
         if (gseaPrerankedPage == null) {
             gseaPrerankedPage = FxToolLauncherPane.forTool(new GseaPreranked(),
-                    "Run Gsea on a Pre-Ranked gene list", "Gsea_app16_v2.png");
+                    "Run Gsea on a Pre-Ranked gene list", "Gsea_app16_v2.png", jobRuntime);
         }
         openOrReselect(gseaPrerankedPage);
     }
@@ -439,7 +534,8 @@ public class GseaFxShell implements Workspace, Application.Handler {
     private void openSsGsea() {
         if (ssGseaPage == null) {
             ssGseaPage = FxToolLauncherPane.forTool(new SsGsea(),
-                    "ssGSEA — single-sample GSEA (gene-set scores per sample)", "Gsea_app16_v2.png");
+                    "ssGSEA — single-sample GSEA (gene-set scores per sample)", "Gsea_app16_v2.png",
+                    jobRuntime);
         }
         openOrReselect(ssGseaPage);
     }
@@ -447,21 +543,22 @@ public class GseaFxShell implements Workspace, Application.Handler {
     private void openCollapseDataset() {
         if (collapsePage == null) {
             collapsePage = FxToolLauncherPane.forTool(new CollapseDataset(),
-                    "Collapse Dataset from Probes to Symbols", "ProjectSpecific16.png");
+                    "Collapse Dataset from Probes to Symbols", "ProjectSpecific16.png", jobRuntime);
         }
         openOrReselect(collapsePage);
     }
 
     private void openChip2Chip() {
         if (chip2ChipPage == null) {
-            chip2ChipPage = FxToolLauncherPane.forTool(new Chip2Chip(), "Chip2Chip", "Chip2Chip16.gif");
+            chip2ChipPage = FxToolLauncherPane.forTool(new Chip2Chip(), "Chip2Chip", "Chip2Chip16.gif",
+                    jobRuntime);
         }
         openOrReselect(chip2ChipPage);
     }
 
     private void openLeadingEdge() {
         if (leadingEdgePage == null) {
-            leadingEdgePage = new FxLeadingEdgePane();
+            leadingEdgePage = new FxLeadingEdgePane(jobRuntime);
         }
         openOrReselect(leadingEdgePage);
     }
@@ -504,7 +601,7 @@ public class GseaFxShell implements Workspace, Application.Handler {
 
     private FxToolLauncherPane ensureGseaPage() {
         if (gseaPage == null) {
-            gseaPage = FxToolLauncherPane.forTool(new Gsea(), "Run Gsea", "Gsea_app16_v2.png");
+            gseaPage = FxToolLauncherPane.forTool(new Gsea(), "Run Gsea", "Gsea_app16_v2.png", jobRuntime);
         }
         return gseaPage;
     }
@@ -561,52 +658,84 @@ public class GseaFxShell implements Workspace, Application.Handler {
     }
 
     private SplitPane buildCenter() {
-        SplitPane left = new SplitPane();
-        left.setOrientation(Orientation.VERTICAL);
-        left.getItems().addAll(buildLeftToolRail(), taskTablePane.getNode());
-        left.setDividerPositions(0.55);
+        shellLeftVerticalSplit = new SplitPane();
+        shellLeftVerticalSplit.setOrientation(Orientation.VERTICAL);
+        shellLeftVerticalSplit.getItems().addAll(buildLeftToolRail(), jobsPane.getNode());
+        shellLeftVerticalSplit.setDividerPositions(
+                dividerFraction(XPreferencesFactory.kShellLeftVerticalDivider.getInt(), 55));
 
-        SplitPane horizontal = new SplitPane();
-        horizontal.getItems().addAll(left, tabPane);
-        horizontal.setDividerPositions(0.22);
-        return horizontal;
+        shellHorizontalSplit = new SplitPane();
+        shellHorizontalSplit.getItems().addAll(shellLeftVerticalSplit, tabPane);
+        shellHorizontalSplit.setDividerPositions(
+                dividerFraction(XPreferencesFactory.kShellHorizontalDivider.getInt(), 22));
+        return shellHorizontalSplit;
     }
 
-    private BorderPane buildBottom() {
-        BorderPane bottom = new BorderPane();
-        bottom.setPadding(new Insets(4, 8, 4, 8));
-        statusLabel.getStyleClass().add("gsea-status");
-        statusLabel.setWrapText(false);
-        statusLabel.setMaxWidth(Double.MAX_VALUE);
-        statusLabel.setCursor(javafx.scene.Cursor.HAND);
-        statusLabel.setTooltip(new javafx.scene.control.Tooltip(
-                "Click for application messages (such as # of permutations complete)"));
-        statusLabel.setOnMouseClicked(e -> toggleConsolePopup());
-        try {
-            var url = JarResources.toURL("expandall.png");
-            if (url != null) {
-                statusLabel.setGraphic(new javafx.scene.image.ImageView(
-                        new Image(url.toExternalForm(), 16, 16, true, true)));
-            }
-        } catch (Exception ignored) {
+    private void restoreShellDividers() {
+        // SplitPane often ignores positions until after it has a real width — apply once laid out.
+        applyShellDividersWhenReady(shellHorizontalSplit,
+                dividerFraction(XPreferencesFactory.kShellHorizontalDivider.getInt(), 22));
+        applyShellDividersWhenReady(shellLeftVerticalSplit,
+                dividerFraction(XPreferencesFactory.kShellLeftVerticalDivider.getInt(), 55));
+    }
+
+    private static void applyShellDividersWhenReady(SplitPane split, double position) {
+        if (split == null) {
+            return;
         }
-        bottom.setLeft(statusLabel);
-        BorderPane.setAlignment(statusLabel, javafx.geometry.Pos.CENTER_LEFT);
-        return bottom;
+        Runnable apply = () -> split.setDividerPositions(position);
+        if (split.getWidth() > 0 && split.getHeight() > 0) {
+            apply.run();
+            return;
+        }
+        ChangeListener<Number> listener = new ChangeListener<>() {
+            @Override
+            public void changed(ObservableValue<? extends Number> obs, Number oldVal, Number newVal) {
+                if (split.getWidth() > 0 && split.getHeight() > 0) {
+                    split.widthProperty().removeListener(this);
+                    split.heightProperty().removeListener(this);
+                    apply.run();
+                }
+            }
+        };
+        split.widthProperty().addListener(listener);
+        split.heightProperty().addListener(listener);
+        // Fallback if size is already valid on the next pulse.
+        Platform.runLater(() -> {
+            if (split.getWidth() > 0 && split.getHeight() > 0) {
+                split.widthProperty().removeListener(listener);
+                split.heightProperty().removeListener(listener);
+                apply.run();
+            }
+        });
     }
 
-    private javafx.stage.Stage consolePopup;
+    private static double dividerFraction(int percent, int defaultPercent) {
+        int pct = percent;
+        if (pct < 5 || pct > 95) {
+            pct = defaultPercent;
+        }
+        return pct / 100.0;
+    }
 
-    private void toggleConsolePopup() {
+    private static int dividerPercent(SplitPane split, int fallback) {
+        if (split == null || split.getDividerPositions().length == 0) {
+            return fallback;
+        }
+        int pct = (int) Math.round(split.getDividerPositions()[0] * 100.0);
+        return Math.max(5, Math.min(95, pct));
+    }
+
+    private void showApplicationMessages() {
         if (consolePopup != null && consolePopup.isShowing()) {
-            consolePopup.hide();
+            consolePopup.toFront();
             return;
         }
         if (consolePopup == null) {
             consolePopup = new javafx.stage.Stage();
             consolePopup.initOwner(stage);
             consolePopup.setTitle("Application messages");
-            FxConsoleViewer viewer = new FxConsoleViewer();
+            FxConsoleViewer viewer = new FxConsoleViewer(applicationLog);
             javafx.scene.Scene consoleScene = new javafx.scene.Scene(
                     (javafx.scene.Parent) viewer.getContent(), 700, 350);
             xapps.gsea.fx.FxTheme.apply(consoleScene);
@@ -891,6 +1020,11 @@ public class GseaFxShell implements Workspace, Application.Handler {
             }
         }
         saveWindowBounds();
+        if (consolePopup != null) {
+            consolePopup.hide();
+        }
+        jobsPane.dispose();
+        jobRuntime.dispose();
         Platform.exit();
         if (!Conf.isDebugMode()) {
             Conf.exitSystem(false);
@@ -904,11 +1038,25 @@ public class GseaFxShell implements Workspace, Application.Handler {
 
     private void saveWindowBounds() {
         try {
-            XPreferencesFactory.kAppWidth.setValue((int) stage.getWidth());
-            XPreferencesFactory.kAppHeight.setValue((int) stage.getHeight());
-            XPreferencesFactory.kAppXPosition.setValue((int) stage.getX());
-            XPreferencesFactory.kAppYPosition.setValue((int) stage.getY());
-            XPreferencesFactory.kAppMaximized.setValue(stage.isMaximized());
+            boolean maximized = stage.isMaximized();
+            XPreferencesFactory.kAppMaximized.setValue(maximized);
+            // While maximized/iconified, Stage reports screen-filling bounds — keep last normal size.
+            if (!maximized && !stage.isIconified()) {
+                captureNormalBoundsFromStage();
+            }
+            if (!Double.isNaN(normalWidth) && !Double.isNaN(normalHeight)
+                    && normalWidth > 1 && normalHeight > 1) {
+                XPreferencesFactory.kAppWidth.setValue((int) Math.round(normalWidth));
+                XPreferencesFactory.kAppHeight.setValue((int) Math.round(normalHeight));
+            }
+            if (!Double.isNaN(normalX) && !Double.isNaN(normalY)) {
+                XPreferencesFactory.kAppXPosition.setValue((int) Math.round(normalX));
+                XPreferencesFactory.kAppYPosition.setValue((int) Math.round(normalY));
+            }
+            XPreferencesFactory.kShellHorizontalDivider.setValue(
+                    dividerPercent(shellHorizontalSplit, 22));
+            XPreferencesFactory.kShellLeftVerticalDivider.setValue(
+                    dividerPercent(shellLeftVerticalSplit, 55));
             XPreferencesFactory.save();
         } catch (Exception e) {
             klog.warn("Could not save window preferences", e);
@@ -939,7 +1087,7 @@ public class GseaFxShell implements Workspace, Application.Handler {
         return stage;
     }
 
-    public FxTaskTablePane getTaskTablePane() {
-        return taskTablePane;
+    public JobRuntime getJobRuntime() {
+        return jobRuntime;
     }
 }
