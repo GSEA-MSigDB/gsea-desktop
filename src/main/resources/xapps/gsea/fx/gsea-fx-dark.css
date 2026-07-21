@@ -299,6 +299,7 @@
 .gsea-root.gsea-dark .tree-cell:filled:selected,
 .gsea-root.gsea-dark .table-row-cell:filled:selected {
     -fx-background-color: #3c4043;
+    -fx-text-fill: #e8eaed;
 }
 
 .gsea-root.gsea-dark .list-cell:filled:hover,

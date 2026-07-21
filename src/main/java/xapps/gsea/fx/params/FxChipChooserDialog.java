@@ -88,41 +88,36 @@ public final class FxChipChooserDialog {
         refreshCachedChips(cachedChips);
         FxFtpChooserSupport.enableDoubleClickToFire(cachedChips, okButton);
         tabs.getTabs().add(new Tab("Local Chips",
-                xapps.gsea.fx.FxSearchField.wrapList(cachedChips,
-                        c -> c == null ? "" : c.name + " " + (c.path != null ? c.path : ""))));
+                FxFtpChooserSupport.wrapLocalTab(
+                        xapps.gsea.fx.FxSearchField.wrapList(cachedChips,
+                                c -> c == null ? "" : c.name + " " + (c.path != null ? c.path : "")),
+                        () -> openLocalChipFile(owner, cachedChips))));
 
         if (FxFtpChooserSupport.isOnline()) {
-            try {
-                ComparatorFactory.FTPFileByVersionComparator humanCmp =
-                        new ComparatorFactory.FTPFileByVersionComparator();
-                List<FTPFile> human = FxFtpChooserSupport.listAndSort(".chip", MSigDBSpecies.Human,
-                        GseaWebResources.getGseaFTPServerChipDir(MSigDBSpecies.Human),
-                        humanCmp);
-                humanList.setItems(FXCollections.observableArrayList(human));
-                FxFtpChooserSupport.applyLatestVersionBolding(humanList, humanCmp);
-                FxFtpChooserSupport.enableDoubleClickToFire(humanList, okButton);
-                tabs.getTabs().add(new Tab("Human Collection Chips (MSigDB)",
-                        xapps.gsea.fx.FxSearchField.wrapList(humanList,
-                                f -> f == null ? "" : f.getName() + " " + f.getPath())));
-
-                ComparatorFactory.FTPFileByVersionComparator mouseCmp =
-                        new ComparatorFactory.FTPFileByVersionComparator("Mouse");
-                List<FTPFile> mouse = FxFtpChooserSupport.listAndSort(".chip", MSigDBSpecies.Mouse,
-                        GseaWebResources.getGseaFTPServerChipDir(MSigDBSpecies.Mouse),
-                        mouseCmp);
-                mouseList.setItems(FXCollections.observableArrayList(mouse));
-                FxFtpChooserSupport.applyLatestVersionBolding(mouseList, mouseCmp);
-                FxFtpChooserSupport.enableDoubleClickToFire(mouseList, okButton);
-                tabs.getTabs().add(new Tab("Mouse Collection Chips (MSigDB)",
-                        xapps.gsea.fx.FxSearchField.wrapList(mouseList,
-                                f -> f == null ? "" : f.getName() + " " + f.getPath())));
-            } catch (Exception ex) {
-                klog.error(ex.getMessage(), ex);
-                tabs.getTabs().add(new Tab("Human Collection Chips (MSigDB)",
-                        messageArea(FxFtpChooserSupport.errorListingMessage(ex))));
-                tabs.getTabs().add(new Tab("Mouse Collection Chips (MSigDB)",
-                        messageArea(FxFtpChooserSupport.errorListingMessage(ex))));
-            }
+            ComparatorFactory.FTPFileByVersionComparator humanCmp =
+                    new ComparatorFactory.FTPFileByVersionComparator();
+            FxFtpChooserSupport.installDeferredFtpTab(
+                    tabs,
+                    "Human Collection Chips (MSigDB)",
+                    humanList,
+                    okButton,
+                    ".chip",
+                    MSigDBSpecies.Human,
+                    GseaWebResources.getGseaFTPServerChipDir(MSigDBSpecies.Human),
+                    humanCmp,
+                    f -> f.getName() + " " + f.getPath());
+            ComparatorFactory.FTPFileByVersionComparator mouseCmp =
+                    new ComparatorFactory.FTPFileByVersionComparator("Mouse");
+            FxFtpChooserSupport.installDeferredFtpTab(
+                    tabs,
+                    "Mouse Collection Chips (MSigDB)",
+                    mouseList,
+                    okButton,
+                    ".chip",
+                    MSigDBSpecies.Mouse,
+                    GseaWebResources.getGseaFTPServerChipDir(MSigDBSpecies.Mouse),
+                    mouseCmp,
+                    f -> f.getName() + " " + f.getPath());
         } else {
             tabs.getTabs().add(new Tab("Human Collection Chips (MSigDB)",
                     messageArea(FxFtpChooserSupport.OFFLINE_MESSAGE)));
@@ -195,6 +190,43 @@ public final class FxChipChooserDialog {
         });
 
         return dialog.showAndWait().filter(StringUtils::isNotBlank);
+    }
+
+    private static void openLocalChipFile(Window owner, ListView<CachedChip> cachedChips) {
+        FxFtpChooserSupport.browseLocalFiles(
+                owner,
+                "Open chip file",
+                FxFtpChooserSupport.chipFileFilters(),
+                false,
+                selectedChipPath(cachedChips),
+                files -> FxFtpChooserSupport.loadLocalFilesAsync(
+                        files,
+                        edu.mit.broad.vdb.chip.Chip.class,
+                        loaded -> {
+                            refreshCachedChips(cachedChips);
+                            try {
+                                selectCachedChipByPath(cachedChips,
+                                        ParserFactory.getCache().getSourcePath(loaded.get(0)));
+                            } catch (Exception ignore) {
+                            }
+                        }));
+    }
+
+    private static String selectedChipPath(ListView<CachedChip> cachedChips) {
+        CachedChip sel = cachedChips.getSelectionModel().getSelectedItem();
+        return sel != null ? sel.path : null;
+    }
+
+    private static void selectCachedChipByPath(ListView<CachedChip> cachedChips, String path) {
+        if (path == null) {
+            return;
+        }
+        for (CachedChip item : cachedChips.getItems()) {
+            if (item != null && path.equals(item.path)) {
+                cachedChips.getSelectionModel().select(item);
+                return;
+            }
+        }
     }
 
     private static void refreshCachedChips(ListView<CachedChip> cachedChips) {

@@ -81,45 +81,56 @@ public final class FxGeneSetChooserDialog {
         FxFtpChooserSupport.enableDoubleClickToFire(cachedGrp, okButton);
         FxFtpChooserSupport.enableDoubleClickToFire(subsets, okButton);
 
+        Window dialogWindow = owner;
         // Open on local cache first; MSigDB FTP collections are secondary.
         tabs.getTabs().add(new Tab("Local GMX/GMT",
-                xapps.gsea.fx.FxSearchField.wrapList(cachedGmx, i -> i == null ? "" : i.name + " " + i.path)));
+                FxFtpChooserSupport.wrapLocalTab(
+                        xapps.gsea.fx.FxSearchField.wrapList(cachedGmx,
+                                i -> i == null ? "" : i.name + " " + i.path),
+                        () -> openLocalGeneSetFiles(
+                                dialogWindow,
+                                cachedGmx,
+                                edu.mit.broad.genome.objects.GeneSetMatrix.class,
+                                FxFtpChooserSupport.gmxFileFilters(),
+                                true))));
         tabs.getTabs().add(new Tab("Local GRP Gene sets",
-                xapps.gsea.fx.FxSearchField.wrapList(cachedGrp, i -> i == null ? "" : i.name + " " + i.path)));
+                FxFtpChooserSupport.wrapLocalTab(
+                        xapps.gsea.fx.FxSearchField.wrapList(cachedGrp,
+                                i -> i == null ? "" : i.name + " " + i.path),
+                        () -> openLocalGeneSetFiles(
+                                dialogWindow,
+                                cachedGrp,
+                                GeneSet.class,
+                                FxFtpChooserSupport.grpFileFilters(),
+                                true))));
         tabs.getTabs().add(new Tab("Subsets",
                 xapps.gsea.fx.FxSearchField.wrapList(subsets, i -> i == null ? "" : i.name + " " + i.path)));
 
         if (FxFtpChooserSupport.isOnline()) {
-            try {
-                ComparatorFactory.FTPFileByVersionComparator humanCmp =
-                        new ComparatorFactory.FTPFileByVersionComparator("h");
-                List<FTPFile> human = FxFtpChooserSupport.listAndSort(".symbols.gmt", MSigDBSpecies.Human,
-                        GseaWebResources.getGseaFTPServerGeneSetsDir(MSigDBSpecies.Human),
-                        humanCmp);
-                humanList.setItems(FXCollections.observableArrayList(human));
-                FxFtpChooserSupport.applyLatestVersionBolding(humanList, humanCmp);
-                FxFtpChooserSupport.enableDoubleClickToFire(humanList, okButton);
-                tabs.getTabs().add(new Tab("Human Collection (MSigDB)",
-                        xapps.gsea.fx.FxSearchField.wrapList(humanList,
-                                f -> f == null ? "" : f.getName() + " " + f.getPath())));
-
-                ComparatorFactory.FTPFileByVersionComparator mouseCmp =
-                        new ComparatorFactory.FTPFileByVersionComparator("mh");
-                List<FTPFile> mouse = FxFtpChooserSupport.listAndSort(".symbols.gmt", MSigDBSpecies.Mouse,
-                        GseaWebResources.getGseaFTPServerGeneSetsDir(MSigDBSpecies.Mouse),
-                        mouseCmp);
-                mouseList.setItems(FXCollections.observableArrayList(mouse));
-                FxFtpChooserSupport.applyLatestVersionBolding(mouseList, mouseCmp);
-                FxFtpChooserSupport.enableDoubleClickToFire(mouseList, okButton);
-                tabs.getTabs().add(new Tab("Mouse Collection (MSigDB)",
-                        xapps.gsea.fx.FxSearchField.wrapList(mouseList,
-                                f -> f == null ? "" : f.getName() + " " + f.getPath())));
-            } catch (Exception ex) {
-                klog.error(ex.getMessage(), ex);
-                TextArea err = messageArea(FxFtpChooserSupport.errorListingMessage(ex));
-                tabs.getTabs().add(new Tab("Human Collection (MSigDB)", err));
-                tabs.getTabs().add(new Tab("Mouse Collection (MSigDB)", messageArea(FxFtpChooserSupport.errorListingMessage(ex))));
-            }
+            ComparatorFactory.FTPFileByVersionComparator humanCmp =
+                    new ComparatorFactory.FTPFileByVersionComparator("h");
+            FxFtpChooserSupport.installDeferredFtpTab(
+                    tabs,
+                    "Human Collection (MSigDB)",
+                    humanList,
+                    okButton,
+                    ".symbols.gmt",
+                    MSigDBSpecies.Human,
+                    GseaWebResources.getGseaFTPServerGeneSetsDir(MSigDBSpecies.Human),
+                    humanCmp,
+                    f -> f.getName() + " " + f.getPath());
+            ComparatorFactory.FTPFileByVersionComparator mouseCmp =
+                    new ComparatorFactory.FTPFileByVersionComparator("mh");
+            FxFtpChooserSupport.installDeferredFtpTab(
+                    tabs,
+                    "Mouse Collection (MSigDB)",
+                    mouseList,
+                    okButton,
+                    ".symbols.gmt",
+                    MSigDBSpecies.Mouse,
+                    GseaWebResources.getGseaFTPServerGeneSetsDir(MSigDBSpecies.Mouse),
+                    mouseCmp,
+                    f -> f.getName() + " " + f.getPath());
         } else {
             tabs.getTabs().add(new Tab("Human Collection (MSigDB)", messageArea(FxFtpChooserSupport.OFFLINE_MESSAGE)));
             tabs.getTabs().add(new Tab("Mouse Collection (MSigDB)", messageArea(FxFtpChooserSupport.OFFLINE_MESSAGE)));
@@ -252,6 +263,50 @@ public final class FxGeneSetChooserDialog {
         });
 
         return dialog.showAndWait().filter(StringUtils::isNotBlank);
+    }
+
+    private static void openLocalGeneSetFiles(
+            Window owner,
+            ListView<CachedPathItem> list,
+            Class<?> type,
+            List<FileChooser.ExtensionFilter> filters,
+            boolean multiple) {
+        FxFtpChooserSupport.browseLocalFiles(
+                owner,
+                "Open gene set file",
+                filters,
+                multiple,
+                selectedCachedPath(list),
+                files -> FxFtpChooserSupport.loadLocalFilesAsync(
+                        files,
+                        type,
+                        loaded -> {
+                            refreshCachedObjectList(list, type);
+                            List<String> paths = new ArrayList<>();
+                            for (PersistentObject obj : loaded) {
+                                try {
+                                    paths.add(ParserFactory.getCache().getSourcePath(obj));
+                                } catch (Exception ignore) {
+                                }
+                            }
+                            selectCachedPaths(list, paths);
+                        }));
+    }
+
+    private static String selectedCachedPath(ListView<CachedPathItem> list) {
+        CachedPathItem sel = list.getSelectionModel().getSelectedItem();
+        return sel != null ? sel.path : null;
+    }
+
+    private static void selectCachedPaths(ListView<CachedPathItem> list, List<String> paths) {
+        if (paths == null || paths.isEmpty()) {
+            return;
+        }
+        for (CachedPathItem item : list.getItems()) {
+            if (item != null && paths.contains(item.path)) {
+                list.getSelectionModel().select(item);
+            }
+        }
     }
 
     private static List<Versioned> collectSelectedVersioned(

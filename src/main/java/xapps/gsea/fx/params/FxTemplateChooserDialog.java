@@ -30,6 +30,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonBar;
@@ -47,7 +48,6 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
-import javafx.scene.paint.Color;
 import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Window;
@@ -83,7 +83,7 @@ public final class FxTemplateChooserDialog {
     public static Optional<String> show(Window owner, TemplateMode mode, String previousSelection) {
         final TemplateMode effectiveMode = mode != null ? mode : TemplateMode.ALL;
         Dialog<String> dialog = new Dialog<>();
-        dialog.setTitle("Select a phenotype");
+        dialog.setTitle("Select phenotype comparison");
         dialog.initOwner(owner);
         dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
         dialog.setResizable(true);
@@ -109,12 +109,16 @@ public final class FxTemplateChooserDialog {
             @Override
             protected void updateItem(TemplateDerivative item, boolean empty) {
                 super.updateItem(item, empty);
+                getStyleClass().remove("gsea-phenotype-combo-source");
                 if (empty || item == null) {
                     setText(null);
-                    setTextFill(null);
+                    setGraphic(null);
                 } else {
                     setText(item.getName(comboSourceMode[0], false));
-                    setTextFill(comboSourceMode[0] ? Color.MAGENTA : null);
+                    setGraphic(null);
+                    if (comboSourceMode[0]) {
+                        getStyleClass().add("gsea-phenotype-combo-source");
+                    }
                 }
             }
         });
@@ -172,11 +176,7 @@ public final class FxTemplateChooserDialog {
             Optional<File> created = showOnTheFlyFromSampleNames(w);
             created.ifPresent(file -> {
                 FxFileChooserUtil.registerOpened(file);
-                clsPath.setText(file.getAbsolutePath());
-                cachedTemplateCombo.getSelectionModel().clearSelection();
-                comboSourceMode[0] = false;
-                options.refresh();
-                loadOptions(file, options, dialog, effectiveMode);
+                applyClsSourceFile(file, clsPath, cachedTemplateCombo, comboSourceMode, options, dialog, effectiveMode);
             });
         });
 
@@ -188,13 +188,49 @@ public final class FxTemplateChooserDialog {
             Optional<File> created = showGenePhenotype(w);
             created.ifPresent(file -> {
                 FxFileChooserUtil.registerOpened(file);
-                clsPath.setText(file.getAbsolutePath());
-                cachedTemplateCombo.getSelectionModel().clearSelection();
-                comboSourceMode[0] = false;
-                options.refresh();
-                loadOptions(file, options, dialog, effectiveMode);
+                applyClsSourceFile(file, clsPath, cachedTemplateCombo, comboSourceMode, options, dialog, effectiveMode);
             });
         });
+
+        Runnable browseClsAction = () -> {
+            Window w = dialog.getDialogPane().getScene().getWindow();
+            FxFtpChooserSupport.browseLocalFiles(
+                    w,
+                    "Open phenotype file",
+                    FxFtpChooserSupport.clsFileFilters(),
+                    false,
+                    clsPath.getText(),
+                    files -> FxFtpChooserSupport.loadLocalFilesAsync(
+                            files,
+                            Template.class,
+                            loaded -> {
+                                try {
+                                    applyClsSourceFile(
+                                            ParserFactory.getCache().getSourceFile(loaded.get(0)),
+                                            clsPath,
+                                            cachedTemplateCombo,
+                                            comboSourceMode,
+                                            options,
+                                            dialog,
+                                            effectiveMode);
+                                } catch (Exception ex) {
+                                    klog.error(ex.getMessage(), ex);
+                                    showError(dialog, "Could not load phenotype file", ex.getMessage());
+                                }
+                            }));
+        };
+
+        Button browseCls = xapps.gsea.fx.FxEllipsisButton.create("Browse");
+        browseCls.setOnAction(e -> browseClsAction.run());
+
+        HBox sourceRow = new HBox(6, cachedTemplateCombo, browseCls);
+        sourceRow.setAlignment(Pos.CENTER_LEFT);
+        HBox.setHgrow(cachedTemplateCombo, Priority.ALWAYS);
+        cachedTemplateCombo.setMaxWidth(Double.MAX_VALUE);
+
+        VBox sourceCol = new VBox(4,
+                sectionLabel("Select source file"),
+                sourceRow);
 
         VBox optionsButtons = new VBox(6, bShowAll, bOnTheFly, bFromGene);
         optionsButtons.setPadding(new Insets(8));
@@ -202,24 +238,21 @@ public final class FxTemplateChooserDialog {
         optionsPane.setCollapsible(false);
         optionsPane.setExpanded(true);
 
-        TitledPane sourcePane = new TitledPane("Select source file", cachedTemplateCombo);
-        sourcePane.setCollapsible(false);
-        TitledPane phenotypeOptionsPane = new TitledPane("Select one phenotype)", options);
-        phenotypeOptionsPane.setCollapsible(false);
-        phenotypeOptionsPane.setMaxHeight(Double.MAX_VALUE);
-        VBox.setVgrow(phenotypeOptionsPane, Priority.ALWAYS);
-
-        VBox center = new VBox(10,
-                sourcePane,
-                phenotypeOptionsPane);
+        options.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
+        VBox phenotypeCol = new VBox(4, sectionLabel("Select phenotype comparison"), options);
         VBox.setVgrow(options, Priority.ALWAYS);
+        VBox.setVgrow(phenotypeCol, Priority.ALWAYS);
+
+        VBox center = new VBox(10, sourceCol, phenotypeCol);
+        VBox.setVgrow(phenotypeCol, Priority.ALWAYS);
+        center.setFillWidth(true);
         center.setPadding(new Insets(8));
 
         BorderPane root = new BorderPane();
         root.setCenter(center);
         root.setBottom(optionsPane);
         dialog.getDialogPane().setContent(root);
-        dialog.getDialogPane().setPrefSize(550, 400);
+        dialog.getDialogPane().setPrefSize(550, 450);
         xapps.gsea.fx.FxTheme.apply(dialog);
         xapps.gsea.fx.FxButtons.stylePrimary(okButton);
         xapps.gsea.fx.FxButtons.styleSecondary(
@@ -267,6 +300,12 @@ public final class FxTemplateChooserDialog {
         return dialog.showAndWait().filter(StringUtils::isNotBlank);
     }
 
+    private static Label sectionLabel(String text) {
+        Label label = new Label(text);
+        label.setStyle("-fx-font-weight: bold;");
+        return label;
+    }
+
     private static void selectMatchingOption(ListView<TemplateDerivative> options, String previousSelection) {
         for (TemplateDerivative td : options.getItems()) {
             String name = td.getName(false, true);
@@ -275,6 +314,21 @@ public final class FxTemplateChooserDialog {
                 return;
             }
         }
+    }
+
+    private static void applyClsSourceFile(
+            File file,
+            TextField clsPath,
+            ComboBox<Template> cachedTemplateCombo,
+            boolean[] comboSourceMode,
+            ListView<TemplateDerivative> options,
+            Dialog<?> dialog,
+            TemplateMode mode) {
+        clsPath.setText(file.getAbsolutePath());
+        cachedTemplateCombo.getSelectionModel().clearSelection();
+        comboSourceMode[0] = false;
+        options.refresh();
+        loadOptions(file, options, dialog, mode);
     }
 
     private static Optional<File> showOnTheFlyFromSampleNames(Window owner) {
@@ -509,14 +563,10 @@ public final class FxTemplateChooserDialog {
         try {
             Template main = ParserFactory.readTemplate(clsFile, true, true, true);
             Template[] tss = qualifyByTypeAndMode(
-                    TemplateFactory.extractAllPossibleTemplates(main, true), false, mode);
+                    TemplateFactory.extractAllPossibleTemplates(main, true), true, mode);
             List<TemplateDerivative> tds = new ArrayList<>();
             for (Template t : tss) {
-                if (t.getName().indexOf('#') != -1 || t.isAux()) {
-                    tds.add(new TemplateDerivatives.AuxTemplateDerivative(t.getName(), main));
-                } else {
-                    tds.add(new TemplateDerivatives.PseudoTemplateDerivative(t));
-                }
+                tds.add(new TemplateDerivatives.AuxTemplateDerivative(t.getName(), main));
             }
             try {
                 Template[] conts = qualifyByTypeAndMode(ParserFactory.readTemplates(clsFile), false, mode);
@@ -632,7 +682,14 @@ public final class FxTemplateChooserDialog {
                 }
             }
         } else if (effective == TemplateMode.ALL) {
-            return tss;
+            for (Template t : tss) {
+                // Skip the non-aux parent template (typically the source file name).
+                if (!t.isContinuous() && !t.isAux() && t.getName().indexOf('#') == -1) {
+                    continue;
+                }
+                list.add(t);
+            }
+            return list.toArray(new Template[0]);
         } else if (effective == TemplateMode.CATEGORICAL_2_CLASS_AND_NUMERIC) {
             for (Template t : tss) {
                 if (t.isContinuous()) {

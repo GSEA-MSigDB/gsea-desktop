@@ -1230,7 +1230,7 @@ public class FxCoreMapPane implements ViewPage {
         nes.setCellValueFactory(c -> c.getValue().nes);
         nes.setPrefWidth(70);
 
-        TableColumn<CoreMapGeneSetRow, Number> np = new TableColumn<>("NOM p");
+        TableColumn<CoreMapGeneSetRow, Number> np = new TableColumn<>("NOM p-Val");
         np.setCellValueFactory(c -> c.getValue().pValue);
         np.setPrefWidth(70);
 

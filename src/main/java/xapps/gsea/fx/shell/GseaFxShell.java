@@ -379,8 +379,13 @@ public class GseaFxShell implements Workspace, Application.Handler {
         return item;
     }
 
-    /** Vertical tool groups: Enrichment Methods, Post-Analysis, Additional Tools, Analysis History. */
+    /** Vertical tool groups: Load Data, Enrichment Methods, Post-Analysis, Additional Tools, Analysis History. */
     private Node buildLeftToolRail() {
+        VBox loadData = new VBox(8,
+                toolButton("Load Data", "Open16.gif", this::openLoadData));
+        loadData.getStyleClass().add("gsea-tool-group");
+        loadData.setPadding(new Insets(8, 6, 8, 6));
+
         VBox enrichment = titledToolGroup("Enrichment Methods",
                 toolButton("GSEA", "GseaApp24.gif", this::openGsea),
                 toolButton("GSEAPreranked", "GseaApp24.gif", this::openGseaPreranked),
@@ -404,7 +409,7 @@ public class GseaFxShell implements Workspace, Application.Handler {
         history.getStyleClass().add("gsea-tool-group");
         history.setPadding(new Insets(8, 6, 8, 6));
 
-        VBox rail = new VBox(10, enrichment, postAnalysis, additional, history);
+        VBox rail = new VBox(10, loadData, enrichment, postAnalysis, additional, history);
         rail.setPadding(new Insets(6));
         // Wide enough for multi-word rail labels + 32px icons without ellipsis.
         rail.setPrefWidth(200);

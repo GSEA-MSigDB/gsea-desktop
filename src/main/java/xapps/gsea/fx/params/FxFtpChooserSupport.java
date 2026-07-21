@@ -3,9 +3,16 @@
  */
 package xapps.gsea.fx.params;
 
+import java.io.File;
+import java.io.InterruptedIOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 import org.apache.commons.lang3.SystemUtils;
 import org.genepattern.io.FTPFile;
@@ -17,15 +24,32 @@ import edu.mit.broad.genome.NamingConventions;
 import edu.mit.broad.genome.alg.ComparatorFactory;
 import edu.mit.broad.genome.objects.MSigDBSpecies;
 import edu.mit.broad.genome.objects.MSigDBVersion;
+import edu.mit.broad.genome.objects.PersistentObject;
 import edu.mit.broad.xbench.core.api.Application;
 import edu.mit.broad.xbench.prefs.XPreferencesFactory;
+import javafx.application.Platform;
+import javafx.collections.FXCollections;
+import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
+import javafx.geometry.Insets;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Dialog;
+import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
+import javafx.scene.control.ProgressIndicator;
+import javafx.scene.control.Tab;
+import javafx.scene.control.TabPane;
+import javafx.scene.control.TextArea;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
+import javafx.scene.layout.VBox;
+import javafx.stage.FileChooser;
+import javafx.stage.Window;
 import xapps.gsea.GseaWebResources;
+import xapps.gsea.fx.FxProgressMonitorRead;
 
 /**
  * Non-UI FTP listing helpers shared by JavaFX gene-set and chip choosers.
@@ -42,6 +66,10 @@ public final class FxFtpChooserSupport {
     public static final String DESELECT_INSTRUCTIONS = SystemUtils.IS_OS_MAC
             ? "Use command-click to select/deselect items."
             : "Use control-click to select/deselect items.";
+
+    public static final String IMPORT_LOCAL_FILE = "Import Local File";
+
+    private static final Map<String, List<FTPFile>> LISTING_CACHE = new ConcurrentHashMap<>();
 
     private FxFtpChooserSupport() {
     }
@@ -88,6 +116,115 @@ public final class FxFtpChooserSupport {
         FTPFile[] arr = files.toArray(new FTPFile[0]);
         Arrays.parallelSort(arr, comparator);
         return Arrays.asList(arr);
+    }
+
+    private static String listingKey(String suffix, MSigDBSpecies species, String ftpDir) {
+        return species.name() + '|' + suffix + '|' + ftpDir;
+    }
+
+    /**
+     * Loads an MSigDB FTP directory listing on a background thread. Results are cached for the
+     * session so reopening a chooser is instant.
+     */
+    public static void loadFtpListingAsync(
+            String suffix,
+            MSigDBSpecies species,
+            String ftpDir,
+            ComparatorFactory.FTPFileByVersionComparator comparator,
+            Consumer<List<FTPFile>> onSuccess,
+            Consumer<Exception> onFailure) {
+        String key = listingKey(suffix, species, ftpDir);
+        List<FTPFile> cached = LISTING_CACHE.get(key);
+        if (cached != null) {
+            Platform.runLater(() -> onSuccess.accept(cached));
+            return;
+        }
+        Task<List<FTPFile>> task = new Task<>() {
+            @Override
+            protected List<FTPFile> call() throws Exception {
+                List<FTPFile> files = listAndSort(suffix, species, ftpDir, comparator);
+                LISTING_CACHE.put(key, files);
+                return files;
+            }
+        };
+        task.setOnSucceeded(e -> onSuccess.accept(task.getValue()));
+        task.setOnFailed(e -> {
+            Throwable t = task.getException();
+            Exception ex = t instanceof Exception exception
+                    ? exception : new Exception(t != null ? t.getMessage() : "FTP listing failed", t);
+            onFailure.accept(ex);
+        });
+        Thread th = new Thread(task, "ftp-listing-" + species.name());
+        th.setDaemon(true);
+        th.start();
+    }
+
+    public static Tab createPendingFtpTab(String title) {
+        Tab tab = new Tab(title);
+        Label status = new Label("Loading MSigDB files from server…");
+        ProgressIndicator progress = new ProgressIndicator();
+        progress.setMaxSize(24, 24);
+        VBox pending = new VBox(8, status, progress);
+        pending.setPadding(new Insets(12));
+        tab.setContent(pending);
+        return tab;
+    }
+
+    public static void finishFtpTab(
+            Tab tab,
+            ListView<FTPFile> listView,
+            Button okButton,
+            List<FTPFile> files,
+            ComparatorFactory.FTPFileByVersionComparator comparator,
+            Function<FTPFile, String> searchText) {
+        listView.setItems(FXCollections.observableArrayList(files));
+        applyLatestVersionBolding(listView, comparator);
+        enableDoubleClickToFire(listView, okButton);
+        tab.setContent(xapps.gsea.fx.FxSearchField.wrapList(listView,
+                f -> f == null ? "" : searchText.apply(f)));
+    }
+
+    public static void failFtpTab(Tab tab, Exception ex) {
+        klog.error(ex.getMessage(), ex);
+        TextArea area = new TextArea(errorListingMessage(ex));
+        area.setEditable(false);
+        area.setWrapText(true);
+        tab.setContent(area);
+    }
+
+    /**
+     * Adds an MSigDB FTP tab that loads only when first selected (never blocks dialog open).
+     */
+    public static void installDeferredFtpTab(
+            TabPane tabs,
+            String title,
+            ListView<FTPFile> listView,
+            Button okButton,
+            String suffix,
+            MSigDBSpecies species,
+            String ftpDir,
+            ComparatorFactory.FTPFileByVersionComparator comparator,
+            Function<FTPFile, String> searchText) {
+        Tab tab = createPendingFtpTab(title);
+        tabs.getTabs().add(tab);
+        AtomicBoolean started = new AtomicBoolean(false);
+        Runnable load = () -> {
+            if (!started.compareAndSet(false, true)) {
+                return;
+            }
+            loadFtpListingAsync(
+                    suffix,
+                    species,
+                    ftpDir,
+                    comparator,
+                    files -> finishFtpTab(tab, listView, okButton, files, comparator, searchText),
+                    ex -> failFtpTab(tab, ex));
+        };
+        tabs.getSelectionModel().selectedItemProperty().addListener((obs, oldTab, selected) -> {
+            if (selected == tab) {
+                load.run();
+            }
+        });
     }
 
     /** Style FTP list cells: bold rows whose name contains the highest MSigDB version id. */
@@ -189,5 +326,125 @@ public final class FxFtpChooserSupport {
                 okButton.fire();
             }
         });
+    }
+
+    /**
+     * Label plus ellipsis button for importing a file from disk into the local cache.
+     */
+    public static HBox importLocalFileRow(Runnable openAction) {
+        Label label = new Label(IMPORT_LOCAL_FILE);
+        Button open = xapps.gsea.fx.FxEllipsisButton.create(IMPORT_LOCAL_FILE);
+        xapps.gsea.fx.FxButtons.styleSecondary(open);
+        open.setOnAction(e -> openAction.run());
+        Region spacer = new Region();
+        HBox row = new HBox(6, label, spacer, open);
+        row.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+        row.setMaxWidth(Double.MAX_VALUE);
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+        return row;
+    }
+
+    /**
+     * Local-cache tab content: import row above a search-wrapped list.
+     */
+    public static VBox wrapLocalTab(VBox searchWrappedList, Runnable openAction) {
+        VBox box = new VBox(6, importLocalFileRow(openAction), searchWrappedList);
+        box.setFillWidth(true);
+        VBox.setVgrow(searchWrappedList, Priority.ALWAYS);
+        return box;
+    }
+
+    public static void browseLocalFiles(
+            Window owner,
+            String title,
+            List<FileChooser.ExtensionFilter> filters,
+            boolean multiple,
+            String seedPath,
+            Consumer<List<File>> onChosen) {
+        FileChooser chooser = new FileChooser();
+        chooser.setTitle(title);
+        if (filters != null) {
+            chooser.getExtensionFilters().addAll(filters);
+        }
+        FxFileChooserUtil.seedInitialDirectory(chooser, seedPath);
+        List<File> chosen;
+        if (multiple) {
+            chosen = chooser.showOpenMultipleDialog(owner);
+            if (chosen == null) {
+                chosen = List.of();
+            }
+        } else {
+            File one = chooser.showOpenDialog(owner);
+            chosen = one != null ? List.of(one) : List.of();
+        }
+        if (!chosen.isEmpty()) {
+            onChosen.accept(chosen);
+        }
+    }
+
+    /**
+     * Parse local files on a background thread (with progress) and deliver loaded objects on the FX thread.
+     */
+    public static void loadLocalFilesAsync(
+            List<File> files,
+            Class<?> expectedType,
+            Consumer<List<PersistentObject>> onLoaded) {
+        if (files == null || files.isEmpty()) {
+            return;
+        }
+        for (File f : files) {
+            FxFileChooserUtil.registerOpened(f);
+        }
+        Task<List<PersistentObject>> task = new Task<>() {
+            @Override
+            protected List<PersistentObject> call() throws Exception {
+                List<PersistentObject> loaded = new ArrayList<>();
+                for (File file : files) {
+                    PersistentObject obj = FxProgressMonitorRead.read(file);
+                    if (!expectedType.isInstance(obj)) {
+                        String got = obj != null ? obj.getClass().getSimpleName() : "null";
+                        throw new IllegalArgumentException(
+                                "Expected " + expectedType.getSimpleName() + " from "
+                                        + file.getName() + ", got " + got);
+                    }
+                    loaded.add(obj);
+                }
+                return loaded;
+            }
+        };
+        task.setOnSucceeded(e -> onLoaded.accept(task.getValue()));
+        task.setOnFailed(e -> {
+            Throwable t = task.getException();
+            if (t != null && !(t instanceof InterruptedIOException)) {
+                Application.getWindowManager().showError("Could not load file", t);
+            }
+        });
+        Thread th = new Thread(task, "load-local-chooser-file");
+        th.setDaemon(true);
+        th.start();
+    }
+
+    public static List<FileChooser.ExtensionFilter> chipFileFilters() {
+        return List.of(
+                new FileChooser.ExtensionFilter("Chip (*.chip)", "*.chip"),
+                new FileChooser.ExtensionFilter("All files", "*.*"));
+    }
+
+    public static List<FileChooser.ExtensionFilter> gmxFileFilters() {
+        return List.of(
+                new FileChooser.ExtensionFilter("Gene set matrix (*.gmt, *.gmx)", "*.gmt", "*.gmx"),
+                new FileChooser.ExtensionFilter("All files", "*.*"));
+    }
+
+    public static List<FileChooser.ExtensionFilter> grpFileFilters() {
+        return List.of(
+                new FileChooser.ExtensionFilter("Gene set (*.grp)", "*.grp"),
+                new FileChooser.ExtensionFilter("All files", "*.*"));
+    }
+
+    public static List<FileChooser.ExtensionFilter> clsFileFilters() {
+        return List.of(
+                new FileChooser.ExtensionFilter("Phenotype (*.cls)", "*.cls"),
+                new FileChooser.ExtensionFilter("All files", "*.*"));
     }
 }

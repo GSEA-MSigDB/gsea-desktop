@@ -850,11 +850,13 @@ public class JavaFxParamEditorFactory implements ParamEditorFactory {
         private final ComboBox<Object> combo = new ComboBox<>();
         private final HBox box = new HBox(6);
         private final Class<?> pobClass;
+        private final List<FileChooser.ExtensionFilter> filters;
         private Object fallbackValue;
 
         private CachedObjectEditor(Param param, Class<?> pobClass, List<FileChooser.ExtensionFilter> filters) {
             super(param);
             this.pobClass = pobClass;
+            this.filters = filters;
 
             combo.setMaxWidth(Double.MAX_VALUE);
             combo.setCellFactory(lv -> xapps.gsea.fx.FxPobListCells.pobNameQuickInfoCell());
@@ -866,6 +868,11 @@ public class JavaFxParamEditorFactory implements ParamEditorFactory {
             HBox.setHgrow(combo, Priority.ALWAYS);
             box.setAlignment(Pos.CENTER_LEFT);
             box.getChildren().add(combo);
+            if (filters != null && !filters.isEmpty()) {
+                Button browse = xapps.gsea.fx.FxEllipsisButton.create("Browse");
+                browse.setOnAction(e -> browseForFile());
+                box.getChildren().add(browse);
+            }
             combo.getSelectionModel().selectedItemProperty().addListener((obs, o, n) -> fireChange());
             combo.setOnShowing(e -> refreshItems());
             try {
@@ -873,6 +880,38 @@ public class JavaFxParamEditorFactory implements ParamEditorFactory {
                         javafx.application.Platform.runLater(this::refreshItems));
             } catch (Throwable ignored) {
             }
+        }
+
+        private void browseForFile() {
+            String seed = null;
+            Object sel = combo.getSelectionModel().getSelectedItem();
+            if (sel != null) {
+                try {
+                    File src = ParserFactory.getCache().getSourceFile(sel);
+                    if (src != null) {
+                        seed = src.getPath();
+                    }
+                } catch (Throwable ignored) {
+                }
+            }
+            if (seed == null && fallbackValue instanceof File) {
+                seed = ((File) fallbackValue).getPath();
+            }
+            FxFtpChooserSupport.browseLocalFiles(
+                    FxFileChooserUtil.windowOf(combo),
+                    param.getNameEnglish() != null ? param.getNameEnglish() : param.getName(),
+                    filters,
+                    false,
+                    seed,
+                    files -> FxFtpChooserSupport.loadLocalFilesAsync(
+                            files,
+                            pobClass,
+                            loaded -> {
+                                refreshItems();
+                                combo.getSelectionModel().select(loaded.get(0));
+                                fallbackValue = null;
+                                fireChange();
+                            }));
         }
 
         private void refreshItems() {

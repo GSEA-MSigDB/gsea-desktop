@@ -292,10 +292,10 @@ public final class GseaReportExplorer implements ReportExplorer {
 
         FlowPane metrics = new FlowPane(8, 6);
         metrics.getChildren().addAll(
-                statChip(fmt(row.nesProperty().get()), "NES"),
                 statChip(fmt(row.esProperty().get()), "ES"),
-                statChip(fmt(row.fdrProperty().get()), "FDR q"),
-                statChip(fmt(row.nomPProperty().get()), "NOM p"),
+                statChip(fmt(row.nesProperty().get()), "NES"),
+                statChip(fmt(row.nomPProperty().get()), "NOM p-Val"),
+                statChip(fmt(row.fdrProperty().get()), "FDR"),
                 statChip(fmt(row.fwerProperty().get()), "FWER"),
                 statChip(String.valueOf(row.sizeProperty().get()), "size"),
                 statChip(String.valueOf(row.rankAtMaxProperty().get()), "rank at max"));

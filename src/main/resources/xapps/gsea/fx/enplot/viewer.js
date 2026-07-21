@@ -222,8 +222,8 @@
     statsEl.innerHTML =
       "<span>ES " + fmt(st.es, 3) + "</span>" +
       "<span>NES " + fmt(st.nes, 2) + "</span>" +
-      "<span>FDR " + fmt(st.fdr, 3) + "</span>" +
       "<span>NOM p " + fmt(st.np, 3) + "</span>" +
+      "<span>FDR " + fmt(st.fdr, 3) + "</span>" +
       "<span>FWER " + fmt(st.fwer, 3) + "</span>" +
       "<span>" + hitCount + " members</span>";
 

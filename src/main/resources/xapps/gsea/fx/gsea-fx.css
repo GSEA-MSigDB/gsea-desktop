@@ -535,3 +535,15 @@
     -fx-cursor: nw-resize;
 }
 
+.gsea-phenotype-combo-source {
+    -fx-text-fill: #9c27b0;
+}
+
+.gsea-root .list-cell:filled:selected {
+    -fx-text-fill: -fx-text-base-color;
+}
+
+.gsea-root.gsea-dark .list-cell:filled:selected .gsea-phenotype-combo-source {
+    -fx-text-fill: #c084fc;
+}
+

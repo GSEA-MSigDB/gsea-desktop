@@ -93,11 +93,11 @@ public final class EnrichmentResultTable {
         nesCol.setCellValueFactory(c -> c.getValue().nesProperty());
         nesCol.setPrefWidth(70);
 
-        TableColumn<EnrichmentResultRow, Number> nomCol = new TableColumn<>("NOM p");
+        TableColumn<EnrichmentResultRow, Number> nomCol = new TableColumn<>("NOM p-Val");
         nomCol.setCellValueFactory(c -> c.getValue().nomPProperty());
         nomCol.setPrefWidth(75);
 
-        TableColumn<EnrichmentResultRow, Number> fdrCol = new TableColumn<>("FDR q");
+        TableColumn<EnrichmentResultRow, Number> fdrCol = new TableColumn<>("FDR");
         fdrCol.setCellValueFactory(c -> c.getValue().fdrProperty());
         fdrCol.setPrefWidth(75);
 

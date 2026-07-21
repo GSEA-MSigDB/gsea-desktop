@@ -124,11 +124,11 @@ public final class CoreMapSelectionCards {
         if (n.rnkScore != null && n.rnkScore != 0) {
             card.getChildren().add(body(String.format(Locale.ROOT, "rnk: %.3f", n.rnkScore)));
         }
-        if (n.nes != null) {
-            card.getChildren().add(body(String.format(Locale.ROOT, "Set NES: %.3f", n.nes)));
-        }
         if (n.enrichmentScore != null) {
             card.getChildren().add(body(String.format(Locale.ROOT, "Best |ES|: %.3f", n.enrichmentScore)));
+        }
+        if (n.nes != null) {
+            card.getChildren().add(body(String.format(Locale.ROOT, "Set NES: %.3f", n.nes)));
         }
         if (n.pValue != null) {
             card.getChildren().add(body(String.format(Locale.ROOT, "Best p: %.2e", n.pValue)));
@@ -405,14 +405,14 @@ public final class CoreMapSelectionCards {
         if (memberGenes != null) {
             card.getChildren().add(body("Members in map: " + memberGenes.size()));
         }
-        if (m.nes != null) {
-            card.getChildren().add(body(String.format(Locale.ROOT, "NES: %.3f", m.nes)));
-        }
         if (m.enrichmentScore != null) {
             card.getChildren().add(body(String.format(Locale.ROOT, "ES: %.3f", m.enrichmentScore)));
         }
+        if (m.nes != null) {
+            card.getChildren().add(body(String.format(Locale.ROOT, "NES: %.3f", m.nes)));
+        }
         if (m.pValue != null) {
-            card.getChildren().add(body("NOM p: " + m.pValue));
+            card.getChildren().add(body("NOM p-Val: " + m.pValue));
         }
         if (m.fdr != null) {
             card.getChildren().add(body("FDR: " + m.fdr));
