@@ -129,11 +129,68 @@ public class JobRuntimeTest {
     }
 
     @Test
-    public void logBufferTracksLastLine() {
-        JobLogBuffer buffer = new JobLogBuffer();
-        buffer.append("line one\n");
-        buffer.append("line two\n");
-        assertEquals("line two", buffer.getLastLine());
+    public void firstJobAutoSelectedSecondDoesNotSteal() throws Exception {
+        CountDownLatch firstWaiting = new CountDownLatch(1);
+        runtime.addListener(job -> {
+            if (job.getState() == JobState.WAITING) {
+                firstWaiting.countDown();
+            }
+        });
+        String runA = runtime.start(new SlowFakeTool(), new ToolParamSet(), Thread.NORM_PRIORITY);
+        assertTrue(firstWaiting.await(5, TimeUnit.SECONDS));
+        assertEquals(runA, runtime.getSelectedJob().getRunId());
+
+        String runB = runtime.start(new SlowFakeTool(), new ToolParamSet(), Thread.NORM_PRIORITY);
+        Thread.sleep(100);
+        assertEquals(runA, runtime.getSelectedJob().getRunId());
+        assertNotNull(runtime.find(runB));
+
+        runtime.setSelectedJob(null);
+        assertEquals(null, runtime.getSelectedJob());
+        runtime.cancel(runA);
+        runtime.cancel(runB);
+    }
+
+    @Test
+    public void toolFactorySnapshotIsolation() throws Exception {
+        Properties snapshot = new Properties();
+        snapshot.setProperty("rpt_label", "keep");
+        snapshot.setProperty("help", "should-be-stripped-in-ctor-copy");
+        Tool tool = edu.mit.broad.xbench.tui.ToolFactory.createTool(
+                QuickFakeTool.class.getName(), snapshot);
+        assertNotNull(tool);
+        // Caller's snapshot must retain help; factory mutates only its copy.
+        assertEquals("should-be-stripped-in-ctor-copy", snapshot.getProperty("help"));
+        assertEquals("keep", snapshot.getProperty("rpt_label"));
+    }
+
+    @Test
+    public void julHandlerRoutesViaAppendLog() throws Exception {
+        runtime.installCapture();
+        appLog.clear();
+        RunContext.unbind();
+        java.util.logging.Logger.getLogger("gsea.test.jul").info("jul-unbound-line");
+        Thread.sleep(100);
+        assertTrue(appLog.getHistoryText().contains("jul-unbound-line"), appLog.getHistoryText());
+
+        CountDownLatch waiting = new CountDownLatch(1);
+        runtime.addListener(job -> {
+            if (job.getState() == JobState.WAITING || job.getState() == JobState.RUNNING) {
+                waiting.countDown();
+            }
+        });
+        String runId = runtime.start(new SlowFakeTool(), new ToolParamSet(), Thread.NORM_PRIORITY);
+        assertTrue(waiting.await(5, TimeUnit.SECONDS));
+        RunContext.bind(runId);
+        try {
+            java.util.logging.Logger.getLogger("gsea.test.jul").info("jul-bound-line");
+            Thread.sleep(100);
+            assertTrue(runtime.find(runId).getLog().getText().contains("jul-bound-line"),
+                    runtime.find(runId).getLog().getText());
+        } finally {
+            RunContext.unbind();
+            runtime.cancel(runId);
+        }
     }
 
     @Test

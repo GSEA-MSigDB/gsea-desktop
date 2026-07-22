@@ -4,7 +4,6 @@
 package xapps.gsea.fx.viewers.coremap;
 
 import java.io.File;
-import java.util.List;
 
 import javafx.geometry.Insets;
 import javafx.scene.control.Button;
@@ -16,8 +15,8 @@ import javafx.scene.layout.VBox;
 import javafx.stage.DirectoryChooser;
 import xapps.gsea.fx.FxButtons;
 import xapps.gsea.fx.params.FxFileChooserUtil;
+import xapps.gsea.fx.params.FxGseaReportXor;
 import xapps.gsea.fx.params.FxReportCacheChooser;
-import xapps.gsea.fx.params.FxReportCacheSupport;
 
 /** Mechanistic / phenotypic GSEA layer folder + cache picker. */
 public final class CoreMapLayerLoadUi {
@@ -101,28 +100,8 @@ public final class CoreMapLayerLoadUi {
 
     /** Resolve without showing conflict dialogs (for auto-parse / job snapshots). */
     public File resolveDirQuiet() {
-        boolean cacheSpecified = cacheChooser.isSpecified();
-        boolean dirSpecified = folderField.getText() != null && !folderField.getText().isBlank();
-        if (cacheSpecified && dirSpecified) {
-            return null;
-        }
-        if (!cacheSpecified && !dirSpecified) {
-            return null;
-        }
-        if (cacheSpecified) {
-            FxReportCacheSupport.CachedReport sel = cacheChooser.getSelectedOne();
-            if (sel != null) {
-                return sel.edbDir;
-            }
-            List<File> dirs = cacheChooser.getReportDirs();
-            if (dirs.isEmpty()) {
-                return null;
-            }
-            File d = dirs.get(0);
-            File nested = new File(d, "edb");
-            return nested.isDirectory() ? nested : d;
-        }
-        String path = folderField.getText().trim();
-        return dir != null && dir.getAbsolutePath().equals(path) ? dir : new File(path);
+        FxGseaReportXor.SingleResult r = FxGseaReportXor.resolveSingle(
+                cacheChooser, folderField.getText(), dir);
+        return r.kind == FxGseaReportXor.Kind.RESOLVED ? r.dir : null;
     }
 }

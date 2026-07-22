@@ -156,23 +156,9 @@ public class FxToolLauncherPane implements ViewPage {
         cmd.setDisable(!ready);
     }
 
-    public static FxToolLauncherPane forTool(Tool tool, String title) {
-        return forTool(tool, title, "ToolLauncher.gif", true, JobRuntime.require());
-    }
-
-    public static FxToolLauncherPane forTool(Tool tool, String title, String iconResourceId) {
-        // LHS tool openers: tool-specific icon, no "Initialized to" banner.
-        return forTool(tool, title, iconResourceId, false, JobRuntime.require());
-    }
-
     public static FxToolLauncherPane forTool(Tool tool, String title, String iconResourceId,
             JobRuntime jobRuntime) {
         return forTool(tool, title, iconResourceId, false, jobRuntime);
-    }
-
-    public static FxToolLauncherPane forTool(Tool tool, String title, String iconResourceId,
-            boolean showInitializedBanner) {
-        return forTool(tool, title, iconResourceId, showInitializedBanner, JobRuntime.require());
     }
 
     public static FxToolLauncherPane forTool(Tool tool, String title, String iconResourceId,

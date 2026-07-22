@@ -43,6 +43,7 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.stage.FileChooser;
 import xapps.gsea.GseaWebResources;
+import xapps.gsea.fx.jobs.JobRuntime;
 import xtools.api.param.ParamSet;
 
 /**
@@ -66,9 +67,9 @@ public class FxLoadDataPane implements ViewPage {
     private volatile boolean loadCancelled;
     private volatile boolean loadInProgress;
 
-    public FxLoadDataPane(Consumer<ViewPage> openPage) {
+    public FxLoadDataPane(Consumer<ViewPage> openPage, JobRuntime jobRuntime) {
         this.openPage = openPage != null ? openPage : page -> { };
-        this.cacheTree = new FxObjectCacheTree(this.openPage);
+        this.cacheTree = new FxObjectCacheTree(this.openPage, jobRuntime);
 
         statusArea.setEditable(false);
         statusArea.setWrapText(true);

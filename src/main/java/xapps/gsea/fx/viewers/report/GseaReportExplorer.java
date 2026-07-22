@@ -5,22 +5,16 @@ package xapps.gsea.fx.viewers.report;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.function.Consumer;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.gsea_msigdb.gsea.ui.api.ViewPage;
 import org.jfree.chart.JFreeChart;
 
-import edu.mit.broad.genome.Constants;
-import edu.mit.broad.genome.objects.Template;
 import edu.mit.broad.genome.objects.esmatrix.db.EnrichmentDb;
 import edu.mit.broad.genome.objects.esmatrix.db.EnrichmentResult;
-import edu.mit.broad.genome.parsers.AuxUtils;
 import edu.mit.broad.genome.parsers.ParserFactory;
 import edu.mit.broad.genome.alg.gsea.GeneSetScoringTable;
 import edu.mit.broad.genome.reports.EnrichmentCharts;
@@ -47,6 +41,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.stage.Window;
+import xapps.gsea.fx.jobs.JobRuntime;
 import xapps.gsea.fx.viewers.FxEnrichmentMapPane;
 import xapps.gsea.fx.viewers.FxLeadingEdgePane;
 import xapps.gsea.fx.viewers.coremap.CoreMapWorkspace;
@@ -66,14 +61,8 @@ public final class GseaReportExplorer implements ReportExplorer {
             "global_es_histogram.png"
     };
 
-    private static final Pattern IMG_SRC = Pattern.compile(
-            "(?i)<img\\b[^>]*\\bsrc\\s*=\\s*['\"]([^'\"]+)['\"]");
-
     private record Loaded(File reportDir, File edbDir, EnrichmentDb edb,
             EnrichmentEsProfiles.ScoringResolution scoring) {
-    }
-
-    private record PhenotypeInfo(String shortName, String longName, boolean positive) {
     }
 
     private record PhenoStats(int enriched, int fdr25, int fdr5, int nom1, int nom5) {
@@ -91,7 +80,7 @@ public final class GseaReportExplorer implements ReportExplorer {
     }
 
     @Override
-    public Node create(Report report, Consumer<ViewPage> openPage) {
+    public Node create(Report report, Consumer<ViewPage> openPage, JobRuntime jobRuntime) {
         Consumer<ViewPage> open = ReportExplorerSupport.safeOpen(openPage);
         File reportDir = ReportExplorerSupport.reportDir(report);
         BorderPane host = new BorderPane();
@@ -105,15 +94,15 @@ public final class GseaReportExplorer implements ReportExplorer {
                             report != null ? report.getParametersUsed() : null);
                     return new Loaded(reportDir, edbDir, ParserFactory.readEdb(edbDir, true), scoring);
                 },
-                data -> buildUi(data, open),
+                data -> buildUi(data, open, jobRuntime),
                 "Could not load enrichment database");
         return host;
     }
 
-    private static Node buildUi(Loaded data, Consumer<ViewPage> openPage) {
+    private static Node buildUi(Loaded data, Consumer<ViewPage> openPage, JobRuntime jobRuntime) {
         EnrichmentDb edb = data.edb();
-        PhenotypeInfo pos = phenotypeInfo(edb, true);
-        PhenotypeInfo neg = phenotypeInfo(edb, false);
+        PhenotypeLabels pos = PhenotypeLabels.from(edb, true);
+        PhenotypeLabels neg = PhenotypeLabels.from(edb, false);
         PhenoStats posStats = PhenoStats.of(edb, true);
         PhenoStats negStats = PhenoStats.of(edb, false);
         int totalSets = edb.getNumResults();
@@ -126,7 +115,7 @@ public final class GseaReportExplorer implements ReportExplorer {
         File leDir = data.edbDir() != null ? data.edbDir() : data.reportDir();
         Button openLe = new Button("Open in Leading Edge");
         xapps.gsea.fx.FxButtons.styleSecondary(openLe);
-        openLe.setOnAction(e -> openLeadingEdge(leDir, openPage));
+        openLe.setOnAction(e -> openLeadingEdge(leDir, openPage, jobRuntime));
 
         Button openEm = new Button("Open in Enrichment Map");
         xapps.gsea.fx.FxButtons.styleSecondary(openEm);
@@ -177,7 +166,7 @@ public final class GseaReportExplorer implements ReportExplorer {
 
     private static void wireExclusiveSelection(
             EnrichmentResultTable primary, EnrichmentResultTable other,
-            PhenotypeInfo primaryInfo, PhenotypeInfo otherInfo,
+            PhenotypeLabels primaryInfo, PhenotypeLabels otherInfo,
             File reportDir, String classA, String classB,
             EnrichmentEsProfiles.ScoringResolution scoring, BorderPane detail) {
         listenSelection(primary, other, primaryInfo, reportDir, classA, classB, scoring, detail);
@@ -186,7 +175,7 @@ public final class GseaReportExplorer implements ReportExplorer {
 
     private static void listenSelection(
             EnrichmentResultTable source, EnrichmentResultTable peer,
-            PhenotypeInfo info, File reportDir, String classA, String classB,
+            PhenotypeLabels info, File reportDir, String classA, String classB,
             EnrichmentEsProfiles.ScoringResolution scoring, BorderPane detail) {
         source.getTable().getSelectionModel().selectedItemProperty().addListener((obs, o, row) -> {
             if (row != null) {
@@ -198,7 +187,7 @@ public final class GseaReportExplorer implements ReportExplorer {
         });
     }
 
-    private static Node overviewBar(EnrichmentDb edb, PhenotypeInfo pos, PhenotypeInfo neg,
+    private static Node overviewBar(EnrichmentDb edb, PhenotypeLabels pos, PhenotypeLabels neg,
             PhenoStats posStats, PhenoStats negStats, EnrichmentEsProfiles.ScoringResolution scoring) {
         int genes = 0;
         try {
@@ -226,7 +215,7 @@ public final class GseaReportExplorer implements ReportExplorer {
         return chips;
     }
 
-    private static Node phenotypePanel(PhenotypeInfo pheno, PhenoStats stats, int totalSets,
+    private static Node phenotypePanel(PhenotypeLabels pheno, PhenoStats stats, int totalSets,
             EnrichmentResultTable table) {
         Label title = new Label(pheno.longName());
         title.getStyleClass().addAll("gsea-pheno-title",
@@ -271,12 +260,12 @@ public final class GseaReportExplorer implements ReportExplorer {
         return hint;
     }
 
-    private static Node buildDetail(File reportDir, EnrichmentResultRow row, PhenotypeInfo pheno,
+    private static Node buildDetail(File reportDir, EnrichmentResultRow row, PhenotypeLabels pheno,
             String classA, String classB, EnrichmentEsProfiles.ScoringResolution scoring) {
         String setName = row.nameProperty().get();
         EnrichmentResult result = row.getResult();
-        File tsv = findGeneSetSibling(reportDir, setName, ".tsv");
-        File html = findGeneSetSibling(reportDir, setName, ".html");
+        File tsv = EnplotReportFiles.findGeneSetSibling(reportDir, setName, ".tsv");
+        File html = EnplotReportFiles.findGeneSetSibling(reportDir, setName, ".html");
 
         Label title = new Label(setName);
         title.getStyleClass().add("gsea-section-header");
@@ -351,8 +340,8 @@ public final class GseaReportExplorer implements ReportExplorer {
             return null;
         }
         String geneSetName = result.getGeneSet().getName(true);
-        File classic = findClassicEnplot(reportDir, geneSetName, html);
-        File v2 = findEnplotV2(reportDir, geneSetName, html);
+        File classic = EnplotReportFiles.findClassicEnplot(reportDir, geneSetName, html);
+        File v2 = EnplotReportFiles.findEnplotV2(reportDir, geneSetName, html);
 
         List<Tab> inner = new ArrayList<>();
         inner.add(ReportExplorerSupport.lazyNodeTab("EnPlot v2",
@@ -434,15 +423,15 @@ public final class GseaReportExplorer implements ReportExplorer {
     private static List<NamedPlot> otherGeneSetPlots(File reportDir, String geneSetName, File html) {
         List<NamedPlot> plots = new ArrayList<>();
         if (html != null && html.isFile()) {
-            for (String src : extractImgSrcs(html)) {
-                String name = fileName(src);
+            for (String src : EnplotReportFiles.extractImgSrcs(html)) {
+                String name = EnplotReportFiles.fileName(src);
                 String lower = name.toLowerCase(Locale.ROOT);
                 if (lower.startsWith("enplot")) {
                     continue;
                 }
-                File image = resolveReportImage(reportDir, src);
+                File image = EnplotReportFiles.resolveReportImage(reportDir, src);
                 if (image != null) {
-                    plots.add(new NamedPlot(plotTitle(name, geneSetName), image));
+                    plots.add(new NamedPlot(EnplotReportFiles.plotTitle(name, geneSetName), image));
                 }
             }
             if (!plots.isEmpty()) {
@@ -465,121 +454,6 @@ public final class GseaReportExplorer implements ReportExplorer {
         return plots;
     }
 
-    private static File findClassicEnplot(File reportDir, String geneSetName, File html) {
-        File fromHtml = findEnplotFromHtml(reportDir, html, false);
-        if (fromHtml != null) {
-            return fromHtml;
-        }
-        if (reportDir == null || geneSetName == null) {
-            return null;
-        }
-        String lowerName = geneSetName.toLowerCase(Locale.ROOT);
-        return ReportExplorerSupport.findFirst(reportDir, n -> {
-            String lower = n.toLowerCase(Locale.ROOT);
-            return lower.startsWith("enplot_" + lowerName)
-                    && !lower.startsWith("enplot2_")
-                    && ReportExplorerSupport.isImageName(n);
-        });
-    }
-
-    private static File findEnplotV2(File reportDir, String geneSetName, File html) {
-        File fromHtml = findEnplotFromHtml(reportDir, html, true);
-        if (fromHtml != null) {
-            return fromHtml;
-        }
-        if (reportDir == null || geneSetName == null) {
-            return null;
-        }
-        String lowerName = geneSetName.toLowerCase(Locale.ROOT);
-        return ReportExplorerSupport.findFirst(reportDir, n -> {
-            String lower = n.toLowerCase(Locale.ROOT);
-            return lower.startsWith("enplot2_" + lowerName) && ReportExplorerSupport.isImageName(n);
-        });
-    }
-
-    private static File findEnplotFromHtml(File reportDir, File html, boolean v2) {
-        if (html == null || !html.isFile()) {
-            return null;
-        }
-        for (String src : extractImgSrcs(html)) {
-            String lower = fileName(src).toLowerCase(Locale.ROOT);
-            boolean match = v2 ? lower.startsWith("enplot2_")
-                    : (lower.startsWith("enplot_") && !lower.startsWith("enplot2_"));
-            if (match) {
-                File image = resolveReportImage(reportDir, src);
-                if (image != null) {
-                    return image;
-                }
-            }
-        }
-        return null;
-    }
-
-    private static List<String> extractImgSrcs(File html) {
-        List<String> srcs = new ArrayList<>();
-        try {
-            Matcher m = IMG_SRC.matcher(Files.readString(html.toPath()));
-            while (m.find()) {
-                String src = m.group(1).trim();
-                if (!src.isEmpty() && !srcs.contains(src)) {
-                    srcs.add(src);
-                }
-            }
-        } catch (Throwable ignored) {
-            // caller falls back to filesystem patterns
-        }
-        return srcs;
-    }
-
-    private static File resolveReportImage(File reportDir, String src) {
-        String name = fileName(src);
-        if (!ReportExplorerSupport.isImageName(name)) {
-            return null;
-        }
-        if (reportDir != null) {
-            File inReport = new File(reportDir, name);
-            if (inReport.isFile()) {
-                return inReport;
-            }
-        }
-        File asPath = new File(src);
-        return asPath.isFile() ? asPath : null;
-    }
-
-    private static String plotTitle(String fileName, String geneSetName) {
-        String lower = fileName.toLowerCase(Locale.ROOT);
-        if (lower.startsWith("enplot2_")) {
-            return "EnPlot v2";
-        }
-        if (lower.startsWith("enplot_")) {
-            return "EnPlot Classic";
-        }
-        if (lower.startsWith("gset_rnd_es_dist")) {
-            return "Null ES distribution";
-        }
-        if (geneSetName != null && lower.startsWith(geneSetName.toLowerCase(Locale.ROOT) + "_")) {
-            return "Heatmap";
-        }
-        int dot = fileName.lastIndexOf('.');
-        return dot > 0 ? fileName.substring(0, dot) : fileName;
-    }
-
-    private static String fileName(String path) {
-        if (path == null || path.isBlank()) {
-            return "";
-        }
-        int slash = Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\'));
-        return slash >= 0 ? path.substring(slash + 1) : path;
-    }
-
-    private static File findGeneSetSibling(File reportDir, String geneSetName, String ext) {
-        if (reportDir == null || geneSetName == null) {
-            return null;
-        }
-        File exact = new File(reportDir, geneSetName + ext);
-        return exact.isFile() ? exact : null;
-    }
-
     private static Node plotsTab(File reportDir) {
         List<File> plots = new ArrayList<>();
         if (reportDir != null) {
@@ -593,45 +467,14 @@ public final class GseaReportExplorer implements ReportExplorer {
         return ReportExplorerSupport.imageGallery(plots);
     }
 
-    /** Naming mirrors EnrichmentReports classA/classB labels. */
-    private static PhenotypeInfo phenotypeInfo(EnrichmentDb edb, boolean positive) {
-        Template template = null;
-        try {
-            template = edb.getTemplate();
-        } catch (Throwable ignored) {
-            // preranked / missing template
-        }
-        if (template == null) {
-            String shortName = Constants.NA + (positive ? "_pos" : "_neg");
-            return new PhenotypeInfo(shortName,
-                    positive ? "positive correlation with profile" : "negative correlation with profile",
-                    positive);
-        }
-        if (template.isContinuous()) {
-            String nn = AuxUtils.getAuxNameOnlyNoHash(template);
-            return new PhenotypeInfo(nn + (positive ? "_pos" : "_neg"),
-                    positive ? "positive correlation with profile" : "negative correlation with profile",
-                    positive);
-        }
-        try {
-            int idx = positive ? 0 : 1;
-            String shortName = template.getClassName(idx);
-            return new PhenotypeInfo(shortName,
-                    shortName + " (" + template.getClass(idx).getSize() + " samples)",
-                    positive);
-        } catch (Throwable t) {
-            String shortName = Constants.NA + (positive ? "_pos" : "_neg");
-            return new PhenotypeInfo(shortName, shortName, positive);
-        }
-    }
-
     private static String fmt(float v) {
         return Float.isNaN(v) ? "NaN" : String.format(Locale.ROOT, "%.4g", v);
     }
 
-    private static void openLeadingEdge(File edbOrReportDir, Consumer<ViewPage> openPage) {
+    private static void openLeadingEdge(File edbOrReportDir, Consumer<ViewPage> openPage,
+            JobRuntime jobRuntime) {
         try {
-            FxLeadingEdgePane pane = new FxLeadingEdgePane();
+            FxLeadingEdgePane pane = new FxLeadingEdgePane(jobRuntime);
             openPage.accept(pane);
             pane.loadFromDirectory(edbOrReportDir);
         } catch (Throwable t) {

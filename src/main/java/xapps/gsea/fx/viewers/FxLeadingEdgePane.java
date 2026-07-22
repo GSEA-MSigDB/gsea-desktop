@@ -36,18 +36,17 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
-import javafx.stage.DirectoryChooser;
 import xapps.gsea.GseaWebResources;
 import xapps.gsea.fx.heatmap.FxChartPane;
 import xapps.gsea.fx.heatmap.FxHeatMapView;
 import xapps.gsea.fx.heatmap.FxJaccardLegend;
 import xapps.gsea.fx.jobs.JobRuntime;
-import xapps.gsea.fx.params.FxFileChooserUtil;
+import xapps.gsea.fx.params.FxGseaReportLoadUi;
 import xapps.gsea.fx.params.FxReportCacheChooser;
-import xapps.gsea.fx.params.FxReportCacheSupport;
 import xapps.gsea.fx.viewers.report.EnrichmentResultRow;
 import xapps.gsea.fx.viewers.report.EnrichmentResultTable;
 import xapps.gsea.fx.viewers.report.LeadingEdgeOutputs;
+import xapps.gsea.fx.viewers.report.PhenotypeLabels;
 import xtools.api.Tool;
 import xtools.api.param.ToolParamSet;
 import xtools.gsea.LeadingEdgeTool;
@@ -91,48 +90,18 @@ public class FxLeadingEdgePane implements ViewPage {
 
     private final BorderPane root = new BorderPane();
     private final TabPane mainTabs = new TabPane();
-    private final TextField folderField = new TextField();
-    private final FxReportCacheChooser cacheChooser = FxReportCacheChooser.single();
+    private final FxGseaReportLoadUi loadUi;
     private final JobRuntime jobRuntime;
-    private File gseaResultDir;
     private int analysisRun = 0;
-
-    public FxLeadingEdgePane() {
-        this(JobRuntime.require());
-    }
 
     public FxLeadingEdgePane(JobRuntime jobRuntime) {
         this.jobRuntime = Objects.requireNonNull(jobRuntime, "jobRuntime");
         LIVE.add(this);
         ensureSharedListener();
-        folderField.setEditable(true);
-        HBox.setHgrow(folderField, Priority.ALWAYS);
-        if (!folderField.getStyleClass().contains("gsea-dir-field")) {
-            folderField.getStyleClass().add("gsea-dir-field");
-        }
-        xapps.gsea.fx.params.FxPathFieldColors.attach(folderField);
-
-        Button chooseFolder = xapps.gsea.fx.FxEllipsisButton.create(
-                "[ OR ] Locate a GSEA report folder from the file system");
-        chooseFolder.setOnAction(e -> chooseFolder());
-
-        Button load = new Button("Load GSEA Results");
-        xapps.gsea.fx.FxButtons.stylePrimary(load);
-        load.setOnAction(e -> loadGseaResults());
-
-        HBox.setHgrow(cacheChooser.getNode(), Priority.ALWAYS);
-
-        HBox cacheRow = new HBox(8,
-                new Label("Select a GSEA result from the application cache"),
-                cacheChooser.getNode());
-        HBox folderRow = xapps.gsea.fx.FxButtons.row(
-                new Label("[ OR ] Locate a GSEA result folder from the file system"),
-                folderField, chooseFolder, load);
-        folderRow.setPadding(new Insets(0, 0, 4, 0));
-        VBox top = new VBox(8, cacheRow, folderRow);
-        top.setPadding(new Insets(12, 12, 4, 12));
+        loadUi = new FxGseaReportLoadUi(FxReportCacheChooser.single(), root, false, false,
+                this::loadGseaResults);
         mainTabs.setTabClosingPolicy(TabPane.TabClosingPolicy.ALL_TABS);
-        root.setTop(top);
+        root.setTop(loadUi.root);
         root.setCenter(mainTabs);
     }
 
@@ -208,59 +177,8 @@ public class FxLeadingEdgePane implements ViewPage {
         }
     }
 
-    private void chooseFolder() {
-        DirectoryChooser chooser = new DirectoryChooser();
-        FxFileChooserUtil.seedInitialDirectory(chooser, folderField.getText());
-        File selected = chooser.showDialog(FxFileChooserUtil.windowOf(root));
-        if (selected == null) {
-            return;
-        }
-        gseaResultDir = selected;
-        folderField.setText(selected.getAbsolutePath());
-        FxFileChooserUtil.registerOpenedDir(selected);
-    }
-
     private void loadGseaResults() {
-        boolean cacheSpecified = cacheChooser.isSpecified();
-        boolean dirSpecified = folderField.getText() != null && !folderField.getText().isBlank();
-        if (cacheSpecified && dirSpecified) {
-            Application.getWindowManager().showMessage(
-                    "Both cache and a brows'ed directory were specified. Only 1 can be specified. Delete one and try again");
-            return;
-        }
-        if (!cacheSpecified && !dirSpecified) {
-            Application.getWindowManager().showMessage(
-                    "No GSEA result folder was specified. Specify one and try again");
-            return;
-        }
-        File dir;
-        if (cacheSpecified) {
-            FxReportCacheSupport.CachedReport sel = cacheChooser.getSelectedOne();
-            if (sel != null) {
-                dir = sel.edbDir;
-            } else {
-                List<File> dirs = cacheChooser.getReportDirs();
-                dir = dirs.isEmpty() ? null : dirs.get(0);
-                if (dir != null) {
-                    File nested = new File(dir, "edb");
-                    if (nested.isDirectory()) {
-                        dir = nested;
-                    }
-                }
-            }
-        } else {
-            String path = folderField.getText().trim();
-            dir = gseaResultDir != null && gseaResultDir.getAbsolutePath().equals(path)
-                    ? gseaResultDir
-                    : new File(path);
-        }
-        if (dir == null) {
-            Application.getWindowManager().showMessage(
-                    "No GSEA result folder was specified. Specify one and try again");
-            return;
-        }
-        // Cache selection must not populate DirParam: preserve the inputs' independent state.
-        loadEdb(dir);
+        loadUi.ifResolvedSingle(this::loadEdb);
     }
 
     /** Open an enrichment result folder (object-cache EnrichmentDb / folder browse). */
@@ -268,11 +186,7 @@ public class FxLeadingEdgePane implements ViewPage {
         if (dir == null) {
             return;
         }
-        gseaResultDir = dir;
-        folderField.setText(dir.getAbsolutePath());
-        // Programmatic/browsed directory loads own DirParam, so avoid a sticky cache+directory XOR.
-        cacheChooser.clearSelection();
-        FxFileChooserUtil.registerOpenedDir(dir);
+        loadUi.setDirectory(dir);
         loadEdb(dir);
     }
 
@@ -282,7 +196,6 @@ public class FxLeadingEdgePane implements ViewPage {
                 EnrichmentDb loaded = ParserFactory.readEdb(dir, true);
                 EnrichmentResult[] results = LeadingEdgeAnalysis.getAllResultsFromEdb(loaded);
                 Platform.runLater(() -> {
-                    this.gseaResultDir = dir;
                     ResultsView view = new ResultsView(loaded, dir, results);
                     Tab tab = new Tab("GSEA Results", view);
                     tab.setClosable(true);
@@ -301,18 +214,11 @@ public class FxLeadingEdgePane implements ViewPage {
     }
 
     private static void applyPhenotypeLabels(EnrichmentDb loaded, Label positive, Label negative) {
-        String pos = "na pos";
-        String neg = "na neg";
-        try {
-            if (loaded.getTemplate() != null) {
-                neg = loaded.getTemplate().getClassName(1);
-            }
-        } catch (Throwable ignored) {
-            // template optional for preranked
-        }
-        positive.setText("positive phenotype: " + pos + "   ");
+        PhenotypeLabels pos = PhenotypeLabels.from(loaded, true);
+        PhenotypeLabels neg = PhenotypeLabels.from(loaded, false);
+        positive.setText("positive phenotype: " + pos.shortName() + "   ");
         positive.setStyle("-fx-text-fill: red;");
-        negative.setText("negative phenotype: " + neg);
+        negative.setText("negative phenotype: " + neg.shortName());
         negative.setStyle("-fx-text-fill: blue;");
     }
 

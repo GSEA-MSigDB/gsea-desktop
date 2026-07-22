@@ -4,8 +4,6 @@
 package xapps.gsea.fx.shell;
 
 import java.io.File;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -20,7 +18,6 @@ import org.slf4j.LoggerFactory;
 
 import edu.mit.broad.genome.Conf;
 import edu.mit.broad.genome.JarResources;
-import edu.mit.broad.genome.StandardException;
 import edu.mit.broad.xbench.core.api.Application;
 import edu.mit.broad.xbench.core.api.FileManager;
 import edu.mit.broad.xbench.core.api.ToolManager;
@@ -31,7 +28,6 @@ import edu.mit.broad.xbench.prefs.XPreferencesFactory;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
-import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.geometry.Rectangle2D;
@@ -39,7 +35,6 @@ import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
-import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
 import javafx.scene.control.Menu;
@@ -49,12 +44,8 @@ import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.control.SplitPane;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
-import javafx.scene.control.TextArea;
 import javafx.scene.image.Image;
-import javafx.scene.input.Clipboard;
-import javafx.scene.input.ClipboardContent;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.stage.Screen;
@@ -594,7 +585,7 @@ public class GseaFxShell implements Workspace, Application.Handler {
 
     private FxLoadDataPane ensureLoadDataPage() {
         if (loadDataPage == null) {
-            loadDataPage = new FxLoadDataPane(this::openPage);
+            loadDataPage = new FxLoadDataPane(this::openPage, jobRuntime);
         }
         return loadDataPage;
     }
@@ -787,102 +778,18 @@ public class GseaFxShell implements Workspace, Application.Handler {
 
     @Override
     public void showError(String message) {
-        runOnFxThreadBlocking(() -> {
-            Alert alert = new Alert(Alert.AlertType.ERROR, message, ButtonType.OK);
-            alert.setHeaderText("Error");
-            alert.initOwner(stage);
-            xapps.gsea.fx.FxTheme.apply(alert);
-            alert.showAndWait();
-            return null;
-        });
+        windowManager.showError(message);
     }
 
     /** Error dialog with an explicit title (used e.g. for a named {@link edu.mit.broad.genome.Errors} bag). */
     public void showError(String title, String message) {
-        runOnFxThreadBlocking(() -> {
-            Alert alert = new Alert(Alert.AlertType.ERROR, message, ButtonType.OK);
-            alert.setHeaderText(title);
-            alert.initOwner(stage);
-            alert.setResizable(true);
-            xapps.gsea.fx.FxTheme.apply(alert);
-            alert.showAndWait();
-            return null;
-        });
+        windowManager.showError(title, message);
     }
 
     @Override
     public void showError(String message, Throwable t) {
         klog.error(message, t);
-        runOnFxThreadBlocking(() -> {
-            showErrorDialog(message, t);
-            return null;
-        });
-    }
-
-    /**
-     * Error dialog with an expandable "Details" stack trace, a Copy button, and (for
-     * {@link StandardException}s) a Help button linking to the matching GSEA User Guide anchor.
-     */
-    private void showErrorDialog(String header, Throwable t) {
-        Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.initOwner(stage);
-        alert.setTitle("Error");
-        alert.setHeaderText(header);
-        String contentText = (t != null && t.getMessage() != null) ? t.getMessage() : header;
-        alert.setContentText(contentText);
-        alert.setResizable(true);
-        xapps.gsea.fx.FxTheme.apply(alert);
-
-        String stackTrace = stackTraceOf(t);
-        if (t != null) {
-            TextArea details = new TextArea(stackTrace);
-            details.setEditable(false);
-            details.setWrapText(false);
-            details.setMaxWidth(Double.MAX_VALUE);
-            details.setMaxHeight(Double.MAX_VALUE);
-            GridPane.setVgrow(details, Priority.ALWAYS);
-            GridPane.setHgrow(details, Priority.ALWAYS);
-
-            GridPane expandable = new GridPane();
-            expandable.setMaxWidth(Double.MAX_VALUE);
-            expandable.add(new Label("Details:"), 0, 0);
-            expandable.add(details, 0, 1);
-            alert.getDialogPane().setExpandableContent(expandable);
-            alert.getDialogPane().setExpanded(false);
-        }
-
-        ButtonType copyType = new ButtonType("Copy Details", ButtonBar.ButtonData.LEFT);
-        alert.getButtonTypes().add(copyType);
-        Button copyButton = (Button) alert.getDialogPane().lookupButton(copyType);
-        copyButton.addEventFilter(ActionEvent.ACTION, e -> {
-            ClipboardContent content = new ClipboardContent();
-            content.putString(header + (stackTrace.isEmpty() ? "" : "\n\n" + stackTrace));
-            Clipboard.getSystemClipboard().setContent(content);
-            e.consume();
-        });
-
-        if (t instanceof StandardException) {
-            int code = ((StandardException) t).getErrorCode();
-            String helpUrl = GseaWebResources.getGseaHelpURL() + "GSEA/GSEA_User_Guide/#error-" + code;
-            ButtonType helpType = new ButtonType("Help", ButtonBar.ButtonData.HELP_2);
-            alert.getButtonTypes().add(helpType);
-            Button helpButton = (Button) alert.getDialogPane().lookupButton(helpType);
-            helpButton.addEventFilter(ActionEvent.ACTION, e -> {
-                browseUrl(helpUrl);
-                e.consume();
-            });
-        }
-
-        alert.showAndWait();
-    }
-
-    private static String stackTraceOf(Throwable t) {
-        if (t == null) {
-            return "";
-        }
-        StringWriter sw = new StringWriter();
-        t.printStackTrace(new PrintWriter(sw));
-        return sw.toString();
+        windowManager.showError(message, t);
     }
 
     @Override

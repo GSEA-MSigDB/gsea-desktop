@@ -23,7 +23,6 @@ import edu.mit.broad.genome.parsers.ParseUtils;
 import edu.mit.broad.genome.parsers.ParserFactory;
 import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
-import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
@@ -132,8 +131,10 @@ public final class FxGeneSetChooserDialog {
                     mouseCmp,
                     f -> f.getName() + " " + f.getPath());
         } else {
-            tabs.getTabs().add(new Tab("Human Collection (MSigDB)", messageArea(FxFtpChooserSupport.OFFLINE_MESSAGE)));
-            tabs.getTabs().add(new Tab("Mouse Collection (MSigDB)", messageArea(FxFtpChooserSupport.OFFLINE_MESSAGE)));
+            tabs.getTabs().add(new Tab("Human Collection (MSigDB)",
+                    FxFtpChooserSupport.messageArea(FxFtpChooserSupport.OFFLINE_MESSAGE)));
+            tabs.getTabs().add(new Tab("Mouse Collection (MSigDB)",
+                    FxFtpChooserSupport.messageArea(FxFtpChooserSupport.OFFLINE_MESSAGE)));
         }
 
         tabs.getSelectionModel().selectedItemProperty().addListener((obs, o, tab) -> {
@@ -190,31 +191,17 @@ public final class FxGeneSetChooserDialog {
             List<Versioned> selected = collectSelectedVersioned(
                     humanList, mouseList, cachedGmx, cachedGrp, subsets);
             if (!speciesOk(selected)) {
-                Alert alert = new Alert(Alert.AlertType.INFORMATION);
-                alert.initOwner(dialog.getDialogPane().getScene().getWindow());
-                alert.setTitle("Multiple species selected");
-                alert.setHeaderText("Multiple species selections are not allowed.");
-                alert.setContentText("Is there a selection on another tab?\n" + FxFtpChooserSupport.DESELECT_INSTRUCTIONS);
-                xapps.gsea.fx.FxTheme.apply(alert);
-                alert.showAndWait();
+                FxFtpChooserSupport.showMultiSelectionInfo(
+                        dialog.getDialogPane().getScene().getWindow(),
+                        "Multiple species selected",
+                        "Multiple species selections are not allowed.");
                 event.consume();
                 return;
             }
             boolean hasOnTheFly = StringUtils.isNotBlank(taGenes.getText());
             if (!versionsOk(selected, hasOnTheFly)) {
-                Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-                alert.initOwner(dialog.getDialogPane().getScene().getWindow());
-                alert.setTitle("Mixed MSigDB versions detected");
-                alert.setHeaderText("Mixed MSigDB versions detected");
-                alert.setContentText(
-                        "Selecting collections from multiple MSigDB versions may result in omitted genes "
-                                + "and is not recommended.\n"
-                                + "NOTE: another tab may have a selection.\n"
-                                + FxFtpChooserSupport.DESELECT_INSTRUCTIONS
-                                + "\n\nClick Cancel to change the selection or OK to keep it.");
-                xapps.gsea.fx.FxTheme.apply(alert);
-                Optional<ButtonType> choice = alert.showAndWait();
-                if (choice.isEmpty() || choice.get() != ButtonType.OK) {
+                if (!FxFtpChooserSupport.confirmMixedMsigdbVersions(
+                        dialog.getDialogPane().getScene().getWindow())) {
                     event.consume();
                 }
             }
@@ -527,12 +514,5 @@ public final class FxGeneSetChooserDialog {
             // Display handled by NonFTPGeneSetsRenderer-style cell factory.
             return name;
         }
-    }
-
-    private static TextArea messageArea(String text) {
-        TextArea area = new TextArea(text);
-        area.setEditable(false);
-        area.setWrapText(true);
-        return area;
     }
 }

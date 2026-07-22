@@ -60,4 +60,24 @@ public final class CoreMapInsightStyles {
             default -> wire;
         };
     }
+
+    public static String evidenceLabel(String wire) {
+        if ("leading_edge".equals(wire)) {
+            return "leading edge (Class 1)";
+        }
+        if ("ranked_extension".equals(wire)) {
+            return "ranked extension (Class 2)";
+        }
+        if ("unranked_extension".equals(wire)) {
+            return "unranked extension (Class 3)";
+        }
+        return wire != null ? wire : "";
+    }
+
+    public static String polarityLabel(Double pol) {
+        if (pol == null || pol == 0) {
+            return "unsigned";
+        }
+        return pol > 0 ? "up" : "down";
+    }
 }

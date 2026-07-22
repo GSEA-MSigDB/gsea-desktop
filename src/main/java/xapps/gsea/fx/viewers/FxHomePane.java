@@ -23,6 +23,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import xapps.gsea.fx.FxReportOpen;
+import xapps.gsea.fx.jobs.JobRuntime;
 
 /** Home page with quick actions and recent analyses. */
 public class FxHomePane implements ViewPage {
@@ -122,7 +123,7 @@ public class FxHomePane implements ViewPage {
             xapps.gsea.fx.FxButtons.styleSecondary(b);
             b.setOnAction(e -> {
                 try {
-                    FxReportOpen.openInApp(stub.getReport(false), openPage);
+                    FxReportOpen.openInApp(stub.getReport(false), openPage, JobRuntime.require());
                 } catch (Exception ex) {
                     Application.getWindowManager().showError("Could not open report", ex);
                 }

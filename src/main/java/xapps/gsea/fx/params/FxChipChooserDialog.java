@@ -18,7 +18,6 @@ import edu.mit.broad.genome.objects.MSigDBSpecies;
 import edu.mit.broad.genome.parsers.ParserFactory;
 import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
-import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
@@ -28,7 +27,6 @@ import javafx.scene.control.ListView;
 import javafx.scene.control.SelectionMode;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
-import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.control.Tooltip;
 import javafx.scene.layout.BorderPane;
@@ -120,9 +118,9 @@ public final class FxChipChooserDialog {
                     f -> f.getName() + " " + f.getPath());
         } else {
             tabs.getTabs().add(new Tab("Human Collection Chips (MSigDB)",
-                    messageArea(FxFtpChooserSupport.OFFLINE_MESSAGE)));
+                    FxFtpChooserSupport.messageArea(FxFtpChooserSupport.OFFLINE_MESSAGE)));
             tabs.getTabs().add(new Tab("Mouse Collection Chips (MSigDB)",
-                    messageArea(FxFtpChooserSupport.OFFLINE_MESSAGE)));
+                    FxFtpChooserSupport.messageArea(FxFtpChooserSupport.OFFLINE_MESSAGE)));
         }
 
         tabs.getSelectionModel().selectedItemProperty().addListener((obs, o, tab) -> {
@@ -159,13 +157,10 @@ public final class FxChipChooserDialog {
             boolean haveCached = cachedChips.getSelectionModel().getSelectedItem() != null;
             int count = (haveHuman ? 1 : 0) + (haveMouse ? 1 : 0) + (haveCached ? 1 : 0);
             if (count > 1) {
-                Alert alert = new Alert(Alert.AlertType.INFORMATION);
-                alert.initOwner(dialog.getDialogPane().getScene().getWindow());
-                alert.setTitle("Multiple CHIPs selected");
-                alert.setHeaderText("Multiple CHIP selections are not allowed.");
-                alert.setContentText("Is there a selection on another tab?\n" + FxFtpChooserSupport.DESELECT_INSTRUCTIONS);
-                xapps.gsea.fx.FxTheme.apply(alert);
-                alert.showAndWait();
+                FxFtpChooserSupport.showMultiSelectionInfo(
+                        dialog.getDialogPane().getScene().getWindow(),
+                        "Multiple CHIPs selected",
+                        "Multiple CHIP selections are not allowed.");
                 event.consume();
             }
         });
@@ -277,12 +272,5 @@ public final class FxChipChooserDialog {
         public String toString() {
             return name;
         }
-    }
-
-    private static TextArea messageArea(String text) {
-        TextArea area = new TextArea(text);
-        area.setEditable(false);
-        area.setWrapText(true);
-        return area;
     }
 }

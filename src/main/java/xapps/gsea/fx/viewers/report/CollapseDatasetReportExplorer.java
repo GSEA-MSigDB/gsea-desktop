@@ -12,6 +12,7 @@ import org.gsea_msigdb.gsea.ui.api.ViewPage;
 import edu.mit.broad.genome.reports.api.Report;
 import javafx.scene.Node;
 import javafx.scene.layout.BorderPane;
+import xapps.gsea.fx.jobs.JobRuntime;
 
 /**
  * Native explorer for CollapseDataset reports: collapsed GCT + etiology table.
@@ -22,14 +23,14 @@ public final class CollapseDatasetReportExplorer implements ReportExplorer {
     }
 
     @Override
-    public Node create(Report report, Consumer<ViewPage> openPage) {
+    public Node create(Report report, Consumer<ViewPage> openPage, JobRuntime jobRuntime) {
         File dir = ReportExplorerSupport.reportDir(report);
         BorderPane host = new BorderPane();
 
         ReportExplorerSupport.loadAsync(host, "collapse-report-explorer",
                 "Loading collapsed dataset…",
                 () -> discover(dir),
-                arts -> buildUi(arts, report, openPage),
+                arts -> buildUi(arts, report, openPage, jobRuntime),
                 "Could not load Collapse Dataset results");
         return host;
     }
@@ -48,9 +49,10 @@ public final class CollapseDatasetReportExplorer implements ReportExplorer {
         return new Artifacts(gct, etiology);
     }
 
-    private static Node buildUi(Artifacts arts, Report report, Consumer<ViewPage> openPage) {
+    private static Node buildUi(Artifacts arts, Report report, Consumer<ViewPage> openPage,
+            JobRuntime jobRuntime) {
         if (arts.gct() == null && arts.etiology() == null) {
-            return new GenericFilesExplorer().create(report, openPage);
+            return new GenericFilesExplorer().create(report, openPage, jobRuntime);
         }
         if (arts.etiology() == null) {
             return ReportExplorerSupport.tabPane(

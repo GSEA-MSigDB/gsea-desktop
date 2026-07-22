@@ -67,7 +67,7 @@ public final class FxJobsPane {
     private final Button folderBtn = new Button("Folder");
     private final Button clearLogBtn = new Button("Clear log");
     private final Button copyLogBtn = new Button("Copy");
-    private JobLogBuffer attachedLog;
+    private LogBuffer attachedLog;
     private String logTitleText = "Log";
     private boolean logExpanded;
     private final Consumer<String> logListener = this::onLogChunk;
@@ -86,7 +86,9 @@ public final class FxJobsPane {
         list.setPlaceholder(new Label("No jobs yet"));
         list.setCellFactory(lv -> new JobListCell());
         list.getSelectionModel().selectedItemProperty().addListener((obs, o, n) -> {
-            runtime.setSelectedJob(n);
+            if (runtime.getSelectedJob() != n) {
+                runtime.setSelectedJob(n);
+            }
             bindLog(n);
             updateActions(n);
             if (o != null) {
@@ -97,7 +99,13 @@ public final class FxJobsPane {
             }
         });
         runtime.selectedJobProperty().addListener((obs, o, n) -> {
-            if (n != null && n != list.getSelectionModel().getSelectedItem()) {
+            JobRecord current = list.getSelectionModel().getSelectedItem();
+            if (n == current) {
+                return;
+            }
+            if (n == null) {
+                list.getSelectionModel().clearSelection();
+            } else {
                 list.getSelectionModel().select(n);
             }
         });
@@ -308,15 +316,11 @@ public final class FxJobsPane {
         }
         JobState state = job.getState();
         if (state == JobState.ERROR || state == JobState.INVALID_PARAM) {
-            Throwable t = job.getLastError();
-            String title = state == JobState.INVALID_PARAM
-                    ? "One or more parameter(s) were not specified"
-                    : "Tool execution error";
-            Application.getWindowManager().showError(title, t);
+            JobErrors.showIfNeeded(job);
             return;
         }
         if (state != null && state.isSuccess()) {
-            FxReportOpen.openFromJob(job, openPage);
+            FxReportOpen.openFromJob(job, openPage, runtime);
         }
     }
 
@@ -346,7 +350,7 @@ public final class FxJobsPane {
                     "No saved parameters are available to reopen " + job.getName() + ".");
             return;
         }
-        FxToolRelaunch.showInToolRunner(tool, paramSnapshot, openPage);
+        FxToolRelaunch.showInToolRunner(tool, paramSnapshot, openPage, runtime);
     }
 
     private void openFolder() {

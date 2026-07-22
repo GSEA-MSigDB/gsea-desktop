@@ -14,6 +14,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import xapps.gsea.fx.jobs.JobRuntime;
 import xapps.gsea.fx.viewers.FxReportFilesList;
 
 /**
@@ -22,7 +23,7 @@ import xapps.gsea.fx.viewers.FxReportFilesList;
 public final class GenericFilesExplorer implements ReportExplorer {
 
     @Override
-    public Node create(Report report, Consumer<ViewPage> openPage) {
+    public Node create(Report report, Consumer<ViewPage> openPage, JobRuntime jobRuntime) {
         ListView<java.io.File> filesList = FxReportFilesList.create(report.getFilesProduced(), openPage);
         Label hint = new Label("Files produced as part of this analysis (double-click to view)");
         VBox box = new VBox(8, hint, filesList);

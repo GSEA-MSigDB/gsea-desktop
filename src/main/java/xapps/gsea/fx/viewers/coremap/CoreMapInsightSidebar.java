@@ -689,7 +689,7 @@ public final class CoreMapInsightSidebar extends VBox {
                 setText(null);
                 return;
             }
-            Label title = new Label(CoreMapCascadeUi.mechLabel(b) + " → " + CoreMapCascadeUi.phenoLabel(b));
+            Label title = new Label(CoreMapInsightSummaries.bridgeTitle(b));
 
             HBox chips = new HBox(6);
             String kind = CoreMapCascadeUi.evidenceKindLabel(b);
@@ -705,25 +705,15 @@ public final class CoreMapInsightSidebar extends VBox {
                     ? CoreMapCascadeUi.cascadeBranchDiagram(b, true)
                     : CoreMapCascadeUi.cascadeChainFlow(b.nodes, b.hops);
 
-            StringBuilder metaSb = new StringBuilder(String.format(Locale.ROOT, "%.3f", b.bridgeScore));
-            if (pathCount > 1) {
-                metaSb.append(" · ").append(pathCount).append(" cascades");
-            }
-            metaSb.append(" · ").append(CoreMapCascadeUi.alignmentLabel(b.directionAlignment));
-            String emp = CoreMapCascadeUi.empiricalPLabel(b);
-            if (emp != null) {
-                metaSb.append(" · ").append(emp);
-            }
-
             VBox card = new VBox(4, title);
             if (!chips.getChildren().isEmpty()) {
                 card.getChildren().add(chips);
             }
             card.getChildren().add(cascade);
-            card.getChildren().add(meta(metaSb.toString()));
-            String related = CoreMapCascadeUi.relatedSetsText(b);
+            card.getChildren().add(meta(CoreMapInsightSummaries.bridgeMeta(b, false)));
+            String related = CoreMapInsightSummaries.relatedSetsLine(b, false);
             if (related != null) {
-                card.getChildren().add(meta("Related: " + related));
+                card.getChildren().add(meta(related));
             }
             card.setPadding(new Insets(8, 6, 8, 6));
             if (isBridgeActive(b)) {
@@ -752,14 +742,14 @@ public final class CoreMapInsightSidebar extends VBox {
                 return;
             }
             Label title = new Label(d.gene);
-            String metaText = String.format(Locale.ROOT, "score %.3f · concordance %.2f",
-                    d.sharedDriverScore, d.directionConcordance);
-            VBox card = new VBox(4, title, meta(metaText));
-            if (d.mechanisticSets != null && !d.mechanisticSets.isEmpty()) {
-                card.getChildren().add(meta("Mech: " + String.join(", ", d.mechanisticSets)));
+            VBox card = new VBox(4, title, meta(CoreMapInsightSummaries.driverScoreLine(d)));
+            String mech = CoreMapInsightSummaries.driverMechSets(d, true);
+            if (mech != null) {
+                card.getChildren().add(meta(mech));
             }
-            if (d.phenotypicSets != null && !d.phenotypicSets.isEmpty()) {
-                card.getChildren().add(meta("Pheno: " + String.join(", ", d.phenotypicSets)));
+            String pheno = CoreMapInsightSummaries.driverPhenoSets(d, true);
+            if (pheno != null) {
+                card.getChildren().add(meta(pheno));
             }
             card.setPadding(new Insets(8, 6, 8, 6));
             if (isGeneActive(d.gene)) {
@@ -788,12 +778,10 @@ public final class CoreMapInsightSidebar extends VBox {
                 return;
             }
             Label title = new Label(h.gene);
-            String layer = h.layer != null ? CoreMapInsightStyles.layerLabel(h.layer.wire()) : "";
-            String metaText = String.format(Locale.ROOT, "%s · hub %.3f · degree %d",
-                    layer, h.hubScore, h.degree);
-            VBox card = new VBox(4, title, meta(metaText));
-            if (h.sets != null && !h.sets.isEmpty()) {
-                card.getChildren().add(meta(String.join(", ", h.sets)));
+            VBox card = new VBox(4, title, meta(CoreMapInsightSummaries.hubMeta(h, false)));
+            String sets = CoreMapInsightSummaries.hubSets(h, false);
+            if (sets != null) {
+                card.getChildren().add(meta(sets));
             }
             card.setPadding(new Insets(8, 6, 8, 6));
             if (isGeneActive(h.gene)) {

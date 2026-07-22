@@ -29,6 +29,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import xapps.gsea.fx.FxButtons;
+import xapps.gsea.fx.jobs.JobRuntime;
 import xapps.gsea.fx.viewers.coremap.CoreMapWorkspace;
 
 /**
@@ -39,10 +40,10 @@ public final class CoreMapReportExplorer implements ReportExplorer {
     private static final Logger klog = LoggerFactory.getLogger(CoreMapReportExplorer.class);
 
     @Override
-    public Node create(Report report, Consumer<ViewPage> openPage) {
+    public Node create(Report report, Consumer<ViewPage> openPage, JobRuntime jobRuntime) {
         File dir = ReportExplorerSupport.reportDir(report);
         if (dir == null || !CoreMapJobStore.looksLikeJobDir(dir)) {
-            return new GenericFilesExplorer().create(report, openPage);
+            return new GenericFilesExplorer().create(report, openPage, jobRuntime);
         }
 
         TextArea summary = new TextArea(buildSummary(dir));
@@ -68,7 +69,7 @@ public final class CoreMapReportExplorer implements ReportExplorer {
         BorderPane pane = new BorderPane(box);
         return ReportExplorerSupport.tabPane(
                 new Tab("CoreMap", pane),
-                new Tab("Files", new GenericFilesExplorer().create(report, openPage)));
+                new Tab("Files", new GenericFilesExplorer().create(report, openPage, jobRuntime)));
     }
 
     private static String buildSummary(File dir) {

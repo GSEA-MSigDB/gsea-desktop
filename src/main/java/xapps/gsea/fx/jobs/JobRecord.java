@@ -23,7 +23,7 @@ public final class JobRecord {
     private final StringProperty name = new SimpleStringProperty();
     private final ObjectProperty<JobState> state = new SimpleObjectProperty<>(JobState.WAITING);
     private final StringProperty statusLabel = new SimpleStringProperty(JobState.WAITING.defaultLabel());
-    private final JobLogBuffer log = new JobLogBuffer();
+    private final LogBuffer log = new LogBuffer();
     private final long startedAtMillis = System.currentTimeMillis();
     private volatile Long finishedAtMillis;
     private volatile File reportDir;
@@ -76,7 +76,7 @@ public final class JobRecord {
         return statusLabel.get();
     }
 
-    public JobLogBuffer getLog() {
+    public LogBuffer getLog() {
         return log;
     }
 

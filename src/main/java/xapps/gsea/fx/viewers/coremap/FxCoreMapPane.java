@@ -563,63 +563,45 @@ public class FxCoreMapPane implements ViewPage {
 
     private void styleInteractomeSourceCombo() {
         interactomeSource.setPrefWidth(260);
-        interactomeSource.setButtonCell(interactomeSourceCell());
-        interactomeSource.setCellFactory(lv -> interactomeSourceCell());
-    }
-
-    private static javafx.scene.control.ListCell<String> interactomeSourceCell() {
-        return new javafx.scene.control.ListCell<>() {
-            @Override
-            protected void updateItem(String item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || item == null) {
-                    setText(null);
-                    return;
-                }
-                setText(switch (item) {
-                    case "fused" -> "Fused (SIGNOR + STRING)";
-                    case "signor" -> "SIGNOR (directed causal)";
-                    case "string" -> "STRING (functional + regulatory)";
-                    case "none" -> "None (set co-membership only)";
-                    default -> item;
-                });
-            }
-        };
+        styleLabeledCombo(interactomeSource, item -> switch (item) {
+            case "fused" -> "Fused (SIGNOR + STRING)";
+            case "signor" -> "SIGNOR (directed causal)";
+            case "string" -> "STRING (functional + regulatory)";
+            case "none" -> "None (set co-membership only)";
+            default -> item;
+        });
     }
 
     private void styleStringModeCombo() {
         stringMode.setPrefWidth(140);
-        stringMode.setButtonCell(stringModeCell());
-        stringMode.setCellFactory(lv -> stringModeCell());
-    }
-
-    private static javafx.scene.control.ListCell<String> stringModeCell() {
-        return new javafx.scene.control.ListCell<>() {
-            @Override
-            protected void updateItem(String item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || item == null) {
-                    setText(null);
-                    return;
-                }
-                setText(switch (item) {
-                    case "integrated" -> "Integrated";
-                    case "regulatory" -> "Regulatory";
-                    case "functional" -> "Functional";
-                    case "physical" -> "Physical";
-                    default -> item;
-                });
-            }
-        };
+        styleLabeledCombo(stringMode, item -> switch (item) {
+            case "integrated" -> "Integrated";
+            case "regulatory" -> "Regulatory";
+            case "functional" -> "Functional";
+            case "physical" -> "Physical";
+            default -> item;
+        });
     }
 
     private void styleSignorQueryCombo() {
         signorQueryType.setPrefWidth(200);
-        signorQueryType.setButtonCell(signorQueryCell());
-        signorQueryType.setCellFactory(lv -> signorQueryCell());
+        styleLabeledCombo(signorQueryType, item -> switch (item) {
+            case "connect" -> "Connect — links among enrichment genes";
+            case "all" -> "All — every relation involving enrichment genes";
+            default -> item;
+        });
     }
 
-    private static javafx.scene.control.ListCell<String> signorQueryCell() {
+    private static void styleLabeledCombo(ComboBox<String> combo,
+            java.util.function.Function<String, String> labelOf) {
+        javafx.util.Callback<javafx.scene.control.ListView<String>, javafx.scene.control.ListCell<String>> factory =
+                lv -> labeledCell(labelOf);
+        combo.setButtonCell(labeledCell(labelOf));
+        combo.setCellFactory(factory);
+    }
+
+    private static javafx.scene.control.ListCell<String> labeledCell(
+            java.util.function.Function<String, String> labelOf) {
         return new javafx.scene.control.ListCell<>() {
             @Override
             protected void updateItem(String item, boolean empty) {
@@ -628,11 +610,7 @@ public class FxCoreMapPane implements ViewPage {
                     setText(null);
                     return;
                 }
-                setText(switch (item) {
-                    case "connect" -> "Connect — links among enrichment genes";
-                    case "all" -> "All — every relation involving enrichment genes";
-                    default -> item;
-                });
+                setText(labelOf.apply(item));
             }
         };
     }
@@ -1041,11 +1019,7 @@ public class FxCoreMapPane implements ViewPage {
         if (lastResult == null) {
             return false;
         }
-        ViewMode mode = switch (viewMode.getValue() != null ? viewMode.getValue() : "connectome") {
-            case "genes" -> ViewMode.GENES;
-            case "sets" -> ViewMode.SETS;
-            default -> ViewMode.CONNECTOME;
-        };
+        ViewMode mode = toViewMode(viewMode.getValue());
         graphView.showResult(lastResult, mode, graphInteractomeSource(), GeneVisibility.ALL, genes, edgePairs);
         return true;
     }
@@ -2143,11 +2117,7 @@ public class FxCoreMapPane implements ViewPage {
         if (lastResult == null) {
             return;
         }
-        ViewMode mode = switch (viewMode.getValue() != null ? viewMode.getValue() : "connectome") {
-            case "genes" -> ViewMode.GENES;
-            case "sets" -> ViewMode.SETS;
-            default -> ViewMode.CONNECTOME;
-        };
+        ViewMode mode = toViewMode(viewMode.getValue());
         GeneVisibility visibility = switch (geneVisibility.getValue() != null ? geneVisibility.getValue() : "cascade") {
             case "mechanism" -> GeneVisibility.MECHANISM;
             case "all" -> GeneVisibility.ALL;
@@ -2155,6 +2125,14 @@ public class FxCoreMapPane implements ViewPage {
         };
         InteractomeSource src = graphInteractomeSource();
         graphView.showResult(lastResult, mode, src, visibility);
+    }
+
+    private static ViewMode toViewMode(String wire) {
+        return switch (wire != null ? wire : "connectome") {
+            case "genes" -> ViewMode.GENES;
+            case "sets" -> ViewMode.SETS;
+            default -> ViewMode.CONNECTOME;
+        };
     }
 
     private void updateGeneVisibilityEnabled() {

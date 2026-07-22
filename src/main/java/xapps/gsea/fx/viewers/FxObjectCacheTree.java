@@ -43,6 +43,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import xapps.gsea.fx.jobs.JobRuntime;
 
 /**
  * Tree of objects currently held in {@link ParserFactory#getCache()}, organized by type.
@@ -54,10 +55,12 @@ public class FxObjectCacheTree {
     private final BorderPane root = new BorderPane();
     private final TreeView<CacheNode> treeView = new TreeView<>();
     private final Consumer<ViewPage> openPage;
+    private final JobRuntime jobRuntime;
     private String filterQuery = "";
 
-    public FxObjectCacheTree(Consumer<ViewPage> openPage) {
+    public FxObjectCacheTree(Consumer<ViewPage> openPage, JobRuntime jobRuntime) {
         this.openPage = openPage != null ? openPage : page -> { };
+        this.jobRuntime = jobRuntime;
 
         Label header = new Label("Object cache\n(objects already loaded & ready for use)");
         header.getStyleClass().add("gsea-section-header");
@@ -361,7 +364,7 @@ public class FxObjectCacheTree {
         try {
             if (pob instanceof EnrichmentDb edb) {
                 File dir = edb.getEdbDir();
-                FxLeadingEdgePane pane = new FxLeadingEdgePane();
+                FxLeadingEdgePane pane = new FxLeadingEdgePane(jobRuntime);
                 if (dir != null && dir.isDirectory()) {
                     pane.loadFromDirectory(dir);
                 }

@@ -15,6 +15,7 @@ import edu.mit.broad.genome.reports.api.Report;
 import javafx.scene.Node;
 import javafx.scene.control.Tab;
 import javafx.scene.layout.BorderPane;
+import xapps.gsea.fx.jobs.JobRuntime;
 
 /**
  * Native explorer for Chip2Chip reports: mapped GMT + etiology summary.
@@ -26,14 +27,14 @@ public final class Chip2ChipReportExplorer implements ReportExplorer {
     }
 
     @Override
-    public Node create(Report report, Consumer<ViewPage> openPage) {
+    public Node create(Report report, Consumer<ViewPage> openPage, JobRuntime jobRuntime) {
         File dir = ReportExplorerSupport.reportDir(report);
         BorderPane host = new BorderPane();
 
         ReportExplorerSupport.loadAsync(host, "chip2chip-report-explorer",
                 "Loading Chip2Chip results…",
                 () -> discover(dir),
-                arts -> buildUi(arts, report, openPage),
+                arts -> buildUi(arts, report, openPage, jobRuntime),
                 "Could not load Chip2Chip results");
         return host;
     }
@@ -66,9 +67,10 @@ public final class Chip2ChipReportExplorer implements ReportExplorer {
         return new Artifacts(mapped, summaryTsv, etiologySummary);
     }
 
-    private static Node buildUi(Artifacts arts, Report report, Consumer<ViewPage> openPage) {
+    private static Node buildUi(Artifacts arts, Report report, Consumer<ViewPage> openPage,
+            JobRuntime jobRuntime) {
         if (arts.mapped() == null && arts.summaryTsv() == null && arts.etiologySummary() == null) {
-            return new GenericFilesExplorer().create(report, openPage);
+            return new GenericFilesExplorer().create(report, openPage, jobRuntime);
         }
         List<Tab> tabs = new ArrayList<>();
         tabs.add(ReportExplorerSupport.lazyFileTab("Mapped gene sets",

@@ -7,6 +7,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.function.Consumer;
 
@@ -31,6 +32,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
+import xapps.gsea.fx.jobs.JobRuntime;
 import xapps.gsea.fx.tui.FxToolRelaunch;
 import xapps.gsea.fx.viewers.report.ReportExplorerRegistry;
 import xapps.gsea.fx.viewers.report.ReportKind;
@@ -45,11 +47,13 @@ public class FxReportViewer implements ViewPage {
     private final ReportKind kind;
     private final BorderPane root = new BorderPane();
     private final Consumer<ViewPage> openPage;
+    private final JobRuntime jobRuntime;
     private final CheckBox loadDataCheck = new CheckBox("Load data");
 
-    public FxReportViewer(Report report, Consumer<ViewPage> openPage) {
+    public FxReportViewer(Report report, Consumer<ViewPage> openPage, JobRuntime jobRuntime) {
         this.report = report;
         this.openPage = openPage != null ? openPage : page -> { };
+        this.jobRuntime = Objects.requireNonNull(jobRuntime, "jobRuntime");
         this.kind = ReportKind.from(report);
 
         root.getStyleClass().add("gsea-report-shell");
@@ -81,7 +85,7 @@ public class FxReportViewer implements ViewPage {
         xapps.gsea.fx.FxButtons.stylePrimary(showInToolRunner);
         xapps.gsea.fx.FxButtons.sizeToContent(showInToolRunner);
         showInToolRunner.setOnAction(e -> FxToolRelaunch.showInToolRunner(
-                report, loadDataCheck.isSelected(), this.openPage));
+                report, loadDataCheck.isSelected(), this.openPage, jobRuntime));
 
         Button openHtml = new Button("Open HTML report");
         openHtml.setTooltip(new javafx.scene.control.Tooltip(
@@ -97,7 +101,7 @@ public class FxReportViewer implements ViewPage {
         toolbar.setAlignment(Pos.CENTER_LEFT);
         toolbar.setPadding(new Insets(8, 14, 8, 14));
 
-        Node results = ReportExplorerRegistry.forKind(kind).create(report, this.openPage);
+        Node results = ReportExplorerRegistry.forKind(kind).create(report, this.openPage, jobRuntime);
         if (results instanceof javafx.scene.layout.Region region) {
             region.setMinSize(0, 0);
             region.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);

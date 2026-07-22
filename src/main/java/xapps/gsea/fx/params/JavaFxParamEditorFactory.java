@@ -152,6 +152,19 @@ public class JavaFxParamEditorFactory implements ParamEditorFactory {
         return String.valueOf(v);
     }
 
+    private static boolean containsByString(List<Object> items, Object value) {
+        String vs = displayText(value);
+        if (vs.isEmpty() || items == null) {
+            return false;
+        }
+        for (Object item : items) {
+            if (item != null && vs.equals(displayText(item))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private static String elementDisplayText(Object el) {
         if (el instanceof File) {
             return ((File) el).getPath();
@@ -469,19 +482,6 @@ public class JavaFxParamEditorFactory implements ParamEditorFactory {
             return false;
         }
 
-        private static boolean containsByString(List<Object> items, Object value) {
-            String vs = displayText(value);
-            if (vs.isEmpty()) {
-                return false;
-            }
-            for (Object item : items) {
-                if (item != null && vs.equals(displayText(item))) {
-                    return true;
-                }
-            }
-            return false;
-        }
-
         @Override
         public Object getValue() {
             return combo.getSelectionModel().getSelectedItem();
@@ -534,19 +534,6 @@ public class JavaFxParamEditorFactory implements ParamEditorFactory {
             selectByString(value != null ? value : unsetIfEmptyArray(param.getDefault()));
             combo.setMaxWidth(Double.MAX_VALUE);
             combo.getSelectionModel().selectedItemProperty().addListener((obs, o, n) -> fireChange());
-        }
-
-        private static boolean containsByString(List<Object> items, Object value) {
-            String vs = displayText(value);
-            if (vs.isEmpty()) {
-                return false;
-            }
-            for (Object item : items) {
-                if (item != null && vs.equals(displayText(item))) {
-                    return true;
-                }
-            }
-            return false;
         }
 
         private static ListCell<Object> featureSpaceCell(boolean descriptive) {

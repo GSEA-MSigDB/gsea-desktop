@@ -82,6 +82,11 @@ public class FxWorkspaceWindowManager implements WindowManager {
         presentErrorAlert(msg, combineMessage(msg, t), stackTraceOf(t), findStandardException(t));
     }
 
+    /** Named error bag without a Throwable (explicit title + body). */
+    public void showError(String title, String message) {
+        presentErrorAlert(title, message, null, null);
+    }
+
     @Override
     public boolean showConfirm(String msg) {
         return showConfirm("Please confirm this action", msg);

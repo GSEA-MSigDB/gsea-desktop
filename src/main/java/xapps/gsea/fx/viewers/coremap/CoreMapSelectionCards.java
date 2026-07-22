@@ -31,27 +31,16 @@ public final class CoreMapSelectionCards {
 
     public static VBox bridgeCard(Bridge bridge, Consumer<String> onGeneClick) {
         VBox card = cardRoot();
-        card.getChildren().add(heading(CoreMapCascadeUi.mechLabel(bridge) + " → " + CoreMapCascadeUi.phenoLabel(bridge)));
-
-        int pathCount = bridge.pathCount != null ? bridge.pathCount : 1;
-        StringBuilder meta = new StringBuilder(String.format(Locale.ROOT, "Bridge score: %.3f", bridge.bridgeScore));
-        if (pathCount > 1) {
-            meta.append(" · ").append(pathCount).append(" cascades");
-        }
-        meta.append(" · ").append(CoreMapCascadeUi.alignmentLabel(bridge.directionAlignment));
-        String emp = CoreMapCascadeUi.empiricalPLabel(bridge);
-        if (emp != null) {
-            meta.append(" · ").append(emp);
-        }
-        card.getChildren().add(body(meta.toString()));
+        card.getChildren().add(heading(CoreMapInsightSummaries.bridgeTitle(bridge)));
+        card.getChildren().add(body(CoreMapInsightSummaries.bridgeMeta(bridge, true)));
 
         String kind = CoreMapCascadeUi.evidenceKindLabel(bridge);
         if (kind != null) {
             card.getChildren().add(new HBox(CoreMapInsightStyles.chip(kind, kind.startsWith("association"))));
         }
-        String related = CoreMapCascadeUi.relatedSetsText(bridge);
+        String related = CoreMapInsightSummaries.relatedSetsLine(bridge, true);
         if (related != null) {
-            card.getChildren().add(muted("Related sets: " + related));
+            card.getChildren().add(muted(related));
         }
         card.getChildren().add(section("Cascades"));
         card.getChildren().add(CoreMapCascadeUi.cascadeBranchDiagram(bridge, false));
@@ -82,12 +71,13 @@ public final class CoreMapSelectionCards {
                 "Highlights cascade genes, cascade edges, and set membership. "
                         + "Ctrl/Cmd+click a bridge to add or remove."));
         for (Bridge path : bridges) {
+            String scoreOnly = String.format(Locale.ROOT, "score %.3f%s", path.bridgeScore,
+                    (path.pathCount != null && path.pathCount > 1)
+                            ? " · " + path.pathCount + " cascades" : "");
             VBox row = new VBox(2,
-                    body(CoreMapCascadeUi.mechLabel(path) + " → " + CoreMapCascadeUi.phenoLabel(path)),
+                    body(CoreMapInsightSummaries.bridgeTitle(path)),
                     CoreMapCascadeUi.cascadeChainFlow(path.nodes, path.hops),
-                    muted(String.format(Locale.ROOT, "score %.3f%s", path.bridgeScore,
-                            (path.pathCount != null && path.pathCount > 1)
-                                    ? " · " + path.pathCount + " cascades" : "")));
+                    muted(scoreOnly));
             row.setPadding(new Insets(4, 0, 4, 0));
             card.getChildren().add(row);
         }
@@ -101,7 +91,7 @@ public final class CoreMapSelectionCards {
             Hyperlink uni = new Hyperlink(n.uniprot);
             final String accession = n.uniprot;
             uni.setOnAction(e -> openUri("https://www.uniprot.org/uniprotkb/" + accession));
-            HBox row = new HBox(6, bold("UniProt:"), uni);
+            HBox row = new HBox(6, section("UniProt:"), uni);
             row.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
             card.getChildren().add(row);
         }
@@ -119,7 +109,7 @@ public final class CoreMapSelectionCards {
         }
         card.getChildren().add(body(conf));
         if (n.evidenceClass != null) {
-            card.getChildren().add(body("Evidence: " + evidenceLabel(n.evidenceClass.wire())));
+            card.getChildren().add(body("Evidence: " + CoreMapInsightStyles.evidenceLabel(n.evidenceClass.wire())));
         }
         if (n.rnkScore != null && n.rnkScore != 0) {
             card.getChildren().add(body(String.format(Locale.ROOT, "rnk: %.3f", n.rnkScore)));
@@ -137,15 +127,21 @@ public final class CoreMapSelectionCards {
             card.getChildren().add(body(String.format(Locale.ROOT, "Best FDR: %.2e", n.fdr)));
         }
         card.getChildren().add(body(String.format(Locale.ROOT, "Polarity: mechanistic %s, phenotypic %s",
-                polarityLabel(n.mechanisticPolarity), polarityLabel(n.phenotypicPolarity))));
+                CoreMapInsightStyles.polarityLabel(n.mechanisticPolarity),
+                CoreMapInsightStyles.polarityLabel(n.phenotypicPolarity))));
 
         double sdScore = sharedDriver != null ? sharedDriver.sharedDriverScore
                 : (n.sharedDriverScore != null ? n.sharedDriverScore : 0);
         double concord = sharedDriver != null ? sharedDriver.directionConcordance
                 : (n.directionConcordance != null ? n.directionConcordance : 0.5);
         if (sharedDriver != null || sdScore > 0) {
-            card.getChildren().add(body(String.format(Locale.ROOT, "Shared-driver score: %.3f", sdScore)));
-            card.getChildren().add(body(String.format(Locale.ROOT, "Concordance: %.2f", concord)));
+            if (sharedDriver != null) {
+                card.getChildren().add(body(CoreMapInsightSummaries.driverScoreFull(sharedDriver)));
+                card.getChildren().add(body(CoreMapInsightSummaries.driverConcordanceFull(sharedDriver)));
+            } else {
+                card.getChildren().add(body(String.format(Locale.ROOT, "Shared-driver score: %.3f", sdScore)));
+                card.getChildren().add(body(String.format(Locale.ROOT, "Concordance: %.2f", concord)));
+            }
         }
         if (n.mechanisticSetNames != null && !n.mechanisticSetNames.isEmpty()) {
             card.getChildren().add(body("Mechanistic sets: " + String.join("; ", n.mechanisticSetNames)));
@@ -163,13 +159,15 @@ public final class CoreMapSelectionCards {
     public static VBox driverCard(SharedDriverSummary d) {
         VBox card = cardRoot();
         card.getChildren().add(heading(d.gene));
-        card.getChildren().add(body(String.format(Locale.ROOT, "Shared-driver score: %.3f", d.sharedDriverScore)));
-        card.getChildren().add(body(String.format(Locale.ROOT, "Concordance: %.2f", d.directionConcordance)));
-        if (d.mechanisticSets != null && !d.mechanisticSets.isEmpty()) {
-            card.getChildren().add(body("Mechanistic sets: " + String.join(", ", d.mechanisticSets)));
+        card.getChildren().add(body(CoreMapInsightSummaries.driverScoreFull(d)));
+        card.getChildren().add(body(CoreMapInsightSummaries.driverConcordanceFull(d)));
+        String mech = CoreMapInsightSummaries.driverMechSets(d, false);
+        if (mech != null) {
+            card.getChildren().add(body(mech));
         }
-        if (d.phenotypicSets != null && !d.phenotypicSets.isEmpty()) {
-            card.getChildren().add(body("Phenotypic sets: " + String.join(", ", d.phenotypicSets)));
+        String pheno = CoreMapInsightSummaries.driverPhenoSets(d, false);
+        if (pheno != null) {
+            card.getChildren().add(body(pheno));
         }
         return card;
     }
@@ -177,10 +175,10 @@ public final class CoreMapSelectionCards {
     public static VBox hubCard(LayerHubSummary h) {
         VBox card = cardRoot();
         card.getChildren().add(heading(h.gene));
-        card.getChildren().add(body(String.format(Locale.ROOT, "Layer: %s · hub %.3f · degree %d",
-                CoreMapInsightStyles.layerLabel(h.layer != null ? h.layer.wire() : ""), h.hubScore, h.degree)));
-        if (h.sets != null && !h.sets.isEmpty()) {
-            card.getChildren().add(body("Sets: " + String.join(", ", h.sets)));
+        card.getChildren().add(body(CoreMapInsightSummaries.hubMeta(h, true)));
+        String sets = CoreMapInsightSummaries.hubSets(h, true);
+        if (sets != null) {
+            card.getChildren().add(body(sets));
         }
         return card;
     }
@@ -338,7 +336,7 @@ public final class CoreMapSelectionCards {
             String first = edge.pmid.split("[;,\\s]+")[0];
             Hyperlink link = new Hyperlink("PMID " + edge.pmid);
             link.setOnAction(e -> openUri("https://pubmed.ncbi.nlm.nih.gov/" + first + "/"));
-            HBox row = new HBox(6, bold("Literature:"), link);
+            HBox row = new HBox(6, section("Literature:"), link);
             row.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
             nodes.add(row);
         }
@@ -392,7 +390,7 @@ public final class CoreMapSelectionCards {
             if (m.externalUrl != null && !m.externalUrl.isBlank()) {
                 Hyperlink link = new Hyperlink(src);
                 link.setOnAction(e -> openUri(m.externalUrl));
-                HBox row = new HBox(6, bold("Source:"), link);
+                HBox row = new HBox(6, section("Source:"), link);
                 row.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
                 card.getChildren().add(row);
             } else {
@@ -448,26 +446,6 @@ public final class CoreMapSelectionCards {
         return card;
     }
 
-    private static String evidenceLabel(String wire) {
-        if ("leading_edge".equals(wire)) {
-            return "leading edge (Class 1)";
-        }
-        if ("ranked_extension".equals(wire)) {
-            return "ranked extension (Class 2)";
-        }
-        if ("unranked_extension".equals(wire)) {
-            return "unranked extension (Class 3)";
-        }
-        return wire != null ? wire : "";
-    }
-
-    private static String polarityLabel(Double pol) {
-        if (pol == null || pol == 0) {
-            return "unsigned";
-        }
-        return pol > 0 ? "up" : "down";
-    }
-
     private static VBox cardRoot() {
         VBox card = new VBox(6);
         card.setPadding(new Insets(2, 0, 2, 0));
@@ -504,18 +482,10 @@ public final class CoreMapSelectionCards {
         return l;
     }
 
-    private static Label bold(String text) {
-        Label l = new Label(text);
-        l.getStyleClass().add("coremap-card-section");
-        return l;
-    }
-
     private static void openUri(String uri) {
         Thread t = new Thread(() -> {
             try {
-                if (java.awt.Desktop.isDesktopSupported()) {
-                    java.awt.Desktop.getDesktop().browse(java.net.URI.create(uri));
-                }
+                xapps.gsea.fx.FxDesktopUtil.openUrl(uri);
             } catch (Exception ignored) {
                 // Browser open is best-effort from the selection card.
             }

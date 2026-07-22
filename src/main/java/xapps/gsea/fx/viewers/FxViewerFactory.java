@@ -12,6 +12,7 @@ import edu.mit.broad.genome.objects.RankedList;
 import edu.mit.broad.genome.objects.Template;
 import edu.mit.broad.genome.reports.api.Report;
 import edu.mit.broad.vdb.chip.Chip;
+import xapps.gsea.fx.jobs.JobRuntime;
 
 import java.util.function.Consumer;
 
@@ -50,7 +51,7 @@ public final class FxViewerFactory {
             return new FxChipViewer((Chip) pob);
         }
         if (pob instanceof Report) {
-            return xapps.gsea.fx.FxReportOpen.viewPageFor((Report) pob, openPage);
+            return xapps.gsea.fx.FxReportOpen.viewPageFor((Report) pob, openPage, JobRuntime.require());
         }
         throw new IllegalArgumentException("No viewer for type: " + pob.getClass().getName());
     }

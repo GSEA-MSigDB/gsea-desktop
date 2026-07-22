@@ -3,68 +3,52 @@
  */
 package xapps.gsea.fx.jobs;
 
-import javafx.application.Platform;
 import javafx.scene.control.TextArea;
 
 /**
  * Unattributed application messages (not tied to a job). Owned by {@link JobRuntime}.
+ * Thin façade over {@link LogBuffer} with optional live {@link TextArea} mirroring.
  */
 public final class ApplicationLog {
 
-    private static final int MAX_CHARS = 512_000;
     private static final String BANNER = "< Application messages will appear below >\n\n";
 
-    private final StringBuilder history = new StringBuilder(BANNER);
+    private final LogBuffer buffer = new LogBuffer(BANNER);
     private volatile TextArea activeArea;
+
+    public ApplicationLog() {
+        buffer.addListener(this::onBufferChunk);
+    }
 
     public void setActiveArea(TextArea area) {
         this.activeArea = area;
         if (area != null) {
-            area.setText(history.toString());
+            area.setText(buffer.getText());
         }
     }
 
     public String getHistoryText() {
-        return history.toString();
+        return buffer.getText();
     }
 
     public void append(String chunk) {
-        if (chunk == null || chunk.isEmpty()) {
-            return;
-        }
-        runOnFx(() -> {
-            history.append(chunk);
-            if (history.length() > MAX_CHARS) {
-                history.delete(0, history.length() - MAX_CHARS);
-            }
-            TextArea area = activeArea;
-            if (area != null) {
-                area.appendText(chunk);
-                area.positionCaret(area.getLength());
-            }
-        });
+        buffer.append(chunk);
     }
 
     public void clear() {
-        runOnFx(() -> {
-            history.setLength(0);
-            history.append(BANNER);
-            TextArea area = activeArea;
-            if (area != null) {
-                area.setText(history.toString());
-            }
-        });
+        buffer.clear();
     }
 
-    private void runOnFx(Runnable action) {
-        try {
-            if (Platform.isFxApplicationThread()) {
-                action.run();
-            } else {
-                Platform.runLater(action);
-            }
-        } catch (IllegalStateException noToolkit) {
-            action.run();
+    private void onBufferChunk(String chunkOrNull) {
+        TextArea area = activeArea;
+        if (area == null) {
+            return;
         }
+        if (chunkOrNull == null) {
+            area.setText(buffer.getText());
+            return;
+        }
+        area.appendText(chunkOrNull);
+        area.positionCaret(area.getLength());
     }
 }

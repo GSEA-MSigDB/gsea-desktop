@@ -33,6 +33,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import xapps.gsea.fx.FxReportOpen;
+import xapps.gsea.fx.jobs.JobRuntime;
 import xapps.gsea.fx.viewers.report.ReportExplorerSupport;
 
 /**
@@ -260,7 +261,8 @@ public class FxAnalysisHistoryPane implements ViewPage {
         }
         try {
             if (node.report != null) {
-                detailPane.setCenter((Node) FxReportOpen.viewPageFor(node.report, openPage).getContent());
+                detailPane.setCenter((Node) FxReportOpen.viewPageFor(node.report, openPage,
+                        JobRuntime.require()).getContent());
                 return;
             }
             // History stubs: read .rpt off the FX thread so large reports don't freeze selection.
@@ -274,7 +276,8 @@ public class FxAnalysisHistoryPane implements ViewPage {
                             return;
                         }
                         if (report != null) {
-                            detailPane.setCenter((Node) FxReportOpen.viewPageFor(report, openPage).getContent());
+                            detailPane.setCenter((Node) FxReportOpen.viewPageFor(report, openPage,
+                                    JobRuntime.require()).getContent());
                         } else {
                             detailPane.setCenter(naPlaceholder());
                         }

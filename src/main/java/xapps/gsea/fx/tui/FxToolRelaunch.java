@@ -4,6 +4,7 @@
 package xapps.gsea.fx.tui;
 
 import java.io.File;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.function.Consumer;
 
@@ -30,7 +31,8 @@ public final class FxToolRelaunch {
     private FxToolRelaunch() {
     }
 
-    public static void showInToolRunner(Report report, boolean loadData, Consumer<ViewPage> openPage) {
+    public static void showInToolRunner(Report report, boolean loadData, Consumer<ViewPage> openPage,
+            JobRuntime jobRuntime) {
         if (report == null) {
             Application.getWindowManager().showError("No report selected");
             return;
@@ -39,6 +41,7 @@ public final class FxToolRelaunch {
             Application.getWindowManager().showError("No workspace available to open the tool");
             return;
         }
+        JobRuntime runtime = Objects.requireNonNull(jobRuntime, "jobRuntime");
         javafx.concurrent.Task<Void> task = new javafx.concurrent.Task<>() {
             @Override
             protected Void call() throws Exception {
@@ -48,7 +51,7 @@ public final class FxToolRelaunch {
                 }
                 Tool tool = ToolFactory.createTool(producer.getName());
                 Properties params = report.getParametersUsed();
-                relaunch(tool, params, report.getName(), loadData, true, openPage);
+                relaunch(tool, params, report.getName(), loadData, true, openPage, runtime);
                 return null;
             }
         };
@@ -61,7 +64,8 @@ public final class FxToolRelaunch {
     }
 
     /** Jobs panel Relaunch with a saved parameter snapshot. */
-    public static void showInToolRunner(Tool sourceTool, Properties paramSnapshot, Consumer<ViewPage> openPage) {
+    public static void showInToolRunner(Tool sourceTool, Properties paramSnapshot, Consumer<ViewPage> openPage,
+            JobRuntime jobRuntime) {
         if (sourceTool == null || paramSnapshot == null) {
             Application.getWindowManager().showError("No saved parameters available for this run");
             return;
@@ -70,11 +74,12 @@ public final class FxToolRelaunch {
             Application.getWindowManager().showError("No workspace available to open the tool");
             return;
         }
+        JobRuntime runtime = Objects.requireNonNull(jobRuntime, "jobRuntime");
         javafx.concurrent.Task<Void> task = new javafx.concurrent.Task<>() {
             @Override
             protected Void call() throws Exception {
                 Tool tool = ToolFactory.createTool(sourceTool.getClass().getName());
-                relaunch(tool, paramSnapshot, null, false, false, openPage);
+                relaunch(tool, paramSnapshot, null, false, false, openPage, runtime);
                 return null;
             }
         };
@@ -91,7 +96,7 @@ public final class FxToolRelaunch {
      * @param showToast toast vs silent process-table relaunch
      */
     private static void relaunch(Tool tool, Properties params, String tabTitleOpt, boolean loadData,
-            boolean showToast, Consumer<ViewPage> openPage) throws Exception {
+            boolean showToast, Consumer<ViewPage> openPage, JobRuntime jobRuntime) throws Exception {
         ParamSet.FoundMissingFile fmf = tool.getParamSet().fileCheckingFill(params);
 
         StringBuilder missing = new StringBuilder();
@@ -135,8 +140,7 @@ public final class FxToolRelaunch {
 
         final String tabTitle = tabTitleOpt != null ? tabTitleOpt : tool.getName();
         Platform.runLater(() -> {
-            openPage.accept(FxToolLauncherPane.forTool(tool, tabTitle, "ToolLauncher.gif", true,
-                    JobRuntime.require()));
+            openPage.accept(FxToolLauncherPane.forTool(tool, tabTitle, "ToolLauncher.gif", true, jobRuntime));
             if (showToast) {
                 Application.getWindowManager().showMessage(
                         "Created a new ToolRunner with parameters from the earlier run. "

@@ -24,16 +24,15 @@ import org.slf4j.MDC;
 import edu.mit.broad.genome.Conf;
 import edu.mit.broad.genome.reports.api.Report;
 import edu.mit.broad.genome.reports.api.ToolReport;
-import edu.mit.broad.xbench.core.api.Application;
 import edu.mit.broad.xbench.tui.JobState;
 import edu.mit.broad.xbench.tui.RunContext;
 import edu.mit.broad.xbench.tui.RunLogOutputStream;
 import edu.mit.broad.xbench.tui.ToolFactory;
-import javafx.application.Platform;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import xapps.gsea.fx.FxThreads;
 import xtools.api.AbstractTool;
 import xtools.api.CanceledException;
 import xtools.api.Tool;
@@ -134,7 +133,7 @@ public final class JobRuntime {
         previousOut = System.out;
         previousErr = System.err;
         PrintStream routing = RunLogOutputStream.printStream(null,
-                (ignored, text) -> appendLog(RunContext.currentRunId(), text));
+                (ignored, text) -> appendLog(currentRunId(), text));
         System.setOut(routing);
         System.setErr(routing);
 
@@ -148,13 +147,7 @@ public final class JobRuntime {
                 }
                 String line = formatter.format(record);
                 String text = line.endsWith("\n") ? line : line + "\n";
-                String runId = currentRunId();
-                JobRecord job = find(runId);
-                if (job != null) {
-                    job.getLog().append(text);
-                    return;
-                }
-                applicationLog.append(text);
+                appendLog(currentRunId(), text);
             }
 
             @Override
@@ -191,7 +184,7 @@ public final class JobRuntime {
 
         Tool clonedTool;
         try {
-            clonedTool = ToolFactory.createTool(tool, pset);
+            clonedTool = ToolFactory.createTool(tool.getClass().getName(), snapshot);
         } catch (Exception t) {
             record.setLastError(t);
             updateStatus(record, JobState.INVALID_PARAM, null, null, null);
@@ -228,15 +221,9 @@ public final class JobRuntime {
         return true;
     }
 
+    /** Auto-dialog for INVALID_PARAM only (start path). */
     public void showParamErrorIfNeeded(String runId) {
-        JobRecord record = find(runId);
-        if (record == null || !record.isParamError()) {
-            return;
-        }
-        Throwable err = record.getLastError();
-        Application.getWindowManager().showError(
-                "One or more parameter(s) were not specified",
-                err != null ? err : new IllegalStateException("Invalid parameters"));
+        JobErrors.showParamErrorIfNeeded(find(runId));
     }
 
     /** Route a log chunk to a job buffer or the application log. */
@@ -287,7 +274,7 @@ public final class JobRuntime {
     }
 
     private void addJobToList(JobRecord record) {
-        runOnFx(() -> {
+        FxThreads.runLater(() -> {
             if (!jobs.contains(record)) {
                 jobs.add(0, record);
                 if (selectedJob.get() == null) {
@@ -298,7 +285,7 @@ public final class JobRuntime {
     }
 
     private void updateStatus(JobRecord record, JobState state, String label, File reportDir, URI reportIndex) {
-        runOnFx(() -> {
+        FxThreads.runLater(() -> {
             JobState currentState = record.getState();
             // Never regress CANCELING → RUNNING/WAITING, or any terminal → active.
             if (state != null && currentState != null) {
@@ -322,18 +309,6 @@ public final class JobRuntime {
                 }
             }
         });
-    }
-
-    private static void runOnFx(Runnable action) {
-        try {
-            if (Platform.isFxApplicationThread()) {
-                action.run();
-            } else {
-                Platform.runLater(action);
-            }
-        } catch (IllegalStateException noToolkit) {
-            action.run();
-        }
     }
 
     private final class Worker implements Runnable {

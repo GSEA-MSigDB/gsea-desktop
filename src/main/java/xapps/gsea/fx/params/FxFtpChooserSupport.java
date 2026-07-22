@@ -74,6 +74,48 @@ public final class FxFtpChooserSupport {
     private FxFtpChooserSupport() {
     }
 
+    /** Read-only wrapped text area used for offline / help messages in chooser tabs. */
+    public static javafx.scene.control.TextArea messageArea(String text) {
+        javafx.scene.control.TextArea area = new javafx.scene.control.TextArea(text);
+        area.setEditable(false);
+        area.setWrapText(true);
+        return area;
+    }
+
+    /** Information alert when more than one tab has a selection. */
+    public static void showMultiSelectionInfo(javafx.stage.Window owner, String title, String header) {
+        javafx.scene.control.Alert alert = new javafx.scene.control.Alert(
+                javafx.scene.control.Alert.AlertType.INFORMATION);
+        if (owner != null) {
+            alert.initOwner(owner);
+        }
+        alert.setTitle(title);
+        alert.setHeaderText(header);
+        alert.setContentText("Is there a selection on another tab?\n" + DESELECT_INSTRUCTIONS);
+        xapps.gsea.fx.FxTheme.apply(alert);
+        alert.showAndWait();
+    }
+
+    /** @return true if the user chose OK to keep a mixed-version selection */
+    public static boolean confirmMixedMsigdbVersions(javafx.stage.Window owner) {
+        javafx.scene.control.Alert alert = new javafx.scene.control.Alert(
+                javafx.scene.control.Alert.AlertType.CONFIRMATION);
+        if (owner != null) {
+            alert.initOwner(owner);
+        }
+        alert.setTitle("Mixed MSigDB versions detected");
+        alert.setHeaderText("Mixed MSigDB versions detected");
+        alert.setContentText(
+                "Selecting collections from multiple MSigDB versions may result in omitted genes "
+                        + "and is not recommended.\n"
+                        + "NOTE: another tab may have a selection.\n"
+                        + DESELECT_INSTRUCTIONS
+                        + "\n\nClick Cancel to change the selection or OK to keep it.");
+        xapps.gsea.fx.FxTheme.apply(alert);
+        java.util.Optional<javafx.scene.control.ButtonType> choice = alert.showAndWait();
+        return choice.isPresent() && choice.get() == javafx.scene.control.ButtonType.OK;
+    }
+
     public static boolean isOnline() {
         return XPreferencesFactory.kOnlineMode.getBoolean();
     }

@@ -9,6 +9,7 @@ import org.gsea_msigdb.gsea.ui.api.ViewPage;
 
 import edu.mit.broad.genome.reports.api.Report;
 import javafx.scene.Node;
+import xapps.gsea.fx.jobs.JobRuntime;
 
 /**
  * Native results UI for one {@link ReportKind}.
@@ -16,5 +17,5 @@ import javafx.scene.Node;
 @FunctionalInterface
 public interface ReportExplorer {
 
-    Node create(Report report, Consumer<ViewPage> openPage);
+    Node create(Report report, Consumer<ViewPage> openPage, JobRuntime jobRuntime);
 }

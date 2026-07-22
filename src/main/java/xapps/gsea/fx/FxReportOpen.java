@@ -17,6 +17,7 @@ import edu.mit.broad.genome.reports.api.Report;
 import edu.mit.broad.xbench.core.api.Application;
 import edu.mit.broad.xbench.tui.ReportStub;
 import xapps.gsea.fx.jobs.JobRecord;
+import xapps.gsea.fx.jobs.JobRuntime;
 import xapps.gsea.fx.viewers.FxReportViewer;
 
 /**
@@ -32,15 +33,15 @@ public final class FxReportOpen {
     }
 
     /** In-app report viewer (Results / Parameters / Files) for any finished analysis. */
-    public static ViewPage viewPageFor(Report report, Consumer<ViewPage> openPage) {
-        return new FxReportViewer(report, openPage);
+    public static ViewPage viewPageFor(Report report, Consumer<ViewPage> openPage, JobRuntime jobRuntime) {
+        return new FxReportViewer(report, openPage, jobRuntime);
     }
 
-    public static void openInApp(Report report, Consumer<ViewPage> openPage) {
+    public static void openInApp(Report report, Consumer<ViewPage> openPage, JobRuntime jobRuntime) {
         if (report == null || openPage == null) {
             return;
         }
-        openPage.accept(viewPageFor(report, openPage));
+        openPage.accept(viewPageFor(report, openPage, jobRuntime));
     }
 
     public static void openInBrowser(Report report) {
@@ -64,7 +65,7 @@ public final class FxReportOpen {
      * Jobs panel path: prefer in-app viewer when an {@code .rpt} can be loaded;
      * otherwise open the HTML index in the browser.
      */
-    public static void openFromJob(JobRecord job, Consumer<ViewPage> openPage) {
+    public static void openFromJob(JobRecord job, Consumer<ViewPage> openPage, JobRuntime jobRuntime) {
         if (job == null) {
             Application.getWindowManager().showMessage("No report produced");
             return;
@@ -72,7 +73,7 @@ public final class FxReportOpen {
         try {
             Report report = tryLoadReport(job.getReportDir());
             if (report != null && openPage != null) {
-                openInApp(report, openPage);
+                openInApp(report, openPage, jobRuntime);
                 return;
             }
             URI index = job.getReportIndex();

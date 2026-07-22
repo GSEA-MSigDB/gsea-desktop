@@ -42,11 +42,11 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
-import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import xapps.gsea.fx.params.FxFileChooserUtil;
+import xapps.gsea.fx.params.FxGseaReportLoadUi;
+import xapps.gsea.fx.params.FxGseaReportXor;
 import xapps.gsea.fx.params.FxReportCacheChooser;
-import xapps.gsea.fx.params.FxReportCacheSupport;
 import xtools.munge.CollapseDataset;
 
 /**
@@ -62,14 +62,14 @@ public class FxEnrichmentMapPane implements ViewPage {
 
     private final BorderPane root = new BorderPane();
     private final TabPane analysisTabs = new TabPane();
-    private final FxReportCacheChooser cacheChooser = FxReportCacheChooser.multiInterval();
-    private final TextField loadDirField = new TextField();
+    private final FxGseaReportLoadUi loadUi;
     private int analysisCount = 0;
 
     public FxEnrichmentMapPane() {
         analysisTabs.setTabClosingPolicy(TabPane.TabClosingPolicy.ALL_TABS);
-
-        Tab loadTab = new Tab("Load GSEA Results", buildLoadPane());
+        loadUi = new FxGseaReportLoadUi(FxReportCacheChooser.multiInterval(), root, true, true,
+                this::loadGseaResults);
+        Tab loadTab = new Tab("Load GSEA Results", loadUi.root);
         loadTab.setClosable(false);
         analysisTabs.getTabs().add(loadTab);
         root.setCenter(analysisTabs);
@@ -80,84 +80,19 @@ public class FxEnrichmentMapPane implements ViewPage {
         if (dir == null) {
             return;
         }
-        cacheChooser.clearSelection();
-        loadDirField.setText(dir.getAbsolutePath());
-        FxFileChooserUtil.registerOpenedDir(dir);
+        loadUi.setDirectory(dir);
         loadGseaResults();
     }
 
-    private VBox buildLoadPane() {
-
-        HBox.setHgrow(loadDirField, Priority.ALWAYS);
-        if (!loadDirField.getStyleClass().contains("gsea-dir-field")) {
-            loadDirField.getStyleClass().add("gsea-dir-field");
-        }
-        xapps.gsea.fx.params.FxPathFieldColors.attach(loadDirField);
-        Button browseDir = xapps.gsea.fx.FxEllipsisButton.create(
-                "[ OR ] Locate a GSEA report folder from the file system");
-        browseDir.setOnAction(e -> {
-            DirectoryChooser chooser = new DirectoryChooser();
-            FxFileChooserUtil.seedInitialDirectory(chooser, loadDirField.getText());
-            File selected = chooser.showDialog(FxFileChooserUtil.windowOf(root));
-            if (selected != null) {
-                loadDirField.setText(selected.getAbsolutePath());
-                FxFileChooserUtil.registerOpenedDir(selected);
-            }
-        });
-
-        Button clear = new Button("Clear");
-        xapps.gsea.fx.FxButtons.styleSecondary(clear);
-        clear.setOnAction(e -> {
-            cacheChooser.clearSelection();
-            loadDirField.clear();
-        });
-        Button load = new Button("Load GSEA Results");
-        xapps.gsea.fx.FxButtons.stylePrimary(load);
-        load.setOnAction(e -> loadGseaResults());
-
-        HBox.setHgrow(cacheChooser.getNode(), Priority.ALWAYS);
-        VBox box = new VBox(12,
-                new Label("Select a GSEA result from the application cache"),
-                cacheChooser.getNode(),
-                new Label("[ OR ] Locate a GSEA result folder from the file system"),
-                new HBox(8, loadDirField, browseDir),
-                xapps.gsea.fx.FxButtons.row(clear, load));
-        box.setPadding(new Insets(16));
-        return box;
-    }
-
     private void loadGseaResults() {
-        boolean hasCache = cacheChooser.isSpecified();
-        String dirText = loadDirField.getText();
-        boolean hasDir = dirText != null && !dirText.isBlank();
-        if (hasCache && hasDir) {
-            Application.getWindowManager().showMessage(
-                    "Both cache and a brows'ed directory were specified. Only 1 can be specified. Delete one and try again");
+        FxGseaReportXor.MultiResult result = loadUi.resolveMulti();
+        if (result.kind != FxGseaReportXor.Kind.RESOLVED) {
+            loadUi.showXorMessage(result.kind);
             return;
         }
-        if (!hasCache && !hasDir) {
-            Application.getWindowManager().showMessage(
-                    "No GSEA result folder was specified. Specify one and try again");
-            return;
-        }
-
-        String[] datasets;
-        if (hasCache) {
-            List<FxReportCacheSupport.CachedReport> selected = cacheChooser.getSelected();
-            if (!selected.isEmpty()) {
-                datasets = selected.stream()
-                        .map(c -> c.reportDir.getAbsolutePath())
-                        .toArray(String[]::new);
-            } else {
-                // Typed comma-separated reportDir paths.
-                datasets = cacheChooser.getReportDirs().stream()
-                        .map(File::getAbsolutePath)
-                        .toArray(String[]::new);
-            }
-        } else {
-            datasets = dirText.trim().split(",");
-        }
-
+        String[] datasets = result.dirs.stream()
+                .map(File::getAbsolutePath)
+                .toArray(String[]::new);
         try {
             AnalysisForm form = new AnalysisForm(datasets);
             analysisCount++;
