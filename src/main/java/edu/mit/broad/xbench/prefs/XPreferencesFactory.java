@@ -3,7 +3,6 @@
  */
 package edu.mit.broad.xbench.prefs;
 
-import edu.mit.broad.genome.Conf;
 import edu.mit.broad.genome.utils.SystemUtils;
 
 import org.slf4j.Logger;
@@ -24,17 +23,8 @@ public class XPreferencesFactory {
 
     public static File kAppRuntimeHomeDir;
 
-    private static final String GSEA_HOME = "gsea_home";
-
     public static final IntPreference kCytoscapeRESTPort = new IntPreference("Cytoscape REST port",
             "Localhost network port for Cytoscape cyREST API", 1234, false, false);
-
-    public static String RESOURCES_DATA_FILE_NAME;
-
-    public static final DirPreference kSpecialUserHomeDir = new DirPreference(
-            "Special location for " + GSEA_HOME + " folder",
-            "Special (non-default) location of " + GSEA_HOME + " folder where the applications reads/stores info",
-            SystemUtils.getUserHome(), false, true);
 
     static {
         kAppRuntimeHomeDir = new File(SystemUtils.getUserHome(), "gsea_home");
@@ -46,20 +36,7 @@ public class XPreferencesFactory {
                         kAppRuntimeHomeDir);
             }
         }
-        RESOURCES_DATA_FILE_NAME = "RdfGseaApp.txt";
         klog.debug("kAppRuntimeHomeDir: {} exists: {}", kAppRuntimeHomeDir, exists);
-    }
-
-    public static int getToolTreeWidth() {
-        return Conf.isGseaApp() ? 300 : 250;
-    }
-
-    public static int getToolTreeWidth_min() {
-        return 150;
-    }
-
-    public static int getToolTreeDivLocation() {
-        return 350;
     }
 
     private XPreferencesFactory() {
@@ -85,19 +62,6 @@ public class XPreferencesFactory {
             "Default location of the output_directory where tool reports are stored",
             new File(kAppRuntimeHomeDir, "output"), false, false);
 
-    public static final BooleanPreference kSplitFileExplorerDisplay = new BooleanPreference(
-            "Split file explorer display", "Show one or two different windows in the File Explorer", false, false,
-            false);
-
-    public static final TabPlacementPreference kTabPlacement = new TabPlacementPreference("Tab Placement",
-            "Display location of the tabbed windows created when viewing data / tools", TabPlacementPreference.TOP);
-
-    public static final BooleanPreference kToolDisplayComponent = new BooleanPreference("Display tool in table",
-            "Display the tool in a Table container", false, false, true);
-
-    public static final BooleanPreference kToolSelectorComponent = new BooleanPreference(
-            "Display tool selector in a tree", "Display the tool selector in a Tree", false, false, true);
-
     public static final BooleanPreference kMakeGseaUpdateCheck = new BooleanPreference(
             "Check for new GSEA version on startup", "Check for new GSEA version on startup", true, false, true);
 
@@ -110,8 +74,7 @@ public class XPreferencesFactory {
             false);
 
     public static final PreferenceCategory kGeneralCategory = new PreferenceCategory(new Preference[] { kEmail,
-            kAskBeforeAppShutdown, kDefaultReportsOutputDir, kTabPlacement, kToolDisplayComponent,
-            kToolSelectorComponent, kMakeGseaUpdateCheck, kUiAppearance });
+            kAskBeforeAppShutdown, kDefaultReportsOutputDir, kMakeGseaUpdateCheck, kUiAppearance });
 
     public static final StringPreference kLastToolName = new StringPreference("Last Tool Run", "Dont change me", "",
             true, true);
@@ -146,13 +109,27 @@ public class XPreferencesFactory {
     public static final BooleanPreference kAppMaximized = new BooleanPreference("app was maximized", "dummy", false,
             false, true);
 
-    /** Main shell: left rail vs. tabs (0–100 percent). */
-    public static final IntPreference kShellHorizontalDivider = new IntPreference(
-            "Shell horizontal divider percent", "Dont change me", 22, false, true);
+    /**
+     * Main shell: left tools column width in pixels.
+     * Default must stay in sync with {@code FxToolsRail.DEFAULT_TOOLS_COLUMN_WIDTH_PX} (320).
+     */
+    public static final IntPreference kShellToolsPanelWidth = new IntPreference(
+            "Shell tools panel width px", "Dont change me", 320, false, true);
 
-    /** Main shell: tools vs. jobs within the left rail (0–100 percent). */
+    /** Main shell: application-messages panel height in pixels. */
+    public static final IntPreference kShellMessagesPanelHeight = new IntPreference(
+            "Shell messages panel height px", "Dont change me", 180, false, true);
+
+    /** Main shell: tools vs. jobs within the left column (0–100 percent). */
     public static final IntPreference kShellLeftVerticalDivider = new IntPreference(
             "Shell left vertical divider percent", "Dont change me", 55, false, true);
+
+    /**
+     * Main shell: tools-rail section and item order.
+     * Format: {@code sectionId:itemId,itemId;sectionId:...}
+     */
+    public static final StringPreference kShellToolsRailOrder = new StringPreference(
+            "Shell tools rail order", "Dont change me", "", false, true);
 
     public static final BooleanPreference kMedian = new BooleanPreference(
             "Use median instead of mean for class metrics",

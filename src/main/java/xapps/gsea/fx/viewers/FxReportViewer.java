@@ -4,18 +4,13 @@
 package xapps.gsea.fx.viewers;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 import java.util.Objects;
-import java.util.Properties;
 import java.util.function.Consumer;
 
 import org.gsea_msigdb.gsea.ui.api.ViewPage;
 
 import edu.mit.broad.genome.reports.api.Report;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -25,7 +20,6 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
-import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
@@ -36,6 +30,7 @@ import xapps.gsea.fx.jobs.JobRuntime;
 import xapps.gsea.fx.tui.FxToolRelaunch;
 import xapps.gsea.fx.viewers.report.ReportExplorerRegistry;
 import xapps.gsea.fx.viewers.report.ReportKind;
+import xapps.gsea.fx.viewers.report.ReportParamsTable;
 
 /**
  * Native report explorer shell: type-aware Results tab, plus Parameters and Files.
@@ -126,27 +121,7 @@ public class FxReportViewer implements ViewPage {
     }
 
     private VBox buildParamsPane() {
-        TableView<ParamRow> table = new TableView<>();
-        TableColumn<ParamRow, String> nameCol = new TableColumn<>("Parameter name");
-        nameCol.setCellValueFactory(c -> c.getValue().nameProperty());
-        nameCol.setPrefWidth(220);
-        TableColumn<ParamRow, String> valueCol = new TableColumn<>("Parameter value");
-        valueCol.setCellValueFactory(c -> c.getValue().valueProperty());
-        valueCol.setPrefWidth(420);
-        table.getColumns().addAll(nameCol, valueCol);
-        table.setEditable(false);
-        table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
-
-        Properties params = report.getParametersUsed();
-        List<ParamRow> rows = new ArrayList<>();
-        if (params != null) {
-            for (String key : params.stringPropertyNames()) {
-                rows.add(new ParamRow(key, params.getProperty(key)));
-            }
-        }
-        table.setItems(FXCollections.observableArrayList(rows));
-        table.setPlaceholder(new Label(""));
-
+        TableView<ReportParamsTable.Row> table = ReportParamsTable.create(report.getParametersUsed());
         VBox box = new VBox(table);
         VBox.setVgrow(table, Priority.ALWAYS);
         box.setPadding(new Insets(8, 12, 12, 12));
@@ -161,24 +136,6 @@ public class FxReportViewer implements ViewPage {
         box.setPadding(new Insets(8, 12, 12, 12));
         VBox.setVgrow(filesList, Priority.ALWAYS);
         return box;
-    }
-
-    private static final class ParamRow {
-        private final SimpleStringProperty name = new SimpleStringProperty();
-        private final SimpleStringProperty value = new SimpleStringProperty();
-
-        ParamRow(String name, String value) {
-            this.name.set(name);
-            this.value.set(value != null ? value : "");
-        }
-
-        SimpleStringProperty nameProperty() {
-            return name;
-        }
-
-        SimpleStringProperty valueProperty() {
-            return value;
-        }
     }
 
     @Override

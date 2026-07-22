@@ -14,13 +14,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.genepattern.heatmap.image.HeatMap;
-import org.jfree.chart.JFreeChart;
 import org.w3c.dom.DOMImplementation;
 import org.w3c.dom.Document;
 
 import java.awt.Dimension;
 import java.awt.Graphics2D;
-import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -73,11 +71,15 @@ public class ImageUtil {
         return saveImage(heatMap.snapshot(), outputFile, format);
     }
 
-    public static final File saveAsSVG(JFreeChart chart, File outputFile, int width, int height, boolean gZip)
-            throws IOException {
+    /** Draw arbitrary content into an SVG (used by {@code PlotRasterExporter}). */
+    public static final File saveAsSVG(java.util.function.Consumer<Graphics2D> drawer,
+            File outputFile, int width, int height, boolean gZip) throws IOException {
+        if (drawer == null) {
+            throw new IllegalArgumentException("drawer cannot be null");
+        }
         outputFile = ensureGzipExtIfNecessary(outputFile, gZip);
         SVGGraphics2D svgGenerator = setupSVGGenerator(width, height);
-        drawChartPlot(chart, svgGenerator, width, height);
+        drawer.accept(svgGenerator);
         return streamToSvg(svgGenerator, outputFile, gZip);
     }
 
@@ -126,10 +128,6 @@ public class ImageUtil {
             }
         }
         return outputFile;
-    }
-
-    private static final void drawChartPlot(JFreeChart chart, Graphics2D graphics, int width, int height) {
-        chart.draw(graphics, new Rectangle(width, height));
     }
 
     private static final Set<String> NON_JPG_IMG_FORMAT_EXTS = new HashSet<>(

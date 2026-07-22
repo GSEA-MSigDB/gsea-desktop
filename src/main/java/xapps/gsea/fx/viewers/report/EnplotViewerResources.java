@@ -22,7 +22,7 @@ import xapps.gsea.fx.FxTheme;
 final class EnplotViewerResources {
 
     private static final Logger klog = LoggerFactory.getLogger(EnplotViewerResources.class);
-    private static final String[] VIEWER_FILES = {"index.html", "viewer.js", "viewer.css"};
+    private static final String[] VIEWER_FILES = ModernEnrichmentPlotJson.VIEWER_FILES;
 
     private static volatile File bundledViewerDir;
 

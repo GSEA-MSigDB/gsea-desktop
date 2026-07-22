@@ -42,12 +42,18 @@ public final class EnplotPayloadLoader {
     /** FX-thread only: build JSON from enrichment result (may recompute ES curve). */
     public static String buildFromResult(EnrichmentResult result, String classA, String classB,
             GeneSetScoringTable scoring) {
+        return buildFromResult(result, classA, classB, scoring, null);
+    }
+
+    public static String buildFromResult(EnrichmentResult result, String classA, String classB,
+            GeneSetScoringTable scoring, String metricName) {
         if (result == null || result.getGeneSet() == null || result.getRankedList() == null
                 || result.getScore() == null) {
             return null;
         }
         String geneSetName = result.getGeneSet().getName(true);
         RankedList rl = result.getRankedList();
+        EnrichmentReports.ensureMetricName(rl, metricName);
         EnrichmentScore score = result.getScore();
         return ModernEnrichmentPlotJson.buildPayloadJson(geneSetName, rl, score.getHitIndices(),
                 score.getESProfile(), EnrichmentEsProfiles.fullEsProfile(result, scoring),

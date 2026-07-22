@@ -37,17 +37,18 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import xapps.gsea.GseaWebResources;
-import xapps.gsea.fx.heatmap.FxChartPane;
 import xapps.gsea.fx.heatmap.FxHeatMapView;
 import xapps.gsea.fx.heatmap.FxJaccardLegend;
 import xapps.gsea.fx.jobs.JobRuntime;
 import xapps.gsea.fx.params.FxGseaReportLoadUi;
 import xapps.gsea.fx.params.FxReportCacheChooser;
+import xapps.gsea.fx.plots.FxPlotPane;
 import xapps.gsea.fx.viewers.report.EnrichmentResultRow;
 import xapps.gsea.fx.viewers.report.EnrichmentResultTable;
 import xapps.gsea.fx.viewers.report.LeadingEdgeOutputs;
 import xapps.gsea.fx.viewers.report.PhenotypeLabels;
 import xtools.api.Tool;
+import edu.mit.broad.genome.plots.PlotBuilders;
 import xtools.api.param.ToolParamSet;
 import xtools.gsea.LeadingEdgeTool;
 
@@ -217,9 +218,9 @@ public class FxLeadingEdgePane implements ViewPage {
         PhenotypeLabels pos = PhenotypeLabels.from(loaded, true);
         PhenotypeLabels neg = PhenotypeLabels.from(loaded, false);
         positive.setText("positive phenotype: " + pos.shortName() + "   ");
-        positive.setStyle("-fx-text-fill: red;");
+        positive.getStyleClass().setAll("gsea-text-phenotype-positive");
         negative.setText("negative phenotype: " + neg.shortName());
-        negative.setStyle("-fx-text-fill: blue;");
+        negative.getStyleClass().setAll("gsea-text-phenotype-negative");
     }
 
     private List<String> selectedNamesOrWarn(ResultsView view) {
@@ -313,26 +314,27 @@ public class FxLeadingEdgePane implements ViewPage {
         top.setDividerPositions(0.5);
 
         java.util.concurrent.atomic.AtomicInteger selectedGene = new java.util.concurrent.atomic.AtomicInteger(-1);
-        FxChartPane geneChart = new FxChartPane("Gene Histogram");
-        geneChart.setChart(
-                LeadingEdgeAnalysis.createGeneHistogramChart(
-                        result.getFeatureFrequency(), result.getGeneScores(), selectedGene),
+        FxPlotPane geneChart = new FxPlotPane("Gene Histogram");
+        geneChart.setSpec(
+                PlotBuilders.geneHistogram(result.getFeatureFrequency(), result.getGeneScores(), selectedGene.get()),
                 720, 360);
         if (result.getFeatureFrequency() != null) {
             geneChart.setItemNames(result.getFeatureFrequency().getRankedNamesArray());
             geneChart.setItemClickHandler(item -> {
                 selectedGene.set(item);
-                geneChart.refresh();
+                geneChart.setSpec(
+                        PlotBuilders.geneHistogram(result.getFeatureFrequency(), result.getGeneScores(), item),
+                        720, 360);
                 String gene = result.getFeatureFrequency().getRankName(item);
                 leHeat.selectColumnByName(gene);
             });
         }
 
         VBox jaccardBox = new VBox(8);
-        FxChartPane jaccardChart = new FxChartPane("Jaccard Histogram of Gene Sets");
-        if (result.getJaccardHistogramChart() != null) {
-            jaccardChart.setChart(result.getJaccardHistogramChart(), 720, 360);
-        }
+        FxPlotPane jaccardChart = new FxPlotPane("Jaccard Histogram of Gene Sets");
+        jaccardChart.setSpec(
+                PlotBuilders.jaccardHistogram(result.getJaccardDistrib(), 0.02),
+                720, 360);
         TextField binField = new TextField("0.02");
         binField.setPrefWidth(80);
         Button updateBin = new Button("Update");
@@ -347,8 +349,8 @@ public class FxLeadingEdgePane implements ViewPage {
                 if (bw == 0) {
                     return;
                 }
-                jaccardChart.setChart(
-                        LeadingEdgeAnalysis.createJaccardHistogramChart(result.getJaccardDistrib(), bw),
+                jaccardChart.setSpec(
+                        PlotBuilders.jaccardHistogram(result.getJaccardDistrib(), bw),
                         720, 360);
             } catch (NumberFormatException nfe) {
                 Application.getWindowManager().showMessage("Bin width is not a number.");
@@ -359,7 +361,7 @@ public class FxLeadingEdgePane implements ViewPage {
                 jaccardChart.getNode());
         VBox.setVgrow(jaccardChart.getNode(), Priority.ALWAYS);
 
-        BorderPane geneNode = geneChart.getNode();
+        BorderPane geneNode = new BorderPane(geneChart.getNode());
         geneNode.setMinSize(0, 0);
         jaccardBox.setMinSize(0, 0);
         SplitPane bottom = new SplitPane(geneNode, jaccardBox);

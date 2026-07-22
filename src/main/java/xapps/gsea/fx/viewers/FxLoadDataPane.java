@@ -184,7 +184,7 @@ public class FxLoadDataPane implements ViewPage {
                 if (empty || path == null) {
                     setText(null);
                     setGraphic(null);
-                    setStyle("");
+                    getStyleClass().removeAll("gsea-text-missing");
                     setTooltip(null);
                     return;
                 }
@@ -192,7 +192,10 @@ public class FxLoadDataPane implements ViewPage {
                 setText(shortRecentPath(file));
                 setGraphic(xapps.gsea.fx.FxFileIcons.forFile(file));
                 setTooltip(new javafx.scene.control.Tooltip(path));
-                setStyle(file.exists() ? "" : "-fx-text-fill: red;");
+                getStyleClass().removeAll("gsea-text-missing");
+                if (!file.exists()) {
+                    getStyleClass().add("gsea-text-missing");
+                }
             }
         });
         recentList.setContextMenu(null);

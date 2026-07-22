@@ -1,23 +1,54 @@
 (function () {
   "use strict";
 
-  var COLORS = {
-    teal: "#0d9488",
-    tealFill: "rgba(13, 148, 136, 0.18)",
-    hit: "#94a3b8",
-    le: "#0f766e",
-    grid: "#e2e8f0",
-    axis: "#64748b",
-    metric: "#94a3b8",
-    pos: "#dc2626",
-    neg: "#2563eb",
-    zero: "#94a3b8",
-    peak: "#0f766e",
-    ink: "#0f172a",
-    annBg: "rgba(255,255,255,0.88)",
-    hover: "rgba(100, 116, 139, 0.75)",
-    hoverLe: "#0f766e",
-    search: "rgba(15, 118, 110, 0.35)"
+  var SCHEMES = {
+    modern: {
+      es: "#0d9488",
+      esFill: "rgba(13, 148, 136, 0.18)",
+      hit: "#94a3b8",
+      le: "#0f766e",
+      grid: "#e2e8f0",
+      axis: "#64748b",
+      metric: "#94a3b8",
+      metricFill: "rgba(148, 163, 184, 0.27)",
+      pos: "#dc2626",
+      neg: "#2563eb",
+      zero: "#94a3b8",
+      peak: "#0f766e",
+      ink: "#0f172a",
+      annBg: "rgba(255,255,255,0.88)",
+      hover: "rgba(100, 116, 139, 0.75)",
+      hoverLe: "#0f766e",
+      search: "rgba(15, 118, 110, 0.35)",
+      hitsLabel: "Set Members",
+      esLineWidth: 2.25,
+      hitLineWidth: 0.85,
+      hitLeLineWidth: 1.5
+    },
+    // Matches MountainPlotSpec.Style.CLASSIC report PNGs (Color.GREEN ES).
+    classic: {
+      es: "#00ff00",
+      esFill: "rgba(0, 255, 0, 0.14)",
+      hit: "#000000",
+      le: "#006600",
+      grid: "#e2e8f0",
+      axis: "#64748b",
+      metric: "#c0c0c0",
+      metricFill: "rgba(192, 192, 192, 0.43)",
+      pos: "#dc2626",
+      neg: "#2563eb",
+      zero: "#404040",
+      peak: "#00ff00",
+      ink: "#0f172a",
+      annBg: "rgba(255,255,255,0.88)",
+      hover: "rgba(100, 116, 139, 0.75)",
+      hoverLe: "#006600",
+      search: "rgba(0, 255, 0, 0.35)",
+      hitsLabel: "Hits",
+      esLineWidth: 2,
+      hitLineWidth: 1,
+      hitLeLineWidth: 1.5
+    }
   };
 
   /** Dark theme for toolbar/header only; the canvas always uses light plot colors. */
@@ -145,8 +176,15 @@
       "</div>" +
       '<div class="enplot-toolbar">' +
       '  <label><input type="checkbox" id="toggle-le" checked/> Highlight leading edge</label>' +
-      '  <label><input type="checkbox" id="toggle-fill" checked/> Fill under ES</label>' +
+      '  <label><input type="checkbox" id="toggle-fill" checked/> Fill under curves</label>' +
       '  <label><input type="checkbox" id="toggle-ann" checked/> Annotations</label>' +
+      '  <label class="enplot-scheme">Color scheme' +
+      '    <select id="color-scheme" title="Modern (v2) or classic GSEA colors">' +
+      '      <option value="modern" selected>Modern</option>' +
+      '      <option value="classic">Classic</option>' +
+      '    </select>' +
+      '  </label>' +
+      '  <button type="button" id="btn-reset-ann">Reset annotations</button>' +
       '  <button type="button" id="btn-reset">Reset zoom</button>' +
       '  <button type="button" id="btn-save">Save PNG</button>' +
       '  <span class="enplot-search">' +
@@ -164,7 +202,7 @@
       '    <button type="button" id="btn-size-apply">Apply size</button>' +
       '    <button type="button" id="btn-size-fit">Fit</button>' +
       "  </span>" +
-      '  <span class="enplot-hint">Drag plot to zoom · scroll to pan · drag edges to resize</span>' +
+      '  <span class="enplot-hint">Drag annotations to move · drag plot to zoom · scroll to pan · drag edges to resize</span>' +
       "</div>" +
       '<div class="enplot-stage-wrap" id="enplot-stage-wrap">' +
       '  <div class="enplot-stage-row">' +
@@ -195,6 +233,40 @@
     }
     var pad = (max - min) * (padFrac || 0.08);
     return { min: min - pad, max: max + pad };
+  }
+
+  function niceTicks(min, max, approxCount) {
+    var range = max - min;
+    if (!(range > 0) || !isFinite(range)) return [];
+    var rough = range / Math.max(1, approxCount || 6);
+    var mag = Math.pow(10, Math.floor(Math.log10(rough)));
+    var residual = rough / mag;
+    var step = residual <= 1 ? mag : residual <= 2 ? 2 * mag : residual <= 5 ? 5 * mag : 10 * mag;
+    var start = Math.ceil((min - step * 1e-9) / step) * step;
+    var ticks = [];
+    for (var v = start; v <= max + step * 1e-9 && ticks.length < 32; v += step) {
+      ticks.push(v);
+    }
+    return ticks;
+  }
+
+  function yTickValues(yExt) {
+    var ticks = niceTicks(yExt.min, yExt.max, 6);
+    if (!(yExt.min < 0 && yExt.max > 0)) return ticks;
+    for (var i = 0; i < ticks.length; i++) {
+      if (Math.abs(ticks[i]) < 1e-12) return ticks;
+    }
+    var out = [];
+    var inserted = false;
+    for (i = 0; i < ticks.length; i++) {
+      if (!inserted && ticks[i] > 0) {
+        out.push(0);
+        inserted = true;
+      }
+      out.push(ticks[i]);
+    }
+    if (!inserted) out.push(0);
+    return out;
   }
 
   function createViewer(data) {
@@ -241,14 +313,25 @@
       showLe: true,
       showFill: true,
       showAnn: true,
-      drag: null,
+      colorScheme: "modern",
+      // Pixel offsets from each annotation's default anchor.
+      annOffset: { stats: null, zeroCross: null, pos: null, neg: null },
+      // Hit targets rebuilt every draw: [{id, x, y, w, h}, …]
+      annHits: [],
+      annDrag: null, // {id, startX, startY, origDx, origDy}
+      drag: null, // zoom drag: {x}
       resizing: null, // "w" | "h" | null
       resizeStart: null,
       sized: false,
       hoverPx: null,
       hoverHit: null,
+      hoverAnn: null,
       searchHit: null
     };
+
+    function colors() {
+      return SCHEMES[state.colorScheme] || SCHEMES.modern;
+    }
 
     var layout = {
       padL: 58,
@@ -322,6 +405,31 @@
       return top + h - ((y - y0) / Math.max(1e-9, y1 - y0)) * h;
     }
 
+    function drawYAxisTicks(ctx, rect, yExt) {
+      var ticks = yTickValues(yExt);
+      var minGap = 12;
+      var lastLabelY = null;
+      ctx.fillStyle = colors().axis;
+      ctx.strokeStyle = colors().axis;
+      ctx.lineWidth = 1;
+      ctx.font = "10px Segoe UI, sans-serif";
+      ctx.textAlign = "right";
+      ctx.textBaseline = "middle";
+      for (var i = 0; i < ticks.length; i++) {
+        var y = ticks[i];
+        var py = yScale(y, yExt.min, yExt.max, rect.top, rect.h);
+        if (py < rect.top - 0.5 || py > rect.top + rect.h + 0.5) continue;
+        ctx.beginPath();
+        ctx.moveTo(layout.padL - 4, py);
+        ctx.lineTo(layout.padL, py);
+        ctx.stroke();
+        if (lastLabelY != null && Math.abs(py - lastLabelY) < minGap) continue;
+        var ty = Math.max(rect.top + 6, Math.min(py, rect.top + rect.h - 6));
+        ctx.fillText(fmt(y, 2), layout.padL - 6, ty);
+        lastLabelY = py;
+      }
+    }
+
     function panelRects(h) {
       var avail = h - layout.padT - layout.padB;
       var sum = layout.weights.reduce(function (a, b) { return a + b; }, 0);
@@ -340,7 +448,34 @@
       return x >= state.x0 && x <= state.x1;
     }
 
-    function drawLabelBox(ctx, text, x, y, anchor) {
+    function annOff(id) {
+      return state.annOffset[id] || { dx: 0, dy: 0 };
+    }
+
+    function registerAnnHit(id, x, y, w, h) {
+      state.annHits.push({ id: id, x: x, y: y, w: w, h: h });
+    }
+
+    function hitTestAnn(px, py) {
+      var hits = state.annHits;
+      for (var i = hits.length - 1; i >= 0; i--) {
+        var a = hits[i];
+        if (px >= a.x && px <= a.x + a.w && py >= a.y && py <= a.y + a.h) {
+          return a;
+        }
+      }
+      return null;
+    }
+
+    function resetAnnOffsets() {
+      state.annOffset = { stats: null, zeroCross: null, pos: null, neg: null };
+    }
+
+    /** Boxed annotation beside a vertical guide (left edge offset from line). */
+    function drawLabelBox(ctx, text, x, y, anchor, annId, opts) {
+      opts = opts || {};
+      var gap = opts.gap != null ? opts.gap : 8;
+      var besideLine = opts.besideLine !== false && (opts.besideLine || annId === "stats" || annId === "zeroCross");
       ctx.font = "11px Segoe UI, sans-serif";
       var padX = 5, padY = 3;
       var lines = String(text).split("\n");
@@ -351,27 +486,88 @@
         maxTw = Math.max(maxTw, ctx.measureText(lines[i]).width);
       }
       var th = lineHeight * lines.length;
-      var bx = x;
+      var bw = maxTw + padX * 2;
+      var bh = th + padY * 2;
+      var bx;
       var by = y;
       if (anchor === "bottom") {
-        by = y - th - padY * 2 - 4;
+        by = y - bh - 4;
       } else if (anchor === "top") {
         by = y + 4;
       }
-      bx = Math.max(layout.padL, Math.min(bx - maxTw / 2 - padX, stage.clientWidth - layout.padR - maxTw - padX * 2));
-      ctx.fillStyle = COLORS.annBg;
-      ctx.strokeStyle = COLORS.grid;
+      if (besideLine) {
+        bx = x + gap;
+        if (bx + bw > stage.clientWidth - layout.padR) {
+          bx = x - gap - bw;
+        }
+        bx = Math.max(layout.padL, Math.min(bx, stage.clientWidth - layout.padR - bw));
+      } else {
+        bx = Math.max(layout.padL, Math.min(x - maxTw / 2 - padX, stage.clientWidth - layout.padR - bw));
+      }
+      if (annId) {
+        var off = annOff(annId);
+        bx += off.dx;
+        by += off.dy;
+        registerAnnHit(annId, bx, by, bw, bh);
+      }
+      ctx.fillStyle = colors().annBg;
+      ctx.strokeStyle = state.hoverAnn === annId || (state.annDrag && state.annDrag.id === annId)
+          ? colors().es : colors().grid;
       ctx.lineWidth = 1;
       ctx.beginPath();
-      ctx.rect(bx, by, maxTw + padX * 2, th + padY * 2);
+      ctx.rect(bx, by, bw, bh);
       ctx.fill();
       ctx.stroke();
-      ctx.fillStyle = COLORS.ink;
+      ctx.fillStyle = colors().ink;
       ctx.textAlign = "left";
       ctx.textBaseline = "top";
       for (i = 0; i < lines.length; i++) {
         ctx.fillText(lines[i], bx + padX, by + padY + i * lineHeight);
       }
+    }
+
+    /** Plain phenotype text annotation with drag hit target. */
+    function drawAnnText(ctx, text, x, y, fill, baseline, textAlign, annId) {
+      ctx.font = "10px Segoe UI, sans-serif";
+      var tw = ctx.measureText(text).width;
+      var th = 12;
+      var pad = 3;
+      var off = annId ? annOff(annId) : { dx: 0, dy: 0 };
+      var tx = x + off.dx;
+      var ty = y + off.dy;
+      var align = textAlign || "left";
+      var base = baseline || "middle";
+      var bx;
+      var by;
+      if (base === "middle") {
+        by = ty - th / 2 - pad;
+      } else if (base === "top") {
+        by = ty - pad;
+      } else {
+        by = ty - th - pad;
+      }
+      if (align === "right") {
+        bx = tx - tw - pad;
+      } else {
+        bx = tx - pad;
+      }
+      var bw = tw + pad * 2;
+      var bh = th + pad * 2;
+      if (annId) {
+        registerAnnHit(annId, bx, by, bw, bh);
+      }
+      var active = state.hoverAnn === annId || (state.annDrag && state.annDrag.id === annId);
+      if (active) {
+        ctx.fillStyle = colors().annBg;
+        ctx.fillRect(bx, by, bw, bh);
+        ctx.strokeStyle = colors().es;
+        ctx.lineWidth = 1;
+        ctx.strokeRect(bx, by, bw, bh);
+      }
+      ctx.fillStyle = fill;
+      ctx.textAlign = align;
+      ctx.textBaseline = base;
+      ctx.fillText(text, tx, ty);
     }
 
     function drawGuideLine(ctx, px, h, style) {
@@ -415,6 +611,7 @@
       canvas.style.height = h + "px";
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.clearRect(0, 0, w, h);
+      state.annHits = [];
 
       var rects = panelRects(h);
       var esY = extentY(data.esCurve, 0.12);
@@ -430,7 +627,7 @@
       if (state.searchHit && inDomain(state.searchHit.rank)) {
         drawGuideLine(ctx, xScale(state.searchHit.rank, w), h, {
           dash: [5, 5],
-          color: COLORS.search,
+          color: colors().search,
           width: 2,
           alpha: 1
         });
@@ -441,7 +638,7 @@
         var leHover = state.hoverHit && state.hoverHit.leadingEdge;
         drawGuideLine(ctx, state.hoverPx, h, {
           dash: leHover ? [7, 4] : [4, 4],
-          color: leHover ? COLORS.hoverLe : COLORS.hover,
+          color: leHover ? colors().hoverLe : colors().hover,
           width: leHover ? 2.4 : 1.25,
           alpha: 1
         });
@@ -458,7 +655,7 @@
     function drawEsPanel(ctx, w, rect, yExt) {
       clipPlot(ctx, rect.top, rect.h, w);
       var zy = yScale(0, yExt.min, yExt.max, rect.top, rect.h);
-      ctx.strokeStyle = COLORS.zero;
+      ctx.strokeStyle = colors().zero;
       ctx.lineWidth = 1;
       ctx.beginPath();
       ctx.moveTo(layout.padL, zy);
@@ -485,7 +682,7 @@
         if (started) {
           ctx.lineTo(xScale(Math.min(state.x1, curve[curve.length - 1][0]), w), zy);
           ctx.closePath();
-          ctx.fillStyle = COLORS.tealFill;
+          ctx.fillStyle = colors().esFill;
           ctx.fill();
         }
       }
@@ -505,8 +702,8 @@
           ctx.lineTo(px, py);
         }
       }
-      ctx.strokeStyle = COLORS.teal;
-      ctx.lineWidth = 2.25;
+      ctx.strokeStyle = colors().es;
+      ctx.lineWidth = colors().esLineWidth;
       ctx.lineJoin = "round";
       ctx.stroke();
 
@@ -516,7 +713,7 @@
       if (peakRank != null && inDomain(peakRank)) {
         peakX = xScale(peakRank, w);
         ctx.setLineDash([4, 3]);
-        ctx.strokeStyle = COLORS.peak;
+        ctx.strokeStyle = colors().peak;
         ctx.lineWidth = 1;
         ctx.beginPath();
         ctx.moveTo(peakX, rect.top);
@@ -527,27 +724,27 @@
       ctx.restore();
 
       if (state.showAnn && peakX != null) {
-        var ann = "ES=" + fmt(st.es, 3) + "  NES=" + fmt(st.nes, 2) + "  FDR=" + fmt(st.fdr, 3)
+        var ann = "ES=" + fmt(st.es, 3) + "  NES=" + fmt(st.nes, 2)
+            + "  NOM pVal=" + fmt(st.np, 3) + "  FDR=" + fmt(st.fdr, 3)
             + "\npeak at rank " + Math.round(peakRank);
         var zeroY = yScale(0, yExt.min, yExt.max, rect.top, rect.h);
-        // Match static v2: stats on peak rank line, in whitespace opposite the ES peak.
+        // Stats beside peak rank line (left edge offset), in whitespace opposite the ES peak.
         if (peakEs != null && peakEs >= 0) {
-          drawLabelBox(ctx, ann, peakX, zeroY, "top");
+          drawLabelBox(ctx, ann, peakX, zeroY, "top", "stats", { besideLine: true });
         } else {
-          drawLabelBox(ctx, ann, peakX, zeroY, "bottom");
+          drawLabelBox(ctx, ann, peakX, zeroY, "bottom", "stats", { besideLine: true });
         }
       }
 
-      ctx.fillStyle = COLORS.axis;
+      ctx.fillStyle = colors().axis;
       ctx.font = "11px Segoe UI, sans-serif";
-      ctx.textAlign = "right";
-      ctx.textBaseline = "middle";
-      ctx.fillText(fmt(yExt.max, 2), layout.padL - 6, rect.top + 8);
-      ctx.fillText(fmt(yExt.min, 2), layout.padL - 6, rect.top + rect.h - 8);
+      drawYAxisTicks(ctx, rect, yExt);
       ctx.save();
       ctx.translate(14, rect.top + rect.h / 2);
       ctx.rotate(-Math.PI / 2);
       ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillStyle = colors().axis;
       ctx.fillText("Enrichment score (ES)", 0, 0);
       ctx.restore();
     }
@@ -560,23 +757,24 @@
         if (!inDomain(h.rank)) continue;
         var px = xScale(h.rank, w);
         var le = state.showLe && h.leadingEdge;
-        ctx.strokeStyle = le ? COLORS.le : COLORS.hit;
-        ctx.lineWidth = le ? 1.5 : 0.85;
+        ctx.strokeStyle = le ? colors().le : colors().hit;
+        ctx.lineWidth = le ? colors().hitLeLineWidth : colors().hitLineWidth;
         ctx.beginPath();
         ctx.moveTo(px, rect.top + 2);
         ctx.lineTo(px, rect.top + rect.h - 2);
         ctx.stroke();
       }
       ctx.restore();
-      if (state.showAnn && state.showLe) {
-        ctx.fillStyle = COLORS.le;
+      // Historic classic hit strip had no range-axis label; modern keeps "Set Members".
+      if (state.scheme !== "classic") {
+        ctx.fillStyle = colors().axis;
         ctx.font = "10px Segoe UI, sans-serif";
         ctx.save();
         ctx.translate(14, rect.top + rect.h / 2);
         ctx.rotate(-Math.PI / 2);
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
-        ctx.fillText("Leading edge", 0, 0);
+        ctx.fillText(colors().hitsLabel, 0, 0);
         ctx.restore();
       }
     }
@@ -632,7 +830,7 @@
       var metric = data.metric || [];
 
       // Horizontal grid (match static EnPlot v2).
-      ctx.strokeStyle = COLORS.grid;
+      ctx.strokeStyle = colors().grid;
       ctx.lineWidth = 1;
       for (var g = 1; g <= 3; g++) {
         var gy = rect.top + (rect.h * g) / 4;
@@ -645,12 +843,40 @@
       // Zero line when metric spans zero.
       if (yExt.min < 0 && yExt.max > 0) {
         var zy = yScale(0, yExt.min, yExt.max, rect.top, rect.h);
-        ctx.strokeStyle = COLORS.zero;
+        ctx.strokeStyle = colors().zero;
         ctx.lineWidth = 1;
         ctx.beginPath();
         ctx.moveTo(layout.padL, zy);
         ctx.lineTo(w - layout.padR, zy);
         ctx.stroke();
+      }
+
+      // Fill under ranked-metric curve to zero (match static EnPlot v2).
+      var metricZy = yScale(0, yExt.min, yExt.max, rect.top, rect.h);
+      if (state.showFill && metric.length > 1) {
+        ctx.beginPath();
+        var fillStarted = false;
+        var lastMx = null;
+        for (var fi = 0; fi < metric.length; fi++) {
+          var mx = metric[fi][0], my = metric[fi][1];
+          if (!inDomain(mx)) continue;
+          var mpx = xScale(mx, w);
+          var mpy = yScale(my, yExt.min, yExt.max, rect.top, rect.h);
+          if (!fillStarted) {
+            ctx.moveTo(mpx, metricZy);
+            ctx.lineTo(mpx, mpy);
+            fillStarted = true;
+          } else {
+            ctx.lineTo(mpx, mpy);
+          }
+          lastMx = mx;
+        }
+        if (fillStarted) {
+          ctx.lineTo(xScale(Math.min(state.x1, lastMx), w), metricZy);
+          ctx.closePath();
+          ctx.fillStyle = colors().metricFill;
+          ctx.fill();
+        }
       }
 
       // Ranked-metric curve.
@@ -668,7 +894,7 @@
           ctx.lineTo(px, py);
         }
       }
-      ctx.strokeStyle = COLORS.metric;
+      ctx.strokeStyle = colors().metric;
       ctx.lineWidth = 1.25;
       ctx.lineJoin = "round";
       ctx.stroke();
@@ -678,7 +904,7 @@
       if (zc != null && zc >= state.x0 && zc <= state.x1) {
         var zx = xScale(zc, w);
         ctx.setLineDash([4, 3]);
-        ctx.strokeStyle = COLORS.axis;
+        ctx.strokeStyle = colors().axis;
         ctx.lineWidth = 0.75;
         ctx.beginPath();
         ctx.moveTo(zx, rect.top);
@@ -686,25 +912,22 @@
         ctx.stroke();
         ctx.setLineDash([]);
         if (state.showAnn) {
-          drawLabelBox(ctx, "Zero cross at " + Math.round(zc), zx, rect.top + rect.h * 0.55, "top");
+          var zcGap = 8;
+          drawLabelBox(ctx, "Zero cross at " + Math.round(zc), zx, rect.top + rect.h * 0.48 - zcGap, "top", "zeroCross",
+              { besideLine: true, gap: zcGap });
         }
       }
       ctx.restore();
 
       // Y-axis ticks and title.
-      ctx.fillStyle = COLORS.axis;
+      drawYAxisTicks(ctx, rect, yExt);
+      ctx.fillStyle = colors().axis;
       ctx.font = "11px Segoe UI, sans-serif";
-      ctx.textAlign = "right";
-      ctx.textBaseline = "middle";
-      ctx.fillText(fmt(yExt.max, 2), layout.padL - 6, rect.top + 8);
-      ctx.fillText(fmt(yExt.min, 2), layout.padL - 6, rect.top + rect.h - 8);
-      if (yExt.min < 0 && yExt.max > 0) {
-        ctx.fillText("0", layout.padL - 6, yScale(0, yExt.min, yExt.max, rect.top, rect.h));
-      }
       ctx.save();
       ctx.translate(14, rect.top + rect.h / 2);
       ctx.rotate(-Math.PI / 2);
       ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
       var metricTitle = "Ranked list metric";
       if (data.metricName) {
         metricTitle += " (" + data.metricName + ")";
@@ -712,25 +935,22 @@
       ctx.fillText(metricTitle, 0, 0);
       ctx.restore();
 
-      // Phenotype labels at max/min metric (EnPlot v2 parity).
+      // Phenotype labels at max/min metric tips: pos left, neg right (mirrors color-bar ends).
       if (state.showAnn) {
         var ext = {
           min: data.metricMin != null ? data.metricMin : metricExtents(metric).min,
           max: data.metricMax != null ? data.metricMax : metricExtents(metric).max
         };
-        ctx.font = "10px Segoe UI, sans-serif";
-        ctx.textAlign = "left";
         if (data.classA) {
           var pyMax = yScale(ext.max, yExt.min, yExt.max, rect.top, rect.h);
-          ctx.fillStyle = COLORS.pos;
-          ctx.textBaseline = "bottom";
-          ctx.fillText("'" + data.classA + "' (pos)", layout.padL + 4, pyMax - 2);
+          drawAnnText(ctx, "'" + data.classA + "' (pos)", layout.padL + 4, pyMax - 2,
+              colors().pos, "bottom", "left", "pos");
         }
         if (data.classB) {
           var pyMin = yScale(ext.min, yExt.min, yExt.max, rect.top, rect.h);
-          ctx.fillStyle = COLORS.neg;
-          ctx.textBaseline = "top";
-          ctx.fillText("'" + data.classB + "' (neg)", layout.padL + 4, pyMin + 2);
+          var negY = Math.max(rect.top + 12, Math.min(pyMin - 2, rect.top + rect.h - 2));
+          drawAnnText(ctx, "'" + data.classB + "' (neg)", w - layout.padR - 4, negY,
+              colors().neg, "bottom", "right", "neg");
         }
       }
     }
@@ -738,15 +958,15 @@
     function drawDomainAxis(ctx, w, h) {
       var axisY = h - layout.padB + 10;
       var plotW = w - layout.padL - layout.padR;
-      ctx.strokeStyle = COLORS.axis;
+      ctx.strokeStyle = colors().axis;
       ctx.lineWidth = 1;
       ctx.beginPath();
       ctx.moveTo(layout.padL, axisY);
       ctx.lineTo(w - layout.padR, axisY);
       ctx.stroke();
 
-      var ticks = 5;
-      ctx.fillStyle = COLORS.axis;
+      var ticks = 8;
+      ctx.fillStyle = colors().axis;
       ctx.font = "10px Segoe UI, sans-serif";
       ctx.textBaseline = "top";
       for (var t = 0; t <= ticks; t++) {
@@ -757,10 +977,8 @@
         ctx.moveTo(px, axisY);
         ctx.lineTo(px, axisY + (t === 0 || t === ticks ? 5 : 3));
         ctx.stroke();
-        if (t === 0 || t === ticks || t === Math.floor(ticks / 2)) {
-          ctx.textAlign = t === 0 ? "left" : (t === ticks ? "right" : "center");
-          ctx.fillText(String(Math.round(rank)), px, axisY + 6);
-        }
+        ctx.textAlign = t === 0 ? "left" : (t === ticks ? "right" : "center");
+        ctx.fillText(String(Math.round(rank)), px, axisY + 6);
       }
       ctx.textAlign = "center";
       ctx.font = "11px Segoe UI, sans-serif";
@@ -820,11 +1038,16 @@
     }
 
     function onMove(ev) {
-      if (state.resizing) return;
+      if (state.resizing || state.annDrag) return;
       var rect = canvas.getBoundingClientRect();
       var px = ev.clientX - rect.left;
       var py = ev.clientY - rect.top;
       var w = stage.clientWidth;
+
+      var overAnn = state.showAnn ? hitTestAnn(px, py) : null;
+      state.hoverAnn = overAnn ? overAnn.id : null;
+      canvas.style.cursor = overAnn ? "grab" : "";
+
       if (px < layout.padL || px > w - layout.padR) {
         state.hoverPx = null;
         state.hoverHit = null;
@@ -834,6 +1057,14 @@
         } else {
           tip.style.display = "none";
         }
+        draw();
+        return;
+      }
+      // Prefer annotation grab over gene hover when overlapping.
+      if (overAnn) {
+        state.hoverPx = null;
+        state.hoverHit = null;
+        tip.style.display = "none";
         draw();
         return;
       }
@@ -852,8 +1083,11 @@
 
     canvas.addEventListener("mousemove", onMove);
     canvas.addEventListener("mouseleave", function () {
+      if (state.annDrag) return;
       state.hoverPx = null;
       state.hoverHit = null;
+      state.hoverAnn = null;
+      canvas.style.cursor = "";
       if (state.searchHit && inDomain(state.searchHit.rank)) {
         showTipForHit(state.searchHit, xScale(state.searchHit.rank, stage.clientWidth), 28);
       } else {
@@ -865,7 +1099,29 @@
     canvas.addEventListener("mousedown", function (ev) {
       if (ev.button !== 0 || state.resizing) return;
       var rect = canvas.getBoundingClientRect();
-      state.drag = { x: ev.clientX - rect.left };
+      var px = ev.clientX - rect.left;
+      var py = ev.clientY - rect.top;
+      if (state.showAnn) {
+        var hit = hitTestAnn(px, py);
+        if (hit) {
+          var off = annOff(hit.id);
+          state.annDrag = {
+            id: hit.id,
+            startX: ev.clientX,
+            startY: ev.clientY,
+            origDx: off.dx,
+            origDy: off.dy
+          };
+          state.drag = null;
+          state.hoverPx = null;
+          tip.style.display = "none";
+          canvas.style.cursor = "grabbing";
+          ev.preventDefault();
+          draw();
+          return;
+        }
+      }
+      state.drag = { x: px };
     });
 
     window.addEventListener("mouseup", function (ev) {
@@ -876,6 +1132,12 @@
         state.resizeStart = null;
         document.body.style.cursor = "";
         syncSizeInputs();
+        return;
+      }
+      if (state.annDrag) {
+        state.annDrag = null;
+        canvas.style.cursor = state.hoverAnn ? "grab" : "";
+        draw();
         return;
       }
       if (!state.drag) return;
@@ -891,6 +1153,18 @@
     });
 
     window.addEventListener("mousemove", function (ev) {
+      if (state.annDrag) {
+        ev.preventDefault();
+        var d = state.annDrag;
+        state.annOffset[d.id] = {
+          dx: d.origDx + (ev.clientX - d.startX),
+          dy: d.origDy + (ev.clientY - d.startY)
+        };
+        canvas.style.cursor = "grabbing";
+        tip.style.display = "none";
+        draw();
+        return;
+      }
       if (!state.resizing || !state.resizeStart) return;
       ev.preventDefault();
       var rs = state.resizeStart;
@@ -944,6 +1218,22 @@
     });
     $("#toggle-ann").addEventListener("change", function (e) {
       state.showAnn = e.target.checked;
+      if (!state.showAnn) {
+        state.hoverAnn = null;
+        state.annDrag = null;
+        canvas.style.cursor = "";
+      }
+      draw();
+    });
+    $("#color-scheme").addEventListener("change", function (e) {
+      state.colorScheme = e.target.value === "classic" ? "classic" : "modern";
+      draw();
+    });
+    $("#btn-reset-ann").addEventListener("click", function () {
+      resetAnnOffsets();
+      state.annDrag = null;
+      state.hoverAnn = null;
+      canvas.style.cursor = "";
       draw();
     });
     $("#btn-reset").addEventListener("click", function () {
@@ -1026,6 +1316,20 @@
 
     draw();
     syncSizeInputs();
+
+    /** FX host: capture a clean PNG of the current plot (no hover chrome). */
+    window.__enplotCapturePng = function () {
+      state.hoverPx = null;
+      state.hoverHit = null;
+      state.hoverAnn = null;
+      tip.style.display = "none";
+      draw();
+      return {
+        dataUrl: canvas.toDataURL("image/png"),
+        width: stage.clientWidth,
+        height: stage.clientHeight
+      };
+    };
   }
 
   loadEmbeddedOrFetch().then(bootOnce).catch(function (err) {

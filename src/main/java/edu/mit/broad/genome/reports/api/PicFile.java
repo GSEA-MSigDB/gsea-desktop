@@ -148,7 +148,7 @@ public class PicFile {
         if (xChart != null) {
             xChart.saveAsPNG(fSavedFile, width, height);
             if (createSvgs) {
-                ImageUtil.saveAsSVG(xChart.getFreeChart(), fSavedFileSvg, width, height, true);
+                xChart.saveAsSVG(fSavedFileSvg, width, height);
             }
             
             // Clear the reference to free resources - this is necessary because the PicFiles are

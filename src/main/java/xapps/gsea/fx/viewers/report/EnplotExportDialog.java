@@ -3,10 +3,17 @@
  */
 package xapps.gsea.fx.viewers.report;
 
+import java.awt.Dimension;
 import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
 import java.util.Locale;
 import java.util.Optional;
@@ -20,8 +27,10 @@ import javax.imageio.metadata.IIOMetadata;
 import javax.imageio.metadata.IIOMetadataNode;
 import javax.imageio.stream.ImageOutputStream;
 
-import org.genepattern.io.ImageUtil;
-import org.jfree.chart.JFreeChart;
+import org.apache.batik.dom.GenericDOMImplementation;
+import org.apache.batik.svggen.SVGGraphics2D;
+import org.w3c.dom.DOMImplementation;
+import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
@@ -87,38 +96,33 @@ public final class EnplotExportDialog {
     }
 
     /**
-     * Prompt for size/DPI/format and write {@code chart}. Returns the saved file, if any.
+     * Prompt for size/DPI/format and write a raster snapshot (interactive EnPlot canvas).
+     * SVG embeds the snapshot as a scaled image (canvas is not a vector source).
      */
-    public static Optional<File> saveChart(Window owner,
-                                           JFreeChart chart,
+    public static Optional<File> saveImage(Window owner,
+                                           BufferedImage image,
                                            String suggestedBaseName,
                                            int defaultWidthPx,
                                            int defaultHeightPx) {
-        if (chart == null) {
+        if (image == null) {
             return Optional.empty();
         }
-        Optional<Spec> specOpt = prompt(owner, defaultWidthPx, defaultHeightPx, Format.PNG);
+        int w = defaultWidthPx > 0 ? defaultWidthPx : image.getWidth();
+        int h = defaultHeightPx > 0 ? defaultHeightPx : image.getHeight();
+        Optional<Spec> specOpt = prompt(owner, w, h, Format.PNG);
         if (specOpt.isEmpty()) {
             return Optional.empty();
         }
         Spec spec = specOpt.get();
 
-        FileChooser chooser = new FileChooser();
-        chooser.setTitle("Save enrichment plot");
-        String base = suggestedBaseName == null || suggestedBaseName.isBlank()
-                ? "enplot" : suggestedBaseName.replaceAll("[^A-Za-z0-9._-]+", "_");
-        chooser.setInitialFileName(base + "." + spec.format().extension);
-        chooser.getExtensionFilters().setAll(
-                new FileChooser.ExtensionFilter(spec.format().label, spec.format().glob));
-        FxFileChooserUtil.seedInitialDirectory(chooser);
-        File target = chooser.showSaveDialog(owner);
-        if (target == null) {
+        Optional<File> targetOpt = chooseTarget(owner, suggestedBaseName, spec.format());
+        if (targetOpt.isEmpty()) {
             return Optional.empty();
         }
-        target = ensureExtension(target, spec.format());
+        File target = targetOpt.get();
 
         try {
-            write(chart, target, spec);
+            writeImage(image, target, spec);
             FxFileChooserUtil.registerOpened(target);
             Application.getWindowManager().showMessage("Saved:\n" + target.getAbsolutePath());
             return Optional.of(target);
@@ -126,6 +130,22 @@ public final class EnplotExportDialog {
             Application.getWindowManager().showError("Could not save enrichment plot", ex);
             return Optional.empty();
         }
+    }
+
+    private static Optional<File> chooseTarget(Window owner, String suggestedBaseName, Format format) {
+        FileChooser chooser = new FileChooser();
+        chooser.setTitle("Save enrichment plot");
+        String base = suggestedBaseName == null || suggestedBaseName.isBlank()
+                ? "enplot" : suggestedBaseName.replaceAll("[^A-Za-z0-9._-]+", "_");
+        chooser.setInitialFileName(base + "." + format.extension);
+        chooser.getExtensionFilters().setAll(
+                new FileChooser.ExtensionFilter(format.label, format.glob));
+        FxFileChooserUtil.seedInitialDirectory(chooser);
+        File target = chooser.showSaveDialog(owner);
+        if (target == null) {
+            return Optional.empty();
+        }
+        return Optional.of(ensureExtension(target, format));
     }
 
     static Optional<Spec> prompt(Window owner, int defaultWidthPx, int defaultHeightPx, Format defaultFormat) {
@@ -205,19 +225,52 @@ public final class EnplotExportDialog {
         return ImageIO.getImageWritersByFormatName(formatName).hasNext();
     }
 
-    static void write(JFreeChart chart, File target, Spec spec) throws IOException {
+    static void writeImage(BufferedImage source, File target, Spec spec) throws IOException {
         Format format = spec.format();
         int w = format == Format.SVG ? Math.max(1, spec.widthPx()) : spec.renderWidth();
         int h = format == Format.SVG ? Math.max(1, spec.heightPx()) : spec.renderHeight();
+        BufferedImage image = scaleImage(source, w, h);
         if (format == Format.SVG) {
-            ImageUtil.saveAsSVG(chart, target, w, h, false);
+            writeSvgFromImage(image, target, w, h);
             return;
         }
-        BufferedImage image = chart.createBufferedImage(w, h);
         if (format == Format.JPEG) {
             image = toRgb(image);
         }
         writeRaster(image, target, format, spec.dpi());
+    }
+
+    private static BufferedImage scaleImage(BufferedImage source, int width, int height) {
+        if (source.getWidth() == width && source.getHeight() == height) {
+            return source;
+        }
+        BufferedImage scaled = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = scaled.createGraphics();
+        try {
+            g.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
+                    RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+            g.setRenderingHint(RenderingHints.KEY_RENDERING,
+                    RenderingHints.VALUE_RENDER_QUALITY);
+            g.drawImage(source, 0, 0, width, height, null);
+        } finally {
+            g.dispose();
+        }
+        return scaled;
+    }
+
+    private static void writeSvgFromImage(BufferedImage image, File target, int width, int height)
+            throws IOException {
+        DOMImplementation domImpl = GenericDOMImplementation.getDOMImplementation();
+        Document document = domImpl.createDocument("http://www.w3.org/2000/svg", "svg", null);
+        SVGGraphics2D svg = new SVGGraphics2D(document);
+        svg.setSVGCanvasSize(new Dimension(width, height));
+        svg.drawImage(image, 0, 0, width, height, null);
+        try (Writer out = new BufferedWriter(
+                new OutputStreamWriter(new FileOutputStream(target), StandardCharsets.UTF_8))) {
+            svg.stream(out, true);
+        } finally {
+            svg.dispose();
+        }
     }
 
     private static void writeRaster(BufferedImage image, File target, Format format, int dpi)

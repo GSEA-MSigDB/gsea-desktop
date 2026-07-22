@@ -17,15 +17,17 @@ repositories {
 
 javafx {
     version = javafxVersion
-    modules = [ 'javafx.controls', 'javafx.graphics', 'javafx.web', 'javafx.swing' ]
+    modules = [ 'javafx.controls', 'javafx.graphics', 'javafx.web' ]
 }
 
 dependencies {
     implementation fileTree(dir: 'modules', include: '*.jar')
-    // Canvas-backed Graphics2D for JFreeChart in the FX shell (also synced into javafx-modules/).
-    implementation 'org.jfree:org.jfree.fxgraphics2d:2.1.5'
     // Windows dark title-bar (DwmSetWindowAttribute); unused on macOS/Linux.
     implementation 'net.java.dev.jna:jna:5.14.0'
+    // In-scene IDE docking for the JavaFX shell (no floating OS windows).
+    implementation('software.coley.bento-fx:core:0.16.0') {
+        exclude group: 'org.openjfx'
+    }
     testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
@@ -68,7 +70,7 @@ jar {
 }
 
 compileJava {
-    options.release = 17
+    options.release = 21
     inputs.property("moduleName", moduleName)
     doFirst {
         options.compilerArgs = [
@@ -80,15 +82,20 @@ compileJava {
 
 tasks.register('syncJavaFxToModules', Copy) {
     group = 'distribution'
-    description = 'Copy OpenJFX and FXGraphics2D jars into javafx-modules/ for script launches'
+    description = 'Copy OpenJFX jars into javafx-modules/ for script launches'
     from configurations.runtimeClasspath
     into 'javafx-modules'
-    include '**/javafx-*.jar'
-    include '**/fxgraphics2d-*.jar'
-    include '**/org.jfree.fxgraphics2d-*.jar'
+    // OpenJFX modules we ship: declared javafx.* plus media (required by javafx.web).
+    // Do not ship javafx-swing.
+    include '**/javafx-base-*.jar'
+    include '**/javafx-controls-*.jar'
+    include '**/javafx-graphics-*.jar'
+    include '**/javafx-media-*.jar'
+    include '**/javafx-web-*.jar'
     include '**/jna-*.jar'
+    include '**/core-0.16.0.jar'
     duplicatesStrategy = DuplicatesStrategy.INCLUDE
-    // Drop prior OpenJFX versions so module-path does not see two javafx.* jars.
+    // Drop prior OpenJFX versions / unused javafx.* jars so module-path stays clean.
     doFirst {
         def dest = file('javafx-modules')
         if (dest.directory) {
@@ -134,17 +141,25 @@ task createDist(type: Copy, dependsOn: jar)  {
         from ("${buildDir}/libs")
         from ("modules")
         from ("javafx-modules")
-        from (configurations.runtimeClasspath)
+        from (configurations.runtimeClasspath) {
+            exclude '**/javafx-swing-*.jar'
+        }
         into "modules"
     }
     into "${buildDir}/GSEA-dist"
 
     doLast {
-        // Ensure OpenJFX + FXGraphics2D jars from Maven are present beside flatDir modules
+        // Ensure required OpenJFX jars from Maven are present beside flatDir modules
+        // (exclude javafx-swing — not used by the app; keep media for javafx.web).
         copy {
             from configurations.runtimeClasspath
             into "${buildDir}/GSEA-dist/modules"
-            include '**/javafx-*.jar'
+            include '**/javafx-base-*.jar'
+            include '**/javafx-controls-*.jar'
+            include '**/javafx-graphics-*.jar'
+            include '**/javafx-media-*.jar'
+            include '**/javafx-web-*.jar'
+            exclude '**/javafx-swing-*.jar'
         }
     }
 }

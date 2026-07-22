@@ -26,8 +26,7 @@ import java.util.Map;
  * @author Aravind Subramanian
  */
 // TODO: parameterize class, throughout
-public class DataFormat extends DataType implements Constants {
-    public DataFormat() { }
+public class DataFormat implements Constants {
 
     private static final Logger klog = LoggerFactory.getLogger(DataFormat.class);
 
@@ -168,6 +167,7 @@ public class DataFormat extends DataType implements Constants {
     /*
      * Class variables
      */
+    private Class fRepresentationClass;
     private String fName;
     private String fDesc;
     private String fExt;
@@ -200,7 +200,9 @@ public class DataFormat extends DataType implements Constants {
     public DataFormat(Class repClass, String name, String desc, String ext, Class parserClass)
             throws IllegalArgumentException {
 
-        super(repClass, ext);
+        if (repClass == null) {
+            throw new IllegalArgumentException("Param repClass cannot be null");
+        }
 
         if (name == null) {
             throw new IllegalArgumentException("Param name cannot be null");
@@ -226,10 +228,18 @@ public class DataFormat extends DataType implements Constants {
 
         // parser can be null
 
+        this.fRepresentationClass = repClass;
         this.fExt = ext;
         this.fName = name;
         this.fDesc = desc;
         this.fParserClass = parserClass;
+    }
+
+    /**
+     * Representation class for this format (dataset, geneset, external type, etc.).
+     */
+    public Class getRepresentationClass() {
+        return fRepresentationClass;
     }
 
     /**

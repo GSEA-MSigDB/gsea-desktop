@@ -29,8 +29,7 @@ public class DesktopIntegration {
 
     /**
      * Wire macOS application menu About / Quit to the JavaFX shell callbacks.
-     * {@code quitHandler} returns {@code true} when quit should proceed (Swing
-     * {@code performQuit} / {@code cancelQuit} parity).
+     * {@code quitHandler} returns {@code true} when quit should proceed.
      * Safe to call on any OS (no-ops when handlers are unsupported).
      */
     public static void installHandlers(Runnable aboutHandler, java.util.function.BooleanSupplier quitHandler) {

@@ -79,9 +79,6 @@ public final class FxJobsPane {
         this.runtime = runtime;
         this.openPage = openPage != null ? openPage : page -> { };
 
-        Label header = new Label("Jobs");
-        header.getStyleClass().add("gsea-section-header");
-
         list.setItems(runtime.getJobs());
         list.setPlaceholder(new Label("No jobs yet"));
         list.setCellFactory(lv -> new JobListCell());
@@ -149,7 +146,7 @@ public final class FxJobsPane {
         actions.setPadding(new Insets(4, 8, 4, 8));
         actions.setAlignment(Pos.CENTER_LEFT);
 
-        listSection.getChildren().setAll(header, list, actions);
+        listSection.getChildren().setAll(list, actions);
         listSection.setPadding(new Insets(4, 0, 0, 0));
         VBox.setVgrow(list, Priority.ALWAYS);
         listSection.getStyleClass().add("gsea-jobs-pane");

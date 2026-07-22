@@ -3,10 +3,12 @@
  */
 package xapps.gsea.fx.viewers.report;
 
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.nio.file.Files;
 import java.util.Base64;
-import java.util.Locale;
+
+import javax.imageio.ImageIO;
 
 import org.json.simple.JSONValue;
 import org.slf4j.Logger;
@@ -27,6 +29,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
 import javafx.stage.Window;
+import netscape.javascript.JSObject;
 
 /**
  * JavaFX host for the bundled interactive EnPlot v2 viewer ({@code xapps/gsea/fx/enplot/}).
@@ -91,6 +94,12 @@ public final class EnplotWebView extends BorderPane {
      */
     public static BorderPane createInteractivePane(File reportDir, EnrichmentResult result,
             String classA, String classB, EnrichmentEsProfiles.ScoringResolution scoring) {
+        return createInteractivePane(reportDir, result, classA, classB, scoring, null);
+    }
+
+    public static BorderPane createInteractivePane(File reportDir, EnrichmentResult result,
+            String classA, String classB, EnrichmentEsProfiles.ScoringResolution scoring,
+            String metricName) {
         if (result == null || result.getRankedList() == null || result.getScore() == null) {
             BorderPane err = new BorderPane();
             err.setCenter(ReportExplorerSupport.messagePane("Interactive EnPlot v2 unavailable."));
@@ -111,7 +120,7 @@ public final class EnplotWebView extends BorderPane {
                 cachedJson -> {
                     String json = cachedJson;
                     if (json == null) {
-                        json = EnplotPayloadLoader.buildFromResult(result, classA, classB, scoringTable);
+                        json = EnplotPayloadLoader.buildFromResult(result, classA, classB, scoringTable, metricName);
                     }
                     if (json == null || json.isBlank()) {
                         return ReportExplorerSupport.messagePane("Interactive EnPlot v2 unavailable.");
@@ -126,7 +135,7 @@ public final class EnplotWebView extends BorderPane {
     }
 
     private static Node withSaveBar(EnplotWebView view, String geneSetName) {
-        Button save = new Button("Save snapshot…");
+        Button save = new Button("Save plot…");
         xapps.gsea.fx.FxButtons.styleSecondary(save);
         save.setOnAction(e -> view.saveSnapshot(geneSetName));
 
@@ -146,35 +155,77 @@ public final class EnplotWebView extends BorderPane {
     public void saveSnapshot(String geneSetName) {
         try {
             Object result = engine.executeScript(
-                    "(function(){ var c=document.getElementById('enplot-canvas');"
-                            + " return c ? c.toDataURL('image/png') : null; })()");
-            if (!(result instanceof String dataUrl) || !dataUrl.startsWith("data:image/png;base64,")) {
+                    "(function(){"
+                            + "if(typeof window.__enplotCapturePng==='function'){"
+                            + "  return window.__enplotCapturePng();"
+                            + "}"
+                            + "var c=document.getElementById('enplot-canvas');"
+                            + "if(!c) return null;"
+                            + "return {dataUrl:c.toDataURL('image/png'),"
+                            + "width:c.clientWidth||c.width,height:c.clientHeight||c.height};"
+                            + "})()");
+            Capture capture = parseCapture(result);
+            if (capture == null) {
                 Application.getWindowManager().showMessage("Could not capture the interactive plot. "
                         + "Wait for it to finish loading, then try again.");
                 return;
             }
-            byte[] bytes = Base64.getDecoder().decode(
-                    dataUrl.substring("data:image/png;base64,".length()));
-            javafx.stage.FileChooser chooser = new javafx.stage.FileChooser();
-            chooser.setTitle("Save EnPlot v2 snapshot");
-            chooser.getExtensionFilters().add(
-                    new javafx.stage.FileChooser.ExtensionFilter("PNG image", "*.png"));
-            String safe = geneSetName == null ? "enplot_v2"
-                    : geneSetName.replaceAll("[^A-Za-z0-9._-]+", "_");
-            chooser.setInitialFileName(safe + "_enplot_v2.png");
-            xapps.gsea.fx.params.FxFileChooserUtil.seedInitialDirectory(chooser);
-            Window owner = getScene() != null ? getScene().getWindow() : null;
-            File out = chooser.showSaveDialog(owner);
-            if (out == null) {
+            byte[] bytes = Base64.getDecoder().decode(capture.base64());
+            BufferedImage image = ImageIO.read(new ByteArrayInputStream(bytes));
+            if (image == null) {
+                Application.getWindowManager().showMessage("Could not decode the interactive plot image.");
                 return;
             }
-            if (!out.getName().toLowerCase(Locale.ROOT).endsWith(".png")) {
-                out = new File(out.getParentFile(), out.getName() + ".png");
-            }
-            Files.write(out.toPath(), bytes);
+            Window owner = getScene() != null ? getScene().getWindow() : null;
+            String safe = geneSetName == null ? "enplot_v2"
+                    : geneSetName.replaceAll("[^A-Za-z0-9._-]+", "_");
+            int defW = capture.width() > 1 ? capture.width() : image.getWidth();
+            int defH = capture.height() > 1 ? capture.height() : image.getHeight();
+            EnplotExportDialog.saveImage(owner, image, safe + "_enplot_v2", defW, defH);
         } catch (Throwable t) {
-            Application.getWindowManager().showError("Save snapshot failed", t);
+            Application.getWindowManager().showError("Save plot failed", t);
         }
+    }
+
+    private record Capture(String base64, int width, int height) {
+    }
+
+    private static Capture parseCapture(Object result) {
+        if (result == null) {
+            return null;
+        }
+        String dataUrl = null;
+        int width = 0;
+        int height = 0;
+        if (result instanceof String s) {
+            dataUrl = s;
+        } else if (result instanceof JSObject js) {
+            Object urlObj = js.getMember("dataUrl");
+            if (urlObj instanceof String s) {
+                dataUrl = s;
+            }
+            width = toInt(js.getMember("width"));
+            height = toInt(js.getMember("height"));
+        }
+        if (dataUrl == null || !dataUrl.startsWith("data:image/png;base64,")) {
+            return null;
+        }
+        String b64 = dataUrl.substring("data:image/png;base64,".length());
+        return new Capture(b64, Math.max(0, width), Math.max(0, height));
+    }
+
+    private static int toInt(Object value) {
+        if (value instanceof Number n) {
+            return n.intValue();
+        }
+        if (value instanceof String s) {
+            try {
+                return Integer.parseInt(s.trim());
+            } catch (NumberFormatException ignored) {
+                return 0;
+            }
+        }
+        return 0;
     }
 
     private void injectPending() {

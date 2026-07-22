@@ -73,7 +73,6 @@ public class MiscReports {
         }
 
         XChart xc = RankedListCharts.createRankedListChart(rl, classAName, classBName);
-        xc.getFreeChart().setBackgroundPaint(EnrichmentReports.CHART_FRAME_COLOR);
         htmlPage.addChart(xc, 500, 400, saveInDir, createSvgs);
 
         htmlPage.addBreak();

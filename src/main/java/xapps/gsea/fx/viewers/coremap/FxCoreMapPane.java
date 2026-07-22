@@ -1188,10 +1188,11 @@ public class FxCoreMapPane implements ViewPage {
                 super.updateItem(item, empty);
                 if (empty || item == null) {
                     setText(null);
-                    setStyle("");
+                    getStyleClass().removeAll("gsea-text-pass", "gsea-text-fail");
                 } else {
                     setText(item ? "pass" : "fail");
-                    setStyle(item ? "-fx-text-fill: #047857;" : "-fx-text-fill: #b45309;");
+                    getStyleClass().removeAll("gsea-text-pass", "gsea-text-fail");
+                    getStyleClass().add(item ? "gsea-text-pass" : "gsea-text-fail");
                 }
             }
         });

@@ -3,8 +3,6 @@
  */
 package edu.mit.broad.genome.reports;
 
-import java.awt.Color;
-import java.awt.Paint;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -13,17 +11,16 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 
-import org.jfree.chart.plot.IntervalMarker;
+import edu.mit.broad.genome.plots.ColorBarSegment;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import edu.mit.broad.genome.NamingConventions;
 import edu.mit.broad.genome.math.Vector;
-import edu.mit.broad.genome.math.XMath;
-import edu.mit.broad.genome.objects.MetricWeightStruc;
 import edu.mit.broad.genome.objects.RankedList;
 
 /**
@@ -39,7 +36,8 @@ public final class ModernEnrichmentPlotJson {
     /** Copied into each report when EnPlot v2 outputs are enabled. */
     public static final String VIEWER_DIR_NAME = "enplot_viewer";
 
-    private static final String[] VIEWER_FILES = {
+    /** Bundled viewer assets copied into reports and FX temp dirs. */
+    public static final String[] VIEWER_FILES = {
             "index.html",
             "viewer.js",
             "viewer.css"
@@ -89,7 +87,7 @@ public final class ModernEnrichmentPlotJson {
                 return false;
             }
             return root.containsKey("metricMin") && root.containsKey("metricMax");
-        } catch (Throwable t) {
+        } catch (ParseException | RuntimeException e) {
             return false;
         }
     }
@@ -99,7 +97,7 @@ public final class ModernEnrichmentPlotJson {
         if (esCurve == null || esCurve.isEmpty()) {
             return false;
         }
-        int minDense = Math.max(50, listSize / 80);
+        int minDense = Math.min(listSize, Math.max(50, listSize / 80));
         return esCurve.size() >= minDense;
     }
 
@@ -124,7 +122,7 @@ public final class ModernEnrichmentPlotJson {
                                     final float np,
                                     final float fdr,
                                     final float fwer,
-                                    final IntervalMarker[] colorBarMarkers_opt) throws IOException {
+                                    final ColorBarSegment[] colorBarMarkers_opt) throws IOException {
         if (saveInDir == null) {
             throw new IllegalArgumentException("saveInDir cannot be null");
         }
@@ -169,7 +167,16 @@ public final class ModernEnrichmentPlotJson {
                                    final float np,
                                    final float fdr,
                                    final float fwer,
-                                   final IntervalMarker[] colorBarMarkers_opt) {
+                                   final ColorBarSegment[] colorBarMarkers_opt) {
+        if (esProfile == null) {
+            throw new IllegalArgumentException("esProfile cannot be null");
+        }
+        if (rl == null) {
+            throw new IllegalArgumentException("rl cannot be null");
+        }
+        EnrichmentMountainData data = EnrichmentMountainData.build(
+                esProfile, esProfile_full_opt, hitIndices, rl);
+
         JSONObject root = new JSONObject();
         root.put("version", PAYLOAD_VERSION);
         root.put("geneSet", gsetName);
@@ -184,41 +191,41 @@ public final class ModernEnrichmentPlotJson {
         stats.put("fwer", (double) fwer);
         root.put("stats", stats);
 
-        int listSize = rl.getSize();
-        root.put("listSize", listSize);
-
-        int peakHit = esProfile.maxDevFrom0Index();
-        float peakEs = esProfile.maxDevFrom0();
-        boolean pos = XMath.isPositive(peakEs);
-        int peakRank = hitIndices[peakHit];
-        root.put("peakRank", peakRank);
-        root.put("peakEs", (double) peakEs);
-
-        MetricWeightStruc mws = rl.getMetricWeightStruc();
-        if (mws != null) {
-            root.put("zeroCross", mws.getTotalPosLength());
+        root.put("listSize", data.listSize);
+        root.put("peakRank", data.peakRank);
+        root.put("peakEs", (double) data.peakEs);
+        if (data.zeroCross >= 0) {
+            root.put("zeroCross", data.zeroCross);
         }
-        root.put("metricName", mws != null && mws.getMetricName() != null ? mws.getMetricName() : "");
+        root.put("metricName", data.metricName);
 
         JSONArray hits = new JSONArray();
-        for (int i = 0; i < hitIndices.length; i++) {
-            int rank = hitIndices[i];
+        for (int i = 0; i < data.hitRanks.length; i++) {
+            int rank = data.hitRanks[i];
             JSONObject h = new JSONObject();
             h.put("rank", rank);
             h.put("symbol", rl.getRankName(rank));
             h.put("metric", (double) rl.getScore(rank));
-            h.put("runningEs", (double) esProfile.getElement(i));
-            boolean leading = (pos && rank <= peakRank) || (!pos && rank >= peakRank);
-            h.put("leadingEdge", leading);
+            h.put("runningEs", i < esProfile.getSize() ? (double) esProfile.getElement(i) : 0d);
+            h.put("leadingEdge", i < data.leadingEdge.length && data.leadingEdge[i]);
             hits.add(h);
         }
         root.put("hits", hits);
-        root.put("esCurve", esCurveArray(hitIndices, esProfile, esProfile_full_opt, listSize, peakRank));
-        root.put("metric", metricArray(rl, listSize));
-        Vector metricScores = Vector.infinityAdjustRankedScoreVector(rl.getScoresV(false));
-        if (metricScores.getSize() > 0) {
-            root.put("metricMin", (double) metricScores.min());
-            root.put("metricMax", (double) metricScores.max());
+        root.put("esCurve", esCurveArray(data, esProfile_full_opt));
+        root.put("metric", metricArray(data));
+        if (data.metricY.length > 0) {
+            double min = data.metricY[0];
+            double max = data.metricY[0];
+            for (double v : data.metricY) {
+                if (v < min) {
+                    min = v;
+                }
+                if (v > max) {
+                    max = v;
+                }
+            }
+            root.put("metricMin", min);
+            root.put("metricMax", max);
         } else {
             root.put("metricMin", 0.0d);
             root.put("metricMax", 0.0d);
@@ -227,71 +234,52 @@ public final class ModernEnrichmentPlotJson {
         return root.toJSONString();
     }
 
-    private static JSONArray colorBarArray(final RankedList rl, final IntervalMarker[] markersOpt) {
+    private static JSONArray colorBarArray(final RankedList rl, final ColorBarSegment[] markersOpt) {
         JSONArray out = new JSONArray();
-        IntervalMarker[] markers = markersOpt;
-        if (markers == null) {
-            int numRanges = (rl.getSize() < 100) ? rl.getSize() : 100;
-            markers = RankedListCharts.createIntervalMarkers(numRanges, rl);
-        }
+        ColorBarSegment[] markers = markersOpt != null
+                ? markersOpt
+                : ColorBarSegment.forRankedList(rl);
         if (markers == null) {
             return out;
         }
-        for (IntervalMarker marker : markers) {
+        for (ColorBarSegment marker : markers) {
             JSONObject seg = new JSONObject();
-            seg.put("start", marker.getStartValue());
-            seg.put("end", marker.getEndValue());
-            seg.put("color", paintToCss(marker.getPaint()));
+            seg.put("start", marker.start);
+            seg.put("end", marker.end);
+            seg.put("color", marker.toCssRgb());
             out.add(seg);
         }
         return out;
     }
 
-    private static String paintToCss(Paint paint) {
-        if (paint instanceof Color c) {
-            return String.format("#%02x%02x%02x", c.getRed(), c.getGreen(), c.getBlue());
-        }
-        return "#cccccc";
-    }
-
-    private static JSONArray esCurveArray(final int[] hitIndices,
-                                          final Vector esProfile,
-                                          final Vector esProfile_full_opt,
-                                          final int listSize,
-                                          final int peakRank) {
+    private static JSONArray esCurveArray(EnrichmentMountainData data, Vector esProfile_full_opt) {
         JSONArray esCurve = new JSONArray();
         if (esProfile_full_opt != null && esProfile_full_opt.getSize() > 0) {
-            appendDownsampled(esCurve, esProfile_full_opt, peakRank);
+            appendDownsampled(esCurve, esProfile_full_opt, data.peakRank);
             return esCurve;
         }
-        // Sparse fallback: hits only, with endpoints at 0
-        appendPoint(esCurve, 0, 0.0d);
-        for (int i = 0; i < hitIndices.length; i++) {
-            appendPoint(esCurve, hitIndices[i], esProfile.getElement(i));
+        // Sparse fallback already includes endpoints in EnrichmentMountainData.
+        for (int i = 0; i < data.esY.length; i++) {
+            appendPoint(esCurve, (int) Math.round(data.esX[i]), data.esY[i]);
         }
-        appendPoint(esCurve, listSize - 1, 0.0d);
         return esCurve;
     }
 
-    private static JSONArray metricArray(final RankedList rl, final int listSize) {
+    private static JSONArray metricArray(EnrichmentMountainData data) {
         JSONArray metric = new JSONArray();
-        Vector scores = Vector.infinityAdjustRankedScoreVector(rl.getScoresV(false));
-        int zeroCross = -1;
-        MetricWeightStruc mws = rl.getMetricWeightStruc();
-        if (mws != null) {
-            zeroCross = mws.getTotalPosLength();
-        }
+        int listSize = data.listSize;
         int step = Math.max(1, listSize / MAX_SERIES_POINTS);
         Integer lastX = null;
         for (int i = 0; i < listSize; i += step) {
-            appendPoint(metric, i, scores.getElement(i));
+            appendPoint(metric, i, data.metricY[i]);
             lastX = i;
         }
-        if (zeroCross >= 0 && zeroCross < listSize && (lastX == null || zeroCross != lastX)) {
-            insertPointSorted(metric, zeroCross, scores.getElement(zeroCross));
+        if (data.zeroCross >= 0 && data.zeroCross < listSize
+                && (lastX == null || data.zeroCross != lastX)) {
+            insertPointSorted(metric, data.zeroCross, data.metricY[data.zeroCross]);
         }
         if (listSize > 0 && (listSize - 1) % step != 0) {
-            appendPoint(metric, listSize - 1, scores.getElement(listSize - 1));
+            appendPoint(metric, listSize - 1, data.metricY[listSize - 1]);
         }
         return metric;
     }

@@ -513,9 +513,10 @@ public final class ReportExplorerSupport {
                 start.run();
             }
         });
-        // Sole / first tab is selected before listeners fire reliably — kick off after layout.
-        Platform.runLater(() -> {
-            if (tab.isSelected()) {
+        // When this becomes the TabPane's selected tab on add, selected may already be true
+        // before the listener above is useful — start once the tab is attached.
+        tab.tabPaneProperty().addListener((obs, was, pane) -> {
+            if (pane != null && tab.isSelected()) {
                 start.run();
             }
         });

@@ -4,7 +4,7 @@
 package xtools.api;
 
 /**
- * Categories of Tools (Swing ToolCategory names/descriptions/icon resources).
+ * Categories of Tools (names, descriptions, and icon resource names).
  */
 public class ToolCategory {
 
@@ -68,7 +68,7 @@ public class ToolCategory {
         return fDesc;
     }
 
-    /** Swing {@code ToolCategory#getIcon} resource name for FX rendering. */
+    /** Icon resource name for FX rendering. */
     public String getIconResource() {
         return fIconResource;
     }

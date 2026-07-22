@@ -1,0 +1,253 @@
+/*
+ * BentoFX docking chrome — structural rules; color tokens live on .gsea-root (gsea-fx.css).
+ */
+
+/* ---------- Layout containers ---------- */
+.container-leaf {
+    -fx-background-color: -color-bg-default;
+}
+
+.container-branch {
+    -fx-background-insets: 0;
+    -fx-padding: 0;
+    -fx-background-color: -color-bg-inset;
+}
+
+.container-branch > .split-pane-divider {
+    -fx-background-color: -color-border-muted !important;
+    -fx-padding: 0 1px 0 1px;
+    -fx-border-color: transparent;
+}
+
+.container-branch > .split-pane-divider > .horizontal-grabber {
+    -fx-background-color: -color-border-default;
+    -fx-background-radius: 2px;
+    -fx-padding: 8px 1px 8px 1px;
+}
+
+.container-branch > .split-pane-divider > .vertical-grabber {
+    -fx-background-color: -color-border-default;
+    -fx-background-radius: 2px;
+    -fx-padding: 1px 8px 1px 8px;
+}
+
+.container-branch > .split-pane-divider:hover > .horizontal-grabber,
+.container-branch > .split-pane-divider:hover > .vertical-grabber {
+    -fx-background-color: -color-accent-emphasis;
+}
+
+.container-branch > .split-pane-divider:pressed > .horizontal-grabber,
+.container-branch > .split-pane-divider:pressed > .vertical-grabber {
+    -fx-background-color: -color-accent-muted;
+}
+
+/* ---------- Header strip ---------- */
+.header-pane {
+    -fx-background-insets: 0;
+    -fx-background-color: -color-bg-subtle;
+    -fx-border-color: transparent transparent -color-border-subtle transparent;
+    -fx-border-width: 0 0 1 0;
+    -fx-padding: 0;
+}
+
+.header-pane:left {
+    -fx-border-color: transparent -color-border-subtle transparent transparent;
+    -fx-border-width: 0 1 0 0;
+}
+
+.header-pane:right {
+    -fx-border-color: transparent transparent transparent -color-border-subtle;
+    -fx-border-width: 0 0 0 1;
+}
+
+.header-pane:bottom {
+    -fx-border-color: -color-border-subtle transparent transparent transparent;
+    -fx-border-width: 1 0 0 0;
+}
+
+.header-pane .close-button {
+    -fx-effect: none;
+    -fx-opacity: 0.55;
+    -fx-background-insets: 0;
+    -fx-background-radius: 3px;
+    -fx-background-color: transparent;
+    -fx-border-width: 0;
+    -fx-padding: 0 2 0 2;
+    -fx-min-height: 0;
+    -fx-pref-height: -1;
+    -fx-cursor: hand;
+}
+
+.header-pane .close-button:hover {
+    -fx-opacity: 1;
+    -fx-background-color: -color-bg-overlay;
+}
+
+.header-pane .header:selected .close-button:hover {
+    -fx-background-color: -color-accent-subtle;
+}
+
+.header-pane .corner-button {
+    -fx-effect: none;
+    -fx-background-insets: 0;
+    -fx-background-radius: 0;
+    -fx-background-color: -color-bg-subtle;
+    -fx-border-width: 0;
+    -fx-padding: 1 4 1 4;
+    -fx-min-height: 0;
+    -fx-pref-height: -1;
+    -fx-cursor: hand;
+    -fx-opacity: 0.75;
+}
+
+.header-pane .corner-button:hover {
+    -fx-opacity: 1;
+    -fx-background-color: -color-bg-overlay;
+}
+
+.header-pane:top .corner-button {
+    -fx-background-insets: 0;
+    -fx-border-color: -color-border-subtle transparent transparent -color-border-subtle;
+    -fx-border-width: 0 0 0 1px;
+}
+
+.header-pane:bottom .corner-button {
+    -fx-border-color: -color-border-subtle transparent transparent -color-border-subtle;
+    -fx-border-width: 0 0 0 1px;
+}
+
+.header-pane:left .corner-button,
+.header-pane:right .corner-button {
+    -fx-border-color: -color-border-subtle transparent transparent transparent;
+    -fx-border-width: 1px 0 0 0;
+}
+
+.root.gsea-dark .header-pane .close-button,
+.root.gsea-dark .header-pane .corner-button {
+    -fx-text-fill: -color-fg-default;
+}
+
+.button-bar {
+    -fx-spacing: 0;
+    -fx-padding: 0;
+    -fx-background-color: -color-bg-subtle;
+}
+
+.button-bar:vertical {
+    -fx-fill-height: false;
+}
+
+.button-bar:horizontal {
+    -fx-fill-width: false;
+}
+
+.header-region {
+    -fx-background-color: -color-bg-subtle;
+}
+
+.header-region:top {
+    -fx-background-insets: 0;
+    -fx-border-width: 0;
+}
+
+.header-region:bottom {
+    -fx-border-color: -color-border-subtle transparent transparent transparent;
+    -fx-border-width: 1px 0 0 0;
+}
+
+.header-region:left {
+    -fx-border-color: transparent -color-border-subtle transparent transparent;
+    -fx-border-width: 0 1px 0 0;
+}
+
+.header-region:right {
+    -fx-border-color: transparent transparent transparent -color-border-subtle;
+    -fx-border-width: 0 0 0 1px;
+}
+
+/* ---------- Tabs / dockable headers ----------
+ * Padding is rotation-symmetric: top/bottom tabs use cross long cross long;
+ * left/right tabs swap to long cross long cross (same strip thickness). */
+.header {
+    -fx-background-color: transparent;
+    -fx-background-radius: 0;
+    -fx-background-insets: 0;
+    -fx-border-color: transparent -color-border-subtle transparent transparent;
+    -fx-border-width: 0 1 0 0;
+    -fx-padding: 1 8 1 8;
+    -fx-min-height: 0;
+    -fx-min-width: 0;
+    -fx-pref-height: -1;
+    -fx-pref-width: -1;
+    -fx-cursor: hand;
+}
+
+.header:left,
+.header:right {
+    -fx-border-color: transparent transparent -color-border-subtle transparent;
+    -fx-border-width: 0 0 1 0;
+    -fx-padding: 8 1 8 1;
+}
+
+.header:hover {
+    -fx-background-color: -color-bg-overlay;
+}
+
+.header-pane .header:selected,
+.header-pane:active .header:selected {
+    -fx-background-color: -color-bg-default;
+}
+
+.header:selected:top {
+    -fx-border-color: transparent -color-border-subtle -color-accent-emphasis transparent;
+    -fx-border-width: 0 1 2 0;
+    -fx-padding: 1 8 0 8;
+}
+
+.header:selected:bottom {
+    -fx-border-color: -color-accent-emphasis -color-border-subtle transparent transparent;
+    -fx-border-width: 2 1 0 0;
+    -fx-padding: 0 8 1 8;
+}
+
+.header:selected:left {
+    -fx-border-color: transparent -color-accent-emphasis -color-border-subtle transparent;
+    -fx-border-width: 0 2 1 0;
+    -fx-padding: 8 0 8 1;
+}
+
+.header:selected:right {
+    -fx-border-color: transparent -color-border-subtle transparent -color-accent-emphasis;
+    -fx-border-width: 0 0 1 2;
+    -fx-padding: 8 1 8 0;
+}
+
+.header .text,
+.header Text {
+    -fx-fill: -color-fg-muted;
+    -fx-font-size: 12px;
+}
+
+.header:selected .text,
+.header:selected Text {
+    -fx-fill: -color-fg-default;
+}
+
+.header:hover .text,
+.header:hover Text {
+    -fx-fill: -color-fg-default;
+}
+
+/* Collapsed tool strips */
+.container:collapsed .header,
+.container:collapsed .header-pane,
+.container:collapsed .header-region,
+.container:collapsed .corner-button {
+    -fx-background-color: -color-bg-subtle;
+}
+
+.dock-insertion-indicator {
+    -fx-stroke: -color-accent-emphasis;
+    -fx-stroke-width: 2px;
+    -fx-stroke-line-cap: round;
+}

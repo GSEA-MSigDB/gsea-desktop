@@ -42,9 +42,10 @@ public final class FxTheme {
 
     private static final String STYLESHEET = "/xapps/gsea/fx/gsea-fx.css";
     private static final String DARK_STYLESHEET = "/xapps/gsea/fx/gsea-fx-dark.css";
+    private static final String BENTO_STYLESHEET = "/xapps/gsea/fx/bento.css";
 
     /** Matches {@code gsea-fx.css} / {@code gsea-fx-dark.css} root backgrounds. */
-    private static final Color FILL_LIGHT = Color.web("#f6f7f9");
+    private static final Color FILL_LIGHT = Color.web("#e8ecf1");
     private static final Color FILL_DARK = Color.web("#1e1f22");
 
     private static final List<WeakReference<Scene>> SCENES = new ArrayList<>();
@@ -64,9 +65,10 @@ public final class FxTheme {
         if (scene == null) {
             return;
         }
-        addBaseStylesheet(scene.getStylesheets());
+        // Class tokens must be on the root before stylesheets resolve looked-up colors
+        // (e.g. dock tab Text -fx-fill: -color-fg-*), or the first pass sticks on light values.
         if (scene.getRoot() != null) {
-            ensureRootClass(scene.getRoot());
+            prepareRoot(scene.getRoot());
         }
         syncAppearance(scene);
         track(SCENES, scene);
@@ -74,6 +76,18 @@ public final class FxTheme {
         if (scene.getWindow() != null) {
             wireWindow(scene.getWindow());
         }
+    }
+
+    /**
+     * Apply {@code gsea-root} / {@code gsea-dark} before the node enters a {@link Scene}
+     * so the first CSS pass uses the correct color tokens.
+     */
+    public static void prepareRoot(Parent root) {
+        if (root == null) {
+            return;
+        }
+        ensureRootClass(root);
+        setDarkClass(root, isDarkEffective());
     }
 
     public static void apply(Dialog<?> dialog) {
@@ -96,8 +110,7 @@ public final class FxTheme {
         if (pane == null) {
             return;
         }
-        addBaseStylesheet(pane.getStylesheets());
-        ensureRootClass(pane);
+        prepareRoot(pane);
         syncAppearance(pane);
         track(DIALOGS, pane);
     }
@@ -165,18 +178,23 @@ public final class FxTheme {
 
     private static void syncAppearance(Scene scene) {
         boolean dark = isDarkEffective();
+        if (scene.getRoot() != null) {
+            // Toggle class before stylesheet list changes so looked-up colors rebind correctly.
+            setDarkClass(scene.getRoot(), dark);
+        }
         syncStylesheets(scene.getStylesheets(), dark);
         scene.setFill(dark ? FILL_DARK : FILL_LIGHT);
         if (scene.getRoot() != null) {
-            setDarkClass(scene.getRoot(), dark);
+            scene.getRoot().applyCss();
         }
         syncNativeChrome(scene.getWindow(), dark);
     }
 
     private static void syncAppearance(DialogPane pane) {
         boolean dark = isDarkEffective();
-        syncStylesheets(pane.getStylesheets(), dark);
         setDarkClass(pane, dark);
+        syncStylesheets(pane.getStylesheets(), dark);
+        pane.applyCss();
         if (pane.getScene() != null) {
             pane.getScene().setFill(dark ? FILL_DARK : FILL_LIGHT);
             syncNativeChrome(pane.getScene().getWindow(), dark);
@@ -231,10 +249,16 @@ public final class FxTheme {
     }
 
     private static void syncStylesheets(List<String> sheets, boolean dark) {
+        String bento = url(BENTO_STYLESHEET);
         String base = url(STYLESHEET);
         String darkUrl = url(DARK_STYLESHEET);
+        // Bento first, then GSEA chrome, then dark overrides.
+        if (!sheets.contains(bento)) {
+            sheets.add(0, bento);
+        }
         if (!sheets.contains(base)) {
-            sheets.add(0, base);
+            int idx = sheets.indexOf(bento);
+            sheets.add(idx + 1, base);
         }
         if (dark) {
             if (!sheets.contains(darkUrl)) {
@@ -252,13 +276,6 @@ public final class FxTheme {
             }
         } else {
             node.getStyleClass().remove("gsea-dark");
-        }
-    }
-
-    private static void addBaseStylesheet(List<String> sheets) {
-        String url = url(STYLESHEET);
-        if (!sheets.contains(url)) {
-            sheets.add(url);
         }
     }
 

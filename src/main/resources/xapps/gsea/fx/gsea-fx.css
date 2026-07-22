@@ -1,35 +1,138 @@
 /*
  * GSEA JavaFX theme — controls, spacing, button chrome.
+ * Semantic color tokens on .gsea-root; dark overrides in gsea-fx-dark.css.
  */
 
 .gsea-root {
+    /* Foreground */
+    -color-fg-default: #1a2b3c;
+    -color-fg-muted: #334155;
+    -color-fg-subtle: #64748b;
+    /* Backgrounds */
+    -color-bg-inset: #e8ecf1;
+    -color-bg-default: #f4f6f9;
+    -color-bg-subtle: #e2e7ee;
+    -color-bg-overlay: #eef2f7;
+    /* Borders */
+    -color-border-default: #c5ced8;
+    -color-border-muted: #d0d7e0;
+    -color-border-subtle: #d8dee6;
+    /* Accent (GSEA blue) */
+    -color-accent-fg: #0b6bcb;
+    -color-accent-emphasis: #0b6bcb;
+    -color-accent-muted: #0958a8;
+    -color-accent-subtle: #dbeafe;
+    /* Selection / phenotype semantics */
+    -color-selected-bg: #dbeafe;
+    -color-pheno-pos: #b91c1c;
+    -color-pheno-neg: #1d4ed8;
+    -color-pheno-pos-bg: #fee2e2;
+    -color-pheno-neg-bg: #dbeafe;
+    -color-pheno-pos-border: #fecaca;
+    -color-pheno-neg-border: #bfdbfe;
+
+    /* Tab chrome: cross=1px (strip thickness), long=8px (along-strip inset) — literals only; JavaFX padding cannot use looked-up sizes. */
+
     -fx-font-family: "Segoe UI", "Helvetica Neue", sans-serif;
     -fx-font-size: 13px;
-    -fx-background-color: #f6f7f9;
+    -fx-background-color: -color-bg-inset;
 }
 
 .gsea-section-header {
     -fx-font-size: 14px;
     -fx-font-weight: bold;
-    -fx-text-fill: #1a2b3c;
+    -fx-text-fill: -color-fg-default;
 }
 
 .gsea-tool-desc {
-    -fx-text-fill: #334155;
+    -fx-text-fill: -color-fg-muted;
 }
 
 .gsea-param-form {
-    -fx-background-color: #ffffff;
+    -fx-background-color: -color-bg-default;
+}
+
+/* ---------- Application shell (menu bar + workspace) ---------- */
+
+.gsea-menu-bar {
+    -fx-background-color: -color-bg-default;
+    -fx-border-color: transparent transparent -color-border-default transparent;
+    -fx-border-width: 0 0 1 0;
+    -fx-padding: 0 0 0 2;
+}
+
+.gsea-menu-bar .label {
+    -fx-text-fill: -color-fg-default;
+}
+
+.gsea-menu-bar .menu:hover,
+.gsea-menu-bar .menu:showing {
+    -fx-background-color: -color-bg-subtle;
+}
+
+.gsea-workspace {
+    -fx-background-color: -color-bg-inset;
+}
+
+/* ---------- Tab panes (report viewer, enplot, params, …) ---------- */
+
+.gsea-root .tab-pane > .tab-header-area {
+    -fx-background-color: -color-bg-subtle;
+    -fx-border-color: transparent transparent -color-border-subtle transparent;
+    -fx-border-width: 0 0 1 0;
+    -fx-padding: 0 6 0 6;
+}
+
+.gsea-root .tab-pane > .tab-header-area > .tab-header-background {
+    -fx-background-color: transparent;
+}
+
+.gsea-root .tab-pane > .tab-header-area > .headers-region > .tab {
+    -fx-background-color: transparent;
+    -fx-background-radius: 0;
+    -fx-background-insets: 0;
+    -fx-padding: 1 8 1 8;
+    -fx-min-height: 0;
+    -fx-pref-height: -1;
+    -fx-border-color: transparent -color-border-subtle transparent transparent;
+    -fx-border-width: 0 1 0 0;
+}
+
+.gsea-root .tab-pane > .tab-header-area > .headers-region > .tab:hover {
+    -fx-background-color: -color-bg-overlay;
+}
+
+.gsea-root .tab-pane > .tab-header-area > .headers-region > .tab:selected {
+    -fx-background-color: -color-bg-default;
+    -fx-border-color: transparent -color-border-subtle -color-accent-emphasis transparent;
+    -fx-border-width: 0 1 2 0;
+    -fx-padding: 1 8 0 8;
+}
+
+.gsea-root .tab-pane > .tab-header-area > .headers-region > .tab .tab-label {
+    -fx-text-fill: -color-fg-muted;
+    -fx-font-size: 12px;
+    -fx-padding: 0;
+}
+
+.gsea-root .tab-pane > .tab-header-area > .headers-region > .tab:hover .tab-label,
+.gsea-root .tab-pane > .tab-header-area > .headers-region > .tab:selected .tab-label {
+    -fx-text-fill: -color-fg-default;
+}
+
+.gsea-root .tab-pane > .tab-content-area {
+    -fx-background-color: -color-bg-default;
+    -fx-border-color: transparent;
 }
 
 /* ---------- Buttons (shared chrome) ---------- */
 
 .gsea-root .button,
 .gsea-button {
-    -fx-background-color: #e8ecf1;
-    -fx-text-fill: #1a2b3c;
+    -fx-background-color: -color-bg-inset;
+    -fx-text-fill: -color-fg-default;
     -fx-background-radius: 4;
-    -fx-border-color: #c5ced8;
+    -fx-border-color: -color-border-default;
     -fx-border-radius: 4;
     -fx-border-width: 1;
     -fx-padding: 5 12 5 12;
@@ -43,13 +146,13 @@
 
 .gsea-root .button:hover,
 .gsea-button:hover {
-    -fx-background-color: #dde3ea;
-    -fx-border-color: #aeb8c4;
+    -fx-background-color: -color-bg-subtle;
+    -fx-border-color: -color-border-default;
 }
 
 .gsea-root .button:pressed,
 .gsea-button:pressed {
-    -fx-background-color: #d0d7e0;
+    -fx-background-color: -color-border-muted;
 }
 
 .gsea-root .button:disabled,
@@ -59,21 +162,21 @@
 
 /* Primary / commit actions (Run, Load, Build, …) */
 .gsea-run-button {
-    -fx-background-color: #0b6bcb;
+    -fx-background-color: -color-accent-emphasis;
     -fx-text-fill: white;
     -fx-font-weight: bold;
-    -fx-border-color: #0958a8;
+    -fx-border-color: -color-accent-muted;
     -fx-padding: 6 16 6 16;
     -fx-min-height: 30;
 }
 
 .gsea-run-button:hover {
-    -fx-background-color: #0958a8;
-    -fx-border-color: #074a8c;
+    -fx-background-color: -color-accent-muted;
+    -fx-border-color: -color-accent-muted;
 }
 
 .gsea-run-button:pressed {
-    -fx-background-color: #074a8c;
+    -fx-background-color: -color-accent-muted;
 }
 
 /* Compact rows: heatmap / chart toolbars */
@@ -92,7 +195,7 @@
     -fx-max-width: 32;
 }
 
-/* LHS vertical tool rail — full-width tiles, icon left of wrapping label */
+/* LHS tool rail — width comes from FxToolsRail column layout; longer labels wrap. */
 .gsea-rail-button {
     -fx-padding: 6 8 6 6;
     -fx-background-radius: 3;
@@ -121,18 +224,94 @@
 }
 
 .gsea-jobs-pane {
-    -fx-background-color: #f8fafc;
+    -fx-background-color: transparent;
 }
 
 .gsea-jobs-root {
-    -fx-border-color: #cbd5e1;
-    -fx-border-width: 1 0 0 0;
+    -fx-border-color: transparent;
+    -fx-border-width: 0;
 }
 
 .gsea-tool-group {
-    -fx-border-color: #a0a0a0;
+    -fx-border-color: -color-border-muted;
     -fx-border-width: 1;
-    -fx-border-radius: 2;
+    -fx-border-radius: 4;
+    -fx-background-color: -color-bg-default;
+    -fx-background-radius: 4;
+    -fx-padding: 8 6 8 6;
+    -fx-spacing: 6;
+}
+
+.gsea-tool-group .gsea-section-header {
+    -fx-font-size: 12px;
+    -fx-padding: 0;
+}
+
+.gsea-tool-group-title {
+    -fx-alignment: center-left;
+    -fx-spacing: 6;
+    -fx-cursor: move;
+    -fx-padding: 0 0 2 0;
+}
+
+.gsea-tool-group-title-untitled {
+    -fx-padding: 0 0 0 0;
+    -fx-min-height: 12;
+}
+
+.gsea-tool-group-grip {
+    -fx-text-fill: -color-fg-subtle;
+    -fx-font-size: 12px;
+    -fx-padding: 0 2 0 0;
+    -fx-opacity: 0.55;
+    -fx-cursor: move;
+}
+
+.gsea-tool-group-title:hover .gsea-tool-group-grip,
+.gsea-tool-group-grip:hover {
+    -fx-opacity: 1;
+    -fx-text-fill: -color-fg-muted;
+}
+
+.gsea-tool-group-items {
+    -fx-spacing: 6;
+}
+
+.gsea-tool-group-dragging {
+    -fx-opacity: 0.5;
+}
+
+/* Accent edge only — keep border-width stable so drop hints do not reflow the card. */
+.gsea-root .container-leaf .gsea-tool-group.gsea-tool-group-drop-before,
+.gsea-tool-group-drop-before {
+    -fx-border-color: -color-accent-fg -color-border-muted -color-border-muted -color-border-muted;
+    -fx-border-width: 1;
+    -fx-background-color: -color-accent-subtle;
+}
+
+.gsea-root .container-leaf .gsea-tool-group.gsea-tool-group-drop-after,
+.gsea-tool-group-drop-after {
+    -fx-border-color: -color-border-muted -color-border-muted -color-accent-fg -color-border-muted;
+    -fx-border-width: 1;
+    -fx-background-color: -color-accent-subtle;
+}
+
+.gsea-rail-button-dragging {
+    -fx-opacity: 0.5;
+}
+
+.gsea-root .button.gsea-rail-button-drop-before,
+.gsea-rail-button-drop-before {
+    -fx-border-color: -color-accent-fg -color-border-default -color-border-default -color-border-default;
+    -fx-border-width: 1;
+    -fx-background-color: -color-accent-subtle;
+}
+
+.gsea-root .button.gsea-rail-button-drop-after,
+.gsea-rail-button-drop-after {
+    -fx-border-color: -color-border-default -color-border-default -color-accent-fg -color-border-default;
+    -fx-border-width: 1;
+    -fx-background-color: -color-accent-subtle;
 }
 
 .gsea-panel-border {
@@ -141,7 +320,7 @@
 }
 
 .gsea-muted {
-    -fx-text-fill: #64748b;
+    -fx-text-fill: -color-fg-subtle;
 }
 
 .gsea-tool-launcher-header {
@@ -162,13 +341,13 @@
 }
 
 .gsea-job-log-toggle-bar {
-    -fx-background-color: #eef2f7;
-    -fx-border-color: #cbd5e1;
+    -fx-background-color: -color-bg-overlay;
+    -fx-border-color: -color-border-default;
     -fx-border-width: 1 0 0 0;
 }
 
 .gsea-job-log-toggle {
-    -fx-text-fill: #475569;
+    -fx-text-fill: -color-fg-subtle;
     -fx-font-size: 12px;
     -fx-font-weight: bold;
 }
@@ -197,23 +376,19 @@
 }
 
 .gsea-job-status-waiting {
-    -fx-text-fill: #64748b;
+    -fx-text-fill: -color-fg-subtle;
 }
 
 .gsea-na-placeholder {
-    -fx-background-color: white;
+    -fx-background-color: -color-bg-default;
 }
 
 .gsea-legend-box {
-    -fx-background-color: white;
-}
-
-.tab-pane > .tab-header-area > .headers-region > .tab {
-    -fx-background-radius: 4 4 0 0;
+    -fx-background-color: -color-bg-default;
 }
 
 .table-view {
-    -fx-background-color: white;
+    -fx-background-color: -color-bg-default;
 }
 
 .text-field,
@@ -244,54 +419,126 @@
 }
 
 .gsea-toast {
-    -fx-background-color: rgba(26, 43, 60, 0.92);
+    -fx-background-color: rgba(244, 246, 249, 0.97);
     -fx-background-radius: 6;
-    -fx-border-color: #334155;
+    -fx-border-color: -color-border-default;
     -fx-border-radius: 6;
     -fx-border-width: 1;
+    -fx-effect: dropshadow(gaussian, rgba(26, 43, 60, 0.16), 14, 0, 0, 3);
 }
 
-.gsea-toast-label {
-    -fx-text-fill: #f8fafc;
+.gsea-root .gsea-toast.gsea-toast-label {
+    -fx-text-fill: -color-fg-default;
     -fx-font-size: 13px;
 }
 
 /* ---------- Native report explorer ---------- */
 
 .gsea-report-shell {
-    -fx-background-color: #f6f7f9;
+    -fx-background-color: -color-bg-inset;
 }
 
 .gsea-report-header {
-    -fx-background-color: #ffffff;
-    -fx-border-color: transparent transparent #e2e8f0 transparent;
+    -fx-background-color: -color-bg-default;
+    -fx-border-color: transparent transparent -color-border-subtle transparent;
     -fx-border-width: 0 0 1 0;
 }
 
 .gsea-report-title {
     -fx-font-size: 16px;
     -fx-font-weight: bold;
-    -fx-text-fill: #0f172a;
+    -fx-text-fill: -color-fg-default;
 }
 
 .gsea-report-kind {
-    -fx-background-color: #e8f1fb;
-    -fx-text-fill: #0b6bcb;
+    -fx-background-color: -color-accent-subtle;
+    -fx-text-fill: -color-accent-emphasis;
     -fx-font-size: 11px;
     -fx-font-weight: bold;
     -fx-padding: 3 8 3 8;
     -fx-background-radius: 4;
 }
 
+.gsea-history-detail {
+    -fx-background-color: -color-bg-default;
+    -fx-border-color: transparent transparent transparent -color-border-subtle;
+    -fx-border-width: 0 0 0 1;
+}
+
+.gsea-history-detail-scroll {
+    -fx-background-color: -color-bg-default;
+    -fx-background: -color-bg-default;
+}
+
+.gsea-history-detail-scroll > .viewport {
+    -fx-background-color: -color-bg-default;
+}
+
+/* Analysis History preview — explicit light text (do not inherit dock / dark tokens). */
+.gsea-history-detail .label {
+    -fx-text-fill: -color-fg-default;
+}
+
+.gsea-history-detail .gsea-muted {
+    -fx-text-fill: -color-fg-subtle;
+}
+
+.gsea-history-detail .gsea-section-header {
+    -fx-text-fill: -color-fg-default;
+}
+
+.gsea-history-detail .gsea-report-title {
+    -fx-text-fill: -color-fg-default;
+}
+
+.gsea-history-detail .gsea-report-kind {
+    -fx-text-fill: -color-accent-emphasis;
+}
+
+.gsea-history-detail .gsea-stat-value {
+    -fx-text-fill: -color-fg-default;
+}
+
+.gsea-history-detail .gsea-stat-label {
+    -fx-text-fill: -color-fg-subtle;
+}
+
+.gsea-history-detail .table-view {
+    -fx-background-color: -color-bg-default;
+}
+
+.gsea-history-detail .table-view .column-header,
+.gsea-history-detail .table-view .column-header .label {
+    -fx-background-color: -color-bg-overlay;
+    -fx-text-fill: -color-fg-muted;
+}
+
+.gsea-history-detail .table-row-cell {
+    -fx-background-color: -color-bg-default;
+    -fx-text-fill: -color-fg-default;
+}
+
+.gsea-history-detail .table-row-cell:filled:selected {
+    -fx-background-color: -color-selected-bg;
+    -fx-text-fill: -color-fg-default;
+}
+
+.gsea-history-detail .gsea-pheno-pos {
+    -fx-text-fill: -color-pheno-pos;
+}
+
+.gsea-history-detail .gsea-pheno-neg {
+    -fx-text-fill: -color-pheno-neg;
+}
+
 .gsea-report-action-bar {
-    -fx-background-color: #ffffff;
-    -fx-border-color: transparent transparent #e2e8f0 transparent;
+    -fx-background-color: -color-bg-default;
+    -fx-border-color: transparent transparent -color-border-subtle transparent;
     -fx-border-width: 0 0 1 0;
 }
 
 .gsea-report-tabs > .tab-header-area {
-    -fx-padding: 6 10 0 10;
-    -fx-background-color: #f6f7f9;
+    -fx-padding: 0 6 0 6;
 }
 
 .gsea-enplot-tabs {
@@ -299,22 +546,12 @@
 }
 
 .gsea-enplot-tabs > .tab-header-area {
-    -fx-padding: 4 0 4 4;
-    -fx-background-color: #eef1f5;
-}
-
-.gsea-enplot-tabs > .tab-header-area > .headers-region > .tab {
-    -fx-padding: 8 12 8 12;
-    -fx-background-insets: 0;
-}
-
-.gsea-enplot-tabs > .tab-header-area > .headers-region > .tab .tab-label {
-    -fx-font-size: 12px;
+    -fx-padding: 0 0 0 4;
 }
 
 .gsea-report-explorer,
 .gsea-enrichment-root {
-    -fx-background-color: #f6f7f9;
+    -fx-background-color: -color-bg-inset;
 }
 
 .gsea-report-filter {
@@ -324,9 +561,9 @@
 }
 
 .gsea-stat-chip {
-    -fx-background-color: #ffffff;
+    -fx-background-color: -color-bg-default;
     -fx-background-radius: 6;
-    -fx-border-color: #e2e8f0;
+    -fx-border-color: -color-border-subtle;
     -fx-border-radius: 6;
     -fx-border-width: 1;
     -fx-padding: 6 10 6 10;
@@ -336,28 +573,28 @@
 .gsea-stat-value {
     -fx-font-size: 14px;
     -fx-font-weight: bold;
-    -fx-text-fill: #0f172a;
+    -fx-text-fill: -color-fg-default;
 }
 
 .gsea-stat-label {
     -fx-font-size: 11px;
-    -fx-text-fill: #64748b;
+    -fx-text-fill: -color-fg-subtle;
 }
 
 .gsea-pheno-panel {
-    -fx-background-color: #ffffff;
+    -fx-background-color: -color-bg-default;
     -fx-background-radius: 8;
-    -fx-border-color: #e2e8f0;
+    -fx-border-color: -color-border-subtle;
     -fx-border-radius: 8;
     -fx-border-width: 1;
 }
 
 .gsea-pheno-panel-pos {
-    -fx-border-color: #fecaca;
+    -fx-border-color: -color-pheno-pos-border;
 }
 
 .gsea-pheno-panel-neg {
-    -fx-border-color: #bfdbfe;
+    -fx-border-color: -color-pheno-neg-border;
 }
 
 .gsea-pheno-title {
@@ -366,11 +603,11 @@
 }
 
 .gsea-pheno-pos {
-    -fx-text-fill: #b91c1c;
+    -fx-text-fill: -color-pheno-pos;
 }
 
 .gsea-pheno-neg {
-    -fx-text-fill: #1d4ed8;
+    -fx-text-fill: -color-pheno-neg;
 }
 
 .gsea-pheno-badge {
@@ -378,21 +615,21 @@
     -fx-font-weight: bold;
     -fx-padding: 2 8 2 8;
     -fx-background-radius: 4;
-    -fx-background-color: #f1f5f9;
+    -fx-background-color: -color-bg-overlay;
 }
 
 .gsea-pheno-badge.gsea-pheno-pos {
-    -fx-background-color: #fee2e2;
+    -fx-background-color: -color-pheno-pos-bg;
 }
 
 .gsea-pheno-badge.gsea-pheno-neg {
-    -fx-background-color: #dbeafe;
+    -fx-background-color: -color-pheno-neg-bg;
 }
 
 .gsea-detail-pane {
-    -fx-background-color: #ffffff;
+    -fx-background-color: -color-bg-default;
     -fx-background-radius: 8;
-    -fx-border-color: #e2e8f0;
+    -fx-border-color: -color-border-subtle;
     -fx-border-radius: 8;
     -fx-border-width: 1;
 }
@@ -403,7 +640,7 @@
 }
 
 .gsea-enrichment-table .column-header-background {
-    -fx-background-color: #f8fafc;
+    -fx-background-color: -color-bg-default;
 }
 
 /* ---------- CoreMap explore accessories ---------- */
@@ -415,13 +652,13 @@
 .coremap-card-title {
     -fx-font-weight: bold;
     -fx-font-size: 12px;
-    -fx-text-fill: #1a2b3c;
+    -fx-text-fill: -color-fg-default;
     -fx-wrap-text: true;
 }
 
 .coremap-meta,
 .coremap-help {
-    -fx-text-fill: #64748b;
+    -fx-text-fill: -color-fg-subtle;
     -fx-font-size: 11px;
     -fx-wrap-text: true;
 }
@@ -436,7 +673,7 @@
 
 .coremap-chip-assoc {
     -fx-background-color: #e2e8f0;
-    -fx-text-fill: #475569;
+    -fx-text-fill: -color-fg-subtle;
     -fx-padding: 1 6 1 6;
     -fx-background-radius: 8;
     -fx-font-size: 10px;
@@ -459,13 +696,13 @@
 }
 
 .coremap-legend {
-    -fx-background-color: #f8fafc;
+    -fx-background-color: -color-bg-default;
     -fx-border-color: #e2e8f0 transparent transparent transparent;
     -fx-border-width: 1 0 0 0;
 }
 
 .coremap-legend-label {
-    -fx-text-fill: #475569;
+    -fx-text-fill: -color-fg-subtle;
     -fx-font-size: 11px;
 }
 
@@ -478,26 +715,26 @@
 
 .coremap-selection-title {
     -fx-font-weight: bold;
-    -fx-text-fill: #1a2b3c;
+    -fx-text-fill: -color-fg-default;
 }
 
 .coremap-card-heading {
     -fx-font-weight: bold;
     -fx-font-size: 13px;
-    -fx-text-fill: #1a2b3c;
+    -fx-text-fill: -color-fg-default;
     -fx-wrap-text: true;
 }
 
 .coremap-card-section {
     -fx-font-weight: bold;
     -fx-font-size: 11px;
-    -fx-text-fill: #1a2b3c;
+    -fx-text-fill: -color-fg-default;
     -fx-padding: 4 0 0 0;
 }
 
 .coremap-card-body {
     -fx-font-size: 11px;
-    -fx-text-fill: #1a2b3c;
+    -fx-text-fill: -color-fg-default;
     -fx-wrap-text: true;
 }
 
@@ -517,7 +754,7 @@
 .coremap-option-group-title {
     -fx-font-weight: bold;
     -fx-font-size: 12px;
-    -fx-text-fill: #1a2b3c;
+    -fx-text-fill: -color-fg-default;
 }
 
 .coremap-cascade-gene {
@@ -534,11 +771,11 @@
 }
 
 .coremap-cascade-hop {
-    -fx-fill: #64748b;
+    -fx-fill: -color-fg-subtle;
 }
 
 .coremap-hint {
-    -fx-text-fill: #64748b;
+    -fx-text-fill: -color-fg-subtle;
     -fx-font-size: 11px;
     -fx-wrap-text: true;
 }
@@ -553,11 +790,80 @@
     -fx-text-fill: #9c27b0;
 }
 
+/* Semantic status colors (exact values from former inline styles). */
+.gsea-text-phenotype-positive {
+    -fx-text-fill: red;
+}
+
+.gsea-text-phenotype-negative {
+    -fx-text-fill: blue;
+}
+
+.gsea-text-missing {
+    -fx-text-fill: red;
+}
+
+.gsea-root .list-cell.gsea-text-missing,
+.gsea-root .list-cell:filled:selected.gsea-text-missing {
+    -fx-text-fill: red;
+}
+
+.gsea-text-pass {
+    -fx-text-fill: #047857;
+}
+
+.gsea-text-fail {
+    -fx-text-fill: #b45309;
+}
+
+.gsea-root .table-cell.gsea-text-pass,
+.gsea-root .table-cell:selected.gsea-text-pass {
+    -fx-text-fill: #047857;
+}
+
+.gsea-root .table-cell.gsea-text-fail,
+.gsea-root .table-cell:selected.gsea-text-fail {
+    -fx-text-fill: #b45309;
+}
+
+.gsea-tool-launcher-header .gsea-tool-launcher-title {
+    -fx-font-weight: bold;
+    -fx-font-size: 14px;
+    -fx-text-fill: white;
+}
+
 .gsea-root .list-cell:filled:selected {
     -fx-text-fill: -fx-text-base-color;
 }
 
 .gsea-root.gsea-dark .list-cell:filled:selected .gsea-phenotype-combo-source {
     -fx-text-fill: #c084fc;
+}
+
+/* ---------- BentoFX dock integrations (see bento.css for chrome tokens) ---------- */
+
+.gsea-root .header {
+    -fx-font-family: "Segoe UI", "Helvetica Neue", sans-serif;
+}
+
+/* Tools rail sits inside a dock leaf — soften nested chrome */
+.gsea-root .container-leaf .gsea-tool-group {
+    -fx-border-color: -color-border-subtle;
+    -fx-effect: dropshadow(gaussian, rgba(26, 43, 60, 0.04), 4, 0, 0, 1);
+}
+
+.gsea-root .gsea-tools-scroll {
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+    -fx-border-color: transparent;
+    -fx-padding: 0;
+}
+
+.gsea-root .gsea-tools-scroll > .viewport {
+    -fx-background-color: transparent;
+}
+
+.gsea-root .gsea-tools-rail {
+    -fx-background-color: transparent;
 }
 

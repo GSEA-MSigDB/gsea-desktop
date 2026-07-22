@@ -1,26 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  gnu.trove.TFloatIntHashMap
- *  gnu.trove.TFloatIntIterator
- *  gnu.trove.TIntIntHashMap
- *  org.jfree.chart.ChartFactory
- *  org.jfree.chart.JFreeChart
- *  org.jfree.chart.axis.NumberAxis
- *  org.jfree.chart.axis.SymbolAxis
- *  org.jfree.chart.axis.ValueAxis
- *  org.jfree.chart.plot.PlotOrientation
- *  org.jfree.chart.plot.XYPlot
- *  org.jfree.chart.renderer.xy.StandardXYBarPainter
- *  org.jfree.chart.renderer.xy.XYBarPainter
- *  org.jfree.chart.renderer.xy.XYBarRenderer
- *  org.jfree.chart.renderer.xy.XYItemRenderer
- *  org.jfree.chart.ui.RectangleInsets
- *  org.jfree.data.xy.IntervalXYDataset
- *  org.jfree.data.xy.XYSeries
- *  org.jfree.data.xy.XYSeriesCollection
- */
 package org.genepattern.gsea;
 
 import edu.mit.broad.genome.alg.AlgUtils;
@@ -38,18 +15,13 @@ import edu.mit.broad.genome.objects.GeneSet;
 import edu.mit.broad.genome.objects.RankedList;
 import edu.mit.broad.genome.objects.esmatrix.db.EnrichmentDb;
 import edu.mit.broad.genome.objects.esmatrix.db.EnrichmentResult;
-import edu.mit.broad.genome.reports.EnrichmentReports;
+import edu.mit.broad.genome.plots.HistogramPlotSpec;
+import edu.mit.broad.genome.plots.PlotBuilders;
+import edu.mit.broad.genome.plots.PlotRasterExporter;
 import edu.mit.broad.xbench.heatmap.DisplayState;
 import edu.mit.broad.xbench.heatmap.GramImagerImpl;
 import gnu.trove.TFloatIntHashMap;
-import gnu.trove.TFloatIntIterator;
-import gnu.trove.TIntIntHashMap;
-import gnu.trove.TIntIntIterator;
-import java.awt.BasicStroke;
 import java.awt.Color;
-import java.awt.Font;
-import java.awt.Paint;
-import java.awt.Stroke;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.HashMap;
@@ -58,21 +30,6 @@ import org.genepattern.data.expr.IExpressionData;
 import org.genepattern.gsea.HCLAlgorithm;
 import org.genepattern.heatmap.ColorScheme;
 import org.genepattern.heatmap.image.HeatMap;
-import org.jfree.chart.ChartFactory;
-import org.jfree.chart.JFreeChart;
-import org.jfree.chart.axis.NumberAxis;
-import org.jfree.chart.axis.SymbolAxis;
-import org.jfree.chart.axis.ValueAxis;
-import org.jfree.chart.plot.PlotOrientation;
-import org.jfree.chart.plot.XYPlot;
-import org.jfree.chart.renderer.xy.StandardXYBarPainter;
-import org.jfree.chart.renderer.xy.XYBarPainter;
-import org.jfree.chart.renderer.xy.XYBarRenderer;
-import org.jfree.chart.renderer.xy.XYItemRenderer;
-import org.jfree.chart.ui.RectangleInsets;
-import org.jfree.data.xy.IntervalXYDataset;
-import org.jfree.data.xy.XYSeries;
-import org.jfree.data.xy.XYSeriesCollection;
 
 public final class LeadingEdgeAnalysis {
     private LeadingEdgeAnalysis() {
@@ -116,112 +73,30 @@ public final class LeadingEdgeAnalysis {
         ColorScheme simColorScheme = LeadingEdgeAnalysis.jaccardColorScheme(similarityDs);
         HeatMap simHeatMap = new GramImagerImpl(new DisplayState(simColorScheme)).createBpogHeatMap(similarityDs);
         GeneSetStats.RedStruc rs = new GeneSetStats().calcRedundancy(gsets, false);
-        JFreeChart geneHistChart = LeadingEdgeAnalysis.createGeneHistogramChart(rs.featureFreq, rankedList);
-        JFreeChart jaccardHistChart = LeadingEdgeAnalysis.createJaccardHistogramChart(rs.jaccardDistrib, 0.02);
-        return new Result(leHeatMap, simHeatMap, leColorScheme, simColorScheme, geneHistChart, jaccardHistChart, lev_ds_clustered_m, similarityDs, reorderedGeneSets, rs.featureFreq, rankedList, rs.jaccardDistrib, edb.getEdbDir());
+        HistogramPlotSpec geneHist = PlotBuilders.geneHistogram(rs.featureFreq, rankedList, null);
+        HistogramPlotSpec jaccardHist = PlotBuilders.jaccardHistogram(rs.jaccardDistrib, 0.02);
+        return new Result(leHeatMap, simHeatMap, leColorScheme, simColorScheme, geneHist, jaccardHist, lev_ds_clustered_m, similarityDs, reorderedGeneSets, rs.featureFreq, rankedList, rs.jaccardDistrib, edb.getEdbDir());
     }
 
-    public static JFreeChart createJaccardHistogramChart(TFloatIntHashMap jaccardToOccurrencesMap, double binWidth) {
-        if (jaccardToOccurrencesMap == null || binWidth <= 0.0 || binWidth > 1.0) {
-            return ChartFactory.createHistogram((String)"", (String)"Jaccard", (String)"Number of Occurences", (IntervalXYDataset)new XYSeriesCollection(), (PlotOrientation)PlotOrientation.VERTICAL, (boolean)false, (boolean)true, (boolean)false);
-        }
-        TIntIntHashMap binNumberToOccurencesMap = new TIntIntHashMap();
-        XYSeries series = new XYSeries((Comparable)((Object)""));
-        XYSeriesCollection coll = new XYSeriesCollection();
-        coll.addSeries(series);
-        TFloatIntIterator it = jaccardToOccurrencesMap.iterator();
-        while (it.hasNext()) {
-            it.advance();
-            float value = it.key();
-            int occurences = it.value();
-            int bin = (int)((double)value / binWidth);
-            int priorOccurences = binNumberToOccurencesMap.get(bin);
-            binNumberToOccurencesMap.put(bin, occurences + priorOccurences);
-        }
-        TIntIntIterator binIt = binNumberToOccurencesMap.iterator();
-        while (binIt.hasNext()) {
-            binIt.advance();
-            series.add((double)binIt.key() * binWidth, (double)binIt.value());
-        }
-        JFreeChart chart = ChartFactory.createHistogram((String)"", (String)"Jaccard", (String)"Number of Occurences", (IntervalXYDataset)coll, (PlotOrientation)PlotOrientation.VERTICAL, (boolean)false, (boolean)true, (boolean)false);
-        LeadingEdgeAnalysis.styleHistogramPlot(chart);
-        chart.setBackgroundPaint((Paint)EnrichmentReports.CHART_FRAME_COLOR);
-        return chart;
+    public static HistogramPlotSpec createJaccardHistogramChart(TFloatIntHashMap jaccardToOccurrencesMap, double binWidth) {
+        return PlotBuilders.jaccardHistogram(jaccardToOccurrencesMap, binWidth);
     }
 
     public static BufferedImage renderJaccardHistogram(TFloatIntHashMap jaccardToOccurrencesMap, double binWidth, int width, int height) {
-        return LeadingEdgeAnalysis.createJaccardHistogramChart(jaccardToOccurrencesMap, binWidth).createBufferedImage(width, height);
+        return PlotRasterExporter.render(createJaccardHistogramChart(jaccardToOccurrencesMap, binWidth), width, height);
     }
 
-    public static JFreeChart createGeneHistogramChart(RankedList featureFrequency, RankedList scores) {
+    public static HistogramPlotSpec createGeneHistogramChart(RankedList featureFrequency, RankedList scores) {
         return LeadingEdgeAnalysis.createGeneHistogramChart(featureFrequency, scores, null);
     }
 
-    public static JFreeChart createGeneHistogramChart(RankedList featureFrequency, RankedList scores, AtomicInteger selectedGeneIndex) {
-        if (featureFrequency == null || featureFrequency.getSize() == 0) {
-            return ChartFactory.createHistogram((String)"", (String)"Gene", (String)"Number Of Gene Sets", (IntervalXYDataset)new XYSeriesCollection(), (PlotOrientation)PlotOrientation.VERTICAL, (boolean)false, (boolean)false, (boolean)false);
-        }
-        XYSeries series = new XYSeries((Comparable)((Object)"Histogram"));
-        XYSeriesCollection coll = new XYSeriesCollection();
-        coll.addSeries(series);
-        for (int i = 0; i < featureFrequency.getSize(); ++i) {
-            series.add((double)i, (double)featureFrequency.getScore(i));
-        }
-        JFreeChart chart = ChartFactory.createHistogram((String)"", (String)"Gene", (String)"Number Of Gene Sets", (IntervalXYDataset)coll, (PlotOrientation)PlotOrientation.VERTICAL, (boolean)false, (boolean)true, (boolean)false);
-        XYPlot plot = chart.getXYPlot();
-        LeadingEdgeAnalysis.styleHistogramPlot(chart);
-        SymbolAxis xAxis = new SymbolAxis("Gene", featureFrequency.getRankedNamesArray());
-        xAxis.setVerticalTickLabels(true);
-        xAxis.setTickLabelFont(new Font("SansSerif", 0, 9));
-        xAxis.setTickMarkPaint((Paint)Color.GRAY);
-        xAxis.setTickMarkStroke((Stroke)new BasicStroke(1.0f));
-        xAxis.setAxisLinePaint((Paint)Color.GRAY);
-        plot.setDomainAxis((ValueAxis)xAxis);
-        final RankedList scoresFinal = scores;
-        final RankedList freqFinal = featureFrequency;
-        final AtomicInteger selected = selectedGeneIndex;
-        XYBarRenderer renderer = new XYBarRenderer(){
-
-            public Paint getItemPaint(int seriesIndex, int item) {
-                if (selected != null && item == selected.get()) {
-                    return Color.YELLOW;
-                }
-                if (scoresFinal != null) {
-                    float value = scoresFinal.getScore(freqFinal.getRankName(item));
-                    return value > 0.0f ? Color.RED : Color.BLUE;
-                }
-                return super.getItemPaint(seriesIndex, item);
-            }
-        };
-        renderer.setGradientPaintTransformer(null);
-        renderer.setBarPainter((XYBarPainter)new StandardXYBarPainter());
-        renderer.setShadowVisible(false);
-        plot.setRenderer((XYItemRenderer)renderer);
-        chart.setBackgroundPaint((Paint)EnrichmentReports.CHART_FRAME_COLOR);
-        return chart;
+    public static HistogramPlotSpec createGeneHistogramChart(RankedList featureFrequency, RankedList scores, AtomicInteger selectedGeneIndex) {
+        Integer selected = selectedGeneIndex != null ? Integer.valueOf(selectedGeneIndex.get()) : null;
+        return PlotBuilders.geneHistogram(featureFrequency, scores, selected);
     }
 
     private static BufferedImage renderGeneHistogram(RankedList featureFrequency, RankedList scores, int width, int height) {
-        return LeadingEdgeAnalysis.createGeneHistogramChart(featureFrequency, scores).createBufferedImage(width, height);
-    }
-
-    private static void styleHistogramPlot(JFreeChart chart) {
-        XYPlot plot = chart.getXYPlot();
-        plot.getRangeAxis().setStandardTickUnits(NumberAxis.createIntegerTickUnits());
-        plot.setAxisOffset(new RectangleInsets(0.0, 0.0, 0.0, 0.0));
-        plot.setBackgroundPaint((Paint)Color.WHITE);
-        plot.setDomainGridlinesVisible(true);
-        plot.setDomainGridlinePaint((Paint)Color.LIGHT_GRAY);
-        plot.setRangeGridlinesVisible(true);
-        plot.setRangeGridlinePaint((Paint)Color.LIGHT_GRAY);
-        plot.getRangeAxis().setAxisLinePaint((Paint)Color.GRAY);
-        plot.getRangeAxis().setTickMarkPaint((Paint)Color.GRAY);
-        if (plot.getRenderer() instanceof XYBarRenderer) {
-            XYBarRenderer renderer = (XYBarRenderer)plot.getRenderer();
-            renderer.setGradientPaintTransformer(null);
-            renderer.setBarPainter((XYBarPainter)new StandardXYBarPainter());
-            renderer.setShadowVisible(false);
-        }
+        return PlotRasterExporter.render(createGeneHistogramChart(featureFrequency, scores), width, height);
     }
 
     private static GeneSet[] reorderGeneSets(GeneSet[] gsets, Dataset clustered) {
@@ -329,8 +204,8 @@ public final class LeadingEdgeAnalysis {
         private final ColorScheme similarityColorScheme;
         private final BufferedImage leadingEdgeHeatMap;
         private final BufferedImage similarityHeatMap;
-        private final JFreeChart geneHistogramChart;
-        private final JFreeChart jaccardHistogramChart;
+        private final HistogramPlotSpec geneHistogramSpec;
+        private final HistogramPlotSpec jaccardHistogramSpec;
         private final BufferedImage geneHistogram;
         private final BufferedImage jaccardHistogram;
         private final Dataset clusteredMorphed;
@@ -341,17 +216,17 @@ public final class LeadingEdgeAnalysis {
         private final TFloatIntHashMap jaccardDistrib;
         private final File resultDirectory;
 
-        Result(HeatMap leadingEdgeHeatMapModel, HeatMap similarityHeatMapModel, ColorScheme leadingEdgeColorScheme, ColorScheme similarityColorScheme, JFreeChart geneHistogramChart, JFreeChart jaccardHistogramChart, Dataset clusteredMorphed, Dataset similarityDataset, GeneSet[] reorderedGeneSets, RankedList featureFrequency, RankedList geneScores, TFloatIntHashMap jaccardDistrib, File resultDirectory) {
+        Result(HeatMap leadingEdgeHeatMapModel, HeatMap similarityHeatMapModel, ColorScheme leadingEdgeColorScheme, ColorScheme similarityColorScheme, HistogramPlotSpec geneHistogramSpec, HistogramPlotSpec jaccardHistogramSpec, Dataset clusteredMorphed, Dataset similarityDataset, GeneSet[] reorderedGeneSets, RankedList featureFrequency, RankedList geneScores, TFloatIntHashMap jaccardDistrib, File resultDirectory) {
             this.leadingEdgeHeatMapModel = leadingEdgeHeatMapModel;
             this.similarityHeatMapModel = similarityHeatMapModel;
             this.leadingEdgeColorScheme = leadingEdgeColorScheme;
             this.similarityColorScheme = similarityColorScheme;
             this.leadingEdgeHeatMap = leadingEdgeHeatMapModel != null ? leadingEdgeHeatMapModel.snapshot() : null;
             this.similarityHeatMap = similarityHeatMapModel != null ? similarityHeatMapModel.snapshot() : null;
-            this.geneHistogramChart = geneHistogramChart;
-            this.jaccardHistogramChart = jaccardHistogramChart;
-            this.geneHistogram = geneHistogramChart != null ? geneHistogramChart.createBufferedImage(720, 360) : null;
-            this.jaccardHistogram = jaccardHistogramChart != null ? jaccardHistogramChart.createBufferedImage(720, 360) : null;
+            this.geneHistogramSpec = geneHistogramSpec;
+            this.jaccardHistogramSpec = jaccardHistogramSpec;
+            this.geneHistogram = geneHistogramSpec != null ? PlotRasterExporter.render(geneHistogramSpec, 720, 360) : null;
+            this.jaccardHistogram = jaccardHistogramSpec != null ? PlotRasterExporter.render(jaccardHistogramSpec, 720, 360) : null;
             this.clusteredMorphed = clusteredMorphed;
             this.similarityDataset = similarityDataset;
             this.reorderedGeneSets = reorderedGeneSets;
@@ -385,12 +260,12 @@ public final class LeadingEdgeAnalysis {
             return this.similarityHeatMap;
         }
 
-        public JFreeChart getGeneHistogramChart() {
-            return this.geneHistogramChart;
+        public HistogramPlotSpec getGeneHistogramSpec() {
+            return this.geneHistogramSpec;
         }
 
-        public JFreeChart getJaccardHistogramChart() {
-            return this.jaccardHistogramChart;
+        public HistogramPlotSpec getJaccardHistogramSpec() {
+            return this.jaccardHistogramSpec;
         }
 
         public BufferedImage getGeneHistogram() {

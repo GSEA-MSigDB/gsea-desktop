@@ -78,7 +78,7 @@ public class FxToolLauncherPane implements ViewPage {
         }
         Label titleLabel = new Label();
         titleLabel.setText(stripSimpleHtml(tool.getTitle()));
-        titleLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 14px; -fx-text-fill: white;");
+        titleLabel.getStyleClass().add("gsea-tool-launcher-title");
         header.getChildren().add(titleLabel);
 
         run.setDefaultButton(true);

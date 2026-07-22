@@ -5,7 +5,6 @@ package edu.mit.broad.genome.reports.pages;
 
 import edu.mit.broad.genome.*;
 import edu.mit.broad.genome.charts.XChart;
-import edu.mit.broad.genome.charts.XComboChart;
 import edu.mit.broad.genome.reports.RichDataframe;
 import edu.mit.broad.genome.reports.api.PicFile;
 
@@ -208,10 +207,6 @@ public class HtmlPage implements Page {
         } catch (Throwable t) {
             addError("Trouble saving image", t);
         }
-    }
-
-    public void addChart(final XComboChart combo, final int width, final int height, File saveInDir, boolean createSvgs) {
-        addChart(combo.getCombinedChart(), width, height, saveInDir, createSvgs);
     }
 
     public void addHeatMap(final String title, final String caption, final HeatMap heatMap, File saveInDir, boolean createSvgs) {

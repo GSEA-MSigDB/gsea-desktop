@@ -24,6 +24,7 @@ import xtools.api.Tool;
 import xtools.api.param.GeneSetMatrixFormatParam;
 import xtools.api.param.ReportLabelParam;
 
+import java.awt.Desktop;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -296,23 +297,33 @@ public class ToolReport implements Report {
     }
 
     /**
-     * IMP -> if headless then never displayed irrespctive of the vdbgui param
-     * Display the Report's contents in a simple GUI.
-     * JFrame with a JList holding objects in this reports -> only Files and Charts
-     * Double clicking / right popup on an elemnt brings up the File/Chart
-     * in a viewer. For files, native viewers only -> Acrobat, etc
-     * For Charts -> just put in a Chart displayer
+     * Open the report HTML index in the system browser when appropriate.
+     * No-op when headless, or when running inside the GSEA desktop app
+     * (the FX shell presents reports via the jobs UI).
      */
-
-    // IMP -> make sure that xomics does not get initialized due to this call
     public void display() {
 
         if (SystemUtils.isHeadless()) {
             klog.info("Suppressing display reports as headless mode");
-        } else if (SystemUtils.isPropertyTrue("GSEA")) {
-            klog.info("Suppressing display reports as gsea app");
-        } else {
-            klog.info("Suppressing Swing report display; open the report index in a browser if needed");
+            return;
+        }
+        if (SystemUtils.isPropertyTrue("GSEA")) {
+            // FX shell opens reports via jobs / FxReportOpen
+            return;
+        }
+        URI index = getReportIndex();
+        if (index == null) {
+            klog.info("No report index to display");
+            return;
+        }
+        try {
+            if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
+                Desktop.getDesktop().browse(index);
+            } else {
+                klog.info("Desktop browse not supported; report index at {}", index);
+            }
+        } catch (Exception e) {
+            klog.warn("Could not open report index in browser: {}", e.toString());
         }
     }
 
@@ -436,7 +447,7 @@ public class ToolReport implements Report {
 
     public void savePageSvg(final XChart xc, final int width, final int height, final File file) {
         try {
-            ImageUtil.saveAsSVG(xc.getFreeChart(), file, width, height, true);
+            xc.saveAsSVG(file, width, height);
             _centralAddPage(new FileWrapperPage(file, xc.getTitle() + " (compressed SVG)"));
         } catch (Throwable t) {
             addError("Trouble saving svg image", t);

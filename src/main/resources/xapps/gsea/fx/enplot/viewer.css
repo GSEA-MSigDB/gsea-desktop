@@ -97,7 +97,8 @@ html, body {
 }
 
 .enplot-toolbar button,
-.enplot-toolbar input[type="text"] {
+.enplot-toolbar input[type="text"],
+.enplot-toolbar select {
   appearance: none;
   border: 1px solid var(--grid);
   background: var(--panel);
@@ -105,6 +106,18 @@ html, body {
   border-radius: 6px;
   padding: 4px 10px;
   font: inherit;
+}
+
+.enplot-toolbar select {
+  padding-right: 24px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%2364748b' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  cursor: pointer;
+}
+
+.enplot-scheme {
+  gap: 8px;
 }
 
 .enplot-toolbar button {

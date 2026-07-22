@@ -26,28 +26,21 @@ import edu.mit.broad.xbench.core.api.VdbManager;
 import edu.mit.broad.xbench.core.api.WindowManager;
 import edu.mit.broad.xbench.prefs.XPreferencesFactory;
 import javafx.application.Platform;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.geometry.Insets;
-import javafx.geometry.Orientation;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
-import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.SeparatorMenuItem;
-import javafx.scene.control.SplitPane;
-import javafx.scene.control.Tab;
-import javafx.scene.control.TabPane;
 import javafx.scene.image.Image;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import javafx.scene.layout.Region;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 import xapps.gsea.GseaWebResources;
@@ -85,7 +78,7 @@ public class GseaFxShell implements Workspace, Application.Handler {
     private static final String RPT_CACHE_BUILD_DATE = "April4_2006_build";
 
     private final Stage stage;
-    private final TabPane tabPane = new TabPane();
+    private final FxDockWorkspace dockWorkspace = new FxDockWorkspace();
     private final ToolManager toolManager = new ToolManagerImpl();
     private final VdbManager vdbManager = new VdbManagerForGsea(RPT_CACHE_BUILD_DATE);
     private final FileManager fileManager;
@@ -93,12 +86,7 @@ public class GseaFxShell implements Workspace, Application.Handler {
     private final ApplicationLog applicationLog;
     private final JobRuntime jobRuntime;
     private final FxJobsPane jobsPane;
-    private javafx.stage.Stage consolePopup;
-
-    /** Left rail (tools + jobs) vs. main tabs. */
-    private SplitPane shellHorizontalSplit;
-    /** Tools vs. jobs within the left rail. */
-    private SplitPane shellLeftVerticalSplit;
+    private final FxConsoleViewer consoleViewer;
 
     /** Last non-maximized / non-iconified window bounds (for prefs while quit maximized). */
     private double normalX = Double.NaN;
@@ -127,8 +115,8 @@ public class GseaFxShell implements Workspace, Application.Handler {
         this.applicationLog = new ApplicationLog();
         this.jobRuntime = new JobRuntime(applicationLog);
         this.jobsPane = new FxJobsPane(jobRuntime, this::openPage);
+        this.consoleViewer = new FxConsoleViewer(applicationLog);
         this.jobRuntime.installCapture();
-        tabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.ALL_TABS);
         // So Report Explorer can reuse the sidebar CoreMap workspace.
         CoreMapWorkspace.registerWorkspace(() -> {
             ensureCoreMapPage();
@@ -144,6 +132,7 @@ public class GseaFxShell implements Workspace, Application.Handler {
         installStageIcons();
 
         MenuBar menuBar = buildMenuBar();
+        menuBar.getStyleClass().add("gsea-menu-bar");
         if (SystemUtils.IS_OS_MAC) {
             menuBar.setUseSystemMenuBar(true);
         }
@@ -152,10 +141,17 @@ public class GseaFxShell implements Workspace, Application.Handler {
         // Scene root (toast StackPane) owns gsea-root / gsea-dark — keep this pane unclassed.
         root.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
         root.setTop(menuBar);
-        root.setCenter(buildCenter());
+        Node workspace = buildCenter();
+        if (workspace instanceof Region region) {
+            region.getStyleClass().add("gsea-workspace");
+        }
+        root.setCenter(workspace);
 
         javafx.scene.layout.StackPane sceneRoot = new javafx.scene.layout.StackPane(root);
         xapps.gsea.fx.FxToast.setHost(sceneRoot);
+        // gsea-dark must be present before Scene construction so dock Text titles
+        // resolve -color-fg-* on the first CSS pass.
+        xapps.gsea.fx.FxTheme.prepareRoot(sceneRoot);
 
         int width = Math.max(1, XPreferencesFactory.kAppWidth.getInt());
         int height = Math.max(1, XPreferencesFactory.kAppHeight.getInt());
@@ -170,7 +166,6 @@ public class GseaFxShell implements Workspace, Application.Handler {
         trackNormalWindowBounds();
         stage.show();
         bringStageToFront();
-        restoreShellDividers();
 
         DesktopIntegration.installHandlers(this::showAbout, this::requestQuit);
 
@@ -465,45 +460,34 @@ public class GseaFxShell implements Workspace, Application.Handler {
         return item;
     }
 
-    /** Vertical tool groups: Load Data, Enrichment Methods, Post-Analysis, Additional Tools, Analysis History. */
+    /** Tool groups: Load Data, Enrichment Methods, Post-Analysis, Additional Tools, Analysis History. */
     private Node buildLeftToolRail() {
-        VBox loadData = new VBox(8,
-                toolButton("Load Data", "Open16.gif", this::openLoadData));
-        loadData.getStyleClass().add("gsea-tool-group");
-        loadData.setPadding(new Insets(8, 6, 8, 6));
-
-        VBox enrichment = titledToolGroup("Enrichment Methods",
-                toolButton("GSEA", "GseaApp24.gif", this::openGsea),
-                toolButton("GSEAPreranked", "GseaApp24.gif", this::openGseaPreranked),
-                toolButton("single-sample GSEA", "GseaApp24.gif", this::openSsGsea)
-        );
-        VBox postAnalysis = titledToolGroup("Post-Analysis",
-                toolButton("CoreMap (Network Integration)", "coremap_logo.png", this::openCoreMap),
-                toolButton("Leading Edge Analysis (Classic LEA)", "Lev32.gif",
-                        this::openLeadingEdge),
-                toolButton("Enrichment Map Visualization", "enrichmentmap_logo.gif",
-                        this::openEnrichmentMap)
-        );
-        VBox additional = titledToolGroup("Additional Tools",
-                toolButton("Collapse Dataset", "ProjectSpecific16.png",
-                        this::openCollapseDataset),
-                toolButton("Chip2Chip", "Chip2Chip24_b.gif", this::openChip2Chip)
-        );
-        VBox history = new VBox(8,
-                toolButton("Analysis History", "past_analysis32.gif",
-                        this::openAnalysisHistory));
-        history.getStyleClass().add("gsea-tool-group");
-        history.setPadding(new Insets(8, 6, 8, 6));
-
-        VBox rail = new VBox(10, loadData, enrichment, postAnalysis, additional, history);
-        rail.setPadding(new Insets(6));
-        // Wide enough for multi-word rail labels + 32px icons without ellipsis.
-        rail.setPrefWidth(200);
-        rail.setMinWidth(180);
-        javafx.scene.control.ScrollPane scroll = new javafx.scene.control.ScrollPane(rail);
-        scroll.setFitToWidth(true);
-        scroll.setHbarPolicy(javafx.scene.control.ScrollPane.ScrollBarPolicy.NEVER);
-        return scroll;
+        return FxToolsRail.build(List.of(
+                new FxToolsRail.ToolSection("loadData", null, List.of(
+                        new FxToolsRail.ToolItem("loadData", "Load Data", "Open16.gif",
+                                this::openLoadData))),
+                new FxToolsRail.ToolSection("enrichment", "Enrichment Methods", List.of(
+                        new FxToolsRail.ToolItem("gsea", "GSEA", "GseaApp24.gif", this::openGsea),
+                        new FxToolsRail.ToolItem("gseaPreranked", "GSEAPreranked", "GseaApp24.gif",
+                                this::openGseaPreranked),
+                        new FxToolsRail.ToolItem("ssGsea", "single-sample GSEA", "GseaApp24.gif",
+                                this::openSsGsea))),
+                new FxToolsRail.ToolSection("postAnalysis", "Post-Analysis", List.of(
+                        new FxToolsRail.ToolItem("coreMap", "CoreMap (Network Integration)",
+                                "coremap_logo.png", this::openCoreMap),
+                        new FxToolsRail.ToolItem("leadingEdge",
+                                "Leading Edge Analysis (Classic LEA)", "Lev32.gif",
+                                this::openLeadingEdge),
+                        new FxToolsRail.ToolItem("enrichmentMap", "Enrichment Map Visualization",
+                                "enrichmentmap_logo.gif", this::openEnrichmentMap))),
+                new FxToolsRail.ToolSection("additional", "Additional Tools", List.of(
+                        new FxToolsRail.ToolItem("collapseDataset", "Collapse Dataset",
+                                "ProjectSpecific16.png", this::openCollapseDataset),
+                        new FxToolsRail.ToolItem("chip2Chip", "Chip2Chip", "Chip2Chip24_b.gif",
+                                this::openChip2Chip))),
+                new FxToolsRail.ToolSection("history", null, List.of(
+                        new FxToolsRail.ToolItem("analysisHistory", "Analysis History",
+                                "past_analysis32.gif", this::openAnalysisHistory)))));
     }
 
     private void openLoadData() {
@@ -598,142 +582,21 @@ public class GseaFxShell implements Workspace, Application.Handler {
     }
 
     /**
-     * Swing {@code WindowManagerImplJideTabbedPane.openWindow}: if the widget is already
-     * in a tab, reselect it; otherwise add a new tab.
+     * If the page is already docked, reselect it; otherwise open a new document dockable.
      */
     private void openOrReselect(ViewPage page) {
-        for (Tab tab : tabPane.getTabs()) {
-            if (tab.getUserData() == page) {
-                tabPane.getSelectionModel().select(tab);
-                return;
-            }
-        }
-        openPage(page);
+        dockWorkspace.openOrReselect(page);
     }
 
-    private static VBox titledToolGroup(String title, Button... buttons) {
-        Label header = new Label(title);
-        header.setStyle("-fx-font-weight: bold; -fx-padding: 0 0 4 0;");
-        VBox box = new VBox(8);
-        box.getChildren().add(header);
-        box.getChildren().addAll(buttons);
-        box.setPadding(new Insets(8, 6, 8, 6));
-        box.getStyleClass().add("gsea-tool-group");
-        return box;
-    }
-
-    private Button toolButton(String text, String iconResource, Runnable action) {
-        Button b = new Button(text);
-        xapps.gsea.fx.FxButtons.styleRail(b);
-        b.setMaxWidth(Double.MAX_VALUE);
-        b.setMinHeight(55);
-        b.setPrefHeight(javafx.scene.layout.Region.USE_COMPUTED_SIZE);
-        b.setWrapText(true);
-        b.setTextOverrun(javafx.scene.control.OverrunStyle.CLIP);
-        b.setContentDisplay(javafx.scene.control.ContentDisplay.LEFT);
-        b.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
-        b.setTextAlignment(javafx.scene.text.TextAlignment.LEFT);
-        if (iconResource != null) {
-            try {
-                var url = JarResources.toURL(iconResource);
-                if (url != null) {
-                    javafx.scene.image.ImageView iv = new javafx.scene.image.ImageView(
-                            new Image(url.toExternalForm(), 32, 32, true, true));
-                    b.setGraphic(iv);
-                }
-            } catch (Exception ignored) {
-            }
-        }
-        b.setOnAction(e -> action.run());
-        return b;
-    }
-
-    private SplitPane buildCenter() {
-        shellLeftVerticalSplit = new SplitPane();
-        shellLeftVerticalSplit.setOrientation(Orientation.VERTICAL);
-        shellLeftVerticalSplit.getItems().addAll(buildLeftToolRail(), jobsPane.getNode());
-        shellLeftVerticalSplit.setDividerPositions(
-                dividerFraction(XPreferencesFactory.kShellLeftVerticalDivider.getInt(), 55));
-
-        shellHorizontalSplit = new SplitPane();
-        shellHorizontalSplit.getItems().addAll(shellLeftVerticalSplit, tabPane);
-        shellHorizontalSplit.setDividerPositions(
-                dividerFraction(XPreferencesFactory.kShellHorizontalDivider.getInt(), 22));
-        return shellHorizontalSplit;
-    }
-
-    private void restoreShellDividers() {
-        // SplitPane often ignores positions until after it has a real width — apply once laid out.
-        applyShellDividersWhenReady(shellHorizontalSplit,
-                dividerFraction(XPreferencesFactory.kShellHorizontalDivider.getInt(), 22));
-        applyShellDividersWhenReady(shellLeftVerticalSplit,
-                dividerFraction(XPreferencesFactory.kShellLeftVerticalDivider.getInt(), 55));
-    }
-
-    private static void applyShellDividersWhenReady(SplitPane split, double position) {
-        if (split == null) {
-            return;
-        }
-        Runnable apply = () -> split.setDividerPositions(position);
-        if (split.getWidth() > 0 && split.getHeight() > 0) {
-            apply.run();
-            return;
-        }
-        ChangeListener<Number> listener = new ChangeListener<>() {
-            @Override
-            public void changed(ObservableValue<? extends Number> obs, Number oldVal, Number newVal) {
-                if (split.getWidth() > 0 && split.getHeight() > 0) {
-                    split.widthProperty().removeListener(this);
-                    split.heightProperty().removeListener(this);
-                    apply.run();
-                }
-            }
-        };
-        split.widthProperty().addListener(listener);
-        split.heightProperty().addListener(listener);
-        // Fallback if size is already valid on the next pulse.
-        Platform.runLater(() -> {
-            if (split.getWidth() > 0 && split.getHeight() > 0) {
-                split.widthProperty().removeListener(listener);
-                split.heightProperty().removeListener(listener);
-                apply.run();
-            }
-        });
-    }
-
-    private static double dividerFraction(int percent, int defaultPercent) {
-        int pct = percent;
-        if (pct < 5 || pct > 95) {
-            pct = defaultPercent;
-        }
-        return pct / 100.0;
-    }
-
-    private static int dividerPercent(SplitPane split, int fallback) {
-        if (split == null || split.getDividerPositions().length == 0) {
-            return fallback;
-        }
-        int pct = (int) Math.round(split.getDividerPositions()[0] * 100.0);
-        return Math.max(5, Math.min(95, pct));
+    private Node buildCenter() {
+        return dockWorkspace.buildLayout(
+                buildLeftToolRail(),
+                jobsPane.getNode(),
+                (Node) consoleViewer.getContent());
     }
 
     private void showApplicationMessages() {
-        if (consolePopup != null && consolePopup.isShowing()) {
-            consolePopup.toFront();
-            return;
-        }
-        if (consolePopup == null) {
-            consolePopup = new javafx.stage.Stage();
-            consolePopup.initOwner(stage);
-            consolePopup.setTitle("Application messages");
-            FxConsoleViewer viewer = new FxConsoleViewer(applicationLog);
-            javafx.scene.Scene consoleScene = new javafx.scene.Scene(
-                    (javafx.scene.Parent) viewer.getContent(), 700, 350);
-            xapps.gsea.fx.FxTheme.apply(consoleScene);
-            consolePopup.setScene(consoleScene);
-        }
-        consolePopup.show();
-        consolePopup.toFront();
+        dockWorkspace.showMessages();
     }
 
     private void clearRecentFileHistory() {
@@ -757,23 +620,7 @@ public class GseaFxShell implements Workspace, Application.Handler {
 
     @Override
     public void openPage(ViewPage page) {
-        Node content = (Node) page.getContent();
-        Tab tab = new Tab(page.getTitle(), content);
-        tab.setClosable(!(page instanceof FxHomePane));
-        tab.setUserData(page);
-        String iconId = page.getIconResourceId();
-        if (iconId != null && !iconId.isBlank()) {
-            try {
-                var url = JarResources.toURL(iconId);
-                if (url != null) {
-                    tab.setGraphic(new javafx.scene.image.ImageView(
-                            new Image(url.toExternalForm(), 16, 16, true, true)));
-                }
-            } catch (Exception ignored) {
-            }
-        }
-        tabPane.getTabs().add(tab);
-        tabPane.getSelectionModel().select(tab);
+        dockWorkspace.openPage(page);
     }
 
     @Override
@@ -927,9 +774,6 @@ public class GseaFxShell implements Workspace, Application.Handler {
             }
         }
         saveWindowBounds();
-        if (consolePopup != null) {
-            consolePopup.hide();
-        }
         jobsPane.dispose();
         jobRuntime.dispose();
         Platform.exit();
@@ -960,10 +804,7 @@ public class GseaFxShell implements Workspace, Application.Handler {
                 XPreferencesFactory.kAppXPosition.setValue((int) Math.round(normalX));
                 XPreferencesFactory.kAppYPosition.setValue((int) Math.round(normalY));
             }
-            XPreferencesFactory.kShellHorizontalDivider.setValue(
-                    dividerPercent(shellHorizontalSplit, 22));
-            XPreferencesFactory.kShellLeftVerticalDivider.setValue(
-                    dividerPercent(shellLeftVerticalSplit, 55));
+            dockWorkspace.savePanelSizes();
             XPreferencesFactory.save();
         } catch (Exception e) {
             klog.warn("Could not save window preferences", e);

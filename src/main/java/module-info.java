@@ -17,6 +17,7 @@ module org.gsea_msigdb.gsea {
     exports edu.mit.broad.genome.objects.esmatrix.db;
     exports edu.mit.broad.genome.objects.strucs;
     exports edu.mit.broad.genome.parsers;
+    exports edu.mit.broad.genome.plots;
     exports edu.mit.broad.genome.reports;
     exports edu.mit.broad.genome.reports.api;
     exports edu.mit.broad.genome.reports.pages;
@@ -71,7 +72,6 @@ module org.gsea_msigdb.gsea {
     requires edtftpj;
     requires httpclient;
     requires httpcore;
-    requires java.datatransfer;
     requires transitive java.desktop;
     requires java.logging;
     requires transitive java.prefs;
@@ -79,13 +79,9 @@ module org.gsea_msigdb.gsea {
     requires javafx.base;
     requires javafx.controls;
     requires javafx.graphics;
-    requires javafx.swing;
     requires javafx.web;
     requires jdk.jsobject;
-    requires jcommon;
     requires jdk.xml.dom;
-    requires jfreechart;
-    requires org.jfree.fxgraphics2d;
     requires com.sun.jna;
     requires json.simple;
     requires maven.artifact;
@@ -93,6 +89,7 @@ module org.gsea_msigdb.gsea {
     requires org.slf4j.jul;
     requires trove;
     requires ujmp.complete;
+    requires bento.fx;
 
     opens xapps.gsea.fx to javafx.graphics;
     opens xapps.gsea.fx.shell to javafx.graphics;

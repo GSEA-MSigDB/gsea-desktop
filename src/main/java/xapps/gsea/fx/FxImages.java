@@ -5,12 +5,12 @@ package xapps.gsea.fx;
 
 import java.awt.image.BufferedImage;
 
-import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.image.Image;
+import javafx.scene.image.PixelFormat;
 import javafx.scene.image.WritableImage;
 
 /**
- * AWT {@link BufferedImage} → JavaFX {@link Image} via {@link SwingFXUtils}.
+ * AWT {@link BufferedImage} → JavaFX {@link Image} without {@code javafx.swing}.
  */
 public final class FxImages {
 
@@ -21,7 +21,12 @@ public final class FxImages {
         if (buffered == null) {
             return null;
         }
-        WritableImage fx = SwingFXUtils.toFXImage(buffered, null);
+        int width = buffered.getWidth();
+        int height = buffered.getHeight();
+        int[] pixels = buffered.getRGB(0, 0, width, height, null, 0, width);
+        WritableImage fx = new WritableImage(width, height);
+        fx.getPixelWriter().setPixels(0, 0, width, height,
+                PixelFormat.getIntArgbInstance(), pixels, 0, width);
         return fx;
     }
 }
