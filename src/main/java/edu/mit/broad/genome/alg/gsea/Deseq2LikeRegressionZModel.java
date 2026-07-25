@@ -84,6 +84,7 @@ public class Deseq2LikeRegressionZModel {
     private static final double LN_2 = Math.log(2.0d);
 
     private static final double WALD_PRIOR_RIDGE = WIDE_PRIOR_LAMBDA_LOG2 / (LN_2 * LN_2);
+    private static final double NEWTON_LAMBDA_NAT = WALD_PRIOR_RIDGE;
     private static final double ROBUST_COOKS_MIN_DISP = 0.04d;
     private static final int MIN_REPLICATES_FOR_REPLACE = 7;
     private static final double OUTLIER_REPLACEMENT_TRIM = 0.20d;
@@ -2174,6 +2175,10 @@ public class Deseq2LikeRegressionZModel {
         final double[] irlsZ = new double[colCount];
         final double sqrtRidge0 = Math.sqrt(WALD_PRIOR_RIDGE);
         final double sqrtRidge1 = Math.sqrt(WALD_PRIOR_RIDGE);
+        final double rllhDisp = Math.max(MIN_DISP_EVAL, dispersion);
+        final double r = 1.0d / rllhDisp;
+        final double logR = Math.log(r);
+        final double logGammaR = Gamma.logGamma(r);
 
         final int[] condition = conditionVector.condition;
         for (int iter = 0; iter < COEF_MAX_ITERS; iter++) {
@@ -2252,7 +2257,8 @@ public class Deseq2LikeRegressionZModel {
             beta1 = newBeta1;
 
             final double deviance = -2.0d
-                    * rowLogLikelihood(ds, rowIndex, conditionVector, sizeFactors, dispersion, beta0, beta1, true);
+                    * rowLogLikelihood(ds, rowIndex, conditionVector, sizeFactors, r,
+                            logR, logGammaR, beta0, beta1, true);
             if (!Double.isFinite(deviance)) {
                 useCurrentIrlsStartForOptimization = false;
                 break;
@@ -2282,17 +2288,16 @@ public class Deseq2LikeRegressionZModel {
             optimizeStart1 = beta1Start;
         }
 
-        final CoefFit optimized = dampedNewtonFitForRow(
+        return dampedNewtonFitForRow(
                 ds,
                 rowIndex,
                 conditionVector,
                 sizeFactors,
-                dispersion,
+                r,
+                logR,
+                logGammaR,
                 optimizeStart0,
-                optimizeStart1,
-                WIDE_PRIOR_LAMBDA_LOG2,
-                WIDE_PRIOR_LAMBDA_LOG2);
-        return optimized;
+                optimizeStart1);
     }
 
     /**
@@ -2321,24 +2326,21 @@ public class Deseq2LikeRegressionZModel {
             final int rowIndex,
             final ConditionVector conditionVector,
             final double[] sizeFactors,
-            final double dispersion,
+            final double r,
+            final double logR,
+            final double logGammaR,
             final double beta0Start,
-            final double beta1Start,
-            final double lambda0Log2,
-            final double lambda1Log2) {
-        final double lambda0Nat = lambda0Log2 / (LN_2 * LN_2);
-        final double lambda1Nat = lambda1Log2 / (LN_2 * LN_2);
+            final double beta1Start) {
         final double betaBound = 30.0d * LN_2;
         final int colCount = ds.getNumCol();
-        final double r = 1.0d / Math.max(MIN_DISP_EVAL, dispersion);
 
         double beta0 = Math.max(-betaBound, Math.min(betaBound,
                 Double.isFinite(beta0Start) ? beta0Start : 0.0d));
         double beta1 = Math.max(-betaBound, Math.min(betaBound,
                 Double.isFinite(beta1Start) ? beta1Start : 0.0d));
 
-        double currentObj = evalNegLogPosteriorNat(ds, rowIndex, conditionVector, sizeFactors, dispersion,
-                beta0, beta1, lambda0Nat, lambda1Nat);
+        double currentObj = evalNegLogPosteriorNat(ds, rowIndex, conditionVector, sizeFactors, r,
+                logR, logGammaR, beta0, beta1, NEWTON_LAMBDA_NAT, NEWTON_LAMBDA_NAT);
         if (!Double.isFinite(currentObj)) {
             return INVALID_COEF_FIT;
         }
@@ -2380,10 +2382,10 @@ public class Deseq2LikeRegressionZModel {
                 return INVALID_COEF_FIT;
             }
 
-            s0 -= lambda0Nat * beta0;
-            s1 -= lambda1Nat * beta1;
-            h00 += lambda0Nat;
-            h11 += lambda1Nat;
+            s0 -= NEWTON_LAMBDA_NAT * beta0;
+            s1 -= NEWTON_LAMBDA_NAT * beta1;
+            h00 += NEWTON_LAMBDA_NAT;
+            h11 += NEWTON_LAMBDA_NAT;
 
             // Active-set handling for the box constraint [-betaBound, betaBound]. A coord
             // is
@@ -2443,7 +2445,7 @@ public class Deseq2LikeRegressionZModel {
                 final double trial0 = Math.max(-betaBound, Math.min(betaBound, beta0 + step * d0));
                 final double trial1 = Math.max(-betaBound, Math.min(betaBound, beta1 + step * d1));
                 final double trialObj = evalNegLogPosteriorNat(ds, rowIndex, conditionVector, sizeFactors,
-                        dispersion, trial0, trial1, lambda0Nat, lambda1Nat);
+                        r, logR, logGammaR, trial0, trial1, NEWTON_LAMBDA_NAT, NEWTON_LAMBDA_NAT);
                 final double required = currentObj - 1.0e-14d * Math.max(1.0d, Math.abs(currentObj));
                 if (Double.isFinite(trialObj) && trialObj <= required) {
                     newBeta0 = trial0;
@@ -2479,13 +2481,15 @@ public class Deseq2LikeRegressionZModel {
             final int rowIndex,
             final ConditionVector conditionVector,
             final double[] sizeFactors,
-            final double dispersion,
+            final double r,
+            final double logR,
+            final double logGammaR,
             final double beta0,
             final double beta1,
             final double lambda0Nat,
             final double lambda1Nat) {
-        final double ll = rowLogLikelihood(ds, rowIndex, conditionVector, sizeFactors, dispersion,
-                beta0, beta1, false);
+        final double ll = rowLogLikelihood(ds, rowIndex, conditionVector, sizeFactors, r,
+                logR, logGammaR, beta0, beta1, false);
         if (!Double.isFinite(ll)) {
             return Double.POSITIVE_INFINITY;
         }
@@ -2531,7 +2535,9 @@ public class Deseq2LikeRegressionZModel {
             final int rowIndex,
             final ConditionVector conditionVector,
             final double[] sizeFactors,
-            final double dispersion,
+            final double r,
+            final double logR,
+            final double logGammaR,
             final double beta0,
             final double beta1,
             final boolean clampMu) {
@@ -2552,18 +2558,18 @@ public class Deseq2LikeRegressionZModel {
                 return Double.NaN;
             }
             final double mu = clampMu ? Math.max(MIN_MU, muExp) : muExp;
-            logLikelihood += nbLogPmf(y, mu, dispersion);
+            logLikelihood += nbLogPmf(y, mu, r, logR, logGammaR);
             used++;
         }
         return used == 0 ? Double.NaN : logLikelihood;
     }
 
-    private static double nbLogPmf(final double y, final double mu, final double alpha) {
-        final double r = 1.0d / Math.max(MIN_DISP_EVAL, alpha);
+    private static double nbLogPmf(final double y, final double mu, 
+            final double r, final double logR, final double logGammaR) {
         final double logDenom = Math.log(r + mu);
-        final double logP = Math.log(r) - logDenom;
+        final double logP = logR - logDenom;
         final double logOneMinusP = Math.log(mu) - logDenom;
-        return Gamma.logGamma(y + r) - Gamma.logGamma(r) - Gamma.logGamma(y + 1.0d)
+        return Gamma.logGamma(y + r) - logGammaR - Gamma.logGamma(y + 1.0d)
                 + r * logP
                 + y * logOneMinusP;
     }
