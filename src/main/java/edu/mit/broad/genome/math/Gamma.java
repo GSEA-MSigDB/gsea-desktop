@@ -227,11 +227,11 @@ public class Gamma {
      * @return the value of {@code log(Gamma(x))}, {@code Double.NaN} if
      * {@code x <= 0.0}.
      */
-    public static double logGamma(double x) {
+    public static final double logGamma(double x) {
         if (Double.isNaN(x) || (x <= 0.0)) {
             return Double.NaN;
         } else if (x < 0.5) {
-            return logGamma1p(x) - Math.log(x);
+            return _logGamma1p(x) - Math.log(x);
         } else if (x <= 2.5) {
             return logGamma1p((x - 0.5) - 0.5);
         } else if (x <= 8.0) {
@@ -268,7 +268,7 @@ public class Gamma {
      * @see <a href="http://en.wikipedia.org/wiki/Digamma_function">Digamma</a>
      * @see <a href="http://www.uv.es/~bernardo/1976AppStatist.pdf">Bernardo&#39;s original article </a>
      */
-    public static double digamma(double x) {
+    public static final double digamma(double x) {
         if (Double.isNaN(x) || Double.isInfinite(x)) {
             return x;
         }
@@ -307,7 +307,7 @@ public class Gamma {
      * @see <a href="http://en.wikipedia.org/wiki/Trigamma_function">Trigamma</a>
      * @see Gamma2#digamma(double)
      */
-    public static double trigamma(double x) {
+    public final static double trigamma(double x) {
         if (Double.isNaN(x) || Double.isInfinite(x)) {
             return x;
         }
@@ -365,7 +365,7 @@ public class Gamma {
      * <a href="http://my.fit.edu/~gabdo/gamma.txt">Note on the computation
      * of the convergent Lanczos complex Gamma approximation</a>
      */
-    private static double lanczos(final double x) {
+    private static final double lanczos(final double x) {
         double sum = LANCZOS_COEFF14 / (x + 14);
         sum += LANCZOS_COEFF13 / (x + 13);
         sum += LANCZOS_COEFF12 / (x + 12);
@@ -383,7 +383,7 @@ public class Gamma {
         return sum + LANCZOS_COEFF0;
     }
     
-    private static double _invGamma1pm1(final double x) {
+    private static final double _invGamma1pm1(final double x) {
         final double t = x <= 0.5 ? x : (x - 0.5) - 0.5;
         if (t < 0.0) {
             final double a = INV_GAMMA1P_M1_A0 + t * INV_GAMMA1P_M1_A1;
@@ -464,13 +464,18 @@ public class Gamma {
      * @throws MathIllegalArgumentException if {@code x < -0.5}.
      * @throws MathIllegalArgumentException if {@code x > 1.5}.
      */
-    public static double logGamma1p(final double x)
+    private static final double logGamma1p(final double x)
         throws MathIllegalArgumentException {
 
         if (x < -0.5) {
             throw new MathIllegalArgumentException(LocalizedCoreFormats.NUMBER_TOO_SMALL,
                                                    x, -0.5);
         }
+        return _logGamma1p(x);
+    }
+    
+    private static final double _logGamma1p(final double x)
+            throws MathIllegalArgumentException {
         if (x > 1.5) {
             throw new MathIllegalArgumentException(LocalizedCoreFormats.NUMBER_TOO_LARGE,
                                                    x, 1.5);
