@@ -21,6 +21,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.math3.analysis.UnivariateFunction;
 import org.apache.commons.math3.analysis.interpolation.LoessInterpolator;
 import org.apache.commons.math3.distribution.ChiSquaredDistribution;
@@ -110,67 +111,39 @@ public class Deseq2LikeRegressionZModel {
         this.independentFilterThreshold = independentFilterThreshold;
         this.replacedRows = replacedRows;
         this.replaceableSamples = replaceableSamples;
-        this.anyRowsReplaced = anyTrue(replacedRows);
+        this.anyRowsReplaced = BooleanUtils.or(replacedRows);
     }
 
     public static Deseq2LikeRegressionZModel fit(final Dataset ds,
             final Template realTemplate,
             final Map<String, TwoClassMarkerStats> markerScores) {
-        return fit(ds, realTemplate, markerScores, null, true);
-    }
-
-    /**
-     * Fit model while optionally reusing precomputed size factors.
-     * Size factors in DESeq2 are computed from counts only, not from the design,
-     * so this can be shared across phenotype permutations with identical counts.
-     */
-    public static Deseq2LikeRegressionZModel fit(final Dataset ds,
-            final Template realTemplate,
-            final Map<String, TwoClassMarkerStats> markerScores,
-            final double[] precomputedSizeFactorsOpt) {
-        return fit(ds, realTemplate, markerScores, precomputedSizeFactorsOpt, true);
-    }
-
-    /**
-     * @param computeIndependentFilteringPass when {@code false} (phenotype permutation refits),
-     *        skip gene-wise Wald p-values, independent-filter threshold selection, and
-     *        {@link TwoClassMarkerStats} updates — the same work is not needed for ranking because
-     *        {@link #scoreForTemplate} recomputes Wald z (and Cook's for the z); the real run's
-     *        filter universe is applied separately. Saves roughly one parallel pass over all genes
-     *        per permutation and avoids mutating a shared {@code markerScores} map.
-     */
-    public static Deseq2LikeRegressionZModel fit(final Dataset ds,
-            final Template realTemplate,
-            final Map<String, TwoClassMarkerStats> markerScores,
-            final double[] precomputedSizeFactorsOpt,
-            final boolean computeIndependentFilteringPass) {
         if (markerScores == null) {
             throw new IllegalArgumentException("markerScores cannot be null for "
                     + Metrics.Wald.NAME + " (DESeq2-like count) scoring");
         }
 
-        validateRawIntegerCounts(ds);
+        // We already check this in the KSTests call so this is redundant.
+        // TODO: clean up so that the validation control flow is clear
+        //validateRawIntegerCounts(ds);
 
         final int colCount = ds.getNumCol();
-        final double[] sizeFactors = precomputedSizeFactorsOpt != null
-                ? Arrays.copyOf(precomputedSizeFactorsOpt, precomputedSizeFactorsOpt.length)
-                : computeSizeFactors(ds);
+        final double[] sizeFactors = computeSizeFactors(ds);
         if (sizeFactors.length != colCount) {
             throw new IllegalArgumentException("precomputedSizeFactorsOpt length " + sizeFactors.length
                     + " does not match column count " + colCount);
         }
-        final double[] conditionReal = createConditionVector(realTemplate, colCount);
-        final boolean[] replaceableSamples = samplesEligibleForReplacement(conditionReal, MIN_REPLICATES_FOR_REPLACE);
+        final ConditionVector conditionVector = createConditionVector(realTemplate, colCount);
+        final boolean[] replaceableSamples = samplesEligibleForReplacement(conditionVector, MIN_REPLICATES_FOR_REPLACE);
         return fitInternal(ds,
                 ds,
                 markerScores,
                 sizeFactors,
-                conditionReal,
+                conditionVector,
                 new boolean[ds.getNumRow()],
                 replaceableSamples,
                 true,
                 null,
-                computeIndependentFilteringPass,
+                true,
                 null,
                 Double.NaN);
     }
@@ -247,13 +220,13 @@ public class Deseq2LikeRegressionZModel {
                     + baselineMeanNormCounts.length + " does not match row count " + ds.getNumRow());
         }
         final int colCount = ds.getNumCol();
-        final double[] conditionReal = createConditionVector(permutedTemplate, colCount);
-        final boolean[] replaceableSamples = samplesEligibleForReplacement(conditionReal, MIN_REPLICATES_FOR_REPLACE);
+        final ConditionVector conditionVector = createConditionVector(permutedTemplate, colCount);
+        final boolean[] replaceableSamples = samplesEligibleForReplacement(conditionVector, MIN_REPLICATES_FOR_REPLACE);
         return fitInternal(ds,
                 ds,
                 markerScores,
                 sharedSizeFactorsImmutable,
-                conditionReal,
+                conditionVector,
                 new boolean[ds.getNumRow()],
                 replaceableSamples,
                 true,
@@ -299,7 +272,7 @@ public class Deseq2LikeRegressionZModel {
             final Dataset fitDs,
             final Map<String, TwoClassMarkerStats> markerScores,
             final double[] sizeFactors,
-            final double[] conditionReal,
+            final ConditionVector conditionVector,
             final boolean[] replacedRows,
             final boolean[] replaceableSamples,
             final boolean allowOutlierReplacement,
@@ -320,7 +293,7 @@ public class Deseq2LikeRegressionZModel {
         final double meanInverseSizeFactor = Double.isNaN(meanInverseSizeFactorHint)
                 ? computeMeanInverseSizeFactor(sizeFactors)
                 : meanInverseSizeFactorHint;
-        final boolean linearMu = canUseLinearMuForGeneWiseDispersion(conditionReal);
+        final boolean linearMu = conditionVector.countOfReferenceCols > 0 && conditionVector.countOfInterestCols > 0;
 
         final double[] dispersionRaw = new double[rowCount];
         final double[][] geneWiseMu = new double[rowCount][];
@@ -332,19 +305,22 @@ public class Deseq2LikeRegressionZModel {
                 return;
             }
 
+            final double[] normalized = normalizedCountsForRow(fitDs, rowIndex, sizeFactors);
+            final double[] normalizedFit = fittedNormalizedCountsForRow(normalized, conditionVector);
             final double alphaStart = initialDispersionStart(
                     fitDs,
                     rowIndex,
                     sizeFactors,
-                    conditionReal,
+                    normalized,
+                    normalizedFit,
                     meanNormCounts[rowIndex],
                     meanInverseSizeFactor,
                     maxDisp);
             final double[] muHat;
             if (linearMu) {
-                muHat = linearModelMuNormalizedForRow(fitDs, rowIndex, conditionReal, sizeFactors);
+                muHat = linearModelMuNormalizedForRow(fitDs, rowIndex, normalizedFit, sizeFactors);
             } else {
-                final CoefFit meanFit = fitMeanParametersForRow(fitDs, rowIndex, conditionReal, sizeFactors,
+                final CoefFit meanFit = fitMeanParametersForRow(fitDs, rowIndex, conditionVector, sizeFactors,
                         alphaStart);
                 muHat = meanFit.valid ? meanFit.muHat : null;
             }
@@ -352,14 +328,8 @@ public class Deseq2LikeRegressionZModel {
                 return;
             }
             geneWiseMu[rowIndex] = muHat;
-
-            final DispersionFit dispersionFit = fitDispersionForRowMLE(
-                    fitDs,
-                    rowIndex,
-                    conditionReal,
-                    muHat,
-                    alphaStart,
-                    maxDisp);
+            final DispersionFit dispersionFit = fitDispersionLineSearch(fitDs, rowIndex, conditionVector, muHat,
+                    alphaStart, Double.NaN, Double.NaN, false, maxDisp);
             double dispGeneEst = Math.min(dispersionFit.alpha, maxDisp);
             if (dispersionFit.lastLogPosterior < dispersionFit.initialLogPosterior
                     + (Math.abs(dispersionFit.initialLogPosterior) / 1.0e6d)) {
@@ -371,7 +341,7 @@ public class Deseq2LikeRegressionZModel {
                 dispGeneEst = fitDispersionGrid(
                         fitDs,
                         rowIndex,
-                        conditionReal,
+                        conditionVector,
                         muHat,
                         Double.NaN,
                         Double.NaN,
@@ -451,21 +421,14 @@ public class Deseq2LikeRegressionZModel {
 
             final double raw = clamp(dispersionRaw[rowIndex], MIN_DISP, maxDisp);
             final double dispMapStart = raw > (0.1d * trend) ? raw : trend;
-            final DispersionFit dispMapFit = fitDispersionMAP(
-                    fitDs,
-                    rowIndex,
-                    conditionReal,
-                    geneWiseMu[rowIndex],
-                    dispMapStart,
-                    trend,
-                    priorVar,
-                    maxDisp);
+            final DispersionFit dispMapFit = fitDispersionLineSearch(fitDs, rowIndex, conditionVector,
+                    geneWiseMu[rowIndex], dispMapStart, Math.log(trend), priorVar, true, maxDisp);
             double dispMap = Math.min(dispMapFit.alpha, maxDisp);
             if (!(dispMapFit.iterations < DISP_MAX_ITERS)) {
                 dispMap = fitDispersionGrid(
                         fitDs,
                         rowIndex,
-                        conditionReal,
+                        conditionVector,
                         geneWiseMu[rowIndex],
                         Math.log(trend),
                         priorVar,
@@ -487,14 +450,14 @@ public class Deseq2LikeRegressionZModel {
                 replacedRows,
                 replaceableSamples);
 
-        if (allowOutlierReplacement && anyTrue(replaceableSamples)) {
-            final ReplacementResult replacement = provisionalModel.replaceOutlierCounts(conditionReal, markerScores);
+        if (allowOutlierReplacement && BooleanUtils.or(replaceableSamples)) {
+            final ReplacementResult replacement = provisionalModel.replaceOutlierCounts(conditionVector, markerScores);
             if (replacement != null) {
                 return fitInternal(ds,
                         replacement.dataset,
                         markerScores,
                         sizeFactors,
-                        conditionReal,
+                        conditionVector,
                         replacement.replacedRows,
                         replaceableSamples,
                         false,
@@ -516,7 +479,7 @@ public class Deseq2LikeRegressionZModel {
                     replaceableSamples);
         }
 
-        final ResultsContext resultsContext = provisionalModel.buildResultsContext(conditionReal);
+        final ResultsContext resultsContext = provisionalModel.buildResultsContext(conditionVector);
         final double[] realPValues = new double[rowCount];
         Arrays.fill(realPValues, Double.NaN);
         java.util.stream.IntStream.range(0, rowCount).parallel().forEach(rowIndex -> {
@@ -532,12 +495,12 @@ public class Deseq2LikeRegressionZModel {
                 return;
             }
             final WaldFit mleWald = fitWaldForRowMleWide(
-                    fitDs, rowIndex, conditionReal, sizeFactors, shrunkDispersion[rowIndex]);
+                    fitDs, rowIndex, conditionVector, sizeFactors, shrunkDispersion[rowIndex]);
             if (!mleWald.valid) {
                 return;
             }
             final CooksResult cooks = provisionalModel.computeCooksResult(rowIndex, mleWald, resultsContext);
-            final boolean contrastAllZero = provisionalModel.contrastAllZeroForRow(rowIndex, conditionReal);
+            final boolean contrastAllZero = provisionalModel.contrastAllZeroForRow(rowIndex, conditionVector);
             // Match DESeq2 default (betaPrior=FALSE): p-value derived from MLE Wald z.
             realPValues[rowIndex] = cooks.outlier ? Double.NaN
                     : (contrastAllZero ? 1.0d : twoSidedPValueFromZ(mleWald.z));
@@ -611,8 +574,8 @@ public class Deseq2LikeRegressionZModel {
         // gene sets stay qualified to rlReal — then GeneSetScoringTables.getScore(member) throws.
         final boolean freezeLowInformationFromMarkerMap = Double.isFinite(independentFilterThresholdOverride);
         final int rowCount = ds.getNumRow();
-        final double[] condition = createConditionVector(template, ds.getNumCol());
-        final ResultsContext resultsContext = buildResultsContext(condition);
+        final ConditionVector conditionVector = createConditionVector(template, ds.getNumCol());
+        final ResultsContext resultsContext = buildResultsContext(conditionVector);
         final DoubleElement[] elements = new DoubleElement[rowCount];
         java.util.concurrent.atomic.AtomicInteger neutralizedRowsAtomic = new java.util.concurrent.atomic.AtomicInteger(0);
         java.util.stream.IntStream.range(0, rowCount).parallel().forEach(rowIndex -> {
@@ -633,9 +596,9 @@ public class Deseq2LikeRegressionZModel {
                 // Match DESeq2 default (betaPrior=FALSE): rank genes by the unshrunk MLE Wald
                 // z.
                 final WaldFit mleWald = fitWaldForRowMleWide(
-                        fitDs, rowIndex, condition, sizeFactors, shrunkDispersion[rowIndex]);
+                        fitDs, rowIndex, conditionVector, sizeFactors, shrunkDispersion[rowIndex]);
                 if (mleWald.valid) {
-                    final boolean contrastAllZero = contrastAllZeroForRow(rowIndex, condition);
+                    final boolean contrastAllZero = contrastAllZeroForRow(rowIndex, conditionVector);
                     final CooksResult cooks = computeCooksResult(rowIndex, mleWald, resultsContext);
                     score = (contrastAllZero || cooks.outlier) ? 0.0d : mleWald.z;
                     if (!Double.isFinite(score)) {
@@ -668,8 +631,8 @@ public class Deseq2LikeRegressionZModel {
     public List<MainStat> computeMainStatsForTemplate(final Template template,
             final Map<String, TwoClassMarkerStats> markerScores) {
         final int rowCount = ds.getNumRow();
-        final double[] condition = createConditionVector(template, ds.getNumCol());
-        final ResultsContext resultsContext = buildResultsContext(condition);
+        final ConditionVector conditionVector = createConditionVector(template, ds.getNumCol());
+        final ResultsContext resultsContext = buildResultsContext(conditionVector);
         final double[] pValues = new double[rowCount];
         final double[] log2FoldChanges = new double[rowCount];
         final double[] lfcSEs = new double[rowCount];
@@ -717,12 +680,12 @@ public class Deseq2LikeRegressionZModel {
             // betas/SEs come from fitNbinomGLMs with the wide default lambda (1e-6) — i.e.
             // our mleWald.
             final WaldFit mleWald = fitWaldForRowMleWide(
-                    fitDs, rowIndex, condition, sizeFactors, shrunkDispersion[rowIndex]);
+                    fitDs, rowIndex, conditionVector, sizeFactors, shrunkDispersion[rowIndex]);
             if (!mleWald.valid) {
                 return;
             }
 
-            final boolean contrastAllZero = contrastAllZeroForRow(rowIndex, condition);
+            final boolean contrastAllZero = contrastAllZeroForRow(rowIndex, conditionVector);
             log2FoldChanges[rowIndex] = contrastAllZero ? 0.0d : mleWald.beta1 / LN_2;
             lfcSEs[rowIndex] = mleWald.se1 / LN_2;
             stats[rowIndex] = contrastAllZero ? 0.0d : mleWald.z;
@@ -794,6 +757,22 @@ public class Deseq2LikeRegressionZModel {
         }
     }
 
+    public static final class ConditionVector {
+        final int[] condition;
+        final int[] selectedColumnIndexes;
+        final int countOfReferenceCols;
+        final int countOfInterestCols;
+
+        private ConditionVector(final int[] condition, final int[] selectedColumnIndexes, final int countOfReferenceCols, final int countOfInterestCols) {
+            this.condition = condition;
+            this.selectedColumnIndexes = selectedColumnIndexes;
+            this.countOfReferenceCols = countOfReferenceCols;
+            this.countOfInterestCols = countOfInterestCols;
+        }
+    }
+
+    private static final WaldFit INVALID_WALD_FIT = new WaldFit(Double.NaN, Double.NaN, Double.NaN, null, null, false);
+
     private static final class WaldFit {
         final double beta1;
         final double se1;
@@ -816,6 +795,8 @@ public class Deseq2LikeRegressionZModel {
             this.valid = valid;
         }
     }
+
+    private static final CoefFit INVALID_COEF_FIT = new CoefFit(Double.NaN, Double.NaN, null, null, false);
 
     private static final class CoefFit {
         final double beta0;
@@ -915,10 +896,10 @@ public class Deseq2LikeRegressionZModel {
         }
     }
 
-    private ResultsContext buildResultsContext(final double[] condition) {
-        final boolean[] samplesForCooks = samplesEligibleForCooks(condition);
-        final double cooksCutoff = defaultCooksCutoff(condition.length, 2, samplesForCooks);
-        final double[] robustDispersion = robustMethodOfMomentsDispersion(condition, samplesForCooks);
+    private ResultsContext buildResultsContext(final ConditionVector conditionVector) {
+        final boolean[] samplesForCooks = samplesEligibleForCooks(conditionVector);
+        final double cooksCutoff = defaultCooksCutoff(conditionVector.condition.length, 2, samplesForCooks);
+        final double[] robustDispersion = robustMethodOfMomentsDispersion(conditionVector, samplesForCooks);
         return new ResultsContext(robustDispersion, samplesForCooks, cooksCutoff);
     }
 
@@ -929,7 +910,7 @@ public class Deseq2LikeRegressionZModel {
             return new CooksResult(Double.NaN, false);
         }
 
-        if (anyRowsReplaced && allTrue(replaceableSamples)) {
+        if (anyRowsReplaced && BooleanUtils.and(replaceableSamples)) {
             return new CooksResult(Double.NaN, false);
         }
 
@@ -1023,9 +1004,9 @@ public class Deseq2LikeRegressionZModel {
         return largerCount >= 3;
     }
 
-    private ReplacementResult replaceOutlierCounts(final double[] condition,
+    private ReplacementResult replaceOutlierCounts(final ConditionVector conditionVector,
             final Map<String, TwoClassMarkerStats> markerScores) {
-        final ResultsContext resultsContext = buildResultsContext(condition);
+        final ResultsContext resultsContext = buildResultsContext(conditionVector);
         if (!Double.isFinite(resultsContext.cooksCutoff)) {
             return null;
         }
@@ -1042,7 +1023,7 @@ public class Deseq2LikeRegressionZModel {
                 return;
             }
 
-            final WaldFit fit = fitWaldForRowMleWide(fitDs, rowIndex, condition, sizeFactors,
+            final WaldFit fit = fitWaldForRowMleWide(fitDs, rowIndex, conditionVector, sizeFactors,
                     shrunkDispersion[rowIndex]);
             if (!fit.valid) {
                 return;
@@ -1099,10 +1080,10 @@ public class Deseq2LikeRegressionZModel {
                 source.getAnnot());
     }
 
-    private double[] robustMethodOfMomentsDispersion(final double[] condition, final boolean[] samplesForCooks) {
+    private double[] robustMethodOfMomentsDispersion(final ConditionVector conditionVector, final boolean[] samplesForCooks) {
         final int rowCount = ds.getNumRow();
         final double[] alpha = new double[rowCount];
-        final boolean anyThreeOrMore = anyTrue(samplesForCooks);
+        final boolean anyThreeOrMore = BooleanUtils.or(samplesForCooks);
 
         for (int rowIndex = 0; rowIndex < rowCount; rowIndex++) {
             final double mean = meanNormCounts[rowIndex];
@@ -1112,7 +1093,7 @@ public class Deseq2LikeRegressionZModel {
             }
 
             final double variance = anyThreeOrMore
-                    ? trimmedCellVarianceForRow(rowIndex, condition, samplesForCooks)
+                    ? trimmedCellVarianceForRow(rowIndex, conditionVector, samplesForCooks)
                     : trimmedVarianceForRow(rowIndex);
             if (!Double.isFinite(variance)) {
                 alpha[rowIndex] = ROBUST_COOKS_MIN_DISP;
@@ -1127,21 +1108,21 @@ public class Deseq2LikeRegressionZModel {
     }
 
     private double trimmedCellVarianceForRow(final int rowIndex,
-            final double[] condition,
+            final ConditionVector conditionVector,
             final boolean[] samplesForCooks) {
         double maxVariance = Double.NaN;
         final double[] values = new double[ds.getNumCol()];
 
         for (int group = 0; group <= 1; group++) {
             int count = 0;
+            final int[] condition = conditionVector.condition;
             for (int columnIndex = 0; columnIndex < ds.getNumCol(); columnIndex++) {
                 final double groupValue = condition[columnIndex];
-                if (!samplesForCooks[columnIndex] || !Double.isFinite(groupValue)) {
+                // TODO: should be able to simplify this conditional.
+                if (!samplesForCooks[columnIndex] || groupValue < 0) {
                     continue;
                 }
-                final boolean inGroup = group == 0
-                        ? Math.abs(groupValue) <= EPS
-                        : Math.abs(groupValue - 1.0d) <= EPS;
+                final boolean inGroup = group == 0 ? groupValue == 0 : groupValue == 1;
                 if (!inGroup) {
                     continue;
                 }
@@ -1204,88 +1185,32 @@ public class Deseq2LikeRegressionZModel {
         return 1.51d * trimmedMean(sqError, count, 1.0d / 8.0d);
     }
 
-    private static boolean[] samplesEligibleForCooks(final double[] condition) {
-        int zeros = 0;
-        int ones = 0;
-        for (double value : condition) {
-            if (!Double.isFinite(value)) {
-                continue;
-            }
-            if (Math.abs(value) <= EPS) {
-                zeros++;
-            } else if (Math.abs(value - 1.0d) <= EPS) {
-                ones++;
-            }
-        }
+    private static boolean[] samplesEligibleForCooks(final ConditionVector conditionVector) {
+        return samplesEligibleForReplacement(conditionVector, 3);
+    }
 
+    private static boolean[] samplesEligibleForReplacement(final ConditionVector conditionVector, final int minReplicates) {
+        final boolean referenceEligibility = conditionVector.countOfReferenceCols >= minReplicates;
+        final boolean interestEligibility = conditionVector.countOfInterestCols >= minReplicates;
+
+        final int[] condition = conditionVector.condition;
+        final int[] selectedColumnIndexes = conditionVector.selectedColumnIndexes;
         final boolean[] eligible = new boolean[condition.length];
-        for (int i = 0; i < condition.length; i++) {
-            final double value = condition[i];
-            if (!Double.isFinite(value)) {
-                eligible[i] = false;
-            } else if (Math.abs(value) <= EPS) {
-                eligible[i] = zeros >= 3;
-            } else if (Math.abs(value - 1.0d) <= EPS) {
-                eligible[i] = ones >= 3;
+        for (int i = 0; i < selectedColumnIndexes.length; i++) {
+            final int value = condition[selectedColumnIndexes[i]];
+            if (value == 0) {
+                eligible[i] = referenceEligibility;
             } else {
-                eligible[i] = false;
+                eligible[i] = interestEligibility;
             }
         }
         return eligible;
-    }
-
-    private static boolean[] samplesEligibleForReplacement(final double[] condition, final int minReplicates) {
-        int zeros = 0;
-        int ones = 0;
-        for (double value : condition) {
-            if (!Double.isFinite(value)) {
-                continue;
-            }
-            if (Math.abs(value) <= EPS) {
-                zeros++;
-            } else if (Math.abs(value - 1.0d) <= EPS) {
-                ones++;
-            }
-        }
-
-        final boolean[] eligible = new boolean[condition.length];
-        for (int i = 0; i < condition.length; i++) {
-            final double value = condition[i];
-            if (!Double.isFinite(value)) {
-                eligible[i] = false;
-            } else if (Math.abs(value) <= EPS) {
-                eligible[i] = zeros >= minReplicates;
-            } else if (Math.abs(value - 1.0d) <= EPS) {
-                eligible[i] = ones >= minReplicates;
-            } else {
-                eligible[i] = false;
-            }
-        }
-        return eligible;
-    }
-
-    private static boolean anyTrue(final boolean[] values) {
-        for (boolean value : values) {
-            if (value) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private static boolean allTrue(final boolean[] values) {
-        for (boolean value : values) {
-            if (!value) {
-                return false;
-            }
-        }
-        return values.length > 0;
     }
 
     private static double defaultCooksCutoff(final int sampleCount,
             final int coefficientCount,
             final boolean[] samplesForCooks) {
-        if (sampleCount <= coefficientCount || !anyTrue(samplesForCooks)) {
+        if (sampleCount <= coefficientCount || !BooleanUtils.or(samplesForCooks)) {
             return Double.NaN;
         }
         return new FDistribution(coefficientCount, sampleCount - coefficientCount)
@@ -1470,16 +1395,12 @@ public class Deseq2LikeRegressionZModel {
     private static double initialDispersionStart(final Dataset ds,
             final int rowIndex,
             final double[] sizeFactors,
-            final double[] condition,
+            final double[] normalized,
+            final double[] normalizedFit,
             final double meanNormCount,
             final double meanInverseSizeFactor,
             final double maxDisp) {
-        if (!Double.isFinite(meanNormCount) || meanNormCount <= 0.0d) {
-            return MIN_DISP;
-        }
-
-        final double[] normalized = normalizedCountsForRow(ds, rowIndex, sizeFactors);
-        final double roughDisp = roughDispersionEstimate(normalized, condition);
+        final double roughDisp = roughDispersionEstimate(normalized, normalizedFit);
         final double baseVariance = sampleVariance(normalized);
         final double momentsDisp = (baseVariance - (meanInverseSizeFactor * meanNormCount))
                 / (meanNormCount * meanNormCount);
@@ -1506,30 +1427,10 @@ public class Deseq2LikeRegressionZModel {
         return count == 0 ? 1.0d : sum / count;
     }
 
-    private static boolean canUseLinearMuForGeneWiseDispersion(final double[] condition) {
-        boolean hasReference = false;
-        boolean hasInterest = false;
-        for (double value : condition) {
-            if (!Double.isFinite(value)) {
-                continue;
-            }
-            if (Math.abs(value) <= EPS) {
-                hasReference = true;
-            } else if (Math.abs(value - 1.0d) <= EPS) {
-                hasInterest = true;
-            } else {
-                return false;
-            }
-        }
-        return hasReference && hasInterest;
-    }
-
     private static double[] linearModelMuNormalizedForRow(final Dataset ds,
             final int rowIndex,
-            final double[] condition,
+            final double[] normalizedFit,
             final double[] sizeFactors) {
-        final double[] normalizedFit = fittedNormalizedCountsForRow(normalizedCountsForRow(ds, rowIndex, sizeFactors),
-                condition);
         if (normalizedFit == null) {
             return null;
         }
@@ -1546,9 +1447,7 @@ public class Deseq2LikeRegressionZModel {
         return muHat;
     }
 
-    private static double roughDispersionEstimate(final double[] normalizedCounts,
-            final double[] condition) {
-        final double[] fittedNormalized = fittedNormalizedCountsForRow(normalizedCounts, condition);
+    private static double roughDispersionEstimate(final double[] normalizedCounts, final double[] fittedNormalized) {
         if (fittedNormalized == null) {
             return Double.NaN;
         }
@@ -1585,19 +1484,20 @@ public class Deseq2LikeRegressionZModel {
     }
 
     private static double[] fittedNormalizedCountsForRow(final double[] normalizedCounts,
-            final double[] condition) {
+            final ConditionVector conditionVector) {
         double sumReference = 0.0d;
         double sumInterest = 0.0d;
         int countReference = 0;
         int countInterest = 0;
 
+        int[] condition = conditionVector.condition;
         for (int i = 0; i < normalizedCounts.length; i++) {
             final double observed = normalizedCounts[i];
-            final double group = condition[i];
-            if (!Double.isFinite(observed) || !Double.isFinite(group)) {
+            final int group = condition[i];
+            if (!Double.isFinite(observed) || group < 0) {
                 continue;
             }
-            if (Math.abs(group) <= EPS) {
+            if (group == 0) {
                 sumReference += observed;
                 countReference++;
             } else {
@@ -1614,13 +1514,13 @@ public class Deseq2LikeRegressionZModel {
         final double meanInterest = sumInterest / countInterest;
         final double[] fitted = new double[condition.length];
         for (int i = 0; i < condition.length; i++) {
-            final double group = condition[i];
-            if (!Double.isFinite(group)) {
-                fitted[i] = Double.NaN;
-            } else if (Math.abs(group) <= EPS) {
+            final int group = condition[i];
+            if (group == 0) {
                 fitted[i] = meanReference;
-            } else {
+            } else if (group == 1) {
                 fitted[i] = meanInterest;
+            } else {
+                fitted[i] = Double.NaN;
             }
         }
         return fitted;
@@ -1771,31 +1671,9 @@ public class Deseq2LikeRegressionZModel {
         return new double[]{varLogDispEsts, varLogDispEsts};
     }
 
-    private static DispersionFit fitDispersionForRowMLE(final Dataset ds,
-            final int rowIndex,
-            final double[] condition,
-            final double[] muHat,
-            final double alphaStart,
-            final double maxDisp) {
-        return fitDispersionLineSearch(ds, rowIndex, condition, muHat, alphaStart, Double.NaN, Double.NaN, false,
-                maxDisp);
-    }
-
-    private static DispersionFit fitDispersionMAP(final Dataset ds,
-            final int rowIndex,
-            final double[] condition,
-            final double[] muHat,
-            final double alphaStart,
-            final double trend,
-            final double priorVar,
-            final double maxDisp) {
-        return fitDispersionLineSearch(ds, rowIndex, condition, muHat, alphaStart, Math.log(trend), priorVar, true,
-                maxDisp);
-    }
-
     private static DispersionFit fitDispersionLineSearch(final Dataset ds,
             final int rowIndex,
-            final double[] condition,
+            final ConditionVector conditionVector,
             final double[] muHat,
             final double alphaStart,
             final double logAlphaPriorMean,
@@ -1804,9 +1682,9 @@ public class Deseq2LikeRegressionZModel {
             final double maxDisp) {
         final double minLogAlpha = Math.log(MIN_DISP_LINE_SEARCH);
         double a = clamp(Math.log(clamp(alphaStart, MIN_DISP, maxDisp)), minLogAlpha, MAX_LOG_ALPHA);
-        double lp = logPosteriorForLogAlpha(ds, rowIndex, condition, muHat, a, logAlphaPriorMean, logAlphaPriorSigmaSq,
+        double lp = logPosteriorForLogAlpha(ds, rowIndex, conditionVector, muHat, a, logAlphaPriorMean, logAlphaPriorSigmaSq,
                 usePrior);
-        double dlp = dLogPosteriorForLogAlpha(ds, rowIndex, condition, muHat, a, logAlphaPriorMean,
+        double dlp = dLogPosteriorForLogAlpha(ds, rowIndex, conditionVector, muHat, a, logAlphaPriorMean,
                 logAlphaPriorSigmaSq, usePrior);
         final double initialLp = lp;
         double lastLp = lp;
@@ -1828,7 +1706,7 @@ public class Deseq2LikeRegressionZModel {
             final double thetaKappa = -logPosteriorForLogAlpha(
                     ds,
                     rowIndex,
-                    condition,
+                    conditionVector,
                     muHat,
                     a + (kappa * dlp),
                     logAlphaPriorMean,
@@ -1839,7 +1717,7 @@ public class Deseq2LikeRegressionZModel {
             if (Double.isFinite(thetaKappa) && thetaKappa <= thetaHatKappa) {
                 acceptedSteps++;
                 a += kappa * dlp;
-                final double lpNew = logPosteriorForLogAlpha(ds, rowIndex, condition, muHat, a, logAlphaPriorMean,
+                final double lpNew = logPosteriorForLogAlpha(ds, rowIndex, conditionVector, muHat, a, logAlphaPriorMean,
                         logAlphaPriorSigmaSq, usePrior);
                 lastLp = lpNew;
                 final double change = lpNew - lp;
@@ -1852,7 +1730,7 @@ public class Deseq2LikeRegressionZModel {
                     break;
                 }
                 lp = lpNew;
-                dlp = dLogPosteriorForLogAlpha(ds, rowIndex, condition, muHat, a, logAlphaPriorMean,
+                dlp = dLogPosteriorForLogAlpha(ds, rowIndex, conditionVector, muHat, a, logAlphaPriorMean,
                         logAlphaPriorSigmaSq, usePrior);
                 kappa = Math.min(kappa * 1.1d, DISP_KAPPA0);
                 if ((acceptedSteps % 5) == 0) {
@@ -1868,7 +1746,7 @@ public class Deseq2LikeRegressionZModel {
 
     private static double fitDispersionGrid(final Dataset ds,
             final int rowIndex,
-            final double[] condition,
+            final ConditionVector conditionVector,
             final double[] muHat,
             final double logAlphaPriorMean,
             final double logAlphaPriorSigmaSq,
@@ -1882,7 +1760,7 @@ public class Deseq2LikeRegressionZModel {
 
         for (int i = 0; i < DISP_GRID_SIZE; i++) {
             final double logAlpha = minLogAlpha + (delta * i);
-            final double logPosterior = logPosteriorForLogAlpha(ds, rowIndex, condition, muHat, logAlpha,
+            final double logPosterior = logPosteriorForLogAlpha(ds, rowIndex, conditionVector, muHat, logAlpha,
                     logAlphaPriorMean, logAlphaPriorSigmaSq, usePrior);
             if (Double.isFinite(logPosterior) && logPosterior > bestLogPosterior) {
                 bestLogPosterior = logPosterior;
@@ -1895,7 +1773,7 @@ public class Deseq2LikeRegressionZModel {
         for (int i = 0; i < DISP_GRID_SIZE; i++) {
             final double t = (double) i / (double) (DISP_GRID_SIZE - 1);
             final double logAlpha = fineStart + ((fineEnd - fineStart) * t);
-            final double logPosterior = logPosteriorForLogAlpha(ds, rowIndex, condition, muHat, logAlpha,
+            final double logPosterior = logPosteriorForLogAlpha(ds, rowIndex, conditionVector, muHat, logAlpha,
                     logAlphaPriorMean, logAlphaPriorSigmaSq, usePrior);
             if (Double.isFinite(logPosterior) && logPosterior > bestLogPosterior) {
                 bestLogPosterior = logPosterior;
@@ -1908,7 +1786,7 @@ public class Deseq2LikeRegressionZModel {
 
     private static double logPosteriorForLogAlpha(final Dataset ds,
             final int rowIndex,
-            final double[] condition,
+            final ConditionVector conditionVector,
             final double[] muHat,
             final double logAlpha,
             final double logAlphaPriorMean,
@@ -1945,7 +1823,7 @@ public class Deseq2LikeRegressionZModel {
             return Double.NEGATIVE_INFINITY;
         }
 
-        final double coxReid = coxReidAdjustment(condition, muHat, alpha);
+        final double coxReid = coxReidAdjustment(conditionVector, muHat, alpha);
         if (!Double.isFinite(coxReid)) {
             return Double.NEGATIVE_INFINITY;
         }
@@ -1958,7 +1836,7 @@ public class Deseq2LikeRegressionZModel {
 
     private static double dLogPosteriorForLogAlpha(final Dataset ds,
             final int rowIndex,
-            final double[] condition,
+            final ConditionVector conditionVector,
             final double[] muHat,
             final double logAlpha,
             final double logAlphaPriorMean,
@@ -1983,33 +1861,36 @@ public class Deseq2LikeRegressionZModel {
         }
         llPart *= alphaInvSq;
 
-        final double crPart = coxReidDerivative(condition, muHat, alpha);
+        final double crPart = coxReidDerivative(conditionVector, muHat, alpha);
         final double priorPart = usePrior ? -((logAlpha - logAlphaPriorMean) / logAlphaPriorSigmaSq) : 0.0d;
         return ((llPart + crPart) * alpha) + priorPart;
     }
 
-    private static double coxReidAdjustment(final double[] condition,
+    private static double coxReidAdjustment(final ConditionVector conditionVector,
             final double[] muHat,
             final double alpha) {
         double s00 = 0.0d;
         double s01 = 0.0d;
         double s11 = 0.0d;
+        final int[] condition = conditionVector.condition;
         for (int columnIndex = 0; columnIndex < condition.length; columnIndex++) {
-            final double x1 = condition[columnIndex];
+            final int x1 = condition[columnIndex];
             final double mu = muHat[columnIndex];
-            if (!Double.isFinite(x1) || !Double.isFinite(mu)) {
+            if (x1 < 0 || !Double.isFinite(mu)) {
                 continue;
             }
             final double weight = 1.0d / ((1.0d / mu) + alpha);
             s00 += weight;
-            s01 += weight * x1;
-            s11 += weight * x1 * x1;
+            if (x1 == 1) {
+                s01 += weight;
+                s11 += weight;
+        }
         }
         final double det = (s00 * s11) - (s01 * s01);
         return det > 0.0d ? -0.5d * Math.log(det) : Double.NEGATIVE_INFINITY;
     }
 
-    private static double coxReidDerivative(final double[] condition,
+    private static double coxReidDerivative(final ConditionVector conditionVector,
             final double[] muHat,
             final double alpha) {
         double s00 = 0.0d;
@@ -2019,10 +1900,11 @@ public class Deseq2LikeRegressionZModel {
         double ds01 = 0.0d;
         double ds11 = 0.0d;
 
+        final int[] condition = conditionVector.condition;
         for (int columnIndex = 0; columnIndex < condition.length; columnIndex++) {
-            final double x1 = condition[columnIndex];
+            final int x1 = condition[columnIndex];
             final double mu = muHat[columnIndex];
-            if (!Double.isFinite(x1) || !Double.isFinite(mu)) {
+            if (x1 < 0 || !Double.isFinite(mu)) {
                 continue;
             }
 
@@ -2031,11 +1913,13 @@ public class Deseq2LikeRegressionZModel {
             final double dWeight = -1.0d / (base * base);
 
             s00 += weight;
-            s01 += weight * x1;
-            s11 += weight * x1 * x1;
             ds00 += dWeight;
-            ds01 += dWeight * x1;
-            ds11 += dWeight * x1 * x1;
+            if (x1 == 1) {
+                s01 += weight;
+                ds01 += dWeight;
+                s11 += weight;
+                ds11 += dWeight;
+        }
         }
 
         final double det = (s00 * s11) - (s01 * s01);
@@ -2056,13 +1940,13 @@ public class Deseq2LikeRegressionZModel {
      */
     private static WaldFit fitWaldForRowMleWide(final Dataset ds,
             final int rowIndex,
-            final double[] condition,
+            final ConditionVector conditionVector,
             final double[] sizeFactors,
             final double dispersion) {
         return fitWaldForRow(
                 ds,
                 rowIndex,
-                condition,
+                conditionVector,
                 sizeFactors,
                 dispersion,
                 WIDE_PRIOR_LAMBDA_LOG2,
@@ -2071,24 +1955,24 @@ public class Deseq2LikeRegressionZModel {
 
     private static WaldFit fitWaldForRow(final Dataset ds,
             final int rowIndex,
-            final double[] condition,
+            final ConditionVector conditionVector,
             final double[] sizeFactors,
             final double dispersion,
             final double lambda0Log2,
             final double lambda1Log2) {
         if (!Double.isFinite(dispersion) || dispersion < 0.0d) {
-            return invalidWaldFit(ds.getNumCol());
+            return INVALID_WALD_FIT;
         }
 
-        final CoefFit init = initializeCoefficientsForRow(ds, rowIndex, condition, sizeFactors);
+        final CoefFit init = initializeCoefficientsForRow(ds, rowIndex, conditionVector, sizeFactors);
         if (!init.valid) {
-            return invalidWaldFit(ds.getNumCol());
+            return INVALID_WALD_FIT;
         }
 
         final CoefFit coefFit = fitCoefficientsForRow(
                 ds,
                 rowIndex,
-                condition,
+                conditionVector,
                 sizeFactors,
                 dispersion,
                 init.beta0,
@@ -2096,7 +1980,7 @@ public class Deseq2LikeRegressionZModel {
                 lambda0Log2,
                 lambda1Log2);
         if (!coefFit.valid) {
-            return invalidWaldFit(ds.getNumCol());
+            return INVALID_WALD_FIT;
         }
 
         final double ridge0 = lambda0Log2 / (LN_2 * LN_2);
@@ -2111,10 +1995,11 @@ public class Deseq2LikeRegressionZModel {
         double m01 = 0.0d;
         double m11 = 0.0d;
 
+        final int[] condition = conditionVector.condition;
         for (int columnIndex = 0; columnIndex < colCount; columnIndex++) {
-            final double x1 = condition[columnIndex];
+            final int x1 = condition[columnIndex];
             final double y = ds.getElement(rowIndex, columnIndex);
-            if (!Double.isFinite(x1)) {
+            if (x1 < 0) {
                 workingMuHat[columnIndex] = Double.NaN;
                 hatDiagonals[columnIndex] = Double.NaN;
                 continue;
@@ -2138,8 +2023,10 @@ public class Deseq2LikeRegressionZModel {
             final double weight = mu / (1.0d + dispersion * mu);
 
             m00 += weight;
-            m01 += weight * x1;
-            m11 += weight * x1 * x1;
+            if (x1 == 1) {
+                m01 += weight;
+                m11 += weight;
+        }
         }
 
         final double a00 = m00 + ridge0;
@@ -2147,7 +2034,7 @@ public class Deseq2LikeRegressionZModel {
         final double a11 = m11 + ridge1;
         final double det = a00 * a11 - a01 * a01;
         if (!Double.isFinite(det) || Math.abs(det) <= EPS) {
-            return invalidWaldFit(ds.getNumCol());
+            return INVALID_WALD_FIT;
         }
 
         final double inv00 = a11 / det;
@@ -2155,10 +2042,10 @@ public class Deseq2LikeRegressionZModel {
         final double inv11 = a00 / det;
 
         for (int columnIndex = 0; columnIndex < colCount; columnIndex++) {
-            final double x1 = condition[columnIndex];
+            final int x1 = condition[columnIndex];
             final double y = ds.getElement(rowIndex, columnIndex);
             final double muRaw = workingMuHat[columnIndex];
-            if (!Double.isFinite(x1) || !Double.isFinite(y) || !Double.isFinite(muRaw)) {
+            if (x1 < 0 || !Double.isFinite(y) || !Double.isFinite(muRaw)) {
                 hatDiagonals[columnIndex] = Double.NaN;
                 continue;
             }
@@ -2167,7 +2054,7 @@ public class Deseq2LikeRegressionZModel {
             // above).
             final double mu = Math.max(MIN_MU, muRaw);
             final double weight = mu / (1.0d + dispersion * mu);
-            final double quadratic = inv00 + (2.0d * x1 * inv01) + (x1 * x1 * inv11);
+            final double quadratic = (x1 == 0) ? inv00 : inv00 + (2.0d * inv01) + inv11;
             hatDiagonals[columnIndex] = weight * quadratic;
         }
 
@@ -2178,28 +2065,20 @@ public class Deseq2LikeRegressionZModel {
         // DESeq2: betaSE uses sqrt(pmax(beta_var_mat, 0)); non-positive variance rows
         // go to optim/refit.
         if (!Double.isFinite(sigma11) || sigma11 <= 0.0d) {
-            return invalidWaldFit(ds.getNumCol());
+            return INVALID_WALD_FIT;
         }
         final double se1 = Math.sqrt(sigma11);
         final double z = coefFit.beta1 / se1;
         if (!Double.isFinite(se1) || !Double.isFinite(z)) {
-            return invalidWaldFit(ds.getNumCol());
+            return INVALID_WALD_FIT;
         }
 
         return new WaldFit(coefFit.beta1, se1, z, coefFit.fittedMuHat, hatDiagonals, true);
     }
 
-    private static WaldFit invalidWaldFit(final int colCount) {
-        final double[] muHat = new double[colCount];
-        final double[] hatDiagonals = new double[colCount];
-        Arrays.fill(muHat, Double.NaN);
-        Arrays.fill(hatDiagonals, Double.NaN);
-        return new WaldFit(Double.NaN, Double.NaN, Double.NaN, muHat, hatDiagonals, false);
-    }
-
     private static CoefFit initializeCoefficientsForRow(final Dataset ds,
             final int rowIndex,
-            final double[] condition,
+            final ConditionVector conditionVector,
             final double[] sizeFactors) {
         // DESeq2 fitNbinomGLMs: beta_mat <- t(solve(R, t(Q) %*% y)) with y =
         // log(counts(normalized)+0.1)
@@ -2209,28 +2088,31 @@ public class Deseq2LikeRegressionZModel {
         double s11 = 0.0d;
         double r0 = 0.0d;
         double r1 = 0.0d;
+        final int[] condition = conditionVector.condition;
         for (int columnIndex = 0; columnIndex < ds.getNumCol(); columnIndex++) {
-            final double x1 = condition[columnIndex];
+            final int x1 = condition[columnIndex];
             final double value = ds.getElement(rowIndex, columnIndex);
-            if (!Double.isFinite(x1) || !Double.isFinite(value) || value < 0.0d) {
+            if (x1 < 0 || !Double.isFinite(value) || value < 0.0d) {
                 continue;
             }
 
             final double z = Math.log((value / Math.max(EPS, sizeFactors[columnIndex])) + 0.1d);
             s00 += 1.0d;
-            s01 += x1;
-            s11 += x1 * x1;
             r0 += z;
-            r1 += x1 * z;
+            if (x1 == 1) {
+                s01++;
+                s11++;
+                r1 += z;
+        }
         }
 
         if (s00 < 2.0d) {
-            return new CoefFit(Double.NaN, Double.NaN, null, null, false);
+            return INVALID_COEF_FIT;
         }
 
         final double det = (s00 * s11) - (s01 * s01);
         if (!Double.isFinite(det) || Math.abs(det) <= EPS) {
-            return new CoefFit(Double.NaN, Double.NaN, null, null, false);
+            return INVALID_COEF_FIT;
         }
 
         final double beta0 = ((r0 * s11) - (r1 * s01)) / det;
@@ -2240,17 +2122,17 @@ public class Deseq2LikeRegressionZModel {
 
     private static CoefFit fitMeanParametersForRow(final Dataset ds,
             final int rowIndex,
-            final double[] condition,
+            final ConditionVector conditionVector,
             final double[] sizeFactors,
             final double dispersion) {
-        final CoefFit init = initializeCoefficientsForRow(ds, rowIndex, condition, sizeFactors);
+        final CoefFit init = initializeCoefficientsForRow(ds, rowIndex, conditionVector, sizeFactors);
         if (!init.valid) {
-            return new CoefFit(Double.NaN, Double.NaN, null, null, false);
+            return INVALID_COEF_FIT;
         }
         return fitCoefficientsForRow(
                 ds,
                 rowIndex,
-                condition,
+                conditionVector,
                 sizeFactors,
                 dispersion,
                 init.beta0,
@@ -2265,7 +2147,7 @@ public class Deseq2LikeRegressionZModel {
      * {@code [sqrt(w)*z ; 0]} (see DESeq2.cpp).
      */
     private static double[] ridgeWlsQr2Cols(final double[] sqrtW,
-            final double[] x1,
+            final int[] x1,
             final double[] zWork,
             final int n,
             final double sqrtLambda0,
@@ -2282,7 +2164,7 @@ public class Deseq2LikeRegressionZModel {
                 return null;
             }
             a[i][0] = sw;
-            a[i][1] = sw * x1[i];
+            a[i][1] = (x1[i] == 0) ? 0.0d : sw;
             b[i] = zWork[i] * sw;
         }
         a[n][0] = sqrtLambda0;
@@ -2308,7 +2190,7 @@ public class Deseq2LikeRegressionZModel {
 
     private static CoefFit fitCoefficientsForRow(final Dataset ds,
             final int rowIndex,
-            final double[] condition,
+            final ConditionVector conditionVector,
             final double[] sizeFactors,
             final double dispersion,
             final double beta0Start,
@@ -2321,7 +2203,7 @@ public class Deseq2LikeRegressionZModel {
         boolean useCurrentIrlsStartForOptimization = false;
         final int colCount = ds.getNumCol();
         final double[] irlsSqrtW = new double[colCount];
-        final double[] irlsX1 = new double[colCount];
+        final int[] irlsX1 = new int[colCount];
         final double[] irlsZ = new double[colCount];
         final double ridge0 = lambda0Log2 / (LN_2 * LN_2);
         final double ridge1 = lambda1Log2 / (LN_2 * LN_2);
@@ -2336,10 +2218,11 @@ public class Deseq2LikeRegressionZModel {
             double b1 = 0.0d;
             int used = 0;
 
+            final int[] condition = conditionVector.condition;
             for (int columnIndex = 0; columnIndex < colCount; columnIndex++) {
-                final double x1 = condition[columnIndex];
+                final int x1 = condition[columnIndex];
                 final double y = ds.getElement(rowIndex, columnIndex);
-                if (!Double.isFinite(x1) || !Double.isFinite(y)) {
+                if (x1 < 0 || !Double.isFinite(y)) {
                     continue;
                 }
 
@@ -2353,10 +2236,12 @@ public class Deseq2LikeRegressionZModel {
                 final double zWork = Math.log(mu / Math.max(EPS, sizeFactors[columnIndex])) + ((y - mu) / mu);
 
                 a00 += weight;
-                a01 += weight * x1;
-                a11 += weight * x1 * x1;
+                if (x1 == 1) {
+                    a01 += weight;
+                    a11 += weight;
+                    b1 += weight * zWork;
+                }
                 b0 += weight * zWork;
-                b1 += weight * x1 * zWork;
 
                 final double sqrtW = Math.sqrt(weight);
                 irlsSqrtW[used] = sqrtW;
@@ -2366,7 +2251,7 @@ public class Deseq2LikeRegressionZModel {
             }
 
             if (used < 2) {
-                return new CoefFit(Double.NaN, Double.NaN, null, null, false);
+                return INVALID_COEF_FIT;
             }
 
             a00 += ridge0;
@@ -2402,7 +2287,7 @@ public class Deseq2LikeRegressionZModel {
             beta1 = newBeta1;
 
             final double deviance = -2.0d
-                    * rowLogLikelihood(ds, rowIndex, condition, sizeFactors, dispersion, beta0, beta1, true);
+                    * rowLogLikelihood(ds, rowIndex, conditionVector, sizeFactors, dispersion, beta0, beta1, true);
             if (!Double.isFinite(deviance)) {
                 useCurrentIrlsStartForOptimization = false;
                 break;
@@ -2415,7 +2300,7 @@ public class Deseq2LikeRegressionZModel {
                     final int nCol = ds.getNumCol();
                     final double[] muHatClamped = new double[nCol];
                     final double[] muHatRaw = new double[nCol];
-                    fittedMeansClampedAndRawForRow(nCol, condition, sizeFactors, beta0, beta1, muHatClamped, muHatRaw);
+                    fittedMeansClampedAndRawForRow(nCol, conditionVector, sizeFactors, beta0, beta1, muHatClamped, muHatRaw);
                     return new CoefFit(beta0, beta1, muHatClamped, muHatRaw, true);
                 }
             }
@@ -2435,14 +2320,14 @@ public class Deseq2LikeRegressionZModel {
         final CoefFit optimized = dampedNewtonFitForRow(
                 ds,
                 rowIndex,
-                condition,
+                conditionVector,
                 sizeFactors,
                 dispersion,
                 optimizeStart0,
                 optimizeStart1,
                 lambda0Log2,
                 lambda1Log2);
-        return optimized.valid ? optimized : new CoefFit(Double.NaN, Double.NaN, null, null, false);
+        return optimized.valid ? optimized : INVALID_COEF_FIT;
     }
 
     /**
@@ -2469,7 +2354,7 @@ public class Deseq2LikeRegressionZModel {
      */
     private static CoefFit dampedNewtonFitForRow(final Dataset ds,
             final int rowIndex,
-            final double[] condition,
+            final ConditionVector conditionVector,
             final double[] sizeFactors,
             final double dispersion,
             final double beta0Start,
@@ -2487,13 +2372,14 @@ public class Deseq2LikeRegressionZModel {
         double beta1 = Math.max(-betaBound, Math.min(betaBound,
                 Double.isFinite(beta1Start) ? beta1Start : 0.0d));
 
-        double currentObj = evalNegLogPosteriorNat(ds, rowIndex, condition, sizeFactors, dispersion,
+        double currentObj = evalNegLogPosteriorNat(ds, rowIndex, conditionVector, sizeFactors, dispersion,
                 beta0, beta1, lambda0Nat, lambda1Nat);
         if (!Double.isFinite(currentObj)) {
-            return new CoefFit(Double.NaN, Double.NaN, null, null, false);
+            return INVALID_COEF_FIT;
         }
 
         final int newtonMaxIters = 200;
+        final int[] condition = conditionVector.condition;
         for (int iter = 0; iter < newtonMaxIters; iter++) {
             double s0 = 0.0d;
             double s1 = 0.0d;
@@ -2502,29 +2388,31 @@ public class Deseq2LikeRegressionZModel {
             double h11 = 0.0d;
             int used = 0;
             for (int c = 0; c < colCount; c++) {
-                final double x1 = condition[c];
+                final int x1 = condition[c];
                 final double y = ds.getElement(rowIndex, c);
-                if (!Double.isFinite(x1) || !Double.isFinite(y) || y < 0.0d) {
+                if (x1 < 0 || !Double.isFinite(y) || y < 0.0d) {
                     continue;
                 }
                 final double offset = Math.log(Math.max(EPS, sizeFactors[c]));
-                final double eta = beta0 + beta1 * x1 + offset;
+                final double eta = (x1 == 0) ? beta0 + offset : beta0 + beta1 + offset;
                 final double mu = Math.exp(eta);
                 if (!Double.isFinite(mu) || mu <= 0.0d) {
-                    return new CoefFit(Double.NaN, Double.NaN, null, null, false);
+                    return INVALID_COEF_FIT;
                 }
                 final double denom = r + mu;
                 final double scoreTerm = (r * (y - mu)) / denom;
-                s0 += scoreTerm;
-                s1 += scoreTerm * x1;
                 final double w = (mu * r * (r + y)) / (denom * denom);
+                s0 += scoreTerm;
                 h00 += w;
-                h01 += w * x1;
-                h11 += w * x1 * x1;
+                if (x1 == 1) {
+                    s1 += scoreTerm;
+                    h01 += w;
+                    h11 += w;
+                }
                 used++;
             }
             if (used < 2) {
-                return new CoefFit(Double.NaN, Double.NaN, null, null, false);
+                return INVALID_COEF_FIT;
             }
 
             s0 -= lambda0Nat * beta0;
@@ -2557,26 +2445,26 @@ public class Deseq2LikeRegressionZModel {
                 break;
             } else if (fix0) {
                 if (!Double.isFinite(h11) || h11 < EPS) {
-                    return new CoefFit(Double.NaN, Double.NaN, null, null, false);
+                    return INVALID_COEF_FIT;
                 }
                 d0 = 0.0d;
                 d1 = s1 / h11;
             } else if (fix1) {
                 if (!Double.isFinite(h00) || h00 < EPS) {
-                    return new CoefFit(Double.NaN, Double.NaN, null, null, false);
+                    return INVALID_COEF_FIT;
                 }
                 d0 = s0 / h00;
                 d1 = 0.0d;
             } else {
                 final double det = h00 * h11 - h01 * h01;
                 if (!Double.isFinite(det) || det < EPS) {
-                    return new CoefFit(Double.NaN, Double.NaN, null, null, false);
+                    return INVALID_COEF_FIT;
                 }
                 d0 = (h11 * s0 - h01 * s1) / det;
                 d1 = (-h01 * s0 + h00 * s1) / det;
             }
             if (!Double.isFinite(d0) || !Double.isFinite(d1)) {
-                return new CoefFit(Double.NaN, Double.NaN, null, null, false);
+                return INVALID_COEF_FIT;
             }
 
             final double gradMax = Math.max(Math.abs(s0), Math.abs(s1));
@@ -2589,7 +2477,7 @@ public class Deseq2LikeRegressionZModel {
             for (int inner = 0; inner < 40; inner++) {
                 final double trial0 = Math.max(-betaBound, Math.min(betaBound, beta0 + step * d0));
                 final double trial1 = Math.max(-betaBound, Math.min(betaBound, beta1 + step * d1));
-                final double trialObj = evalNegLogPosteriorNat(ds, rowIndex, condition, sizeFactors,
+                final double trialObj = evalNegLogPosteriorNat(ds, rowIndex, conditionVector, sizeFactors,
                         dispersion, trial0, trial1, lambda0Nat, lambda1Nat);
                 final double required = currentObj - 1.0e-14d * Math.max(1.0d, Math.abs(currentObj));
                 if (Double.isFinite(trialObj) && trialObj <= required) {
@@ -2618,20 +2506,20 @@ public class Deseq2LikeRegressionZModel {
 
         final double[] muHatClamped = new double[colCount];
         final double[] muHatRaw = new double[colCount];
-        fittedMeansClampedAndRawForRow(colCount, condition, sizeFactors, beta0, beta1, muHatClamped, muHatRaw);
+        fittedMeansClampedAndRawForRow(colCount, conditionVector, sizeFactors, beta0, beta1, muHatClamped, muHatRaw);
         return new CoefFit(beta0, beta1, muHatClamped, muHatRaw, true);
     }
 
     private static double evalNegLogPosteriorNat(final Dataset ds,
             final int rowIndex,
-            final double[] condition,
+            final ConditionVector conditionVector,
             final double[] sizeFactors,
             final double dispersion,
             final double beta0,
             final double beta1,
             final double lambda0Nat,
             final double lambda1Nat) {
-        final double ll = rowLogLikelihood(ds, rowIndex, condition, sizeFactors, dispersion,
+        final double ll = rowLogLikelihood(ds, rowIndex, conditionVector, sizeFactors, dispersion,
                 beta0, beta1, false);
         if (!Double.isFinite(ll)) {
             return Double.POSITIVE_INFINITY;
@@ -2647,21 +2535,22 @@ public class Deseq2LikeRegressionZModel {
      * clamped helpers.
      */
     private static void fittedMeansClampedAndRawForRow(final int colCount,
-            final double[] condition,
+            final ConditionVector conditionVector,
             final double[] sizeFactors,
             final double beta0,
             final double beta1,
             final double[] outClamped,
             final double[] outRaw) {
+        final int[] condition = conditionVector.condition;
         for (int columnIndex = 0; columnIndex < colCount; columnIndex++) {
-            final double x1 = condition[columnIndex];
-            if (!Double.isFinite(x1)) {
+            final int x1 = condition[columnIndex];
+            if (x1 < 0) {
                 outClamped[columnIndex] = Double.NaN;
                 outRaw[columnIndex] = Double.NaN;
                 continue;
             }
             final double offset = Math.log(Math.max(EPS, sizeFactors[columnIndex]));
-            final double eta = beta0 + (beta1 * x1) + offset;
+            final double eta = (x1 == 0) ? beta0 + offset : beta0 + beta1 + offset;
             final double muExp = Math.exp(eta);
             if (!Double.isFinite(muExp)) {
                 outClamped[columnIndex] = Double.NaN;
@@ -2675,7 +2564,7 @@ public class Deseq2LikeRegressionZModel {
 
     private static double rowLogLikelihood(final Dataset ds,
             final int rowIndex,
-            final double[] condition,
+            final ConditionVector conditionVector,
             final double[] sizeFactors,
             final double dispersion,
             final double beta0,
@@ -2683,15 +2572,16 @@ public class Deseq2LikeRegressionZModel {
             final boolean clampMu) {
         double logLikelihood = 0.0d;
         int used = 0;
+        final int[] condition = conditionVector.condition;
         for (int columnIndex = 0; columnIndex < ds.getNumCol(); columnIndex++) {
-            final double x1 = condition[columnIndex];
+            final int x1 = condition[columnIndex];
             final double y = ds.getElement(rowIndex, columnIndex);
-            if (!Double.isFinite(x1) || !Double.isFinite(y) || y < 0.0d) {
+            if (x1 < 0 || !Double.isFinite(y) || y < 0.0d) {
                 continue;
             }
 
             final double offset = Math.log(Math.max(EPS, sizeFactors[columnIndex]));
-            final double eta = beta0 + beta1 * x1 + offset;
+            final double eta = (x1 == 0) ? beta0 + offset : beta0 + beta1 + offset;
             final double muExp = Math.exp(eta);
             if (!Double.isFinite(muExp) || muExp <= 0.0d) {
                 return Double.NaN;
@@ -3564,10 +3454,12 @@ public class Deseq2LikeRegressionZModel {
         }
         return 1.51d;
     }
-
-    private static double[] createConditionVector(final Template template, final int numCols) {
-        final double[] condition = new double[numCols];
-        Arrays.fill(condition, Double.NaN);
+    
+    private static ConditionVector createConditionVector(final Template template, final int numCols) {
+        final int[] condition = new int[numCols];
+        Arrays.fill(condition, -1);
+        int countOfReferenceCols = 0;
+        int countOfInterestCols = 0;
 
         final int classOfInterestIndex = template.getClassOfInterestIndex();
         final int interestClass = classOfInterestIndex == 0 ? 0 : 1;
@@ -3577,7 +3469,8 @@ public class Deseq2LikeRegressionZModel {
         for (Template.Item item : reference.getItemsOrderedByProfilePos()) {
             final int index = item.getProfilePosition();
             if (index >= 0 && index < numCols) {
-                condition[index] = 0.0d;
+                condition[index] = 0;
+                countOfReferenceCols++;
             }
         }
 
@@ -3585,13 +3478,22 @@ public class Deseq2LikeRegressionZModel {
         for (Template.Item item : interest.getItemsOrderedByProfilePos()) {
             final int index = item.getProfilePosition();
             if (index >= 0 && index < numCols) {
-                condition[index] = 1.0d;
+                condition[index] = 1;
+                countOfInterestCols++;
             }
         }
-        return condition;
+        
+        final int[] selected = new int[countOfReferenceCols + countOfInterestCols];
+        for (int i = 0, pos = 0; i < numCols; i++) {
+            if (condition[i] >= 0) {
+                selected[pos++] = i;
+            }
+        }
+        
+        return new ConditionVector(condition, selected, countOfReferenceCols, countOfInterestCols);
     }
 
-    private boolean contrastAllZeroForRow(final int rowIndex, final double[] condition) {
+    private boolean contrastAllZeroForRow(final int rowIndex, final ConditionVector conditionVector) {
         boolean anySelected = false;
         boolean selectedAllZero = true;
         boolean anyPositive = false;
@@ -3606,7 +3508,7 @@ public class Deseq2LikeRegressionZModel {
                 anyPositive = true;
             }
 
-            if (!Double.isFinite(condition[columnIndex])) {
+            if (conditionVector.condition[columnIndex] < 0) {
                 continue;
             }
 
