@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2026 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package xtools.api.param;
 
@@ -11,9 +11,7 @@ import edu.mit.broad.genome.swing.fields.GFieldPlusChooser;
 import edu.mit.broad.vdb.chip.Chip;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.SystemUtils;
 
-import xapps.gsea.GseaWebResources;
 import xtools.api.ui.GeneSetMatrixChooserUI;
 
 import java.awt.event.ActionEvent;
@@ -61,9 +59,6 @@ public class GeneSetMatrixMultiChooserParam extends AbstractParam {
         this.delimiter = alternateDelimiter;
     }
 
-    private static final String GSEA_ALTERED_FTP_PATH = GseaWebResources.GSEA_FTP_SERVER + ":" + GseaWebResources.GSEA_FTP_SERVER_BASE_DIR;
-    private static final String GSEA_BASE_FTP_PATH = GseaWebResources.GSEA_FTP_SERVER + ":/" + GseaWebResources.GSEA_FTP_SERVER_BASE_DIR;
-    
     private Object[] _getObjects() throws Exception {
         Object val = getValue();
         Object[] objs;
@@ -73,21 +68,10 @@ public class GeneSetMatrixMultiChooserParam extends AbstractParam {
             for (int p = 0; p < paths.length; p++) {
                 String path = paths[p];
                 if (path.toLowerCase().startsWith("ftp.") || path.toLowerCase().startsWith("gseaftp.")) {
+                    // FTP-sourced paths can no longer be downloaded (only recognized here so they
+                    // reach ParserFactory's explicit, clear rejection rather than being
+                    // misinterpreted as a nonexistent local file path below).
                     if (AuxUtils.isAux(path)) {
-                        // We're looking for just one gene set out of an FTP-based file.
-                        // Hack the path if necessary.  The FTP paths used in caching the individual gene sets may get munged 
-                        // so we put them back as expected, otherwise there will be a cache miss and we'll re-fetch the file
-                        // unnecessarily.  This is specific to Broad FTP paths.
-                        // TODO: clean up the caching behind this.
-                        // This path munging happens because the keys are stored as *Files*, which causes issues when converting
-                        // back-and-forth to Strings (as needed for URLs).  Part of that is implicit canonicalization and part is
-                        // platform-specific (i.e. Windows) conversion.  It's not simple though since the Files are used elsewhere.
-                        if (StringUtils.containsIgnoreCase(path, GseaWebResources.GSEA_FTP_SERVER)) {
-                            // Special case: correct Windows path separators
-                            if (SystemUtils.IS_OS_WINDOWS) { path = StringUtils.replace(path, "\\", "/"); }
-                            path = StringUtils.replace(path, GSEA_ALTERED_FTP_PATH, GSEA_BASE_FTP_PATH);
-                        }
-                        
                         GeneSetMatrix gm = ParserFactory.readGeneSetMatrix(path, true);
                         GeneSet geneSet = gm.getGeneSet(AuxUtils.getAuxNameOnlyIncludingHash(path));
                         objs[p] = geneSet;
@@ -95,9 +79,9 @@ public class GeneSetMatrixMultiChooserParam extends AbstractParam {
                         objs[p] = ParserFactory.readGeneSetMatrix(path, true);
                     }
                 } else if (AuxUtils.isAux(path)) {
-                    objs[p] = ParserFactory.readGeneSet(new File(path), true);
+                    objs[p] = ParserFactory.readGeneSet(path, true);
                 } else {
-                    objs[p] = ParserFactory.read(new File(path));
+                    objs[p] = ParserFactory.read(path, true);
                 }
             }
         } else if (val instanceof Object[]) {

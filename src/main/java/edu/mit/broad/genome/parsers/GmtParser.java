@@ -73,7 +73,7 @@ public class GmtParser extends AbstractParser {
         startImport(sourcepath);
         MSigDBVersion msigDBVersion;
         String pathLC = sourcepath.toLowerCase();
-        if (StringUtils.containsAny(pathLC, "ftp.broadinstitute.org", "data.broadinstitute.org",
+        if (StringUtils.containsAny(pathLC, "data.broadinstitute.org",
                 "data.gsea-msigdb.org", "datasets.genepattern.org")) {
             // Create a version object and assign it to the GeneSetMatrix.  We can only safely track
             // the version of files that we know have been downloaded in the session, at least for now.

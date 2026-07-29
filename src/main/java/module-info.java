@@ -91,7 +91,6 @@ module org.gsea_msigdb.gsea {
     requires commons.math3;
     requires dom4j.full;
     requires ecs;
-    requires edtftpj;
     requires forms;
     requires httpclient;
     requires httpcore;
