@@ -11,6 +11,8 @@ import xapps.gsea.GseaWebResources;
 import xtools.api.param.Validator;
 
 import javax.swing.*;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.TreePath;
 
 import org.apache.commons.lang3.SystemUtils;
 import org.slf4j.Logger;
@@ -116,6 +118,34 @@ public class DialogDescriptor {
         jl.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent me) {
                 if (jl.isSelectionEmpty()) { return; }
+
+                if (me.getClickCount() == 2) {
+                    me.consume();
+                    if (!performValidationBeforeOK()) { return; }
+                    fChoosenOption = DialogDescriptor.OK_OPTION;
+                    if (fDialog != null) {
+                        fDialog.dispose();    // this somehow auto calls the show method in joptionpane
+                    }
+                }
+            }
+        });
+    }
+
+    /**
+     * only makes sense if the specified jtree is a component that is
+     * displayed in the dialog descriptor window
+     * Double click / enter on a leaf node of the jtree == a OK button click
+     * Double-clicking a non-leaf node is left alone (falls through to the tree's normal
+     * expand/collapse handling) since it does not represent a selectable item.
+     * Simply closes the dialog and returns void when double clicked (the OK is implied)
+     */
+    public void enableDoubleClickableJTree(final JTree jt) {
+        jt.addMouseListener(new MouseAdapter() {
+            public void mouseClicked(MouseEvent me) {
+                if (jt.isSelectionEmpty()) { return; }
+                TreePath path = jt.getSelectionPath();
+                Object node = path.getLastPathComponent();
+                if (!(node instanceof DefaultMutableTreeNode) || !((DefaultMutableTreeNode) node).isLeaf()) { return; }
 
                 if (me.getClickCount() == 2) {
                     me.consume();

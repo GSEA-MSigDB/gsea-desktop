@@ -10,7 +10,6 @@ import edu.mit.broad.genome.parsers.DataFormat;
 import edu.mit.broad.genome.parsers.ParserFactory;
 import edu.mit.broad.genome.swing.GPopupChecker;
 import edu.mit.broad.xbench.core.api.Application;
-import org.genepattern.uiutil.FTPFile;
 
 import javax.swing.*;
 import java.awt.*;
@@ -26,7 +25,7 @@ import java.io.File;
  */
 public class RendererFactory2 {
 
-    public static final Icon FTP_FILE_ICON = JarResources.getIcon("FTPFile.gif");
+    public static final Icon MSIGDB_FILE_ICON = JarResources.getIcon("FTPFile.gif");
 
     /**
      * For rendering the lists/combo boxes that have nodes properly
@@ -137,22 +136,6 @@ public class RendererFactory2 {
             } else if (value instanceof XChart) {
                 this.setText(((XChart) value).getName());
                 this.setIcon(XChart.ICON);
-            } else if (value instanceof FTPFile) {
-
-                String s = ((FTPFile) value).getPath();
-                String slc = s.toLowerCase();
-                if (slc.indexOf("c1.") != -1) {
-                    s = s + " [Positional]";
-                } else if (slc.indexOf("c2.") != -1) {
-                    s = s + " [Curated]";
-                } else if (slc.indexOf("c3.") != -1) {
-                    s = s + " [Motif]";
-                } else if (slc.indexOf("c4.") != -1) {
-                    s = s + " [Computational]";
-                }
-
-                this.setText(s);
-                this.setIcon(FTP_FILE_ICON);
             }
 
             return this;
