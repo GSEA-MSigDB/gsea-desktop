@@ -1,58 +1,12 @@
 /*
- * Copyright (c) 2003-2024 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2026 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package xapps.gsea;
-
-import edu.mit.broad.genome.objects.MSigDBSpecies;
 
 /**
  * @author Aravind Subramanian, David Eby
  */
 public class GseaWebResources {
-    public final static String GSEA_FTP_SERVER = "ftp.broadinstitute.org";
-    private final static String GSEA_FTP_SERVER_USERNAME = "anonymous";
-    private final static String GSEA_FTP_SERVER_PASSWORD = "gsea@broadinstitute.org";
-    public final static String GSEA_FTP_SERVER_BASE_DIR = "/pub/gsea/msigdb";
-    private final static String GSEA_FTP_SERVER_CHIPFILES_SUB_DIR = "annotations";
-    private final static String GSEA_FTP_SERVER_HUMAN_CHIPFILES_DIR =
-            GSEA_FTP_SERVER_BASE_DIR + "/human/" + GSEA_FTP_SERVER_CHIPFILES_SUB_DIR;
-    private final static String GSEA_FTP_SERVER_MOUSE_CHIPFILES_DIR =
-            GSEA_FTP_SERVER_BASE_DIR + "/mouse/" + GSEA_FTP_SERVER_CHIPFILES_SUB_DIR;
-    private final static String GSEA_FTP_SERVER_GENESETS_SUB_DIR = "gene_sets";
-    private final static String GSEA_FTP_SERVER_HUMAN_GENESETS_DIR =
-            GSEA_FTP_SERVER_BASE_DIR + "/human/" + GSEA_FTP_SERVER_GENESETS_SUB_DIR;
-
-    private final static String GSEA_FTP_SERVER_MOUSE_GENESETS_DIR =
-            GSEA_FTP_SERVER_BASE_DIR + "/mouse/" + GSEA_FTP_SERVER_GENESETS_SUB_DIR;
-    
-    public static String getGseaFTPServer() {
-        return GSEA_FTP_SERVER;
-    }
-
-    public static String getGseaFTPServerUserName() {
-        return GSEA_FTP_SERVER_USERNAME;
-    }
-
-    public static String getGseaFTPServerPassword() {
-        return GSEA_FTP_SERVER_PASSWORD;
-    }
-    
-    public static String getGseaFTPServerChipDir(MSigDBSpecies targetSpecies) {
-        switch (targetSpecies) {
-          case Human: return GSEA_FTP_SERVER_HUMAN_CHIPFILES_DIR;
-          case Mouse: return GSEA_FTP_SERVER_MOUSE_CHIPFILES_DIR;
-          default: throw new IllegalArgumentException("No FTP directory for " + targetSpecies.name());
-        }
-    }
-
-    public static String getGseaFTPServerGeneSetsDir(MSigDBSpecies  targetSpecies) {
-        switch (targetSpecies) {
-        case Human: return GSEA_FTP_SERVER_HUMAN_GENESETS_DIR;
-        case Mouse: return GSEA_FTP_SERVER_MOUSE_GENESETS_DIR;
-        default: throw new IllegalArgumentException("No FTP directory for " + targetSpecies.name());
-        }
-    }
-
     public static String getGseaBaseURL() {
         return "https://www.gsea-msigdb.org/gsea";
     }
@@ -88,4 +42,7 @@ public class GseaWebResources {
     public static String getGseaExamplesURL() {
         return getGseaBaseURL() + "/datasets.jsp";
     }
+
+    public final static String DEFAULT_MSIGDB_CATALOG_URL =
+            "https://data.broadinstitute.org/gsea-msigdb/msigdb/release/msigdb_releases.json";
 }
