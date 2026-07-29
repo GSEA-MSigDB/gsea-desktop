@@ -9,3 +9,4 @@
 /build_java11
 /.gradle
 /logs
+/.claude
