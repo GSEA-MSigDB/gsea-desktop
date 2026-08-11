@@ -69,9 +69,10 @@ module org.gsea_msigdb.gsea {
     requires commons.math3;
     requires dom4j.full;
     requires ecs;
-    requires edtftpj;
     requires httpclient;
     requires httpcore;
+    requires hipparchus.core;
+    requires hipparchus.stat;
     requires transitive java.desktop;
     requires java.logging;
     requires transitive java.prefs;

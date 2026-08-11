@@ -115,7 +115,7 @@ public class KSTests {
 		
         // For Wald Z-style metrics, always keep markerScores to enable low-information gene filtering
         if (!filterFeaturesWithMissingValues && !Metrics.isWaldZFamily(metric)) {
-            markerScores = null; 
+            markerScores = null;
         }
 
         Deseq2LikeRegressionZModel deseq2LikeCountModel = null;

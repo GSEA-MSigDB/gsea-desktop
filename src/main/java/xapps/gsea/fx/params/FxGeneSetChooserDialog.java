@@ -9,19 +9,18 @@ import java.util.List;
 import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
-import org.genepattern.io.FTPFile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import edu.mit.broad.genome.alg.ComparatorFactory;
 import edu.mit.broad.genome.objects.GeneSet;
+import edu.mit.broad.genome.objects.MSigDBCatalogFile;
+import edu.mit.broad.genome.objects.MSigDBRelease;
 import edu.mit.broad.genome.objects.MSigDBSpecies;
 import edu.mit.broad.genome.objects.MSigDBVersion;
 import edu.mit.broad.genome.objects.PersistentObject;
 import edu.mit.broad.genome.objects.Versioned;
 import edu.mit.broad.genome.parsers.ParseUtils;
 import edu.mit.broad.genome.parsers.ParserFactory;
-import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonBar;
@@ -35,16 +34,15 @@ import javafx.scene.control.TabPane;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TitledPane;
 import javafx.scene.control.Tooltip;
+import javafx.scene.control.TreeView;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Window;
 import xapps.gsea.GseaWebResources;
 import org.gsea_msigdb.gsea.runtime.AppServices;
 
 /**
- * JavaFX gene-set chooser: Human/Mouse MSigDB FTP, local multi-file browse, and text entry.
+ * JavaFX gene-set chooser: Human/Mouse MSigDB catalog trees, local multi-file browse, and text entry.
  */
 public final class FxGeneSetChooserDialog {
     private static final Logger klog = LoggerFactory.getLogger(FxGeneSetChooserDialog.class);
@@ -61,82 +59,73 @@ public final class FxGeneSetChooserDialog {
         dialog.initOwner(owner);
         dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
         dialog.setResizable(true);
-        FxFtpChooserSupport.addHelpAndInfoButtons(dialog, "#gmx",
+        FxChooserSupport.addHelpAndInfoButtons(dialog, "#gmx",
                 "MSigDB Collections", GseaWebResources.getGseaBaseURL() + "/msigdb/");
-        FxFtpChooserSupport.addMsigdbLicenseButton(dialog);
+        FxChooserSupport.addMsigdbLicenseButton(dialog);
         final Button okButton = (Button) dialog.getDialogPane().lookupButton(ButtonType.OK);
 
         TabPane tabs = new TabPane();
         tabs.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
 
-        ListView<FTPFile> humanList = new ListView<>();
-        humanList.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-        ListView<FTPFile> mouseList = new ListView<>();
-        mouseList.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+        TreeView<Object> humanTree = new TreeView<>();
+        TreeView<Object> mouseTree = new TreeView<>();
 
         ListView<CachedPathItem> cachedGmx = cachedObjectList(edu.mit.broad.genome.objects.GeneSetMatrix.class);
         ListView<CachedPathItem> cachedGrp = cachedObjectList(GeneSet.class);
         ListView<CachedPathItem> subsets = auxGeneSetList();
-        FxFtpChooserSupport.enableDoubleClickToFire(cachedGmx, okButton);
-        FxFtpChooserSupport.enableDoubleClickToFire(cachedGrp, okButton);
-        FxFtpChooserSupport.enableDoubleClickToFire(subsets, okButton);
+        FxChooserSupport.enableDoubleClickToFire(cachedGmx, okButton);
+        FxChooserSupport.enableDoubleClickToFire(cachedGrp, okButton);
+        FxChooserSupport.enableDoubleClickToFire(subsets, okButton);
 
         Window dialogWindow = owner;
-        // Open on local cache first; MSigDB FTP collections are secondary.
+        // Open on local cache first; MSigDB catalog collections are secondary.
         tabs.getTabs().add(new Tab("Local GMX/GMT",
-                FxFtpChooserSupport.wrapLocalTab(
+                FxChooserSupport.wrapLocalTab(
                         xapps.gsea.fx.widgets.FxSearchField.wrapList(cachedGmx,
                                 i -> i == null ? "" : i.name + " " + i.path),
                         () -> openLocalGeneSetFiles(
                                 dialogWindow,
                                 cachedGmx,
                                 edu.mit.broad.genome.objects.GeneSetMatrix.class,
-                                FxFtpChooserSupport.gmxFileFilters(),
+                                FxChooserSupport.gmxFileFilters(),
                                 true))));
         tabs.getTabs().add(new Tab("Local GRP Gene sets",
-                FxFtpChooserSupport.wrapLocalTab(
+                FxChooserSupport.wrapLocalTab(
                         xapps.gsea.fx.widgets.FxSearchField.wrapList(cachedGrp,
                                 i -> i == null ? "" : i.name + " " + i.path),
                         () -> openLocalGeneSetFiles(
                                 dialogWindow,
                                 cachedGrp,
                                 GeneSet.class,
-                                FxFtpChooserSupport.grpFileFilters(),
+                                FxChooserSupport.grpFileFilters(),
                                 true))));
         tabs.getTabs().add(new Tab("Subsets",
                 xapps.gsea.fx.widgets.FxSearchField.wrapList(subsets, i -> i == null ? "" : i.name + " " + i.path)));
 
-        if (FxFtpChooserSupport.isOnline()) {
-            ComparatorFactory.FTPFileByVersionComparator humanCmp =
-                    new ComparatorFactory.FTPFileByVersionComparator("h");
-            FxFtpChooserSupport.installDeferredFtpTab(
+        if (FxChooserSupport.isOnline()) {
+            humanTree = FxChooserSupport.installDeferredCatalogTab(
                     tabs,
                     "Human Collection (MSigDB)",
-                    humanList,
                     okButton,
-                    ".symbols.gmt",
                     MSigDBSpecies.Human,
-                    GseaWebResources.getGseaFTPServerGeneSetsDir(MSigDBSpecies.Human),
-                    humanCmp,
-                    f -> f.getName() + " " + f.getPath());
-            ComparatorFactory.FTPFileByVersionComparator mouseCmp =
-                    new ComparatorFactory.FTPFileByVersionComparator("mh");
-            FxFtpChooserSupport.installDeferredFtpTab(
+                    MSigDBRelease::getGeneSetsCatalogUrl,
+                    true);
+            mouseTree = FxChooserSupport.installDeferredCatalogTab(
                     tabs,
                     "Mouse Collection (MSigDB)",
-                    mouseList,
                     okButton,
-                    ".symbols.gmt",
                     MSigDBSpecies.Mouse,
-                    GseaWebResources.getGseaFTPServerGeneSetsDir(MSigDBSpecies.Mouse),
-                    mouseCmp,
-                    f -> f.getName() + " " + f.getPath());
+                    MSigDBRelease::getGeneSetsCatalogUrl,
+                    true);
         } else {
             tabs.getTabs().add(new Tab("Human Collection (MSigDB)",
-                    FxFtpChooserSupport.messageArea(FxFtpChooserSupport.OFFLINE_MESSAGE)));
+                    FxChooserSupport.messageArea(FxChooserSupport.OFFLINE_MESSAGE)));
             tabs.getTabs().add(new Tab("Mouse Collection (MSigDB)",
-                    FxFtpChooserSupport.messageArea(FxFtpChooserSupport.OFFLINE_MESSAGE)));
+                    FxChooserSupport.messageArea(FxChooserSupport.OFFLINE_MESSAGE)));
         }
+
+        final TreeView<Object> humanTreeFinal = humanTree;
+        final TreeView<Object> mouseTreeFinal = mouseTree;
 
         tabs.getSelectionModel().selectedItemProperty().addListener((obs, o, tab) -> {
             if (tab == null) {
@@ -190,9 +179,9 @@ public final class FxGeneSetChooserDialog {
 
         okButton.addEventFilter(javafx.event.ActionEvent.ACTION, event -> {
             List<Versioned> selected = collectSelectedVersioned(
-                    humanList, mouseList, cachedGmx, cachedGrp, subsets);
+                    humanTreeFinal, mouseTreeFinal, cachedGmx, cachedGrp, subsets);
             if (!speciesOk(selected)) {
-                FxFtpChooserSupport.showMultiSelectionInfo(
+                FxChooserSupport.showMultiSelectionInfo(
                         dialog.getDialogPane().getScene().getWindow(),
                         "Multiple species selected",
                         "Multiple species selections are not allowed.");
@@ -201,7 +190,7 @@ public final class FxGeneSetChooserDialog {
             }
             boolean hasOnTheFly = StringUtils.isNotBlank(taGenes.getText());
             if (!versionsOk(selected, hasOnTheFly)) {
-                if (!FxFtpChooserSupport.confirmMixedMsigdbVersions(
+                if (!FxChooserSupport.confirmMixedMsigdbVersions(
                         dialog.getDialogPane().getScene().getWindow())) {
                     event.consume();
                 }
@@ -213,10 +202,10 @@ public final class FxGeneSetChooserDialog {
                 return null;
             }
             List<String> all = new ArrayList<>();
-            for (FTPFile f : humanList.getSelectionModel().getSelectedItems()) {
+            for (MSigDBCatalogFile f : FxChooserSupport.getSelectedCatalogFiles(humanTreeFinal)) {
                 all.add(f.getPath());
             }
-            for (FTPFile f : mouseList.getSelectionModel().getSelectedItems()) {
+            for (MSigDBCatalogFile f : FxChooserSupport.getSelectedCatalogFiles(mouseTreeFinal)) {
                 all.add(f.getPath());
             }
             for (CachedPathItem item : cachedGmx.getSelectionModel().getSelectedItems()) {
@@ -259,13 +248,13 @@ public final class FxGeneSetChooserDialog {
             Class<?> type,
             List<FileChooser.ExtensionFilter> filters,
             boolean multiple) {
-        FxFtpChooserSupport.browseLocalFiles(
+        FxChooserSupport.browseLocalFiles(
                 owner,
                 "Open gene set file",
                 filters,
                 multiple,
                 selectedCachedPath(list),
-                files -> FxFtpChooserSupport.loadLocalFilesAsync(
+                files -> FxChooserSupport.loadLocalFilesAsync(
                         files,
                         type,
                         loaded -> {
@@ -298,14 +287,14 @@ public final class FxGeneSetChooserDialog {
     }
 
     private static List<Versioned> collectSelectedVersioned(
-            ListView<FTPFile> humanList,
-            ListView<FTPFile> mouseList,
+            TreeView<Object> humanTree,
+            TreeView<Object> mouseTree,
             ListView<CachedPathItem> cachedGmx,
             ListView<CachedPathItem> cachedGrp,
             ListView<CachedPathItem> subsets) {
         List<Versioned> selected = new ArrayList<>();
-        selected.addAll(humanList.getSelectionModel().getSelectedItems());
-        selected.addAll(mouseList.getSelectionModel().getSelectedItems());
+        selected.addAll(FxChooserSupport.getSelectedCatalogFiles(humanTree));
+        selected.addAll(FxChooserSupport.getSelectedCatalogFiles(mouseTree));
         for (CachedPathItem item : cachedGmx.getSelectionModel().getSelectedItems()) {
             if (item.source instanceof Versioned) {
                 selected.add((Versioned) item.source);
@@ -512,7 +501,6 @@ public final class FxGeneSetChooserDialog {
 
         @Override
         public String toString() {
-            // Display handled by NonFTPGeneSetsRenderer-style cell factory.
             return name;
         }
     }

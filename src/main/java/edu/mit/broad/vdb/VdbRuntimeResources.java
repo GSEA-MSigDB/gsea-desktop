@@ -1,13 +1,16 @@
 /*
- * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2026 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.vdb;
 
 import java.io.File;
 import java.util.WeakHashMap;
 
-import edu.mit.broad.genome.Constants;
+import org.apache.commons.lang3.StringUtils;
+
+import edu.mit.broad.genome.NamingConventions;
 import edu.mit.broad.vdb.chip.Chip;
+import xapps.gsea.GseaWebResources;
 
 /**
  * Vdb related resources that are available at runtime
@@ -50,10 +53,6 @@ public class VdbRuntimeResources {
         return chip;
     }
 
-    private static String FTP_ANNOTATION_BASE = "ftp://gseaftp.broadinstitute.org/pub/gsea/annotations/";
-
-    private static String fChipLocBase = FTP_ANNOTATION_BASE; // default us the Broad FTP site
-
     public static String getChipFile_source(String chipNameOrPath) {
         if (chipNameOrPath == null) {
             throw new IllegalArgumentException("Param chipNameOrPath cannot be null");
@@ -79,9 +78,23 @@ public class VdbRuntimeResources {
             return chipNameOrPath;
         }
 
+        if (NamingConventions.isURL(chipNameOrPath)) {
+            // Already a full URL (e.g. selected from the CHIP catalog chooser) -- use it as-is,
+            // same as the ftp/gseaftp cases above. Only a bare chip name (handled below) needs a
+            // base URL prepended; doing that to an already-complete URL would double it up.
+            return chipNameOrPath;
+        }
+
         chipNameOrPath = chipNameOrPath.replace('-', '_');
 
-        String path = fChipLocBase + chipNameOrPath;
+        // No scheme or path given -- resolve against the HTTPS annotations mirror instead of the
+        // old FTP site. Chip file names conventionally encode their species (e.g.
+        // "Human_..."/"Mouse_..."), so use that to pick the right one; default to Human otherwise,
+        // matching the same species-guessing convention already used for gene set files in
+        // GmtParser.
+        String base = StringUtils.containsIgnoreCase(chipNameOrPath, "mouse")
+                ? GseaWebResources.getMouseArrayAnnotationsURL() : GseaWebResources.getHumanArrayAnnotationsURL();
+        String path = base + chipNameOrPath;
         if (!path.endsWith(".chip")) {
             path += ".chip";
         }

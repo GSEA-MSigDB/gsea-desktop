@@ -7,10 +7,9 @@ import java.util.Comparator;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
-import org.genepattern.io.FTPFile;
 
 import edu.mit.broad.genome.math.Order;
-import edu.mit.broad.genome.objects.MSigDBVersion;
+import edu.mit.broad.genome.objects.MSigDBRelease;
 import edu.mit.broad.genome.objects.PersistentObject;
 import edu.mit.broad.genome.objects.ScoredDataset;
 import edu.mit.broad.genome.objects.esmatrix.db.EnrichmentResult;
@@ -137,66 +136,45 @@ public class ComparatorFactory {
         }
     };
     
-    public static class FTPFileByVersionComparator implements Comparator<FTPFile> {
+    /**
+     * Sorts MSigDB releases newest-first within one species, and tracks the highest version seen
+     * so the tree UI can bold the current/latest release. Operates on whole releases rather than
+     * individual files, since (unlike the old FTP-listing-derived {@code FTPFileByVersionComparator}
+     * this replaces) every file in a per-release catalog already shares its release's version --
+     * there is no longer a need to compare versions file-by-file.
+     */
+    public static class MSigDBReleaseByVersionComparator implements Comparator<MSigDBRelease> {
         // Used to track highest version seen by this instance.  Use a fake lowest-possible version
         // for the initial comparison.
         private String highestVersionId;
         private DefaultArtifactVersion highestVersion = new DefaultArtifactVersion("v0.0");
-        private final String preferredPrefix;
 
         public String getHighestVersionId() { return highestVersionId; }
 
-        public FTPFileByVersionComparator() { this.preferredPrefix = null; }
-
-        public FTPFileByVersionComparator(String preferredPrefix) { this.preferredPrefix = preferredPrefix; }
-        
         /**
-         * Return -1 if o1 is less than o2, 0 if they're equal, +1 if o1 is greater than o2.
+         * Return -1 if release1 is newer than release2 (sorts first), 0 if the same version,
+         * +1 if release1 is older.
          */
-        public int compare(FTPFile ftpFile1, FTPFile ftpFile2) {
-            MSigDBVersion msigDBVersion1 = ftpFile1.getMSigDBVersion();
-            MSigDBVersion msigDBVersion2 = ftpFile2.getMSigDBVersion();
-            if (msigDBVersion1 == null) { return (msigDBVersion2 == null) ? 0 : -1; }
-            if (msigDBVersion2 == null) { return 1; }
-            
-            DefaultArtifactVersion version1 = msigDBVersion1.getArtifactVersion();
-            DefaultArtifactVersion version2 = msigDBVersion2.getArtifactVersion();
-
-            if (!version1.equals(version2)) {
-                int compareTo = version2.compareTo(version1);
-                if (compareTo < 0) {
-                    if (highestVersion.compareTo(version1) < 0) {
-                        highestVersion = version1;
-                        highestVersionId = msigDBVersion1.getVersionString();
-                    }
-                } else {
-                    if (highestVersion.compareTo(version2) < 0) {
-                        highestVersion = version2;
-                        highestVersionId = msigDBVersion2.getVersionString();
-                    }
-                }
-                return compareTo;
-            }
+        public int compare(MSigDBRelease release1, MSigDBRelease release2) {
+            DefaultArtifactVersion version1 = release1.getMSigDBVersion().getArtifactVersion();
+            DefaultArtifactVersion version2 = release2.getMSigDBVersion().getArtifactVersion();
 
             if (highestVersion.compareTo(version1) < 0) {
-                // Doesn't matter which we use since they are equal
                 highestVersion = version1;
-                highestVersionId = msigDBVersion1.getVersionString();
+                highestVersionId = release1.getMSigDBVersion().getVersionString();
             }
-            
-            // Optional preferredPrefix check.  Items starting with the preferredPrefix
-            // get sorted above the others.
-            String s1 = ftpFile1.getName();
-            String s2 = ftpFile2.getName();
-            if (preferredPrefix != null) {
-                final boolean s1HasPP = s1.startsWith(preferredPrefix);
-                final boolean s2HasPP = s2.startsWith(preferredPrefix);
-                if (s1HasPP && !s2HasPP) { return -1; }
-                if (!s1HasPP && s2HasPP) { return 1; }
+            if (highestVersion.compareTo(version2) < 0) {
+                highestVersion = version2;
+                highestVersionId = release2.getMSigDBVersion().getVersionString();
             }
 
-            // now just string comparison
-            return s1.compareTo(s2);
+            if (!version1.equals(version2)) {
+                // Descending: the newer (greater) version sorts first.
+                return version2.compareTo(version1);
+            }
+
+            // Same version -- fall back to release name for a stable, deterministic order.
+            return release1.getReleaseName().compareTo(release2.getReleaseName());
         }
 
         public boolean equals(Object o2) { return false; }

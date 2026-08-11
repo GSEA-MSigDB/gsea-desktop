@@ -87,7 +87,7 @@ public final class FxTemplateChooserDialog {
         dialog.initOwner(owner);
         dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
         dialog.setResizable(true);
-        FxFtpChooserSupport.addHelpButton(dialog, "#cls");
+        FxChooserSupport.addHelpButton(dialog, "#cls");
         final Button okButton = (Button) dialog.getDialogPane().lookupButton(ButtonType.OK);
 
         TextField clsPath = new TextField();
@@ -122,7 +122,7 @@ public final class FxTemplateChooserDialog {
                 }
             }
         });
-        FxFtpChooserSupport.enableDoubleClickToFire(options, okButton);
+        FxChooserSupport.enableDoubleClickToFire(options, okButton);
 
         ComboBox<Template> cachedTemplateCombo = new ComboBox<>();
         cachedTemplateCombo.setMaxWidth(Double.MAX_VALUE);
@@ -194,13 +194,13 @@ public final class FxTemplateChooserDialog {
 
         Runnable browseClsAction = () -> {
             Window w = dialog.getDialogPane().getScene().getWindow();
-            FxFtpChooserSupport.browseLocalFiles(
+            FxChooserSupport.browseLocalFiles(
                     w,
                     "Open phenotype file",
-                    FxFtpChooserSupport.clsFileFilters(),
+                    FxChooserSupport.clsFileFilters(),
                     false,
                     clsPath.getText(),
-                    files -> FxFtpChooserSupport.loadLocalFilesAsync(
+                    files -> FxChooserSupport.loadLocalFilesAsync(
                             files,
                             Template.class,
                             loaded -> {
@@ -338,7 +338,7 @@ public final class FxTemplateChooserDialog {
         dialog.initModality(Modality.WINDOW_MODAL);
         dialog.getDialogPane().getButtonTypes().addAll(ButtonType.CLOSE);
         dialog.setResizable(true);
-        FxFtpChooserSupport.addUserGuideHelpButton(dialog, "#Phenotype-Select-Window");
+        FxChooserSupport.addUserGuideHelpButton(dialog, "#Phenotype-Select-Window");
 
         TextArea taClassA = new TextArea();
         taClassA.setPrefRowCount(12);
@@ -443,7 +443,7 @@ public final class FxTemplateChooserDialog {
         dialog.initModality(Modality.WINDOW_MODAL);
         dialog.getDialogPane().getButtonTypes().addAll(ButtonType.CLOSE);
         dialog.setResizable(true);
-        FxFtpChooserSupport.addUserGuideHelpButton(dialog, "#Phenotype-Select-Window");
+        FxChooserSupport.addUserGuideHelpButton(dialog, "#Phenotype-Select-Window");
 
         ComboBox<Dataset> cbDataset = datasetCombo();
         TextField geneFilter = new TextField();

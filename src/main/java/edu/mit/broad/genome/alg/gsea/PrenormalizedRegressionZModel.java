@@ -37,7 +37,7 @@ import org.slf4j.LoggerFactory;
  * after {@link #scoreForTemplate} (with {@code lowInformationChecked} set) so enrichment uses all
  * non-omitted genes unless that logic is extended for normalized inputs.
  */
-class PrenormalizedRegressionZModel {
+public class PrenormalizedRegressionZModel {
     private final Logger log = LoggerFactory.getLogger(PrenormalizedRegressionZModel.class);
 
     private static final double EPS = 1e-10;
@@ -52,9 +52,8 @@ class PrenormalizedRegressionZModel {
      * Construct a model for {@link Metrics#Wald} scoring on already-normalized values.
      * Template shape is validated here; per-gene fits occur in {@link #scoreForTemplate}.
      */
-    public static PrenormalizedRegressionZModel fit(final Dataset ds,
-                                                  final Template realTemplate,
-                                                  final Map<String, TwoClassMarkerStats> markerScores) {
+    public static PrenormalizedRegressionZModel fit(final Dataset ds, final Template realTemplate,
+                                                    final Map<String, TwoClassMarkerStats> markerScores) {
         if (markerScores == null) {
             throw new IllegalArgumentException("markerScores cannot be null for " + Metrics.Wald.NAME + " scoring on normalized data");
         }

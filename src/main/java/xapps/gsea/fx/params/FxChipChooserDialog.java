@@ -9,13 +9,12 @@ import java.util.List;
 import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
-import org.genepattern.io.FTPFile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import edu.mit.broad.genome.alg.ComparatorFactory;
+import edu.mit.broad.genome.objects.MSigDBCatalogFile;
+import edu.mit.broad.genome.objects.MSigDBRelease;
 import edu.mit.broad.genome.objects.MSigDBSpecies;
-import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonBar;
@@ -26,19 +25,15 @@ import javafx.scene.control.ListView;
 import javafx.scene.control.SelectionMode;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
-import javafx.scene.control.TextField;
 import javafx.scene.control.Tooltip;
+import javafx.scene.control.TreeView;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.VBox;
-import javafx.stage.FileChooser;
 import javafx.stage.Window;
 import xapps.gsea.GseaWebResources;
 import org.gsea_msigdb.gsea.runtime.AppServices;
 
 /**
- * JavaFX chip chooser: Human/Mouse MSigDB FTP chips or a single local .chip file.
+ * JavaFX chip chooser: Human/Mouse MSigDB catalog chips or a single local .chip file.
  */
 public final class FxChipChooserDialog {
     private static final Logger klog = LoggerFactory.getLogger(FxChipChooserDialog.class);
@@ -55,17 +50,15 @@ public final class FxChipChooserDialog {
         dialog.initOwner(owner);
         dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
         dialog.setResizable(true);
-        FxFtpChooserSupport.addHelpAndInfoButtons(dialog, "#chip",
+        FxChooserSupport.addHelpAndInfoButtons(dialog, "#chip",
                 "MSigDB Chips", GseaWebResources.getGseaChipInfoHelpURL());
         final Button okButton = (Button) dialog.getDialogPane().lookupButton(ButtonType.OK);
 
         TabPane tabs = new TabPane();
         tabs.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
 
-        ListView<FTPFile> humanList = new ListView<>();
-        humanList.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
-        ListView<FTPFile> mouseList = new ListView<>();
-        mouseList.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
+        TreeView<Object> humanTree = new TreeView<>();
+        TreeView<Object> mouseTree = new TreeView<>();
 
         ListView<CachedChip> cachedChips = new ListView<>();
         cachedChips.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
@@ -84,44 +77,37 @@ public final class FxChipChooserDialog {
             }
         });
         refreshCachedChips(cachedChips);
-        FxFtpChooserSupport.enableDoubleClickToFire(cachedChips, okButton);
+        FxChooserSupport.enableDoubleClickToFire(cachedChips, okButton);
         tabs.getTabs().add(new Tab("Local Chips",
-                FxFtpChooserSupport.wrapLocalTab(
+                FxChooserSupport.wrapLocalTab(
                         xapps.gsea.fx.widgets.FxSearchField.wrapList(cachedChips,
                                 c -> c == null ? "" : c.name + " " + (c.path != null ? c.path : "")),
                         () -> openLocalChipFile(owner, cachedChips))));
 
-        if (FxFtpChooserSupport.isOnline()) {
-            ComparatorFactory.FTPFileByVersionComparator humanCmp =
-                    new ComparatorFactory.FTPFileByVersionComparator();
-            FxFtpChooserSupport.installDeferredFtpTab(
+        if (FxChooserSupport.isOnline()) {
+            humanTree = FxChooserSupport.installDeferredCatalogTab(
                     tabs,
                     "Human Collection Chips (MSigDB)",
-                    humanList,
                     okButton,
-                    ".chip",
                     MSigDBSpecies.Human,
-                    GseaWebResources.getGseaFTPServerChipDir(MSigDBSpecies.Human),
-                    humanCmp,
-                    f -> f.getName() + " " + f.getPath());
-            ComparatorFactory.FTPFileByVersionComparator mouseCmp =
-                    new ComparatorFactory.FTPFileByVersionComparator("Mouse");
-            FxFtpChooserSupport.installDeferredFtpTab(
+                    MSigDBRelease::getChipCatalogUrl,
+                    false);
+            mouseTree = FxChooserSupport.installDeferredCatalogTab(
                     tabs,
                     "Mouse Collection Chips (MSigDB)",
-                    mouseList,
                     okButton,
-                    ".chip",
                     MSigDBSpecies.Mouse,
-                    GseaWebResources.getGseaFTPServerChipDir(MSigDBSpecies.Mouse),
-                    mouseCmp,
-                    f -> f.getName() + " " + f.getPath());
+                    MSigDBRelease::getChipCatalogUrl,
+                    false);
         } else {
             tabs.getTabs().add(new Tab("Human Collection Chips (MSigDB)",
-                    FxFtpChooserSupport.messageArea(FxFtpChooserSupport.OFFLINE_MESSAGE)));
+                    FxChooserSupport.messageArea(FxChooserSupport.OFFLINE_MESSAGE)));
             tabs.getTabs().add(new Tab("Mouse Collection Chips (MSigDB)",
-                    FxFtpChooserSupport.messageArea(FxFtpChooserSupport.OFFLINE_MESSAGE)));
+                    FxChooserSupport.messageArea(FxChooserSupport.OFFLINE_MESSAGE)));
         }
+
+        final TreeView<Object> humanTreeFinal = humanTree;
+        final TreeView<Object> mouseTreeFinal = mouseTree;
 
         tabs.getSelectionModel().selectedItemProperty().addListener((obs, o, tab) -> {
             if (tab != null && "Local Chips".equals(tab.getText())) {
@@ -141,7 +127,6 @@ public final class FxChipChooserDialog {
 
         tabs.getSelectionModel().select(0);
 
-
         BorderPane root = new BorderPane(tabs);
         root.setPadding(new Insets(8));
         dialog.getDialogPane().setContent(root);
@@ -152,12 +137,12 @@ public final class FxChipChooserDialog {
                 (Button) dialog.getDialogPane().lookupButton(ButtonType.CANCEL));
 
         okButton.addEventFilter(javafx.event.ActionEvent.ACTION, event -> {
-            boolean haveHuman = humanList.getSelectionModel().getSelectedItem() != null;
-            boolean haveMouse = mouseList.getSelectionModel().getSelectedItem() != null;
+            boolean haveHuman = !FxChooserSupport.getSelectedCatalogFiles(humanTreeFinal).isEmpty();
+            boolean haveMouse = !FxChooserSupport.getSelectedCatalogFiles(mouseTreeFinal).isEmpty();
             boolean haveCached = cachedChips.getSelectionModel().getSelectedItem() != null;
             int count = (haveHuman ? 1 : 0) + (haveMouse ? 1 : 0) + (haveCached ? 1 : 0);
             if (count > 1) {
-                FxFtpChooserSupport.showMultiSelectionInfo(
+                FxChooserSupport.showMultiSelectionInfo(
                         dialog.getDialogPane().getScene().getWindow(),
                         "Multiple CHIPs selected",
                         "Multiple CHIP selections are not allowed.");
@@ -169,13 +154,13 @@ public final class FxChipChooserDialog {
             if (btn == null || btn.getButtonData() == ButtonBar.ButtonData.CANCEL_CLOSE) {
                 return null;
             }
-            FTPFile selected = humanList.getSelectionModel().getSelectedItem();
-            if (selected != null) {
-                return selected.getPath();
+            List<MSigDBCatalogFile> humanSel = FxChooserSupport.getSelectedCatalogFiles(humanTreeFinal);
+            if (!humanSel.isEmpty()) {
+                return humanSel.get(0).getPath();
             }
-            selected = mouseList.getSelectionModel().getSelectedItem();
-            if (selected != null) {
-                return selected.getPath();
+            List<MSigDBCatalogFile> mouseSel = FxChooserSupport.getSelectedCatalogFiles(mouseTreeFinal);
+            if (!mouseSel.isEmpty()) {
+                return mouseSel.get(0).getPath();
             }
             CachedChip cached = cachedChips.getSelectionModel().getSelectedItem();
             if (cached != null) {
@@ -188,13 +173,13 @@ public final class FxChipChooserDialog {
     }
 
     private static void openLocalChipFile(Window owner, ListView<CachedChip> cachedChips) {
-        FxFtpChooserSupport.browseLocalFiles(
+        FxChooserSupport.browseLocalFiles(
                 owner,
                 "Open chip file",
-                FxFtpChooserSupport.chipFileFilters(),
+                FxChooserSupport.chipFileFilters(),
                 false,
                 selectedChipPath(cachedChips),
-                files -> FxFtpChooserSupport.loadLocalFilesAsync(
+                files -> FxChooserSupport.loadLocalFilesAsync(
                         files,
                         edu.mit.broad.vdb.chip.Chip.class,
                         loaded -> {

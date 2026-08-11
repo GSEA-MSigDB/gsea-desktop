@@ -73,13 +73,13 @@ final class CachedObjectEditor extends AbstractBoundEditor {
         if (seed == null && fallbackValue instanceof File) {
             seed = ((File) fallbackValue).getPath();
         }
-        FxFtpChooserSupport.browseLocalFiles(
+        FxChooserSupport.browseLocalFiles(
                 FxFileChooserUtil.windowOf(combo),
                 param.getNameEnglish() != null ? param.getNameEnglish() : param.getName(),
                 filters,
                 false,
                 seed,
-                files -> FxFtpChooserSupport.loadLocalFilesAsync(
+                files -> FxChooserSupport.loadLocalFilesAsync(
                         files,
                         pobClass,
                         loaded -> {

@@ -9,6 +9,7 @@
 /build_java11
 /.gradle
 /logs
+/.claude
 /javafx-modules/
 # Local scratch / generated analysis artifacts
 __pycache__/

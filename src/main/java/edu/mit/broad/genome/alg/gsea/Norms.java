@@ -82,7 +82,7 @@ public class Norms {
 
                 final double absReal = Math.abs(real);
                 double sumLog = 0.0d;
-                boolean usable = (Double.isNaN(absReal) || Double.isInfinite(absReal) || absReal <= 0.0d);
+                boolean usable = (Double.isFinite(absReal) && absReal > 0.0d);
                 if (usable) {
                     sumLog += Math.log(absReal);
                     for (int c = 0; c < rndColCount; c++) {

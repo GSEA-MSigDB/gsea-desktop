@@ -5,6 +5,8 @@ package edu.mit.broad.xbench.prefs;
 
 import edu.mit.broad.genome.utils.SystemUtils;
 
+import xapps.gsea.GseaWebResources;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
@@ -55,6 +57,10 @@ public class XPreferencesFactory {
             "You can connect to the GSEA website over the Internet. This ensures you always get the current version of gene sets and chip annotations. ",
             true, false, false);
 
+    public static final StringPreference kMSigDBCatalogURL = new StringPreference("MSigDB Catalog URL",
+            "URL of the JSON catalog listing available MSigDB releases (Human and Mouse gene sets and chip annotations).",
+            GseaWebResources.DEFAULT_MSIGDB_CATALOG_URL, false, false);
+
     public static final DirPreference kDefaultReportsOutputDir = new DirPreference("Default reports output folder",
             "Default location of the output_directory where tool reports are stored",
             new File(kAppRuntimeHomeDir, "output"), false, false);
@@ -71,7 +77,8 @@ public class XPreferencesFactory {
             false);
 
     public static final PreferenceCategory kGeneralCategory = new PreferenceCategory(new Preference[] { kEmail,
-            kAskBeforeAppShutdown, kDefaultReportsOutputDir, kMakeGseaUpdateCheck, kUiAppearance });
+            kAskBeforeAppShutdown, kDefaultReportsOutputDir, kMakeGseaUpdateCheck, kOnlineMode,
+            kMSigDBCatalogURL, kUiAppearance });
 
     public static final StringPreference kLastToolName = new StringPreference("Last Tool Run", "Dont change me", "",
             true, true);

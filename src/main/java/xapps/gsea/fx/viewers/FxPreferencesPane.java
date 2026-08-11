@@ -35,6 +35,7 @@ public class FxPreferencesPane implements ViewPage {
     private final CheckBox askBeforeShutdown = new CheckBox();
     private final CheckBox onlineMode = new CheckBox();
     private final CheckBox updateCheck = new CheckBox();
+    private final TextField msigdbCatalogUrlField = new TextField();
     private final ComboBox<String> appearance = new ComboBox<>();
     private final TextField outputDirField = new TextField();
     private final TextField cytoscapePortField = new TextField();
@@ -79,15 +80,18 @@ public class FxPreferencesPane implements ViewPage {
         appPrefs.add(askBeforeShutdown, 1, 0);
         appPrefs.add(new Label("Connect over the Internet"), 0, 1);
         appPrefs.add(onlineMode, 1, 1);
-        appPrefs.add(new Label("Check for new GSEA version on startup"), 0, 2);
-        appPrefs.add(updateCheck, 1, 2);
+        appPrefs.add(new Label(XPreferencesFactory.kMSigDBCatalogURL.getName()), 0, 2);
+        msigdbCatalogUrlField.setMaxWidth(Double.MAX_VALUE);
+        appPrefs.add(msigdbCatalogUrlField, 1, 2);
+        appPrefs.add(new Label("Check for new GSEA version on startup"), 0, 3);
+        appPrefs.add(updateCheck, 1, 3);
         appearance.getItems().setAll(
                 xapps.gsea.fx.FxTheme.APPEARANCE_SYSTEM,
                 xapps.gsea.fx.FxTheme.APPEARANCE_LIGHT,
                 xapps.gsea.fx.FxTheme.APPEARANCE_DARK);
         appearance.setMaxWidth(Double.MAX_VALUE);
-        appPrefs.add(new Label("Appearance"), 0, 3);
-        appPrefs.add(appearance, 1, 3);
+        appPrefs.add(new Label("Appearance"), 0, 4);
+        appPrefs.add(appearance, 1, 4);
         TitledPane appPane = new TitledPane(" Application preferences ", appPrefs);
         appPane.setCollapsible(false);
 
@@ -171,6 +175,7 @@ public class FxPreferencesPane implements ViewPage {
         askBeforeShutdown.setSelected(XPreferencesFactory.kAskBeforeAppShutdown.getBoolean());
         onlineMode.setSelected(XPreferencesFactory.kOnlineMode.getBoolean());
         updateCheck.setSelected(XPreferencesFactory.kMakeGseaUpdateCheck.getBoolean());
+        msigdbCatalogUrlField.setText(XPreferencesFactory.kMSigDBCatalogURL.getString());
         appearance.getSelectionModel().select(xapps.gsea.fx.FxTheme.appearancePref());
         File dir = XPreferencesFactory.kDefaultReportsOutputDir.getDir(false);
         outputDirField.setText(dir != null ? dir.getAbsolutePath() : "");
@@ -200,6 +205,7 @@ public class FxPreferencesPane implements ViewPage {
             XPreferencesFactory.kAskBeforeAppShutdown.setValue(askBeforeShutdown.isSelected());
             XPreferencesFactory.kOnlineMode.setValue(onlineMode.isSelected());
             XPreferencesFactory.kMakeGseaUpdateCheck.setValue(updateCheck.isSelected());
+            XPreferencesFactory.kMSigDBCatalogURL.setValue(msigdbCatalogUrlField.getText().trim());
             String appearanceSel = appearance.getSelectionModel().getSelectedItem();
             if (appearanceSel == null || appearanceSel.isBlank()) {
                 appearanceSel = xapps.gsea.fx.FxTheme.APPEARANCE_SYSTEM;
