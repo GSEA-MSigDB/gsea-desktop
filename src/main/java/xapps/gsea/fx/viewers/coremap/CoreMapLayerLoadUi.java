@@ -13,7 +13,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.stage.DirectoryChooser;
-import xapps.gsea.fx.FxButtons;
+import xapps.gsea.fx.widgets.FxButtons;
 import xapps.gsea.fx.params.FxFileChooserUtil;
 import xapps.gsea.fx.params.FxGseaReportXor;
 import xapps.gsea.fx.params.FxReportCacheChooser;
@@ -47,7 +47,7 @@ public final class CoreMapLayerLoadUi {
             folderField.getStyleClass().add("gsea-dir-field");
         }
         xapps.gsea.fx.params.FxPathFieldColors.attach(folderField);
-        Button browse = xapps.gsea.fx.FxEllipsisButton.create("Browse " + title + " GSEA folder");
+        Button browse = xapps.gsea.fx.widgets.FxEllipsisButton.create("Browse " + title + " GSEA folder");
         browse.setOnAction(e -> chooseFolder());
         FxButtons.styleSecondary(clearBtn);
         clearBtn.setOnAction(e -> {

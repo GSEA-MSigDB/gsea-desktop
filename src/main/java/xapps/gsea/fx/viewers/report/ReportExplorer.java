@@ -3,13 +3,10 @@
  */
 package xapps.gsea.fx.viewers.report;
 
-import java.util.function.Consumer;
-
-import org.gsea_msigdb.gsea.ui.api.ViewPage;
+import org.gsea_msigdb.gsea.ui.api.FeatureHost;
 
 import edu.mit.broad.genome.reports.api.Report;
 import javafx.scene.Node;
-import xapps.gsea.fx.jobs.JobRuntime;
 
 /**
  * Native results UI for one {@link ReportKind}.
@@ -17,5 +14,5 @@ import xapps.gsea.fx.jobs.JobRuntime;
 @FunctionalInterface
 public interface ReportExplorer {
 
-    Node create(Report report, Consumer<ViewPage> openPage, JobRuntime jobRuntime);
+    Node create(Report report, FeatureHost host);
 }

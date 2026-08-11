@@ -22,8 +22,8 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.stage.FileChooser;
 import javafx.stage.Window;
-import xapps.gsea.fx.FxButtons;
-import xapps.gsea.fx.FxImages;
+import xapps.gsea.fx.widgets.FxButtons;
+import xapps.gsea.fx.widgets.FxImages;
 import xapps.gsea.fx.params.FxFileChooserUtil;
 
 /**

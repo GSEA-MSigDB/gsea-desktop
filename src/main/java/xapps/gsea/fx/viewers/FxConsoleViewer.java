@@ -32,16 +32,16 @@ public class FxConsoleViewer implements ViewPage {
         root.setCenter(area);
 
         Button clear = new Button("Clear All Output");
-        xapps.gsea.fx.FxButtons.styleSecondary(clear);
+        xapps.gsea.fx.widgets.FxButtons.styleSecondary(clear);
         clear.setOnAction(e -> applicationLog.clear());
         Button copy = new Button("Copy");
-        xapps.gsea.fx.FxButtons.styleSecondary(copy);
+        xapps.gsea.fx.widgets.FxButtons.styleSecondary(copy);
         copy.setOnAction(e -> {
             ClipboardContent content = new ClipboardContent();
             content.putString(area.getText());
             Clipboard.getSystemClipboard().setContent(content);
         });
-        HBox actions = xapps.gsea.fx.FxButtons.row(clear, copy);
+        HBox actions = xapps.gsea.fx.widgets.FxButtons.row(clear, copy);
         actions.setAlignment(javafx.geometry.Pos.CENTER_RIGHT);
         actions.setPadding(new Insets(8));
         root.setBottom(actions);
@@ -58,7 +58,7 @@ public class FxConsoleViewer implements ViewPage {
     }
 
     @Override
-    public Object getContent() {
+    public javafx.scene.Node getContent() {
         return root;
     }
 }

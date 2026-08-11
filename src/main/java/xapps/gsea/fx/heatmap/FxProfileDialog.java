@@ -43,10 +43,10 @@ public final class FxProfileDialog {
         stage.initModality(Modality.NONE);
         stage.setTitle("Profile");
         Button close = new Button("Close");
-        xapps.gsea.fx.FxButtons.styleSecondary(close);
+        xapps.gsea.fx.widgets.FxButtons.styleSecondary(close);
         close.setOnAction(e -> stage.close());
         BorderPane root = new BorderPane(chartPane.getNode());
-        HBox bottom = xapps.gsea.fx.FxButtons.row(close);
+        HBox bottom = xapps.gsea.fx.widgets.FxButtons.row(close);
         bottom.setPadding(new Insets(8));
         root.setBottom(bottom);
         BorderPane.setMargin(root.getBottom(), new Insets(8));

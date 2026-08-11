@@ -21,7 +21,6 @@ import org.slf4j.LoggerFactory;
 import edu.mit.broad.genome.objects.esmatrix.db.EnrichmentDb;
 import edu.mit.broad.genome.objects.esmatrix.db.EnrichmentResult;
 import edu.mit.broad.genome.parsers.ParserFactory;
-import edu.mit.broad.xbench.core.api.Application;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
@@ -51,6 +50,8 @@ import xtools.api.Tool;
 import edu.mit.broad.genome.plots.PlotBuilders;
 import xtools.api.param.ToolParamSet;
 import xtools.gsea.LeadingEdgeTool;
+import org.gsea_msigdb.gsea.runtime.AppServices;
+import org.gsea_msigdb.gsea.ui.api.FeatureHost;
 
 /**
  * Interactive Leading Edge viewer:
@@ -93,9 +94,15 @@ public class FxLeadingEdgePane implements ViewPage {
     private final TabPane mainTabs = new TabPane();
     private final FxGseaReportLoadUi loadUi;
     private final JobRuntime jobRuntime;
+    private final AppServices svc;
     private int analysisRun = 0;
 
-    public FxLeadingEdgePane(JobRuntime jobRuntime) {
+    public FxLeadingEdgePane(FeatureHost host) {
+        this(Objects.requireNonNull(host, "host").services(), host.jobs());
+    }
+
+    private FxLeadingEdgePane(AppServices svc, JobRuntime jobRuntime) {
+        this.svc = Objects.requireNonNull(svc, "svc");
         this.jobRuntime = Objects.requireNonNull(jobRuntime, "jobRuntime");
         LIVE.add(this);
         ensureSharedListener();
@@ -135,17 +142,17 @@ public class FxLeadingEdgePane implements ViewPage {
             this.gseaResultDir = gseaResultDir;
             resultTable.setResults(results);
 
-            runAnalysisButton.setGraphic(xapps.gsea.fx.FxFileIcons.forResource("Run16.png"));
+            runAnalysisButton.setGraphic(xapps.gsea.fx.widgets.FxFileIcons.forResource("Run16.png"));
             runAnalysisButton.setOnAction(e -> runInteractiveAnalysis(this));
-            buildHtmlButton.setGraphic(xapps.gsea.fx.FxFileIcons.forResource("Run16.png"));
+            buildHtmlButton.setGraphic(xapps.gsea.fx.widgets.FxFileIcons.forResource("Run16.png"));
             buildHtmlButton.setOnAction(e -> runHtmlReport(this));
-            xapps.gsea.fx.FxButtons.stylePrimary(runAnalysisButton);
-            xapps.gsea.fx.FxButtons.styleSecondary(buildHtmlButton);
+            xapps.gsea.fx.widgets.FxButtons.stylePrimary(runAnalysisButton);
+            xapps.gsea.fx.widgets.FxButtons.styleSecondary(buildHtmlButton);
             applyPhenotypeLabels(edb, positivePhenotypeLabel, negativePhenotypeLabel);
             HBox phenotypeRow = new HBox(0, positivePhenotypeLabel, negativePhenotypeLabel);
 
             Button help = helpButton();
-            HBox filterRow = xapps.gsea.fx.FxButtons.row(help, selectionLabel, runAnalysisButton, buildHtmlButton);
+            HBox filterRow = xapps.gsea.fx.widgets.FxButtons.row(help, selectionLabel, runAnalysisButton, buildHtmlButton);
             VBox top = new VBox(8, phenotypeRow, filterRow);
             top.setPadding(new Insets(8, 12, 4, 12));
 
@@ -206,7 +213,7 @@ public class FxLeadingEdgePane implements ViewPage {
             } catch (Throwable t) {
                 klog.error("Failed to load EDB from {}", dir, t);
                 Platform.runLater(() -> {
-                    Application.getWindowManager().showError("Trouble loading enrichment database", t);
+                    svc.dialogs().showError("Trouble loading enrichment database", t);
                 });
             }
         }, "gsea-load-edb");
@@ -225,12 +232,12 @@ public class FxLeadingEdgePane implements ViewPage {
 
     private List<String> selectedNamesOrWarn(ResultsView view) {
         if (view == null || view.edb == null || view.gseaResultDir == null) {
-            Application.getWindowManager().showMessage("Load a GSEA result folder first.");
+            svc.dialogs().showMessage("Load a GSEA result folder first.");
             return null;
         }
         List<EnrichmentResultRow> selected = new ArrayList<>(view.table.getSelectionModel().getSelectedItems());
         if (selected.size() < 2) {
-            Application.getWindowManager().showMessage("Select at least two gene sets in the table.");
+            svc.dialogs().showMessage("Select at least two gene sets in the table.");
             return null;
         }
         return selected.stream().map(r -> r.nameProperty().get()).collect(Collectors.toList());
@@ -255,7 +262,7 @@ public class FxLeadingEdgePane implements ViewPage {
             } catch (Throwable t) {
                 klog.error("Interactive leading edge analysis failed", t);
                 Platform.runLater(() -> {
-                    Application.getWindowManager().showError(
+                    svc.dialogs().showError(
                             "An error occurred while running leading edge analysis", t);
                     view.updateSelectionUi();
                 });
@@ -267,14 +274,14 @@ public class FxLeadingEdgePane implements ViewPage {
 
     private Button helpButton() {
         Button help = new Button("Help");
-        help.setGraphic(xapps.gsea.fx.FxFileIcons.forResource("Help16_v2.gif"));
-        xapps.gsea.fx.FxButtons.styleSecondary(help);
+        help.setGraphic(xapps.gsea.fx.widgets.FxFileIcons.forResource("Help16_v2.gif"));
+        xapps.gsea.fx.widgets.FxButtons.styleSecondary(help);
         help.setOnAction(e -> {
             String url = GseaWebResources.getGseaHelpURL() + "GSEA/GSEA_User_Guide/Interpret-Leading-Edge";
             try {
                 xapps.gsea.fx.FxDesktopUtil.openUrl(url);
             } catch (Exception ex) {
-                Application.getWindowManager().showError("Could not open Leading Edge help", ex);
+                svc.dialogs().showError("Could not open Leading Edge help", ex);
             }
         });
         return help;
@@ -338,12 +345,12 @@ public class FxLeadingEdgePane implements ViewPage {
         TextField binField = new TextField("0.02");
         binField.setPrefWidth(80);
         Button updateBin = new Button("Update");
-        xapps.gsea.fx.FxButtons.styleToolbar(updateBin);
+        xapps.gsea.fx.widgets.FxButtons.styleToolbar(updateBin);
         updateBin.setOnAction(e -> {
             try {
                 double bw = Double.parseDouble(binField.getText().trim());
                 if (bw < 0 || bw > 1) {
-                    Application.getWindowManager().showMessage("Bin width must be between zero and one.");
+                    svc.dialogs().showMessage("Bin width must be between zero and one.");
                     return;
                 }
                 if (bw == 0) {
@@ -353,7 +360,7 @@ public class FxLeadingEdgePane implements ViewPage {
                         PlotBuilders.jaccardHistogram(result.getJaccardDistrib(), bw),
                         720, 360);
             } catch (NumberFormatException nfe) {
-                Application.getWindowManager().showMessage("Bin width is not a number.");
+                svc.dialogs().showMessage("Bin width is not a number.");
             }
         });
         jaccardBox.getChildren().addAll(
@@ -406,7 +413,7 @@ public class FxLeadingEdgePane implements ViewPage {
             } catch (Throwable t) {
                 klog.error("Leading edge HTML report failed to start", t);
                 Platform.runLater(() -> {
-                    Application.getWindowManager().showError(
+                    svc.dialogs().showError(
                             "An error occurred while building the HTML report", t);
                     view.updateSelectionUi();
                 });
@@ -427,7 +434,7 @@ public class FxLeadingEdgePane implements ViewPage {
     }
 
     @Override
-    public Object getContent() {
+    public javafx.scene.Node getContent() {
         return root;
     }
 }

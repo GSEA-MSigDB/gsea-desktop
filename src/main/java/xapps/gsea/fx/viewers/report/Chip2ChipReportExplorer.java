@@ -7,15 +7,13 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.function.Consumer;
 
-import org.gsea_msigdb.gsea.ui.api.ViewPage;
+import org.gsea_msigdb.gsea.ui.api.FeatureHost;
 
 import edu.mit.broad.genome.reports.api.Report;
 import javafx.scene.Node;
 import javafx.scene.control.Tab;
 import javafx.scene.layout.BorderPane;
-import xapps.gsea.fx.jobs.JobRuntime;
 
 /**
  * Native explorer for Chip2Chip reports: mapped GMT + etiology summary.
@@ -27,16 +25,16 @@ public final class Chip2ChipReportExplorer implements ReportExplorer {
     }
 
     @Override
-    public Node create(Report report, Consumer<ViewPage> openPage, JobRuntime jobRuntime) {
+    public Node create(Report report, FeatureHost host) {
         File dir = ReportExplorerSupport.reportDir(report);
-        BorderPane host = new BorderPane();
+        BorderPane pane = new BorderPane();
 
-        ReportExplorerSupport.loadAsync(host, "chip2chip-report-explorer",
+        ReportExplorerSupport.loadAsync(pane, "chip2chip-report-explorer",
                 "Loading Chip2Chip results…",
                 () -> discover(dir),
-                arts -> buildUi(arts, report, openPage, jobRuntime),
+                arts -> buildUi(arts, report, host),
                 "Could not load Chip2Chip results");
-        return host;
+        return pane;
     }
 
     private static Artifacts discover(File dir) {
@@ -67,10 +65,9 @@ public final class Chip2ChipReportExplorer implements ReportExplorer {
         return new Artifacts(mapped, summaryTsv, etiologySummary);
     }
 
-    private static Node buildUi(Artifacts arts, Report report, Consumer<ViewPage> openPage,
-            JobRuntime jobRuntime) {
+    private static Node buildUi(Artifacts arts, Report report, FeatureHost host) {
         if (arts.mapped() == null && arts.summaryTsv() == null && arts.etiologySummary() == null) {
-            return new GenericFilesExplorer().create(report, openPage, jobRuntime);
+            return new GenericFilesExplorer().create(report, host);
         }
         List<Tab> tabs = new ArrayList<>();
         tabs.add(ReportExplorerSupport.lazyFileTab("Mapped gene sets",

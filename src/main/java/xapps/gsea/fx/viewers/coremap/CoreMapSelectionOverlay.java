@@ -15,7 +15,7 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
-import xapps.gsea.fx.FxButtons;
+import xapps.gsea.fx.widgets.FxButtons;
 
 /**
  * Resizable, draggable selection hoverbox (CoreMap {@code SelectionHoverbox}).

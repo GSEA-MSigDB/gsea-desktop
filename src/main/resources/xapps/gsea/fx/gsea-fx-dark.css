@@ -201,17 +201,20 @@
     -fx-background-color: -color-bg-subtle;
 }
 
+.gsea-root.gsea-dark .button.gsea-run-button,
 .gsea-root.gsea-dark .gsea-run-button {
     -fx-background-color: -color-accent-emphasis;
     -fx-text-fill: white;
     -fx-border-color: -color-accent-muted;
 }
 
+.gsea-root.gsea-dark .button.gsea-run-button:hover,
 .gsea-root.gsea-dark .gsea-run-button:hover {
     -fx-background-color: -color-accent-muted;
     -fx-border-color: -color-accent-muted;
 }
 
+.gsea-root.gsea-dark .button.gsea-run-button:pressed,
 .gsea-root.gsea-dark .gsea-run-button:pressed {
     -fx-background-color: -color-accent-muted;
 }
@@ -603,6 +606,36 @@
 
 .gsea-root.gsea-dark .gsea-enrichment-table .column-header-background {
     -fx-background-color: -color-bg-raised;
+}
+
+.gsea-root.gsea-dark .gsea-section-bar {
+    -fx-background-color: -color-bg-raised;
+    -fx-border-color: -color-border-default;
+}
+
+.gsea-root.gsea-dark .gsea-section-toggle {
+    -fx-text-fill: -color-fg-subtle;
+}
+
+.gsea-root.gsea-dark .gsea-section-toggle:hover {
+    -fx-background-color: -color-bg-subtle;
+    -fx-text-fill: -color-fg-default;
+}
+
+.gsea-root.gsea-dark .gsea-section-toggle:selected {
+    -fx-background-color: -color-bg-subtle;
+    -fx-text-fill: -color-fg-default;
+    -fx-border-color: -color-border-default;
+}
+
+.gsea-root.gsea-dark .gsea-pheno-toggle-pos:selected {
+    -fx-text-fill: -color-pheno-pos;
+    -fx-border-color: -color-pheno-pos-border;
+}
+
+.gsea-root.gsea-dark .gsea-pheno-toggle-neg:selected {
+    -fx-text-fill: -color-accent-fg;
+    -fx-border-color: -color-pheno-neg-border;
 }
 
 /* ---------- CoreMap explore accessories (dark) ---------- */

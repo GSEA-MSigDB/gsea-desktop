@@ -5,13 +5,13 @@ package xapps.gsea.fx.params;
 
 import java.io.File;
 
-import edu.mit.broad.xbench.core.api.Application;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.Window;
+import org.gsea_msigdb.gsea.runtime.AppServices;
 
 /**
- * Seeds File/Directory choosers from {@link Application#getFileManager()} and registers selections.
+ * Seeds File/Directory choosers from {@link AppServices#files()} and registers selections.
  */
 public final class FxFileChooserUtil {
     private FxFileChooserUtil() {
@@ -19,8 +19,8 @@ public final class FxFileChooserUtil {
 
     private static File lastDirOrNull() {
         try {
-            if (Application.isHandlerSet()) {
-                return Application.getFileManager().getLastDirAccesessed();
+            if ((AppServices.current() != null)) {
+                return AppServices.require().files().getLastDirAccesessed();
             }
         } catch (Throwable ignored) {
             // App handler / prefs may not be ready yet
@@ -77,8 +77,8 @@ public final class FxFileChooserUtil {
             return;
         }
         try {
-            if (Application.isHandlerSet()) {
-                Application.getFileManager().registerRecentlyOpenedFile(file);
+            if ((AppServices.current() != null)) {
+                AppServices.require().files().registerRecentlyOpenedFile(file);
             }
         } catch (Throwable ignored) {
         }
@@ -89,8 +89,8 @@ public final class FxFileChooserUtil {
             return;
         }
         try {
-            if (Application.isHandlerSet()) {
-                Application.getFileManager().registerRecentlyOpenedDir(dir);
+            if ((AppServices.current() != null)) {
+                AppServices.require().files().registerRecentlyOpenedDir(dir);
             }
         } catch (Throwable ignored) {
         }

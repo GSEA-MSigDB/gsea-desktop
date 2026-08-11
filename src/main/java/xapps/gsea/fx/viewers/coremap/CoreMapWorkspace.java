@@ -4,18 +4,18 @@
 package xapps.gsea.fx.viewers.coremap;
 
 import java.io.File;
+import java.util.Objects;
 import java.util.Optional;
-import java.util.function.Consumer;
-import java.util.function.Supplier;
 
+import org.gsea_msigdb.gsea.ui.api.FeatureHost;
+import org.gsea_msigdb.gsea.ui.api.PageId;
 import org.gsea_msigdb.gsea.ui.api.ViewPage;
 
-import edu.mit.broad.xbench.core.api.Application;
 import javafx.scene.control.ChoiceDialog;
 
 /**
- * Bridges the shell Steps-rail CoreMap workspace and Report Explorer opens so
- * both layers land on one pane.
+ * Opens the Steps-rail CoreMap singleton (via {@link FeatureHost} / {@link PageId#COREMAP})
+ * from Report Explorer actions.
  */
 public final class CoreMapWorkspace {
 
@@ -23,25 +23,17 @@ public final class CoreMapWorkspace {
             "CoreMap will contact SIGNOR and/or STRING over the network, and may use UniProt for "
                     + "ID mapping. Continue?";
 
-    private static volatile Supplier<FxCoreMapPane> workspace;
-
     private CoreMapWorkspace() {
-    }
-
-    /** Registered by {@code GseaFxShell}: ensure singleton pane, show it, return it. */
-    public static void registerWorkspace(Supplier<FxCoreMapPane> ensureOpen) {
-        workspace = ensureOpen;
     }
 
     /**
      * Ask mech/pheno (preferring an empty slot), confirm overwrite if needed, load directory.
      */
-    public static void openFromReport(File dir, Supplier<FxCoreMapPane> fallbackPane,
-            Consumer<ViewPage> openPage) {
-        if (dir == null) {
+    public static void openFromReport(File dir, FeatureHost host) {
+        if (dir == null || host == null) {
             return;
         }
-        FxCoreMapPane pane = resolvePane(fallbackPane, openPage);
+        FxCoreMapPane pane = resolvePane(host);
         if (pane == null) {
             return;
         }
@@ -50,7 +42,7 @@ public final class CoreMapWorkspace {
             return;
         }
         if (pane.isLayerLoaded(asMechanistic)
-                && !Application.getWindowManager().showConfirm(
+                && !host.dialogs().showConfirm(
                         "Replace the existing "
                                 + (asMechanistic ? "mechanistic" : "phenotypic")
                                 + " CoreMap layer with this report?")) {
@@ -60,30 +52,26 @@ public final class CoreMapWorkspace {
     }
 
     /** Open a saved CoreMap job folder into the Steps-rail workspace. */
-    public static void openJob(File jobDir, Consumer<ViewPage> openPage) {
-        if (jobDir == null) {
+    public static void openJob(File jobDir, FeatureHost host) {
+        if (jobDir == null || host == null) {
             return;
         }
-        FxCoreMapPane pane = resolvePane(FxCoreMapPane::new, openPage);
+        FxCoreMapPane pane = resolvePane(host);
         if (pane == null) {
-            Application.getWindowManager().showMessage("Could not open CoreMap workspace.");
+            host.dialogs().showMessage("Could not open CoreMap workspace.");
             return;
         }
         pane.loadJob(jobDir);
     }
 
-    private static FxCoreMapPane resolvePane(Supplier<FxCoreMapPane> fallbackPane,
-            Consumer<ViewPage> openPage) {
-        Supplier<FxCoreMapPane> ensure = workspace;
-        if (ensure != null) {
-            return ensure.get();
+    private static FxCoreMapPane resolvePane(FeatureHost host) {
+        Objects.requireNonNull(host, "host");
+        ViewPage page = host.pages().get(PageId.COREMAP);
+        host.openPage(page);
+        if (page instanceof FxCoreMapPane coreMap) {
+            return coreMap;
         }
-        if (fallbackPane == null || openPage == null) {
-            return null;
-        }
-        FxCoreMapPane pane = fallbackPane.get();
-        openPage.accept(pane);
-        return pane;
+        return null;
     }
 
     /**

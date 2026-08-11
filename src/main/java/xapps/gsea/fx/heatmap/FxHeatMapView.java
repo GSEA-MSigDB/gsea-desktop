@@ -50,7 +50,7 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Window;
-import xapps.gsea.fx.FxImages;
+import xapps.gsea.fx.widgets.FxImages;
 import xapps.gsea.fx.params.FxFileChooserUtil;
 
 /**
@@ -144,16 +144,16 @@ public class FxHeatMapView {
         saveDs.setOnAction(e -> saveDatasetSlice());
         profileButton = new Button("Profile");
         profileButton.setOnAction(e -> runProfile());
-        xapps.gsea.fx.FxButtons.styleToolbar(displayOpts);
-        xapps.gsea.fx.FxButtons.styleToolbar(legendButton);
-        xapps.gsea.fx.FxButtons.styleToolbar(saveImg);
-        xapps.gsea.fx.FxButtons.styleToolbar(saveDs);
-        xapps.gsea.fx.FxButtons.styleToolbar(profileButton);
+        xapps.gsea.fx.widgets.FxButtons.styleToolbar(displayOpts);
+        xapps.gsea.fx.widgets.FxButtons.styleToolbar(legendButton);
+        xapps.gsea.fx.widgets.FxButtons.styleToolbar(saveImg);
+        xapps.gsea.fx.widgets.FxButtons.styleToolbar(saveDs);
+        xapps.gsea.fx.widgets.FxButtons.styleToolbar(profileButton);
 
-        HBox tools = xapps.gsea.fx.FxButtons.row(
+        HBox tools = xapps.gsea.fx.widgets.FxButtons.row(
                 new Label("Grid Size:"), sizeSlider, grid, toolbarRowNames, toolbarColNames, displayOpts, legendButton,
                 saveImg, saveDs, profileButton);
-        xapps.gsea.fx.FxButtons.padTight(tools);
+        xapps.gsea.fx.widgets.FxButtons.padTight(tools);
         tools.setMinWidth(0);
 
         ScrollPane imageScroll = new ScrollPane(imageView);
@@ -716,7 +716,7 @@ public class FxHeatMapView {
         TextField pathField = new TextField();
         pathField.setPrefColumnCount(30);
         Button browse = new Button("Browse...");
-        xapps.gsea.fx.FxButtons.styleSecondary(browse);
+        xapps.gsea.fx.widgets.FxButtons.styleSecondary(browse);
         browse.setOnAction(e -> {
             FileChooser chooser = new FileChooser();
             chooser.setTitle("Save Dataset");

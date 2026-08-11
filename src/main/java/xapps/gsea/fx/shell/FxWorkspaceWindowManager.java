@@ -128,7 +128,7 @@ public class FxWorkspaceWindowManager implements WindowManager {
             });
             return;
         }
-        xapps.gsea.fx.FxToast.show(title, msg);
+        xapps.gsea.fx.widgets.FxToast.show(title, msg);
     }
 
     // ------------------------------------------------------------------

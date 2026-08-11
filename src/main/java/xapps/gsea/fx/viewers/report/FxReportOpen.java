@@ -1,24 +1,25 @@
 /*
  * Copyright (c) 2003-2026 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California. All rights reserved.
  */
-package xapps.gsea.fx;
+package xapps.gsea.fx.viewers.report;
 
 import java.io.File;
 import java.net.URI;
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.function.Consumer;
+import java.util.Objects;
 
+import org.gsea_msigdb.gsea.ui.api.FeatureHost;
 import org.gsea_msigdb.gsea.ui.api.ViewPage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import edu.mit.broad.genome.reports.api.Report;
-import edu.mit.broad.xbench.core.api.Application;
 import edu.mit.broad.xbench.tui.ReportStub;
+import xapps.gsea.fx.FxDesktopUtil;
 import xapps.gsea.fx.jobs.JobRecord;
-import xapps.gsea.fx.jobs.JobRuntime;
 import xapps.gsea.fx.viewers.FxReportViewer;
+import org.gsea_msigdb.gsea.runtime.AppServices;
 
 /**
  * Shared report opening for the Jobs panel, home, and analysis history.
@@ -33,31 +34,31 @@ public final class FxReportOpen {
     }
 
     /** In-app report viewer (Results / Parameters / Files) for any finished analysis. */
-    public static ViewPage viewPageFor(Report report, Consumer<ViewPage> openPage, JobRuntime jobRuntime) {
-        return new FxReportViewer(report, openPage, jobRuntime);
+    public static ViewPage viewPageFor(Report report, FeatureHost host) {
+        return new FxReportViewer(report, Objects.requireNonNull(host, "host"));
     }
 
-    public static void openInApp(Report report, Consumer<ViewPage> openPage, JobRuntime jobRuntime) {
-        if (report == null || openPage == null) {
+    public static void openInApp(Report report, FeatureHost host) {
+        if (report == null || host == null) {
             return;
         }
-        openPage.accept(viewPageFor(report, openPage, jobRuntime));
+        host.openPage(viewPageFor(report, host));
     }
 
     public static void openInBrowser(Report report) {
         if (report == null) {
-            Application.getWindowManager().showMessage("No report produced");
+            AppServices.require().dialogs().showMessage("No report produced");
             return;
         }
         try {
             URI index = report.getReportIndex();
             if (index == null) {
-                Application.getWindowManager().showMessage("No report produced");
+                AppServices.require().dialogs().showMessage("No report produced");
                 return;
             }
             FxDesktopUtil.openUri(index);
         } catch (Exception e) {
-            Application.getWindowManager().showError("Could not open report", e);
+            AppServices.require().dialogs().showError("Could not open report", e);
         }
     }
 
@@ -65,15 +66,16 @@ public final class FxReportOpen {
      * Jobs panel path: prefer in-app viewer when an {@code .rpt} can be loaded;
      * otherwise open the HTML index in the browser.
      */
-    public static void openFromJob(JobRecord job, Consumer<ViewPage> openPage, JobRuntime jobRuntime) {
+    public static void openFromJob(JobRecord job, FeatureHost host) {
         if (job == null) {
-            Application.getWindowManager().showMessage("No report produced");
+            AppServices.require().dialogs().showMessage("No report produced");
             return;
         }
+        Objects.requireNonNull(host, "host");
         try {
             Report report = tryLoadReport(job.getReportDir());
-            if (report != null && openPage != null) {
-                openInApp(report, openPage, jobRuntime);
+            if (report != null) {
+                openInApp(report, host);
                 return;
             }
             URI index = job.getReportIndex();
@@ -81,9 +83,9 @@ public final class FxReportOpen {
                 FxDesktopUtil.openUri(index);
                 return;
             }
-            Application.getWindowManager().showMessage("No report produced");
+            AppServices.require().dialogs().showMessage("No report produced");
         } catch (Exception e) {
-            Application.getWindowManager().showError("Could not open report", e);
+            AppServices.require().dialogs().showError("Could not open report", e);
         }
     }
 

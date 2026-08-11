@@ -12,21 +12,25 @@ import java.nio.file.StandardCopyOption;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import edu.mit.broad.genome.alg.gsea.GeneSetScoringTable;
+import edu.mit.broad.genome.objects.RankedList;
+import edu.mit.broad.genome.objects.esmatrix.db.EnrichmentResult;
+import edu.mit.broad.genome.objects.esmatrix.db.EnrichmentScore;
+import edu.mit.broad.genome.reports.EnrichmentEsProfiles;
+import edu.mit.broad.genome.reports.EnrichmentReports;
 import edu.mit.broad.genome.reports.ModernEnrichmentPlotJson;
 import xapps.gsea.fx.FxTheme;
 
 /**
- * Resolves a {@code file:} URL for the bundled EnPlot viewer so JavaFX WebView loads
- * {@code viewer.js} / {@code viewer.css} reliably (classpath {@code jar:} URLs are flaky on Windows).
+ * Interactive EnPlot v2: bundled viewer URL + JSON payload resolve/build.
  */
-final class EnplotViewerResources {
+final class EnplotSupport {
 
-    private static final Logger klog = LoggerFactory.getLogger(EnplotViewerResources.class);
+    private static final Logger klog = LoggerFactory.getLogger(EnplotSupport.class);
     private static final String[] VIEWER_FILES = ModernEnrichmentPlotJson.VIEWER_FILES;
-
     private static volatile File bundledViewerDir;
 
-    private EnplotViewerResources() {
+    private EnplotSupport() {
     }
 
     /** Extract bundled assets to a temp {@code file:} folder (always matches app version). */
@@ -39,6 +43,37 @@ final class EnplotViewerResources {
             klog.error("Could not extract bundled EnPlot viewer", ioe);
             return null;
         }
+    }
+
+    static File jsonFile(File reportDir, String geneSetName) {
+        return reportDir != null ? ModernEnrichmentPlotJson.jsonFile(reportDir, geneSetName) : null;
+    }
+
+    /** Background-safe: read validated JSON from disk only. */
+    static String readCachedJson(File jsonFile, int listSize) throws IOException {
+        if (jsonFile == null || !jsonFile.isFile()) {
+            return null;
+        }
+        String json = Files.readString(jsonFile.toPath());
+        return ModernEnrichmentPlotJson.isCurrentPayload(json, listSize) ? json : null;
+    }
+
+    /** FX-thread only: build JSON from enrichment result (may recompute ES curve). */
+    static String buildFromResult(EnrichmentResult result, String classA, String classB,
+            GeneSetScoringTable scoring, String metricName) {
+        if (result == null || result.getGeneSet() == null || result.getRankedList() == null
+                || result.getScore() == null) {
+            return null;
+        }
+        String geneSetName = result.getGeneSet().getName(true);
+        RankedList rl = result.getRankedList();
+        EnrichmentReports.ensureMetricName(rl, metricName);
+        EnrichmentScore score = result.getScore();
+        return ModernEnrichmentPlotJson.buildPayloadJson(geneSetName, rl, score.getHitIndices(),
+                score.getESProfile(), EnrichmentEsProfiles.fullEsProfile(result, scoring),
+                classA, classB, score.getES(), score.getNES(), score.getNP(),
+                score.getFDR(), score.getFWER(),
+                EnrichmentReports.colorBarMarkers(rl));
     }
 
     private static String pageUrl(File indexHtml, boolean dark) {
@@ -56,7 +91,7 @@ final class EnplotViewerResources {
             refreshBundledAssets(cached);
             return cached;
         }
-        synchronized (EnplotViewerResources.class) {
+        synchronized (EnplotSupport.class) {
             cached = bundledViewerDir;
             if (cached != null && new File(cached, "index.html").isFile()) {
                 refreshBundledAssets(cached);

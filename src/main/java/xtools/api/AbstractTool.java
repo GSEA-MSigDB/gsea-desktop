@@ -11,9 +11,7 @@ import edu.mit.broad.genome.reports.api.ReportIndexState;
 import edu.mit.broad.genome.reports.api.ToolReport;
 import edu.mit.broad.genome.reports.pages.HtmlFormat;
 import edu.mit.broad.genome.utils.CmdLineArgs;
-import edu.mit.broad.genome.utils.SystemUtils;
 import edu.mit.broad.vdb.chip.Chip;
-import edu.mit.broad.xbench.core.api.Application;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.ecs.StringElement;
@@ -26,7 +24,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import xapps.gsea.GseaWebResources;
-import xapps.gsea.UpdateChecker;
 import xtools.api.param.*;
 
 import java.io.IOException;
@@ -40,13 +37,6 @@ import java.util.*;
  * @author Aravind Subramanian, David Eby
  */
 public abstract class AbstractTool implements Tool {
-    // @imp note: needed here as otherwise jar resources tries to load icons
-    static {
-        if (!SystemUtils.isPropertyDefined("java.awt.headless")) {
-            System.setProperty("java.awt.headless", "true");
-        }
-    }
-
     public static final String REPORT_INDEX = "xtools.report_index";
 
     private PrintStream fOut;
@@ -97,12 +87,11 @@ public abstract class AbstractTool implements Tool {
     // Dont call declareParams()  - class vars arent yet inited
     // constructed using instantiation and npe is thrown.
     protected AbstractTool(final String toolName) {
+        // CLI/headless bootstrap only when no GUI handler is registered yet.
+        ToolBootstrap.ensureHeadlessRuntime();
+
         this.fTimer = new edu.mit.broad.genome.utils.Timer();
         this.log = LoggerFactory.getLogger(this.getClass());
-
-        if (Application.isHandlerSet() == false) {
-            Application.registerHandler(new XToolsApplication());
-        }
 
         this.fParamSet = new ToolParamSet();
 
@@ -205,7 +194,7 @@ public abstract class AbstractTool implements Tool {
 
     // @note this is the core start report method
     protected void startExec(final ReportIndexState indexState) throws IOException {
-        UpdateChecker.oneTimeGseaUpdateCheck();
+        ToolBootstrap.maybeCheckForUpdates();
         fTimer.start();
         fReport = new ToolReport(this, true, indexState);
         //log.info("Running " + getName() + " with reports: " + fRptLabelParam.getReportLabel() + " folder: " + fReport.getReportDir() + " indexState: " + indexState.toString());

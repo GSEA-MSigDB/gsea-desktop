@@ -22,7 +22,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.stage.Window;
-import xapps.gsea.fx.FxEllipsisButton;
+import xapps.gsea.fx.widgets.FxEllipsisButton;
 
 /**
  * FX
@@ -219,9 +219,9 @@ public final class FxReportCacheChooser {
         VBox.setVgrow(list, Priority.ALWAYS);
         dialog.getDialogPane().setContent(body);
         xapps.gsea.fx.FxTheme.apply(dialog);
-        xapps.gsea.fx.FxButtons.stylePrimary(
+        xapps.gsea.fx.widgets.FxButtons.stylePrimary(
                 (Button) dialog.getDialogPane().lookupButton(ButtonType.OK));
-        xapps.gsea.fx.FxButtons.styleSecondary(
+        xapps.gsea.fx.widgets.FxButtons.styleSecondary(
                 (Button) dialog.getDialogPane().lookupButton(ButtonType.CANCEL));
 
         dialog.showAndWait().ifPresent(btn -> {

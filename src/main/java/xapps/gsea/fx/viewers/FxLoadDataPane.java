@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
+import org.gsea_msigdb.gsea.ui.api.FeatureHost;
 import org.gsea_msigdb.gsea.ui.api.ViewPage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,7 +44,6 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.stage.FileChooser;
 import xapps.gsea.GseaWebResources;
-import xapps.gsea.fx.jobs.JobRuntime;
 import xtools.api.param.ParamSet;
 
 /**
@@ -67,9 +67,10 @@ public class FxLoadDataPane implements ViewPage {
     private volatile boolean loadCancelled;
     private volatile boolean loadInProgress;
 
-    public FxLoadDataPane(Consumer<ViewPage> openPage, JobRuntime jobRuntime) {
-        this.openPage = openPage != null ? openPage : page -> { };
-        this.cacheTree = new FxObjectCacheTree(this.openPage, jobRuntime);
+    public FxLoadDataPane(FeatureHost host) {
+        java.util.Objects.requireNonNull(host, "host");
+        this.openPage = host::openPage;
+        this.cacheTree = new FxObjectCacheTree(host);
 
         statusArea.setEditable(false);
         statusArea.setWrapText(true);
@@ -86,12 +87,12 @@ public class FxLoadDataPane implements ViewPage {
         HBox progressRow = new HBox(10, loadProgress, loadProgressLabel, cancelLoad);
         HBox.setHgrow(loadProgress, Priority.ALWAYS);
         progressRow.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
-        xapps.gsea.fx.FxButtons.styleSecondary(cancelLoad);
+        xapps.gsea.fx.widgets.FxButtons.styleSecondary(cancelLoad);
 
         Button browse = new Button("Browse for files ...");
-        browse.setGraphic(xapps.gsea.fx.FxFileIcons.forResource("Open16.gif"));
-        xapps.gsea.fx.FxButtons.stylePrimary(browse);
-        xapps.gsea.fx.FxButtons.sizeToContent(browse);
+        browse.setGraphic(xapps.gsea.fx.widgets.FxFileIcons.forResource("Open16.gif"));
+        xapps.gsea.fx.widgets.FxButtons.stylePrimary(browse);
+        xapps.gsea.fx.widgets.FxButtons.sizeToContent(browse);
         browse.setMaxWidth(Double.MAX_VALUE);
         browse.setOnAction(e -> browseAndLoad());
         javafx.scene.control.TitledPane method1 = new javafx.scene.control.TitledPane("Method 1:", browse);
@@ -99,9 +100,9 @@ public class FxLoadDataPane implements ViewPage {
         method1.setMaxWidth(Double.MAX_VALUE);
 
         Button loadLast = new Button("Load last dataset used");
-        loadLast.setGraphic(xapps.gsea.fx.FxFileIcons.forResource("History16_v2.gif"));
-        xapps.gsea.fx.FxButtons.styleSecondary(loadLast);
-        xapps.gsea.fx.FxButtons.sizeToContent(loadLast);
+        loadLast.setGraphic(xapps.gsea.fx.widgets.FxFileIcons.forResource("History16_v2.gif"));
+        xapps.gsea.fx.widgets.FxButtons.styleSecondary(loadLast);
+        xapps.gsea.fx.widgets.FxButtons.sizeToContent(loadLast);
         loadLast.setMaxWidth(Double.MAX_VALUE);
         loadLast.setOnAction(e -> loadLastAnalysisFiles());
         javafx.scene.control.TitledPane method2 = new javafx.scene.control.TitledPane("Method 2:", loadLast);
@@ -109,9 +110,9 @@ public class FxLoadDataPane implements ViewPage {
         method2.setMaxWidth(Double.MAX_VALUE);
 
         Button formatHelp = new Button("File Format Help ...");
-        formatHelp.setGraphic(xapps.gsea.fx.FxFileIcons.forResource("Help16_v2.gif"));
-        xapps.gsea.fx.FxButtons.styleSecondary(formatHelp);
-        xapps.gsea.fx.FxButtons.sizeToContent(formatHelp);
+        formatHelp.setGraphic(xapps.gsea.fx.widgets.FxFileIcons.forResource("Help16_v2.gif"));
+        xapps.gsea.fx.widgets.FxButtons.styleSecondary(formatHelp);
+        xapps.gsea.fx.widgets.FxButtons.sizeToContent(formatHelp);
         formatHelp.setOnAction(e -> openUrl(GseaWebResources.getGseaDataFormatsHelpURL()));
         VBox formatsList = supportedFormatsBox();
         VBox formatsContent = new VBox(10, formatsList, formatHelp);
@@ -145,15 +146,15 @@ public class FxLoadDataPane implements ViewPage {
         });
 
         Button clearStaged = new Button("Clear");
-        xapps.gsea.fx.FxButtons.styleSecondary(clearStaged);
+        xapps.gsea.fx.widgets.FxButtons.styleSecondary(clearStaged);
         clearStaged.setOnAction(e -> {
             stagedFiles.clear();
             stagedList.getItems().clear();
             appendStatus("Cleared staged drop list.");
         });
         Button loadStaged = new Button("Load these files!");
-        loadStaged.setGraphic(xapps.gsea.fx.FxFileIcons.forResource("Dnd2.gif"));
-        xapps.gsea.fx.FxButtons.stylePrimary(loadStaged);
+        loadStaged.setGraphic(xapps.gsea.fx.widgets.FxFileIcons.forResource("Dnd2.gif"));
+        xapps.gsea.fx.widgets.FxButtons.stylePrimary(loadStaged);
         loadStaged.setOnAction(e -> {
             if (stagedFiles.isEmpty()) {
                 Application.getWindowManager().showMessage(
@@ -162,7 +163,7 @@ public class FxLoadDataPane implements ViewPage {
             }
             loadFiles(new ArrayList<>(stagedFiles), false);
         });
-        HBox stagedActions = xapps.gsea.fx.FxButtons.row(clearStaged, loadStaged);
+        HBox stagedActions = xapps.gsea.fx.widgets.FxButtons.row(clearStaged, loadStaged);
         javafx.scene.layout.VBox method3 = new javafx.scene.layout.VBox(8, dropHint, stagedList, stagedActions);
         method3.setPadding(new Insets(8));
         method3.getStyleClass().add("gsea-panel-border");
@@ -190,7 +191,7 @@ public class FxLoadDataPane implements ViewPage {
                 }
                 File file = new File(path);
                 setText(shortRecentPath(file));
-                setGraphic(xapps.gsea.fx.FxFileIcons.forFile(file));
+                setGraphic(xapps.gsea.fx.widgets.FxFileIcons.forFile(file));
                 setTooltip(new javafx.scene.control.Tooltip(path));
                 getStyleClass().removeAll("gsea-text-missing");
                 if (!file.exists()) {
@@ -239,11 +240,11 @@ public class FxLoadDataPane implements ViewPage {
                 files.add(new File(path));
             }
             if (!files.isEmpty()) {
-                xapps.gsea.fx.FxFileTransferSupport.startFileDrag(recentList, files, e);
+                xapps.gsea.fx.widgets.FxFileTransferSupport.startFileDrag(recentList, files, e);
             }
         });
         VBox recentPane = new VBox(8, recentHeader,
-                xapps.gsea.fx.FxSearchField.wrapList(recentList, path -> path != null ? path : ""));
+                xapps.gsea.fx.widgets.FxSearchField.wrapList(recentList, path -> path != null ? path : ""));
         recentPane.setPadding(new Insets(12));
         VBox.setVgrow(recentList, Priority.ALWAYS);
 
@@ -265,7 +266,7 @@ public class FxLoadDataPane implements ViewPage {
             if (e.getGestureSource() != target
                     && (e.getDragboard().hasFiles()
                     || e.getDragboard().hasString()
-                    || xapps.gsea.fx.FxPobTransferSupport.hasPobList(e.getDragboard()))) {
+                    || xapps.gsea.fx.widgets.FxPobTransferSupport.hasPobList(e.getDragboard()))) {
                 e.acceptTransferModes(TransferMode.COPY);
             }
             e.consume();
@@ -274,9 +275,9 @@ public class FxLoadDataPane implements ViewPage {
             Dragboard db = e.getDragboard();
             boolean success = false;
             List<File> incoming = new ArrayList<>();
-            if (xapps.gsea.fx.FxPobTransferSupport.hasPobList(db)) {
+            if (xapps.gsea.fx.widgets.FxPobTransferSupport.hasPobList(db)) {
                 for (edu.mit.broad.genome.objects.PersistentObject pob :
-                        xapps.gsea.fx.FxPobTransferSupport.takeDragPobs(e)) {
+                        xapps.gsea.fx.widgets.FxPobTransferSupport.takeDragPobs(e)) {
                     try {
                         File src = ParserFactory.getCache().getSourceFile(pob);
                         if (src != null) {
@@ -288,7 +289,7 @@ public class FxLoadDataPane implements ViewPage {
                 }
             } else {
                 // Prefer path string when it retains missing files stripped from FILES flavor.
-                incoming.addAll(xapps.gsea.fx.FxFileTransferSupport.filesFromDragboard(db));
+                incoming.addAll(xapps.gsea.fx.widgets.FxFileTransferSupport.filesFromDragboard(db));
             }
             if (!incoming.isEmpty()) {
                 for (File f : incoming) {
@@ -337,7 +338,7 @@ public class FxLoadDataPane implements ViewPage {
         MenuItem purgeSel = new MenuItem("Purge " + files.size() + " Selected Files");
         purgeSel.setOnAction(e -> purgeSelectedRecent(files));
         MenuItem copyFiles = new MenuItem("Copy File(s)");
-        copyFiles.setGraphic(xapps.gsea.fx.FxFileIcons.forResource("Copy16.gif"));
+        copyFiles.setGraphic(xapps.gsea.fx.widgets.FxFileIcons.forResource("Copy16.gif"));
         copyFiles.setOnAction(e -> copyRecentFiles(files));
         MenuItem purgeAll = new MenuItem("Purge All Files");
         purgeAll.setOnAction(e -> purgeAllRecent());
@@ -351,7 +352,7 @@ public class FxLoadDataPane implements ViewPage {
         ContextMenu menu = FxFileActions.fileContextMenu(file, openPage, this::refreshRecentFiles);
         menu.getItems().add(new SeparatorMenuItem());
         MenuItem copyFiles = new MenuItem("Copy File(s)");
-        copyFiles.setGraphic(xapps.gsea.fx.FxFileIcons.forResource("Copy16.gif"));
+        copyFiles.setGraphic(xapps.gsea.fx.widgets.FxFileIcons.forResource("Copy16.gif"));
         copyFiles.setOnAction(e -> copyRecentFiles(java.util.Collections.singletonList(file)));
         MenuItem purgeSel = new MenuItem("Purge Selected File");
         purgeSel.setOnAction(e -> purgeSelectedRecent(java.util.Collections.singletonList(file)));
@@ -409,7 +410,7 @@ public class FxLoadDataPane implements ViewPage {
     }
 
     private static void copyRecentFiles(List<File> files) {
-        xapps.gsea.fx.FxFileTransferSupport.copyFilesToClipboard(
+        xapps.gsea.fx.widgets.FxFileTransferSupport.copyFilesToClipboard(
                 files != null ? files : java.util.Collections.emptyList());
     }
 
@@ -813,7 +814,7 @@ public class FxLoadDataPane implements ViewPage {
     }
 
     @Override
-    public Object getContent() {
+    public javafx.scene.Node getContent() {
         return root;
     }
 }

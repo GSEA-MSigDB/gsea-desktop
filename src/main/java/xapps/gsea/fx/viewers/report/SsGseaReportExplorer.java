@@ -7,15 +7,13 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.function.Consumer;
 
-import org.gsea_msigdb.gsea.ui.api.ViewPage;
+import org.gsea_msigdb.gsea.ui.api.FeatureHost;
 
 import edu.mit.broad.genome.reports.api.Report;
 import javafx.scene.Node;
 import javafx.scene.control.Tab;
 import javafx.scene.layout.BorderPane;
-import xapps.gsea.fx.jobs.JobRuntime;
 
 /**
  * Native explorer for ssGSEA reports: scores GCT, optional ROC/MCC tables and plot galleries.
@@ -31,16 +29,16 @@ public final class SsGseaReportExplorer implements ReportExplorer {
     }
 
     @Override
-    public Node create(Report report, Consumer<ViewPage> openPage, JobRuntime jobRuntime) {
+    public Node create(Report report, FeatureHost host) {
         File dir = ReportExplorerSupport.reportDir(report);
-        BorderPane host = new BorderPane();
+        BorderPane pane = new BorderPane();
 
-        ReportExplorerSupport.loadAsync(host, "ssgsea-report-explorer",
+        ReportExplorerSupport.loadAsync(pane, "ssgsea-report-explorer",
                 "Loading ssGSEA results…",
                 () -> discover(dir),
-                arts -> buildUi(arts, report, openPage, jobRuntime),
+                arts -> buildUi(arts, report, host),
                 "Could not load ssGSEA results");
-        return host;
+        return pane;
     }
 
     private static Artifacts discover(File dir) {
@@ -62,8 +60,7 @@ public final class SsGseaReportExplorer implements ReportExplorer {
         return new Artifacts(scores, bubbles, resultTsvs, rocPlots, mccSnaps);
     }
 
-    private static Node buildUi(Artifacts arts, Report report, Consumer<ViewPage> openPage,
-            JobRuntime jobRuntime) {
+    private static Node buildUi(Artifacts arts, Report report, FeatureHost host) {
         List<Tab> tabs = new ArrayList<>();
         tabs.add(ReportExplorerSupport.lazyFileTab("Scores",
                 arts.scores(), "No *_ssgsea_scores.gct found"));
@@ -87,7 +84,7 @@ public final class SsGseaReportExplorer implements ReportExplorer {
         }
 
         if (tabs.size() == 1 && arts.scores() == null) {
-            return new GenericFilesExplorer().create(report, openPage, jobRuntime);
+            return new GenericFilesExplorer().create(report, host);
         }
         return ReportExplorerSupport.tabPane(tabs.toArray(Tab[]::new));
     }

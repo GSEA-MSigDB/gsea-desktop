@@ -38,6 +38,7 @@ public class FxParamSetForm {
     private final VBox root = new VBox(4);
     private final List<Runnable> changeListeners = new ArrayList<>();
     private final List<LazySection> collapsedSections = new ArrayList<>();
+    private final List<ParamDependency> dependencies = new ArrayList<>();
     private boolean changeWired;
     private Runnable changeFanout;
 
@@ -110,7 +111,7 @@ public class FxParamSetForm {
         }
 
         Button toggle = new Button(shown ? "Hide" : "Show");
-        xapps.gsea.fx.FxButtons.styleToolbar(toggle);
+        xapps.gsea.fx.widgets.FxButtons.styleToolbar(toggle);
         Label header = new Label(title + " fields");
         header.getStyleClass().add("gsea-section-header");
         Region spacer = new Region();
@@ -261,6 +262,24 @@ public class FxParamSetForm {
 
     public ParamSet getParamSet() {
         return paramSet;
+    }
+
+    public void setDependencies(List<ParamDependency> deps) {
+        dependencies.clear();
+        if (deps != null) {
+            dependencies.addAll(deps);
+        }
+    }
+
+    public void addDependency(ParamDependency dep) {
+        if (dep != null) {
+            dependencies.add(dep);
+        }
+    }
+
+    /** Apply declared {@link ParamDependency} rules (call after {@link #commitAll()}). */
+    public void applyDependencies() throws Exception {
+        ParamDependency.applyAll(dependencies, paramSet);
     }
 
     public ScrollPane getScrollPane() {

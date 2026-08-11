@@ -16,6 +16,7 @@ import javafx.application.Platform;
 import javafx.geometry.Orientation;
 import javafx.geometry.Side;
 import javafx.scene.Node;
+import javafx.scene.control.SplitPane;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.Region;
@@ -97,6 +98,10 @@ public final class FxDockWorkspace {
         return documentLeaf;
     }
 
+    public DockContainerBranch getLeftColumn() {
+        return leftColumn;
+    }
+
     /**
      * Build the default IDE layout and return the scene-graph root.
      *
@@ -139,6 +144,8 @@ public final class FxDockWorkspace {
 
         // SplitPane compress floor for the tools+jobs column (includes side-tab chrome).
         leftColumn.setMinWidth(FxToolsRail.MIN_TOOLS_COLUMN_WIDTH_PX);
+        SplitPane.setResizableWithParent(leftColumn, false);
+        SplitPane.setResizableWithParent(messagesLeaf, false);
         root.setContainerSizePx(messagesLeaf, messagesHeight);
         workspaceBranch.setContainerSizePx(leftColumn, toolsWidth);
         leftColumn.setContainerSizePercent(toolsLeaf, toolsSplit / 100.0);

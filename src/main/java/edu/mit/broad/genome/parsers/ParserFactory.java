@@ -47,11 +47,16 @@ public class ParserFactory implements Constants {
     // The default one is the generic NON-application related cache
     //additionally there are application specific classes
     static ObjectCache _getCache() {
+        org.gsea_msigdb.gsea.runtime.WorkspaceSession session =
+                org.gsea_msigdb.gsea.runtime.WorkspaceSession.currentOrNull();
+        if (session != null) {
+            return session.cache();
+        }
         return kDefaultObjectCache;
     }
 
     /**
-     * @return The Parsers object cache
+     * @return The Parsers object cache (GUI session cache when a {@link org.gsea_msigdb.gsea.runtime.WorkspaceSession} is bound)
      */
     public static ObjectCache getCache() {
         return _getCache();

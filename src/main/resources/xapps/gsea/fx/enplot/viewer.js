@@ -170,10 +170,6 @@
 
   function buildUi(app) {
     app.innerHTML =
-      '<div class="enplot-header">' +
-      '  <h1 id="enplot-title">Enrichment plot</h1>' +
-      '  <div class="enplot-stats" id="enplot-stats"></div>' +
-      "</div>" +
       '<div class="enplot-toolbar">' +
       '  <label><input type="checkbox" id="toggle-le" checked/> Highlight leading edge</label>' +
       '  <label><input type="checkbox" id="toggle-fill" checked/> Fill under curves</label>' +
@@ -274,8 +270,6 @@
     var app = $("#app");
     buildUi(app);
 
-    var title = $("#enplot-title");
-    var statsEl = $("#enplot-stats");
     var canvas = $("#enplot-canvas");
     var stage = $("#enplot-stage");
     var stageWrap = $("#enplot-stage-wrap");
@@ -288,16 +282,12 @@
     var heightInput = $("#plot-height");
     var ctx = canvas.getContext("2d");
 
-    title.textContent = "EnPlot v2: " + (data.geneSet || "");
     var st = data.stats || {};
-    var hitCount = (data.hits && data.hits.length) || 0;
-    statsEl.innerHTML =
-      "<span>ES " + fmt(st.es, 3) + "</span>" +
-      "<span>NES " + fmt(st.nes, 2) + "</span>" +
-      "<span>NOM p " + fmt(st.np, 3) + "</span>" +
-      "<span>FDR " + fmt(st.fdr, 3) + "</span>" +
-      "<span>FWER " + fmt(st.fwer, 3) + "</span>" +
-      "<span>" + hitCount + " members</span>";
+    var plotTitle = "Enrichment plot: " + (data.geneSet || "");
+    var plotCaption = "ES=" + fmt(st.es, 4)
+        + " NES=" + fmt(st.nes, 4)
+        + " NOM pVal=" + fmt(st.np, 4)
+        + " FDR=" + fmt(st.fdr, 4);
 
     var listSize = data.listSize || 1;
     var hitsBySymbol = {};
@@ -315,7 +305,7 @@
       showAnn: true,
       colorScheme: "modern",
       // Pixel offsets from each annotation's default anchor.
-      annOffset: { stats: null, zeroCross: null, pos: null, neg: null },
+      annOffset: { peak: null, zeroCross: null, pos: null, neg: null },
       // Hit targets rebuilt every draw: [{id, x, y, w, h}, …]
       annHits: [],
       annDrag: null, // {id, startX, startY, origDx, origDy}
@@ -336,7 +326,7 @@
     var layout = {
       padL: 58,
       padR: 16,
-      padT: 12,
+      padT: 40,
       padB: 30,
       weights: [12, 3, 1, 7]
     };
@@ -388,6 +378,16 @@
       var h = parseInt(heightInput.value, 10);
       if (!isFinite(w)) w = stage.clientWidth;
       if (!isFinite(h)) h = stage.clientHeight;
+      w = clamp(w, SIZE_MIN_W, SIZE_MAX_W);
+      h = clamp(h, SIZE_MIN_H, SIZE_MAX_H);
+      var curW = Math.round(stage.clientWidth);
+      var curH = Math.round(stage.clientHeight);
+      // Same as the live plot: do not switch fit→fixed (that layout churn shrinks the stage).
+      if (w === curW && h === curH) {
+        widthInput.value = String(w);
+        heightInput.value = String(h);
+        return;
+      }
       setStageSize(w, h, true);
     }
 
@@ -468,14 +468,14 @@
     }
 
     function resetAnnOffsets() {
-      state.annOffset = { stats: null, zeroCross: null, pos: null, neg: null };
+      state.annOffset = { peak: null, zeroCross: null, pos: null, neg: null };
     }
 
     /** Boxed annotation beside a vertical guide (left edge offset from line). */
     function drawLabelBox(ctx, text, x, y, anchor, annId, opts) {
       opts = opts || {};
       var gap = opts.gap != null ? opts.gap : 8;
-      var besideLine = opts.besideLine !== false && (opts.besideLine || annId === "stats" || annId === "zeroCross");
+      var besideLine = opts.besideLine !== false && (opts.besideLine || annId === "peak" || annId === "zeroCross");
       ctx.font = "11px Segoe UI, sans-serif";
       var padX = 5, padY = 3;
       var lines = String(text).split("\n");
@@ -610,8 +610,19 @@
       canvas.style.width = w + "px";
       canvas.style.height = h + "px";
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      ctx.clearRect(0, 0, w, h);
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, w, h);
       state.annHits = [];
+
+      // Title + stats caption (same placement as static EnPlot v2).
+      ctx.fillStyle = colors().ink;
+      ctx.font = "bold 13px Segoe UI, sans-serif";
+      ctx.textAlign = "left";
+      ctx.textBaseline = "alphabetic";
+      ctx.fillText(plotTitle, layout.padL, 16);
+      ctx.font = "10px Segoe UI, sans-serif";
+      ctx.fillStyle = colors().axis;
+      ctx.fillText(plotCaption, layout.padL, 30);
 
       var rects = panelRects(h);
       var esY = extentY(data.esCurve, 0.12);
@@ -724,15 +735,14 @@
       ctx.restore();
 
       if (state.showAnn && peakX != null) {
-        var ann = "ES=" + fmt(st.es, 3) + "  NES=" + fmt(st.nes, 2)
-            + "  NOM pVal=" + fmt(st.np, 3) + "  FDR=" + fmt(st.fdr, 3)
-            + "\npeak at rank " + Math.round(peakRank);
+        // Stats are in the plot caption; peak line only labels rank.
+        var ann = "peak at rank " + Math.round(peakRank);
         var zeroY = yScale(0, yExt.min, yExt.max, rect.top, rect.h);
-        // Stats beside peak rank line (left edge offset), in whitespace opposite the ES peak.
+        // Peak label beside the rank line, in whitespace opposite the ES peak.
         if (peakEs != null && peakEs >= 0) {
-          drawLabelBox(ctx, ann, peakX, zeroY, "top", "stats", { besideLine: true });
+          drawLabelBox(ctx, ann, peakX, zeroY, "top", "peak", { besideLine: true });
         } else {
-          drawLabelBox(ctx, ann, peakX, zeroY, "bottom", "stats", { besideLine: true });
+          drawLabelBox(ctx, ann, peakX, zeroY, "bottom", "peak", { besideLine: true });
         }
       }
 
@@ -1296,7 +1306,7 @@
     if (typeof ResizeObserver !== "undefined") {
       new ResizeObserver(function () {
         draw();
-        if (!state.resizing) {
+        if (!state.resizing && !state.sized) {
           syncSizeInputs();
         }
       }).observe(stage);
@@ -1310,14 +1320,15 @@
     } else {
       window.addEventListener("resize", function () {
         draw();
-        syncSizeInputs();
+        if (!state.sized) {
+          syncSizeInputs();
+        }
       });
     }
 
     draw();
     syncSizeInputs();
 
-    /** FX host: capture a clean PNG of the current plot (no hover chrome). */
     window.__enplotCapturePng = function () {
       state.hoverPx = null;
       state.hoverHit = null;

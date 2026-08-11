@@ -21,7 +21,6 @@ import org.slf4j.LoggerFactory;
 
 import edu.mit.broad.cytoscape.CytoscapeCyrest;
 import edu.mit.broad.cytoscape.EnrichmentMapParameters;
-import edu.mit.broad.xbench.core.api.Application;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
@@ -48,6 +47,8 @@ import xapps.gsea.fx.params.FxGseaReportLoadUi;
 import xapps.gsea.fx.params.FxGseaReportXor;
 import xapps.gsea.fx.params.FxReportCacheChooser;
 import xtools.munge.CollapseDataset;
+import org.gsea_msigdb.gsea.runtime.AppServices;
+import org.gsea_msigdb.gsea.ui.api.FeatureHost;
 
 /**
  * JavaFX Enrichment Map / Cytoscape launcher. Load stage (report cache XOR directory → closable analysis tabs);
@@ -64,8 +65,14 @@ public class FxEnrichmentMapPane implements ViewPage {
     private final TabPane analysisTabs = new TabPane();
     private final FxGseaReportLoadUi loadUi;
     private int analysisCount = 0;
+    private final AppServices svc;
 
-    public FxEnrichmentMapPane() {
+    public FxEnrichmentMapPane(FeatureHost host) {
+        this(java.util.Objects.requireNonNull(host, "host").services());
+    }
+
+    private FxEnrichmentMapPane(AppServices svc) {
+        this.svc = java.util.Objects.requireNonNull(svc, "svc");
         analysisTabs.setTabClosingPolicy(TabPane.TabClosingPolicy.ALL_TABS);
         loadUi = new FxGseaReportLoadUi(FxReportCacheChooser.multiInterval(), root, true, true,
                 this::loadGseaResults);
@@ -106,7 +113,7 @@ public class FxEnrichmentMapPane implements ViewPage {
             analysisTabs.getSelectionModel().select(tab);
         } catch (Throwable t) {
             klog.error("Unable to initialize Enrichment Map interface", t);
-            Application.getWindowManager().showError("Trouble loading enrichment database", t);
+            svc.dialogs().showError("Trouble loading enrichment database", t);
         }
     }
 
@@ -182,9 +189,9 @@ public class FxEnrichmentMapPane implements ViewPage {
             HBox.setHgrow(expressionField, Priority.ALWAYS);
             HBox.setHgrow(expression2Field, Priority.ALWAYS);
 
-            Button browseExpr = xapps.gsea.fx.FxEllipsisButton.create();
+            Button browseExpr = xapps.gsea.fx.widgets.FxEllipsisButton.create();
             browseExpr.setOnAction(e -> chooseExpressionFile(expressionField, resultDirField));
-            Button browseExpr2 = xapps.gsea.fx.FxEllipsisButton.create();
+            Button browseExpr2 = xapps.gsea.fx.widgets.FxEllipsisButton.create();
             browseExpr2.setOnAction(e -> chooseExpressionFile(expression2Field, resultDir2Field));
 
             ToggleGroup metricGroup = new ToggleGroup();
@@ -296,11 +303,11 @@ public class FxEnrichmentMapPane implements ViewPage {
             prerankedNote.setStyle("-fx-font-style: italic;");
 
             Button launch = new Button("Build Enrichment Map");
-            xapps.gsea.fx.FxButtons.stylePrimary(launch);
+            xapps.gsea.fx.widgets.FxButtons.stylePrimary(launch);
             launch.setOnAction(e -> launchEnrichmentMap());
 
             VBox box = new VBox(12, form, prerankedNote,
-                    xapps.gsea.fx.FxButtons.row(launch));
+                    xapps.gsea.fx.widgets.FxButtons.row(launch));
             box.setPadding(new Insets(16));
             TitledPane titled = new TitledPane("Enrichment Map Parameters", box);
             titled.setCollapsible(false);
@@ -455,7 +462,7 @@ public class FxEnrichmentMapPane implements ViewPage {
         private void launchEnrichmentMap() {
             String resultDir = resultDirField.getText();
             if (resultDir == null || resultDir.isBlank()) {
-                Application.getWindowManager().showMessage("Specify a GSEA result folder first.");
+                svc.dialogs().showMessage("Specify a GSEA result folder first.");
                 return;
             }
 
@@ -488,13 +495,13 @@ public class FxEnrichmentMapPane implements ViewPage {
                 try {
                     if (!cyto.CytoscapeRestActive()) {
                         klog.info(LAUNCH_MSG);
-                        if (!Application.getWindowManager().showConfirm(LAUNCH_MSG)) {
+                        if (!svc.dialogs().showConfirm(LAUNCH_MSG)) {
                             return;
                         }
                     }
                     if (cyto.CytoscapeRestActive() && cyto.CytoscapeRestCommandEM()) {
                         if (cyto.createEM_get()) {
-                            Platform.runLater(() -> Application.getWindowManager().showMessage(
+                            Platform.runLater(() -> svc.dialogs().showMessage(
                                     "An Enrichment map was successfully loaded and created in cytoscape.  "
                                             + "Please navigate to cytoscape to view results"));
                         }
@@ -502,7 +509,7 @@ public class FxEnrichmentMapPane implements ViewPage {
                 } catch (java.io.IOException e) {
                     klog.error("Unable to communicate with cytoscape: {}", e.getMessage());
                     klog.error(LAUNCH_MSG);
-                    Application.getWindowManager().showMessage(LAUNCH_MSG);
+                    svc.dialogs().showMessage(LAUNCH_MSG);
                 } catch (java.net.URISyntaxException e) {
                     klog.error("Issue with cytoscape rest command: {}", e.getMessage());
                 }
@@ -577,7 +584,7 @@ public class FxEnrichmentMapPane implements ViewPage {
 
             String res = params.get("param res");
             if (res != null && !new File(res).exists()) {
-                Application.getWindowManager().showMessage("Unable to find expression file: " + res);
+                AppServices.require().dialogs().showMessage("Unable to find expression file: " + res);
             }
             if ("false".equalsIgnoreCase(collapse) || "No_Collapse".equalsIgnoreCase(collapse)) {
                 return res;
@@ -637,7 +644,7 @@ public class FxEnrichmentMapPane implements ViewPage {
     }
 
     @Override
-    public Object getContent() {
+    public javafx.scene.Node getContent() {
         return root;
     }
 }

@@ -6,8 +6,8 @@ package xapps.gsea.fx.viewers;
 import java.io.File;
 import java.util.Date;
 import java.util.Objects;
-import java.util.function.Consumer;
 
+import org.gsea_msigdb.gsea.ui.api.FeatureHost;
 import org.gsea_msigdb.gsea.ui.api.ViewPage;
 
 import edu.mit.broad.genome.reports.api.Report;
@@ -26,8 +26,8 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
-import xapps.gsea.fx.jobs.JobRuntime;
 import xapps.gsea.fx.tui.FxToolRelaunch;
+import xapps.gsea.fx.viewers.report.GseaReportExplorer;
 import xapps.gsea.fx.viewers.report.ReportExplorerRegistry;
 import xapps.gsea.fx.viewers.report.ReportKind;
 import xapps.gsea.fx.viewers.report.ReportParamsTable;
@@ -41,14 +41,12 @@ public class FxReportViewer implements ViewPage {
     private final Report report;
     private final ReportKind kind;
     private final BorderPane root = new BorderPane();
-    private final Consumer<ViewPage> openPage;
-    private final JobRuntime jobRuntime;
+    private final FeatureHost host;
     private final CheckBox loadDataCheck = new CheckBox("Load data");
 
-    public FxReportViewer(Report report, Consumer<ViewPage> openPage, JobRuntime jobRuntime) {
+    public FxReportViewer(Report report, FeatureHost host) {
         this.report = report;
-        this.openPage = openPage != null ? openPage : page -> { };
-        this.jobRuntime = Objects.requireNonNull(jobRuntime, "jobRuntime");
+        this.host = Objects.requireNonNull(host, "host");
         this.kind = ReportKind.from(report);
 
         root.getStyleClass().add("gsea-report-shell");
@@ -76,18 +74,18 @@ public class FxReportViewer implements ViewPage {
                 "Follow files specified in params and load their data"));
 
         Button showInToolRunner = new Button("Show in ToolRunner");
-        showInToolRunner.setGraphic(xapps.gsea.fx.FxFileIcons.forResource("ToolLauncher.gif"));
-        xapps.gsea.fx.FxButtons.stylePrimary(showInToolRunner);
-        xapps.gsea.fx.FxButtons.sizeToContent(showInToolRunner);
+        showInToolRunner.setGraphic(xapps.gsea.fx.widgets.FxFileIcons.forResource("ToolLauncher.gif"));
+        xapps.gsea.fx.widgets.FxButtons.stylePrimary(showInToolRunner);
+        xapps.gsea.fx.widgets.FxButtons.sizeToContent(showInToolRunner);
         showInToolRunner.setOnAction(e -> FxToolRelaunch.showInToolRunner(
-                report, loadDataCheck.isSelected(), this.openPage, jobRuntime));
+                report, loadDataCheck.isSelected(), host));
 
         Button openHtml = new Button("Open HTML report");
         openHtml.setTooltip(new javafx.scene.control.Tooltip(
                 "Open the classic HTML report index in your system browser"));
-        xapps.gsea.fx.FxButtons.styleSecondary(openHtml);
-        xapps.gsea.fx.FxButtons.sizeToContent(openHtml);
-        openHtml.setOnAction(e -> xapps.gsea.fx.FxReportOpen.openInBrowser(report));
+        xapps.gsea.fx.widgets.FxButtons.styleSecondary(openHtml);
+        xapps.gsea.fx.widgets.FxButtons.sizeToContent(openHtml);
+        openHtml.setOnAction(e -> xapps.gsea.fx.viewers.report.FxReportOpen.openInBrowser(report));
 
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
@@ -96,7 +94,7 @@ public class FxReportViewer implements ViewPage {
         toolbar.setAlignment(Pos.CENTER_LEFT);
         toolbar.setPadding(new Insets(8, 14, 8, 14));
 
-        Node results = ReportExplorerRegistry.forKind(kind).create(report, this.openPage, jobRuntime);
+        Node results = ReportExplorerRegistry.forKind(kind).create(report, host);
         if (results instanceof javafx.scene.layout.Region region) {
             region.setMinSize(0, 0);
             region.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
@@ -108,11 +106,28 @@ public class FxReportViewer implements ViewPage {
         tabs.setMinSize(0, 0);
         Tab resultsTab = new Tab("Results", results);
         resultsTab.setClosable(false);
+        tabs.getTabs().add(resultsTab);
+
+        if (kind == ReportKind.GSEA || kind == ReportKind.GSEA_PRERANKED) {
+            Node plots = GseaReportExplorer.createSummaryPlots(report);
+            if (plots != null) {
+                if (plots instanceof javafx.scene.layout.Region region) {
+                    region.setMinSize(0, 0);
+                    region.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
+                }
+                BorderPane plotsPane = new BorderPane(plots);
+                plotsPane.setPadding(new Insets(8, 12, 12, 12));
+                Tab plotsTab = new Tab("Plots", plotsPane);
+                plotsTab.setClosable(false);
+                tabs.getTabs().add(plotsTab);
+            }
+        }
+
         Tab paramsTab = new Tab("Parameters", buildParamsPane());
         paramsTab.setClosable(false);
         Tab filesTab = new Tab("Files", buildFilesPane());
         filesTab.setClosable(false);
-        tabs.getTabs().addAll(resultsTab, paramsTab, filesTab);
+        tabs.getTabs().addAll(paramsTab, filesTab);
 
         VBox box = new VBox(header, toolbar, tabs);
         VBox.setVgrow(tabs, Priority.ALWAYS);
@@ -120,21 +135,19 @@ public class FxReportViewer implements ViewPage {
         root.setMinSize(0, 0);
     }
 
-    private VBox buildParamsPane() {
+    private Node buildParamsPane() {
         TableView<ReportParamsTable.Row> table = ReportParamsTable.create(report.getParametersUsed());
-        VBox box = new VBox(table);
-        VBox.setVgrow(table, Priority.ALWAYS);
-        box.setPadding(new Insets(8, 12, 12, 12));
-        return box;
+        BorderPane pane = new BorderPane(table);
+        pane.setPadding(new Insets(8, 12, 12, 12));
+        return pane;
     }
 
-    private VBox buildFilesPane() {
-        ListView<File> filesList = FxReportFilesList.create(report.getFilesProduced(), openPage);
-        Label hint = new Label("Files produced as part of this analysis (double-click to view)");
-        hint.getStyleClass().add("gsea-muted");
-        VBox box = new VBox(8, hint, filesList);
+    private Node buildFilesPane() {
+        ListView<File> files = FxReportFilesList.create(report, host::openPage);
+        Label hint = new Label("All files in the report folder (double-click to view)");
+        VBox box = new VBox(8, hint, files);
         box.setPadding(new Insets(8, 12, 12, 12));
-        VBox.setVgrow(filesList, Priority.ALWAYS);
+        VBox.setVgrow(files, Priority.ALWAYS);
         return box;
     }
 
@@ -149,7 +162,7 @@ public class FxReportViewer implements ViewPage {
     }
 
     @Override
-    public Object getContent() {
+    public Node getContent() {
         return root;
     }
 }

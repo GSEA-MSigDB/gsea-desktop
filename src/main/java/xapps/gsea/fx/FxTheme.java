@@ -28,6 +28,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.Dialog;
 import javafx.scene.control.DialogEvent;
 import javafx.scene.control.DialogPane;
+import xapps.gsea.fx.shell.FxWindowsDarkFrame;
 import javafx.scene.paint.Color;
 import javafx.stage.Window;
 

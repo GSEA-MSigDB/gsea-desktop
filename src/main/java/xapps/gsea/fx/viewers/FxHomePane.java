@@ -5,11 +5,11 @@ package xapps.gsea.fx.viewers;
 
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.function.Consumer;
+import java.util.Objects;
 
+import org.gsea_msigdb.gsea.ui.api.FeatureHost;
 import org.gsea_msigdb.gsea.ui.api.ViewPage;
 
-import edu.mit.broad.xbench.core.api.Application;
 import edu.mit.broad.xbench.tui.ReportStub;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -22,17 +22,18 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
-import xapps.gsea.fx.FxReportOpen;
-import xapps.gsea.fx.jobs.JobRuntime;
+import xapps.gsea.fx.viewers.report.FxReportOpen;
+import org.gsea_msigdb.gsea.runtime.AppServices;
 
 /** Home page with quick actions and recent analyses. */
 public class FxHomePane implements ViewPage {
 
     private final BorderPane root = new BorderPane();
 
-    public FxHomePane(Consumer<ViewPage> openPage, Runnable openLoadData, Runnable openGsea,
+    public FxHomePane(FeatureHost host, Runnable openLoadData, Runnable openGsea,
             Runnable openHistory) {
-        Consumer<ViewPage> open = openPage != null ? openPage : page -> { };
+        Objects.requireNonNull(host, "host");
+        AppServices services = host.services();
 
         ImageView imageView = new ImageView();
         try {
@@ -60,15 +61,15 @@ public class FxHomePane implements ViewPage {
         Button loadData = actionButton("Load Data", "Open16.gif", true, openLoadData);
         Button runGsea = actionButton("Run GSEA", "Gsea_app16_v2.png", true, openGsea);
         Button history = actionButton("Analysis history", "past_analysis16.gif", false, openHistory);
-        xapps.gsea.fx.FxButtons.sizeToContent(loadData, runGsea, history);
+        xapps.gsea.fx.widgets.FxButtons.sizeToContent(loadData, runGsea, history);
 
         Label recentHeader = new Label("Recent analyses");
         recentHeader.getStyleClass().add("gsea-section-header");
         VBox recentBox = new VBox(6, recentHeader);
         recentBox.setPadding(new Insets(8, 0, 0, 0));
-        addRecentButtons(recentBox, open);
+        addRecentButtons(recentBox, host, services);
 
-        VBox left = new VBox(14, brand, blurb, xapps.gsea.fx.FxButtons.row(loadData, runGsea, history),
+        VBox left = new VBox(14, brand, blurb, xapps.gsea.fx.widgets.FxButtons.row(loadData, runGsea, history),
                 recentBox);
         left.setPadding(new Insets(24, 16, 24, 24));
         left.setMaxWidth(560);
@@ -86,11 +87,11 @@ public class FxHomePane implements ViewPage {
 
     private static Button actionButton(String text, String icon, boolean primary, Runnable action) {
         Button b = new Button(text);
-        b.setGraphic(xapps.gsea.fx.FxFileIcons.forResource(icon));
+        b.setGraphic(xapps.gsea.fx.widgets.FxFileIcons.forResource(icon));
         if (primary) {
-            xapps.gsea.fx.FxButtons.stylePrimary(b);
+            xapps.gsea.fx.widgets.FxButtons.stylePrimary(b);
         } else {
-            xapps.gsea.fx.FxButtons.styleSecondary(b);
+            xapps.gsea.fx.widgets.FxButtons.styleSecondary(b);
         }
         if (action != null) {
             b.setOnAction(e -> action.run());
@@ -98,10 +99,10 @@ public class FxHomePane implements ViewPage {
         return b;
     }
 
-    private static void addRecentButtons(VBox recentBox, Consumer<ViewPage> openPage) {
+    private static void addRecentButtons(VBox recentBox, FeatureHost host, AppServices svc) {
         ReportStub[] all;
         try {
-            all = Application.getToolManager().getReportsInCache();
+            all = svc.tools().getReportsInCache();
         } catch (Throwable t) {
             all = null;
         }
@@ -120,12 +121,12 @@ public class FxHomePane implements ViewPage {
             Button b = new Button(stub.getName_without_ts());
             b.setMaxWidth(Double.MAX_VALUE);
             b.setAlignment(Pos.CENTER_LEFT);
-            xapps.gsea.fx.FxButtons.styleSecondary(b);
+            xapps.gsea.fx.widgets.FxButtons.styleSecondary(b);
             b.setOnAction(e -> {
                 try {
-                    FxReportOpen.openInApp(stub.getReport(false), openPage, JobRuntime.require());
+                    FxReportOpen.openInApp(stub.getReport(false), host);
                 } catch (Exception ex) {
-                    Application.getWindowManager().showError("Could not open report", ex);
+                    svc.dialogs().showError("Could not open report", ex);
                 }
             });
             recentBox.getChildren().add(b);
@@ -143,7 +144,7 @@ public class FxHomePane implements ViewPage {
     }
 
     @Override
-    public Object getContent() {
+    public javafx.scene.Node getContent() {
         return root;
     }
 }

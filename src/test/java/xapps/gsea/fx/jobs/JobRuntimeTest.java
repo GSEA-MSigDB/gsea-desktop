@@ -22,7 +22,7 @@ import org.junit.jupiter.api.Test;
 
 import edu.mit.broad.genome.reports.api.Report;
 import edu.mit.broad.xbench.tui.JobState;
-import edu.mit.broad.xbench.tui.RunContext;
+import org.gsea_msigdb.gsea.runtime.RunContext;
 import xtools.api.Tool;
 import xtools.api.ToolCategory;
 import xtools.api.param.ParamSet;
@@ -239,14 +239,6 @@ public class JobRuntimeTest {
             }
         }
         assertTrue(lastCanceled > lastRunning);
-    }
-
-    @Test
-    public void disposeClearsCurrent() {
-        assertEquals(runtime, JobRuntime.current());
-        runtime.dispose();
-        assertEquals(null, JobRuntime.current());
-        runtime = null; // tearDown skip
     }
 
     @Test

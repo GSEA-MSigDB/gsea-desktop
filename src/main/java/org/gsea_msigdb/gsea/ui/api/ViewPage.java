@@ -3,9 +3,10 @@
  */
 package org.gsea_msigdb.gsea.ui.api;
 
+import javafx.scene.Node;
+
 /**
  * Page that can be opened in the application workspace (tab / window).
- * Content is a JavaFX {@code Node}.
  */
 public interface ViewPage {
 
@@ -19,5 +20,5 @@ public interface ViewPage {
     /**
      * JavaFX content node for this page.
      */
-    Object getContent();
+    Node getContent();
 }

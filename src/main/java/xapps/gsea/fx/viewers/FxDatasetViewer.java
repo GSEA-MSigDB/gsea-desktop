@@ -195,7 +195,7 @@ public class FxDatasetViewer implements ViewPage {
     }
 
     @Override
-    public Object getContent() {
+    public javafx.scene.Node getContent() {
         return root;
     }
 }

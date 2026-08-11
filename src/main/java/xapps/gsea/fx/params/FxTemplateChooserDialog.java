@@ -25,7 +25,6 @@ import edu.mit.broad.genome.objects.TemplateImplFromSampleNames;
 import edu.mit.broad.genome.objects.TemplateMode;
 import edu.mit.broad.genome.parsers.ParseUtils;
 import edu.mit.broad.genome.parsers.ParserFactory;
-import edu.mit.broad.xbench.core.api.Application;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
@@ -51,6 +50,7 @@ import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Window;
+import org.gsea_msigdb.gsea.runtime.AppServices;
 
 /**
  * JavaFX phenotype (CLS) chooser with options: browse a .cls,
@@ -129,8 +129,8 @@ public final class FxTemplateChooserDialog {
         cachedTemplateCombo.setItems(FXCollections.observableArrayList(nonAuxCachedTemplates()));
         dialog.setOnShowing(e -> refreshCachedTemplateCombo(cachedTemplateCombo));
         cachedTemplateCombo.setOnShowing(e -> refreshCachedTemplateCombo(cachedTemplateCombo));
-        cachedTemplateCombo.setCellFactory(lv -> xapps.gsea.fx.FxPobListCells.pobCell());
-        cachedTemplateCombo.setButtonCell(xapps.gsea.fx.FxPobListCells.pobCell());
+        cachedTemplateCombo.setCellFactory(lv -> xapps.gsea.fx.widgets.FxPobListCells.pobCell());
+        cachedTemplateCombo.setButtonCell(xapps.gsea.fx.widgets.FxPobListCells.pobCell());
         cachedTemplateCombo.getSelectionModel().selectedItemProperty().addListener((obs, o, selected) -> {
             if (selected != null) {
                 clsPath.clear();
@@ -142,11 +142,11 @@ public final class FxTemplateChooserDialog {
 
         Button bShowAll = new Button("Show phenotypes from all source files");
         bShowAll.setMaxWidth(Double.MAX_VALUE);
-        xapps.gsea.fx.FxButtons.styleSecondary(bShowAll);
+        xapps.gsea.fx.widgets.FxButtons.styleSecondary(bShowAll);
         bShowAll.setOnAction(e -> {
             try {
                 @SuppressWarnings("unchecked")
-                List<Template> all = ParserFactory.getCache().getCachedObjectsL(Template.class);
+                List<Template> all = AppServices.require().cache().getCachedObjectsL(Template.class);
                 Template[] qualified = qualifyByTypeAndMode(
                         all.toArray(new Template[0]), true, effectiveMode);
                 List<TemplateDerivative> tds = new ArrayList<>();
@@ -170,7 +170,7 @@ public final class FxTemplateChooserDialog {
 
         Button bOnTheFly = new Button("Create an on-the-fly phenotype ...");
         bOnTheFly.setMaxWidth(Double.MAX_VALUE);
-        xapps.gsea.fx.FxButtons.styleSecondary(bOnTheFly);
+        xapps.gsea.fx.widgets.FxButtons.styleSecondary(bOnTheFly);
         bOnTheFly.setOnAction(e -> {
             Window w = dialog.getDialogPane().getScene().getWindow();
             Optional<File> created = showOnTheFlyFromSampleNames(w);
@@ -182,7 +182,7 @@ public final class FxTemplateChooserDialog {
 
         Button bFromGene = new Button("Use a gene as the phenotype ...");
         bFromGene.setMaxWidth(Double.MAX_VALUE);
-        xapps.gsea.fx.FxButtons.styleSecondary(bFromGene);
+        xapps.gsea.fx.widgets.FxButtons.styleSecondary(bFromGene);
         bFromGene.setOnAction(e -> {
             Window w = dialog.getDialogPane().getScene().getWindow();
             Optional<File> created = showGenePhenotype(w);
@@ -206,7 +206,7 @@ public final class FxTemplateChooserDialog {
                             loaded -> {
                                 try {
                                     applyClsSourceFile(
-                                            ParserFactory.getCache().getSourceFile(loaded.get(0)),
+                                            AppServices.require().cache().getSourceFile(loaded.get(0)),
                                             clsPath,
                                             cachedTemplateCombo,
                                             comboSourceMode,
@@ -220,7 +220,7 @@ public final class FxTemplateChooserDialog {
                             }));
         };
 
-        Button browseCls = xapps.gsea.fx.FxEllipsisButton.create("Browse");
+        Button browseCls = xapps.gsea.fx.widgets.FxEllipsisButton.create("Browse");
         browseCls.setOnAction(e -> browseClsAction.run());
 
         HBox sourceRow = new HBox(6, cachedTemplateCombo, browseCls);
@@ -254,8 +254,8 @@ public final class FxTemplateChooserDialog {
         dialog.getDialogPane().setContent(root);
         dialog.getDialogPane().setPrefSize(550, 450);
         xapps.gsea.fx.FxTheme.apply(dialog);
-        xapps.gsea.fx.FxButtons.stylePrimary(okButton);
-        xapps.gsea.fx.FxButtons.styleSecondary(
+        xapps.gsea.fx.widgets.FxButtons.stylePrimary(okButton);
+        xapps.gsea.fx.widgets.FxButtons.styleSecondary(
                 (Button) dialog.getDialogPane().lookupButton(ButtonType.CANCEL));
 
         dialog.setResultConverter(btn -> {
@@ -279,7 +279,7 @@ public final class FxTemplateChooserDialog {
             } else {
                 try {
                     @SuppressWarnings("unchecked")
-                    List<Template> all = ParserFactory.getCache().getCachedObjectsL(Template.class);
+                    List<Template> all = AppServices.require().cache().getCachedObjectsL(Template.class);
                     for (Template t : all) {
                         if (t == null) {
                             continue;
@@ -375,7 +375,7 @@ public final class FxTemplateChooserDialog {
         TitledPane datasetPane = new TitledPane("Dataset", cbDataset);
         datasetPane.setCollapsible(false);
         Button apply = new Button("Apply to dataset");
-        xapps.gsea.fx.FxButtons.stylePrimary(apply);
+        xapps.gsea.fx.widgets.FxButtons.stylePrimary(apply);
         final File[] created = { null };
         apply.setOnAction(e -> {
             try {
@@ -401,7 +401,7 @@ public final class FxTemplateChooserDialog {
                     return;
                 }
 
-                File out = Application.getVdbManager().getDefaultOutputDir();
+                File out = AppServices.require().vdb().getDefaultOutputDir();
                 String classAName = tfClassA.getText().trim();
                 String classBName = tfClassB.getText().trim();
                 String tn = classAName + "_vs_" + classBName + ".cls";
@@ -478,7 +478,7 @@ public final class FxTemplateChooserDialog {
         }
 
         Button apply = new Button("Apply to dataset");
-        xapps.gsea.fx.FxButtons.stylePrimary(apply);
+        xapps.gsea.fx.widgets.FxButtons.stylePrimary(apply);
         final File[] created = { null };
         apply.setOnAction(e -> {
             try {
@@ -502,7 +502,7 @@ public final class FxTemplateChooserDialog {
                     return;
                 }
 
-                File out = Application.getVdbManager().getDefaultOutputDir();
+                File out = AppServices.require().vdb().getDefaultOutputDir();
                 String tn = gene + "_profile_in_" + ds.getName() + ".cls";
                 File file = NamingConventions.createSafeFile(out, tn);
                 Template createdTemplate = TemplateFactory.createContinuousTemplate(gene, ds);
@@ -541,7 +541,7 @@ public final class FxTemplateChooserDialog {
         cb.setMaxWidth(Double.MAX_VALUE);
         try {
             @SuppressWarnings("unchecked")
-            List<Dataset> datasets = ParserFactory.getCache().getCachedObjectsL(Dataset.class);
+            List<Dataset> datasets = AppServices.require().cache().getCachedObjectsL(Dataset.class);
             cb.setItems(FXCollections.observableArrayList(datasets));
             if (!datasets.isEmpty()) {
                 cb.getSelectionModel().selectFirst();
@@ -549,8 +549,8 @@ public final class FxTemplateChooserDialog {
         } catch (Exception e) {
             klog.debug("Could not list cached datasets", e);
         }
-        cb.setCellFactory(lv -> xapps.gsea.fx.FxPobListCells.pobCell());
-        cb.setButtonCell(xapps.gsea.fx.FxPobListCells.pobCell());
+        cb.setCellFactory(lv -> xapps.gsea.fx.widgets.FxPobListCells.pobCell());
+        cb.setButtonCell(xapps.gsea.fx.widgets.FxPobListCells.pobCell());
         return cb;
     }
 
@@ -593,7 +593,7 @@ public final class FxTemplateChooserDialog {
         List<Template> result = new ArrayList<>();
         try {
             @SuppressWarnings("unchecked")
-            List<Template> all = ParserFactory.getCache().getCachedObjectsL(Template.class);
+            List<Template> all = AppServices.require().cache().getCachedObjectsL(Template.class);
             for (Template t : all) {
                 if (t.isContinuous() || !t.isAux()) {
                     result.add(t);
@@ -623,7 +623,7 @@ public final class FxTemplateChooserDialog {
         try {
             List<TemplateDerivative> tds = new ArrayList<>();
             if (selected.isContinuous()) {
-                File file = ParserFactory.getCache().getSourceFile(selected);
+                File file = AppServices.require().cache().getSourceFile(selected);
                 Set<Template> uniq = new LinkedHashSet<>(Arrays.asList(ParserFactory.readTemplates(file)));
                 Template[] cts = qualifyByTypeAndMode(uniq.toArray(new Template[0]), false, mode);
                 for (Template ct : cts) {

@@ -5,14 +5,12 @@ package xapps.gsea.fx.viewers.report;
 
 import java.io.File;
 import java.util.Locale;
-import java.util.function.Consumer;
 
-import org.gsea_msigdb.gsea.ui.api.ViewPage;
+import org.gsea_msigdb.gsea.ui.api.FeatureHost;
 
 import edu.mit.broad.genome.reports.api.Report;
 import javafx.scene.Node;
 import javafx.scene.layout.BorderPane;
-import xapps.gsea.fx.jobs.JobRuntime;
 
 /**
  * Native explorer for CollapseDataset reports: collapsed GCT + etiology table.
@@ -23,16 +21,16 @@ public final class CollapseDatasetReportExplorer implements ReportExplorer {
     }
 
     @Override
-    public Node create(Report report, Consumer<ViewPage> openPage, JobRuntime jobRuntime) {
+    public Node create(Report report, FeatureHost host) {
         File dir = ReportExplorerSupport.reportDir(report);
-        BorderPane host = new BorderPane();
+        BorderPane pane = new BorderPane();
 
-        ReportExplorerSupport.loadAsync(host, "collapse-report-explorer",
+        ReportExplorerSupport.loadAsync(pane, "collapse-report-explorer",
                 "Loading collapsed dataset…",
                 () -> discover(dir),
-                arts -> buildUi(arts, report, openPage, jobRuntime),
+                arts -> buildUi(arts, report, host),
                 "Could not load Collapse Dataset results");
-        return host;
+        return pane;
     }
 
     private static Artifacts discover(File dir) {
@@ -49,10 +47,9 @@ public final class CollapseDatasetReportExplorer implements ReportExplorer {
         return new Artifacts(gct, etiology);
     }
 
-    private static Node buildUi(Artifacts arts, Report report, Consumer<ViewPage> openPage,
-            JobRuntime jobRuntime) {
+    private static Node buildUi(Artifacts arts, Report report, FeatureHost host) {
         if (arts.gct() == null && arts.etiology() == null) {
-            return new GenericFilesExplorer().create(report, openPage, jobRuntime);
+            return new GenericFilesExplorer().create(report, host);
         }
         if (arts.etiology() == null) {
             return ReportExplorerSupport.tabPane(

@@ -304,7 +304,7 @@ public final class FxToolsRail {
 
     private static Button toolButton(ToolItem item) {
         Button b = new Button(item.label());
-        xapps.gsea.fx.FxButtons.styleRail(b);
+        xapps.gsea.fx.widgets.FxButtons.styleRail(b);
         b.setUserData(item.id());
         b.setMaxHeight(Region.USE_PREF_SIZE);
         if (item.iconResource() != null) {

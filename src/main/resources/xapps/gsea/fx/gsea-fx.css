@@ -161,6 +161,7 @@
 }
 
 /* Primary / commit actions (Run, Load, Build, …) */
+.gsea-root .button.gsea-run-button,
 .gsea-run-button {
     -fx-background-color: -color-accent-emphasis;
     -fx-text-fill: white;
@@ -170,11 +171,13 @@
     -fx-min-height: 30;
 }
 
+.gsea-root .button.gsea-run-button:hover,
 .gsea-run-button:hover {
     -fx-background-color: -color-accent-muted;
     -fx-border-color: -color-accent-muted;
 }
 
+.gsea-root .button.gsea-run-button:pressed,
 .gsea-run-button:pressed {
     -fx-background-color: -color-accent-muted;
 }
@@ -541,12 +544,46 @@
     -fx-padding: 0 6 0 6;
 }
 
-.gsea-enplot-tabs {
-    -fx-background-color: transparent;
+.gsea-section-bar {
+    -fx-background-color: -color-bg-overlay;
+    -fx-background-radius: 6;
+    -fx-border-color: -color-border-subtle;
+    -fx-border-radius: 6;
+    -fx-border-width: 1;
+    -fx-padding: 2;
 }
 
-.gsea-enplot-tabs > .tab-header-area {
-    -fx-padding: 0 0 0 4;
+.gsea-section-toggle {
+    -fx-background-color: transparent;
+    -fx-background-radius: 4;
+    -fx-border-color: transparent;
+    -fx-border-radius: 4;
+    -fx-padding: 4 10 4 10;
+    -fx-font-size: 12px;
+    -fx-text-fill: -color-fg-muted;
+    -fx-cursor: hand;
+}
+
+.gsea-section-toggle:hover {
+    -fx-background-color: -color-bg-default;
+    -fx-text-fill: -color-fg-default;
+}
+
+.gsea-section-toggle:selected {
+    -fx-background-color: -color-bg-default;
+    -fx-text-fill: -color-fg-default;
+    -fx-font-weight: bold;
+    -fx-border-color: -color-border-subtle;
+}
+
+.gsea-pheno-toggle-pos:selected {
+    -fx-text-fill: -color-pheno-pos;
+    -fx-border-color: -color-pheno-pos-border;
+}
+
+.gsea-pheno-toggle-neg:selected {
+    -fx-text-fill: -color-pheno-neg;
+    -fx-border-color: -color-pheno-neg-border;
 }
 
 .gsea-report-explorer,

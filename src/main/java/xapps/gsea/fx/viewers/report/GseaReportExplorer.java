@@ -7,9 +7,9 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.function.Consumer;
 
-import org.gsea_msigdb.gsea.ui.api.ViewPage;
+import org.gsea_msigdb.gsea.ui.api.FeatureHost;
+import org.gsea_msigdb.gsea.runtime.AppServices;
 import edu.mit.broad.genome.objects.esmatrix.db.EnrichmentDb;
 import edu.mit.broad.genome.objects.esmatrix.db.EnrichmentResult;
 import edu.mit.broad.genome.parsers.ParserFactory;
@@ -18,8 +18,7 @@ import edu.mit.broad.genome.reports.EnrichmentCharts;
 import edu.mit.broad.genome.reports.EnrichmentEsProfiles;
 import edu.mit.broad.genome.reports.EnrichmentReports;
 import edu.mit.broad.genome.reports.api.Report;
-import edu.mit.broad.xbench.core.api.Application;
-import xapps.gsea.fx.FxImages;
+import xapps.gsea.fx.widgets.FxImages;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
@@ -28,25 +27,24 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.SelectionMode;
 import javafx.scene.control.SplitPane;
-import javafx.scene.control.Tab;
-import javafx.scene.control.TabPane;
 import javafx.scene.control.TextField;
+import javafx.scene.control.ToggleButton;
+import javafx.scene.control.ToggleGroup;
 import javafx.scene.image.Image;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Window;
-import xapps.gsea.fx.jobs.JobRuntime;
 import xapps.gsea.fx.viewers.FxEnrichmentMapPane;
 import xapps.gsea.fx.viewers.FxLeadingEdgePane;
 import xapps.gsea.fx.viewers.coremap.CoreMapWorkspace;
-import xapps.gsea.fx.viewers.coremap.FxCoreMapPane;
 
 /**
- * Native GSEA / GSEAPreranked explorer: side-by-side phenotype panels, summary stats,
- * gene-set detail, and summary plots.
+ * Native GSEA / GSEAPreranked explorer: phenotype switcher and gene-set detail
+ * in a flat Results view. Summary plots live on the report shell Plots tab.
  */
 public final class GseaReportExplorer implements ReportExplorer {
 
@@ -77,8 +75,7 @@ public final class GseaReportExplorer implements ReportExplorer {
     }
 
     @Override
-    public Node create(Report report, Consumer<ViewPage> openPage, JobRuntime jobRuntime) {
-        Consumer<ViewPage> open = ReportExplorerSupport.safeOpen(openPage);
+    public Node create(Report report, FeatureHost featureHost) {
         File reportDir = ReportExplorerSupport.reportDir(report);
         BorderPane host = new BorderPane();
         host.getStyleClass().add("gsea-report-explorer");
@@ -91,12 +88,12 @@ public final class GseaReportExplorer implements ReportExplorer {
                             report != null ? report.getParametersUsed() : null);
                     return new Loaded(reportDir, edbDir, ParserFactory.readEdb(edbDir, true), scoring);
                 },
-                data -> buildUi(data, open, jobRuntime),
+                data -> buildUi(data, featureHost),
                 "Could not load enrichment database");
         return host;
     }
 
-    private static Node buildUi(Loaded data, Consumer<ViewPage> openPage, JobRuntime jobRuntime) {
+    private static Node buildUi(Loaded data, FeatureHost featureHost) {
         EnrichmentDb edb = data.edb();
         PhenotypeLabels pos = PhenotypeLabels.from(edb, true);
         PhenotypeLabels neg = PhenotypeLabels.from(edb, false);
@@ -105,24 +102,25 @@ public final class GseaReportExplorer implements ReportExplorer {
         int totalSets = edb.getNumResults();
 
         TextField filter = new TextField();
-        filter.setPromptText("Filter gene sets in both panels…");
+        filter.setPromptText("Filter gene sets…");
         filter.getStyleClass().add("gsea-report-filter");
         HBox.setHgrow(filter, Priority.ALWAYS);
 
         File leDir = data.edbDir() != null ? data.edbDir() : data.reportDir();
         Button openLe = new Button("Open in Leading Edge");
-        xapps.gsea.fx.FxButtons.styleSecondary(openLe);
-        openLe.setOnAction(e -> openLeadingEdge(leDir, openPage, jobRuntime));
+        xapps.gsea.fx.widgets.FxButtons.styleSecondary(openLe);
+        openLe.setOnAction(e -> openLeadingEdge(leDir, featureHost));
 
         Button openEm = new Button("Open in Enrichment Map");
-        xapps.gsea.fx.FxButtons.styleSecondary(openEm);
-        openEm.setOnAction(e -> openEnrichmentMap(data.reportDir(), openPage));
+        xapps.gsea.fx.widgets.FxButtons.styleSecondary(openEm);
+        openEm.setOnAction(e -> openEnrichmentMap(data.reportDir(), featureHost));
 
         Button openCm = new Button("Open in CoreMap");
-        xapps.gsea.fx.FxButtons.styleSecondary(openCm);
-        openCm.setOnAction(e -> openCoreMap(leDir, openPage));
+        xapps.gsea.fx.widgets.FxButtons.styleSecondary(openCm);
+        openCm.setOnAction(e -> openCoreMap(leDir, featureHost));
 
         HBox toolbar = new HBox(10, filter, openLe, openEm, openCm);
+        toolbar.setAlignment(Pos.CENTER_LEFT);
         toolbar.setPadding(new Insets(0, 0, 8, 0));
 
         BorderPane detail = new BorderPane();
@@ -146,25 +144,102 @@ public final class GseaReportExplorer implements ReportExplorer {
         wireExclusiveSelection(posTable, negTable, pos, neg, data.reportDir(), classA, classB,
                 data.scoring(), metricName, detail);
 
-        SplitPane phenotypeSplit = new SplitPane(
-                phenotypePanel(pos, posStats, totalSets, posTable),
-                phenotypePanel(neg, negStats, totalSets, negTable));
-        phenotypeSplit.setOrientation(Orientation.HORIZONTAL);
-        phenotypeSplit.setDividerPositions(0.5);
+        Node geneSetsView = geneSetsView(pos, neg, posStats, negStats, totalSets, posTable, negTable, detail);
+        VBox.setVgrow(geneSetsView, Priority.ALWAYS);
 
-        SplitPane mainSplit = new SplitPane(phenotypeSplit, detail);
+        VBox root = new VBox(10, overviewBar(edb, pos, neg, posStats, negStats, data.scoring()),
+                toolbar, geneSetsView);
+        root.setPadding(new Insets(12));
+        root.getStyleClass().add("gsea-enrichment-root");
+        return root;
+    }
+
+    private static Node geneSetsView(
+            PhenotypeLabels pos, PhenotypeLabels neg,
+            PhenoStats posStats, PhenoStats negStats, int totalSets,
+            EnrichmentResultTable posTable, EnrichmentResultTable negTable,
+            BorderPane detail) {
+        ToggleGroup phenoGroup = new ToggleGroup();
+        ToggleButton posBtn = new ToggleButton(pos.shortName());
+        ToggleButton negBtn = new ToggleButton(neg.shortName());
+        posBtn.setToggleGroup(phenoGroup);
+        negBtn.setToggleGroup(phenoGroup);
+        posBtn.getStyleClass().addAll("gsea-section-toggle", "gsea-pheno-toggle", "gsea-pheno-toggle-pos");
+        negBtn.getStyleClass().addAll("gsea-section-toggle", "gsea-pheno-toggle", "gsea-pheno-toggle-neg");
+        posBtn.setFocusTraversable(false);
+        negBtn.setFocusTraversable(false);
+        for (ToggleButton btn : List.of(posBtn, negBtn)) {
+            btn.addEventFilter(javafx.scene.input.MouseEvent.MOUSE_PRESSED, e -> {
+                if (btn.isSelected()) {
+                    e.consume();
+                }
+            });
+        }
+        HBox phenoBar = new HBox(0, posBtn, negBtn);
+        phenoBar.getStyleClass().add("gsea-section-bar");
+        phenoBar.setAlignment(Pos.CENTER_LEFT);
+
+        FlowPane chips = new FlowPane(6, 6);
+        BorderPane tableHost = new BorderPane();
+        tableHost.setMinSize(0, 0);
+        VBox.setVgrow(tableHost, Priority.ALWAYS);
+
+        Runnable showPos = () -> {
+            chips.getChildren().setAll(
+                    ReportStatChips.chip(posStats.enriched() + " / " + totalSets, "enriched in " + pos.shortName()),
+                    ReportStatChips.chip(String.valueOf(posStats.fdr25()), "FDR < 25%"),
+                    ReportStatChips.chip(String.valueOf(posStats.fdr5()), "FDR < 5%"),
+                    ReportStatChips.chip(String.valueOf(posStats.nom1()), "NOM p < 1%"),
+                    ReportStatChips.chip(String.valueOf(posStats.nom5()), "NOM p < 5%"));
+            tableHost.setCenter(posTable.getTable());
+            BorderPane.setMargin(posTable.getTable(), new Insets(0, 8, 8, 8));
+        };
+        Runnable showNeg = () -> {
+            chips.getChildren().setAll(
+                    ReportStatChips.chip(negStats.enriched() + " / " + totalSets, "enriched in " + neg.shortName()),
+                    ReportStatChips.chip(String.valueOf(negStats.fdr25()), "FDR < 25%"),
+                    ReportStatChips.chip(String.valueOf(negStats.fdr5()), "FDR < 5%"),
+                    ReportStatChips.chip(String.valueOf(negStats.nom1()), "NOM p < 1%"),
+                    ReportStatChips.chip(String.valueOf(negStats.nom5()), "NOM p < 5%"));
+            tableHost.setCenter(negTable.getTable());
+            BorderPane.setMargin(negTable.getTable(), new Insets(0, 8, 8, 8));
+        };
+
+        Label phenoTitle = new Label(pos.longName());
+        phenoTitle.getStyleClass().addAll("gsea-pheno-title", "gsea-pheno-pos");
+        phenoTitle.setWrapText(true);
+
+        phenoGroup.selectedToggleProperty().addListener((obs, o, n) -> {
+            boolean negSelected = n == negBtn;
+            if (negSelected) {
+                phenoTitle.setText(neg.longName());
+                phenoTitle.getStyleClass().setAll("gsea-pheno-title", "gsea-pheno-neg");
+                showNeg.run();
+            } else {
+                phenoTitle.setText(pos.longName());
+                phenoTitle.getStyleClass().setAll("gsea-pheno-title", "gsea-pheno-pos");
+                showPos.run();
+            }
+        });
+        phenoGroup.selectToggle(posBtn);
+        showPos.run();
+
+        VBox header = new VBox(6, new HBox(10, phenoBar, phenoTitle), chips);
+        header.setPadding(new Insets(10, 12, 8, 12));
+        HBox.setHgrow(phenoTitle, Priority.ALWAYS);
+
+        BorderPane tablePanel = new BorderPane(tableHost);
+        tablePanel.setTop(header);
+        tablePanel.getStyleClass().addAll("gsea-pheno-panel", "gsea-pheno-panel-pos");
+        phenoGroup.selectedToggleProperty().addListener((obs, o, n) -> {
+            tablePanel.getStyleClass().removeAll("gsea-pheno-panel-pos", "gsea-pheno-panel-neg");
+            tablePanel.getStyleClass().add(n == negBtn ? "gsea-pheno-panel-neg" : "gsea-pheno-panel-pos");
+        });
+
+        SplitPane mainSplit = new SplitPane(tablePanel, detail);
         mainSplit.setOrientation(Orientation.VERTICAL);
         mainSplit.setDividerPositions(0.58);
-        VBox.setVgrow(mainSplit, Priority.ALWAYS);
-
-        VBox enrichment = new VBox(10, overviewBar(edb, pos, neg, posStats, negStats, data.scoring()),
-                toolbar, mainSplit);
-        enrichment.setPadding(new Insets(12));
-        enrichment.getStyleClass().add("gsea-enrichment-root");
-
-        return ReportExplorerSupport.tabPane(
-                ReportExplorerSupport.fixedTab("Enrichment", enrichment),
-                ReportExplorerSupport.fixedTab("Plots", plotsTab(data.reportDir())));
+        return mainSplit;
     }
 
     private static void wireExclusiveSelection(
@@ -212,41 +287,14 @@ public final class GseaReportExplorer implements ReportExplorer {
                     + " — scoring_scheme was not found in this report.");
             warn.getStyleClass().add("gsea-muted");
             warn.setWrapText(true);
-            VBox box = new VBox(8, chips, warn);
-            return box;
+            return new VBox(8, chips, warn);
         }
         return chips;
     }
 
-    private static Node phenotypePanel(PhenotypeLabels pheno, PhenoStats stats, int totalSets,
-            EnrichmentResultTable table) {
-        Label title = new Label(pheno.longName());
-        title.getStyleClass().addAll("gsea-pheno-title",
-                pheno.positive() ? "gsea-pheno-pos" : "gsea-pheno-neg");
-        title.setWrapText(true);
-
-        FlowPane chips = new FlowPane(6, 6);
-        chips.getChildren().addAll(
-                ReportStatChips.chip(stats.enriched() + " / " + totalSets, "enriched in " + pheno.shortName()),
-                ReportStatChips.chip(String.valueOf(stats.fdr25()), "FDR < 25%"),
-                ReportStatChips.chip(String.valueOf(stats.fdr5()), "FDR < 5%"),
-                ReportStatChips.chip(String.valueOf(stats.nom1()), "NOM p < 1%"),
-                ReportStatChips.chip(String.valueOf(stats.nom5()), "NOM p < 5%"));
-
-        VBox header = new VBox(6, title, chips);
-        header.setPadding(new Insets(10, 12, 8, 12));
-
-        BorderPane panel = new BorderPane(table.getTable());
-        panel.setTop(header);
-        BorderPane.setMargin(table.getTable(), new Insets(0, 8, 8, 8));
-        panel.getStyleClass().addAll("gsea-pheno-panel",
-                pheno.positive() ? "gsea-pheno-panel-pos" : "gsea-pheno-panel-neg");
-        return panel;
-    }
-
     private static Node emptyDetail() {
         Label hint = new Label(
-                "Select a gene set in either phenotype panel to view its enrichment plot and members.");
+                "Select a gene set to view its enrichment plot and members.");
         hint.getStyleClass().add("gsea-muted");
         hint.setWrapText(true);
         hint.setPadding(new Insets(16));
@@ -285,7 +333,7 @@ public final class GseaReportExplorer implements ReportExplorer {
         HBox actions = new HBox(8);
         if (html != null) {
             Button openHtml = new Button("Open gene-set HTML");
-            xapps.gsea.fx.FxButtons.styleSecondary(openHtml);
+            xapps.gsea.fx.widgets.FxButtons.styleSecondary(openHtml);
             openHtml.setOnAction(e -> ReportExplorerSupport.openFileExternal(html));
             actions.getChildren().add(openHtml);
         }
@@ -297,58 +345,42 @@ public final class GseaReportExplorer implements ReportExplorer {
             actions.getChildren().add(leLabel);
         }
 
-        List<Tab> tabs = new ArrayList<>();
-        Tab enplotSection = enrichmentPlotSection(reportDir, result, classA, classB, scoring, metricName, html);
-        if (enplotSection != null) {
-            tabs.add(enplotSection);
+        List<ReportExplorerSupport.Section> sections = new ArrayList<>();
+        if (canShowEnplot(result)) {
+            File classic = EnplotReportFiles.findClassicEnplot(reportDir, setName, html);
+            File v2 = EnplotReportFiles.findEnplotV2(reportDir, setName, html);
+            sections.add(new ReportExplorerSupport.Section("EnPlot v2",
+                    () -> staticEnplotPane(result, true, v2, classA, classB, scoring, metricName)));
+            sections.add(new ReportExplorerSupport.Section("Classic",
+                    () -> staticEnplotPane(result, false, classic, classA, classB, scoring, metricName)));
+            sections.add(new ReportExplorerSupport.Section("Interactive",
+                    () -> EnplotWebView.createInteractivePane(reportDir, result, classA, classB, scoring, metricName),
+                    true));
         }
         for (NamedPlot plot : otherGeneSetPlots(reportDir, setName, html)) {
-            tabs.add(ReportExplorerSupport.fixedTab(plot.title(),
-                    ReportExplorerSupport.singleImage(plot.file())));
-        }
-        if (tabs.isEmpty()) {
-            tabs.add(ReportExplorerSupport.fixedTab("Plots",
-                    ReportExplorerSupport.messagePane("No enrichment plots found for this gene set.")));
+            sections.add(new ReportExplorerSupport.Section(plot.title(),
+                    () -> ReportExplorerSupport.singleImage(plot.file())));
         }
         if (tsv != null) {
-            tabs.add(ReportExplorerSupport.fixedTab("Members", ReportExplorerSupport.tsvTable(tsv)));
+            sections.add(new ReportExplorerSupport.Section("Members",
+                    () -> ReportExplorerSupport.tsvTable(tsv)));
         }
-        TabPane detailTabs = ReportExplorerSupport.tabPane(tabs.toArray(Tab[]::new));
-        detailTabs.getStyleClass().add("gsea-report-tabs");
+        Node sectionHost;
+        if (sections.isEmpty()) {
+            sectionHost = ReportExplorerSupport.messagePane("No enrichment plots found for this gene set.");
+        } else {
+            sectionHost = ReportExplorerSupport.lazySectionHost(sections);
+        }
 
-        VBox box = new VBox(10, titleRow, metrics, actions, detailTabs);
-        VBox.setVgrow(detailTabs, Priority.ALWAYS);
-        box.setPadding(new Insets(12));
+        VBox box = new VBox(8, titleRow, metrics, actions, sectionHost);
+        VBox.setVgrow(sectionHost, Priority.ALWAYS);
+        box.setPadding(new Insets(8, 10, 10, 10));
+        box.setMinSize(0, 0);
         return box;
     }
 
-    /**
-     * Nested Enrichment Plot section with left tabs: EnPlot v2, EnPlot Classic, Interactive.
-     * Static classic/v2 images are used when present; otherwise charts are generated on demand
-     * from the loaded enrichment database (including gene sets outside {@code plot_top_x}).
-     */
-    private static Tab enrichmentPlotSection(File reportDir, EnrichmentResult result,
-            String classA, String classB, EnrichmentEsProfiles.ScoringResolution scoring,
-            String metricName, File html) {
-        if (result == null || result.getRankedList() == null || result.getScore() == null) {
-            return null;
-        }
-        String geneSetName = result.getGeneSet().getName(true);
-        File classic = EnplotReportFiles.findClassicEnplot(reportDir, geneSetName, html);
-        File v2 = EnplotReportFiles.findEnplotV2(reportDir, geneSetName, html);
-
-        List<Tab> inner = new ArrayList<>();
-        inner.add(ReportExplorerSupport.lazyNodeTab("EnPlot v2",
-                () -> staticEnplotPane(result, true, v2, classA, classB, scoring, metricName)));
-        inner.add(ReportExplorerSupport.lazyNodeTab("EnPlot Classic",
-                () -> staticEnplotPane(result, false, classic, classA, classB, scoring, metricName)));
-        inner.add(ReportExplorerSupport.lazyNodeTabOnClick("Interactive",
-                () -> EnplotWebView.createInteractivePane(reportDir, result, classA, classB, scoring, metricName)));
-
-        TabPane nested = ReportExplorerSupport.tabPane(inner.toArray(Tab[]::new));
-        nested.setSide(javafx.geometry.Side.LEFT);
-        nested.getStyleClass().add("gsea-enplot-tabs");
-        return ReportExplorerSupport.fixedTab("Enrichment Plot", nested);
+    private static boolean canShowEnplot(EnrichmentResult result) {
+        return result != null && result.getRankedList() != null && result.getScore() != null;
     }
 
     private static Node staticEnplotPane(EnrichmentResult result, boolean v2,
@@ -362,19 +394,7 @@ public final class GseaReportExplorer implements ReportExplorer {
         BorderPane host = new BorderPane();
         host.setMinSize(0, 0);
 
-        Button save = new Button("Save plot…");
-        xapps.gsea.fx.FxButtons.styleSecondary(save);
-        Label source = new Label(existingImage != null
-                ? "From report · Save exports a fresh chart"
-                : "Generated on demand");
-        source.getStyleClass().add("gsea-muted");
-        HBox bar = new HBox(8, save, source);
-        bar.setAlignment(Pos.CENTER_LEFT);
-        bar.setPadding(new Insets(6, 8, 6, 8));
-        bar.getStyleClass().add("gsea-report-action-bar");
-        host.setTop(bar);
-
-        save.setOnAction(e -> {
+        Runnable saveAction = () -> {
             try {
                 EnrichmentCharts charts = EnrichmentReports.createComboChart(
                         result, v2, classA, classB, scoringTable, metricName);
@@ -394,12 +414,12 @@ public final class GseaReportExplorer implements ReportExplorer {
                 }
                 EnplotExportDialog.saveImage(owner, bi, base, previewW, previewH);
             } catch (Throwable t) {
-                Application.getWindowManager().showError("Could not save enrichment plot", t);
+                AppServices.require().dialogs().showError("Could not save enrichment plot", t);
             }
-        });
+        };
 
         if (existingImage != null) {
-            host.setCenter(ReportExplorerSupport.singleImage(existingImage));
+            host.setCenter(withCompactSave(ReportExplorerSupport.singleImage(existingImage), saveAction));
             return host;
         }
 
@@ -410,10 +430,30 @@ public final class GseaReportExplorer implements ReportExplorer {
                 ignored -> {
                     EnrichmentCharts charts = EnrichmentReports.createComboChart(
                             result, v2, classA, classB, scoringTable, metricName);
-                    return ReportExplorerSupport.singleImage(plotToFxImage(charts.comboChart, previewW, previewH));
+                    return withCompactSave(
+                            ReportExplorerSupport.singleImage(plotToFxImage(charts.comboChart, previewW, previewH)),
+                            saveAction);
                 },
                 "Could not generate " + (v2 ? "EnPlot v2" : "classic") + " plot");
         return host;
+    }
+
+    /** Save control overlaid on the plot — avoids a dedicated chrome row. */
+    private static Node withCompactSave(Node content, Runnable onSave) {
+        Button save = new Button("Save…");
+        xapps.gsea.fx.widgets.FxButtons.styleSecondary(save);
+        xapps.gsea.fx.widgets.FxButtons.sizeToContent(save);
+        save.setOnAction(e -> onSave.run());
+        StackPane stack = new StackPane();
+        stack.setMinSize(0, 0);
+        if (content != null) {
+            stack.getChildren().add(content);
+        }
+        stack.getChildren().add(save);
+        StackPane.setAlignment(save, Pos.TOP_RIGHT);
+        // Clear of typical ScrollPane scrollbar gutter (matches interactive EnPlot).
+        StackPane.setMargin(save, new Insets(6, 22, 0, 0));
+        return stack;
     }
 
     private static Image plotToFxImage(edu.mit.broad.genome.charts.XChart chart, int width, int height) {
@@ -465,11 +505,17 @@ public final class GseaReportExplorer implements ReportExplorer {
         if (heatmap != null) {
             plots.add(new NamedPlot("Heatmap", heatmap));
         }
-        // Null ES distribution uses a fixed filename in HTML reports; only show when embedded in this set's page.
         return plots;
     }
 
-    private static Node plotsTab(File reportDir) {
+    /**
+     * Summary plot gallery for the report shell Plots tab, or {@code null} if none are present.
+     */
+    public static Node createSummaryPlots(Report report) {
+        return plotsGallery(ReportExplorerSupport.reportDir(report));
+    }
+
+    private static Node plotsGallery(File reportDir) {
         List<File> plots = new ArrayList<>();
         if (reportDir != null) {
             for (String name : SUMMARY_PLOT_NAMES) {
@@ -479,41 +525,48 @@ public final class GseaReportExplorer implements ReportExplorer {
                 }
             }
         }
-        return ReportExplorerSupport.imageGallery(plots);
+        if (plots.isEmpty()) {
+            return null;
+        }
+        Node gallery = ReportExplorerSupport.imageGallery(plots);
+        if (gallery instanceof javafx.scene.layout.Region region) {
+            region.setMinSize(0, 0);
+            region.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
+        }
+        return gallery;
     }
 
     private static String fmt(float v) {
         return Float.isNaN(v) ? "NaN" : String.format(Locale.ROOT, "%.4g", v);
     }
 
-    private static void openLeadingEdge(File edbOrReportDir, Consumer<ViewPage> openPage,
-            JobRuntime jobRuntime) {
+    private static void openLeadingEdge(File edbOrReportDir, FeatureHost host) {
         try {
-            FxLeadingEdgePane pane = new FxLeadingEdgePane(jobRuntime);
-            openPage.accept(pane);
+            FxLeadingEdgePane pane = new FxLeadingEdgePane(host);
+            host.openPage(pane);
             pane.loadFromDirectory(edbOrReportDir);
         } catch (Throwable t) {
-            Application.getWindowManager().showError("Could not open Leading Edge", t);
+            host.dialogs().showError("Could not open Leading Edge", t);
         }
     }
 
-    private static void openEnrichmentMap(File reportDir, Consumer<ViewPage> openPage) {
+    private static void openEnrichmentMap(File reportDir, FeatureHost host) {
         try {
-            FxEnrichmentMapPane pane = new FxEnrichmentMapPane();
-            openPage.accept(pane);
+            FxEnrichmentMapPane pane = new FxEnrichmentMapPane(host);
+            host.openPage(pane);
             if (reportDir != null) {
                 pane.loadFromDirectory(reportDir);
             }
         } catch (Throwable t) {
-            Application.getWindowManager().showError("Could not open Enrichment Map", t);
+            host.dialogs().showError("Could not open Enrichment Map", t);
         }
     }
 
-    private static void openCoreMap(File edbOrReportDir, Consumer<ViewPage> openPage) {
+    private static void openCoreMap(File edbOrReportDir, FeatureHost host) {
         try {
-            CoreMapWorkspace.openFromReport(edbOrReportDir, FxCoreMapPane::new, openPage);
+            CoreMapWorkspace.openFromReport(edbOrReportDir, host);
         } catch (Throwable t) {
-            Application.getWindowManager().showError("Could not open CoreMap", t);
+            host.dialogs().showError("Could not open CoreMap", t);
         }
     }
 }

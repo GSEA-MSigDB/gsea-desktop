@@ -7,7 +7,6 @@ import java.io.File;
 
 import org.gsea_msigdb.gsea.ui.api.ViewPage;
 
-import edu.mit.broad.xbench.core.api.Application;
 import edu.mit.broad.xbench.prefs.XPreferencesFactory;
 import javafx.geometry.Insets;
 import javafx.scene.control.Button;
@@ -24,6 +23,7 @@ import javafx.scene.layout.VBox;
 import javafx.stage.DirectoryChooser;
 import xapps.gsea.GseaWebResources;
 import xapps.gsea.fx.params.FxFileChooserUtil;
+import org.gsea_msigdb.gsea.runtime.AppServices;
 
 /**
  * JavaFX preferences form backed by {@link XPreferencesFactory}.
@@ -41,8 +41,10 @@ public class FxPreferencesPane implements ViewPage {
     private final CheckBox median = new CheckBox();
     private final CheckBox fixLowVar = new CheckBox();
     private final CheckBox biasedVar = new CheckBox();
+    private final AppServices svc;
 
-    public FxPreferencesPane() {
+    public FxPreferencesPane(AppServices svc) {
+        this.svc = java.util.Objects.requireNonNull(svc, "svc");
         loadFromPrefs();
 
         GridPane reportForm = new GridPane();
@@ -50,7 +52,7 @@ public class FxPreferencesPane implements ViewPage {
         reportForm.setVgap(10);
         reportForm.setPadding(new Insets(8));
         Label outLabel = new Label("Default output folder");
-        Button browse = xapps.gsea.fx.FxEllipsisButton.create("Browse for folder");
+        Button browse = xapps.gsea.fx.widgets.FxEllipsisButton.create("Browse for folder");
         browse.setOnAction(e -> chooseOutputDir());
         HBox outRow = new HBox(8, outputDirField, browse);
         HBox.setHgrow(outputDirField, Priority.ALWAYS);
@@ -108,8 +110,8 @@ public class FxPreferencesPane implements ViewPage {
     }
 
     /** Modal preferences dialog with Help / OK / Cancel. @return true if OK saved. */
-    public static boolean showDialog(javafx.stage.Window owner) {
-        FxPreferencesPane pane = new FxPreferencesPane();
+    public static boolean showDialog(javafx.stage.Window owner, AppServices svc) {
+        FxPreferencesPane pane = new FxPreferencesPane(svc);
         javafx.scene.control.Dialog<Boolean> dialog = new javafx.scene.control.Dialog<>();
         dialog.initOwner(owner);
         dialog.setTitle("Preferences");
@@ -128,16 +130,16 @@ public class FxPreferencesPane implements ViewPage {
         }
         javafx.scene.control.Button helpBtn =
                 (javafx.scene.control.Button) dialog.getDialogPane().lookupButton(helpType);
-        helpBtn.setGraphic(xapps.gsea.fx.FxFileIcons.forResource("Help16_v2.gif"));
-        xapps.gsea.fx.FxButtons.styleSecondary(helpBtn);
+        helpBtn.setGraphic(xapps.gsea.fx.widgets.FxFileIcons.forResource("Help16_v2.gif"));
+        xapps.gsea.fx.widgets.FxButtons.styleSecondary(helpBtn);
         javafx.scene.control.Button okBtn =
                 (javafx.scene.control.Button) dialog.getDialogPane().lookupButton(okType);
-        xapps.gsea.fx.FxButtons.stylePrimary(okBtn);
+        xapps.gsea.fx.widgets.FxButtons.stylePrimary(okBtn);
         javafx.scene.control.Button cancelBtn =
                 (javafx.scene.control.Button) dialog.getDialogPane().lookupButton(cancelType);
-        xapps.gsea.fx.FxButtons.styleSecondary(cancelBtn);
+        xapps.gsea.fx.widgets.FxButtons.styleSecondary(cancelBtn);
         helpBtn.addEventFilter(javafx.event.ActionEvent.ACTION, e -> {
-            openPrefsHelp();
+            pane.openPrefsHelp();
             e.consume();
         });
         pane.wireOutputDirColors();
@@ -156,12 +158,12 @@ public class FxPreferencesPane implements ViewPage {
         xapps.gsea.fx.params.FxPathFieldColors.attach(outputDirField);
     }
 
-    private static void openPrefsHelp() {
+    private void openPrefsHelp() {
         String url = GseaWebResources.getGseaHelpURL() + "GSEA/GSEA_User_Guide/#Prefs-Window";
         try {
             xapps.gsea.fx.FxDesktopUtil.openUrl(url);
         } catch (Exception ex) {
-            Application.getWindowManager().showError("Could not open preferences help", ex);
+            svc.dialogs().showError("Could not open preferences help", ex);
         }
     }
 
@@ -212,12 +214,12 @@ public class FxPreferencesPane implements ViewPage {
             XPreferencesFactory.save();
             xapps.gsea.fx.FxTheme.refreshAll();
             if (toast) {
-                Application.getWindowManager().showMessage(algoChanged
+                svc.dialogs().showMessage(algoChanged
                         ? "Preferences saved. Algorithm defaults apply to newly opened tool windows."
                         : "Preferences saved.");
             }
         } catch (Exception e) {
-            Application.getWindowManager().showError("Trouble saving preferences", e);
+            svc.dialogs().showError("Trouble saving preferences", e);
         }
     }
 
@@ -232,7 +234,7 @@ public class FxPreferencesPane implements ViewPage {
     }
 
     @Override
-    public Object getContent() {
+    public javafx.scene.Node getContent() {
         return root;
     }
 }

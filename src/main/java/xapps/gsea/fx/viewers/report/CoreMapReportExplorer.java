@@ -6,9 +6,8 @@ package xapps.gsea.fx.viewers.report;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.util.function.Consumer;
 
-import org.gsea_msigdb.gsea.ui.api.ViewPage;
+import org.gsea_msigdb.gsea.ui.api.FeatureHost;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.slf4j.Logger;
@@ -17,7 +16,6 @@ import org.slf4j.LoggerFactory;
 import edu.mit.broad.coremap.CoreMapJob;
 import edu.mit.broad.coremap.CoreMapJobStore;
 import edu.mit.broad.genome.reports.api.Report;
-import edu.mit.broad.xbench.core.api.Application;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
@@ -28,8 +26,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
-import xapps.gsea.fx.FxButtons;
-import xapps.gsea.fx.jobs.JobRuntime;
+import xapps.gsea.fx.widgets.FxButtons;
 import xapps.gsea.fx.viewers.coremap.CoreMapWorkspace;
 
 /**
@@ -40,10 +37,10 @@ public final class CoreMapReportExplorer implements ReportExplorer {
     private static final Logger klog = LoggerFactory.getLogger(CoreMapReportExplorer.class);
 
     @Override
-    public Node create(Report report, Consumer<ViewPage> openPage, JobRuntime jobRuntime) {
+    public Node create(Report report, FeatureHost host) {
         File dir = ReportExplorerSupport.reportDir(report);
         if (dir == null || !CoreMapJobStore.looksLikeJobDir(dir)) {
-            return new GenericFilesExplorer().create(report, openPage, jobRuntime);
+            return new GenericFilesExplorer().create(report, host);
         }
 
         TextArea summary = new TextArea(buildSummary(dir));
@@ -54,10 +51,10 @@ public final class CoreMapReportExplorer implements ReportExplorer {
         FxButtons.stylePrimary(open);
         open.setOnAction(e -> {
             try {
-                CoreMapWorkspace.openJob(dir, openPage);
+                CoreMapWorkspace.openJob(dir, host);
             } catch (Throwable t) {
                 klog.error("Could not open CoreMap job", t);
-                Application.getWindowManager().showError("Could not open CoreMap job", t);
+                host.dialogs().showError("Could not open CoreMap job", t);
             }
         });
 
@@ -69,7 +66,7 @@ public final class CoreMapReportExplorer implements ReportExplorer {
         BorderPane pane = new BorderPane(box);
         return ReportExplorerSupport.tabPane(
                 new Tab("CoreMap", pane),
-                new Tab("Files", new GenericFilesExplorer().create(report, openPage, jobRuntime)));
+                new Tab("Files", new GenericFilesExplorer().create(report, host)));
     }
 
     private static String buildSummary(File dir) {

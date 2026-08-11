@@ -41,6 +41,7 @@ import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Window;
 import xapps.gsea.GseaWebResources;
+import org.gsea_msigdb.gsea.runtime.AppServices;
 
 /**
  * JavaFX gene-set chooser: Human/Mouse MSigDB FTP, local multi-file browse, and text entry.
@@ -84,7 +85,7 @@ public final class FxGeneSetChooserDialog {
         // Open on local cache first; MSigDB FTP collections are secondary.
         tabs.getTabs().add(new Tab("Local GMX/GMT",
                 FxFtpChooserSupport.wrapLocalTab(
-                        xapps.gsea.fx.FxSearchField.wrapList(cachedGmx,
+                        xapps.gsea.fx.widgets.FxSearchField.wrapList(cachedGmx,
                                 i -> i == null ? "" : i.name + " " + i.path),
                         () -> openLocalGeneSetFiles(
                                 dialogWindow,
@@ -94,7 +95,7 @@ public final class FxGeneSetChooserDialog {
                                 true))));
         tabs.getTabs().add(new Tab("Local GRP Gene sets",
                 FxFtpChooserSupport.wrapLocalTab(
-                        xapps.gsea.fx.FxSearchField.wrapList(cachedGrp,
+                        xapps.gsea.fx.widgets.FxSearchField.wrapList(cachedGrp,
                                 i -> i == null ? "" : i.name + " " + i.path),
                         () -> openLocalGeneSetFiles(
                                 dialogWindow,
@@ -103,7 +104,7 @@ public final class FxGeneSetChooserDialog {
                                 FxFtpChooserSupport.grpFileFilters(),
                                 true))));
         tabs.getTabs().add(new Tab("Subsets",
-                xapps.gsea.fx.FxSearchField.wrapList(subsets, i -> i == null ? "" : i.name + " " + i.path)));
+                xapps.gsea.fx.widgets.FxSearchField.wrapList(subsets, i -> i == null ? "" : i.name + " " + i.path)));
 
         if (FxFtpChooserSupport.isOnline()) {
             ComparatorFactory.FTPFileByVersionComparator humanCmp =
@@ -183,8 +184,8 @@ public final class FxGeneSetChooserDialog {
         dialog.getDialogPane().setContent(root);
         dialog.getDialogPane().setPrefSize(800, 400);
         xapps.gsea.fx.FxTheme.apply(dialog);
-        xapps.gsea.fx.FxButtons.stylePrimary(okButton);
-        xapps.gsea.fx.FxButtons.styleSecondary(
+        xapps.gsea.fx.widgets.FxButtons.stylePrimary(okButton);
+        xapps.gsea.fx.widgets.FxButtons.styleSecondary(
                 (Button) dialog.getDialogPane().lookupButton(ButtonType.CANCEL));
 
         okButton.addEventFilter(javafx.event.ActionEvent.ACTION, event -> {
@@ -236,7 +237,7 @@ public final class FxGeneSetChooserDialog {
                     try {
                         File tmp = File.createTempFile(gset.getName(), ".grp");
                         ParserFactory.save(gset, tmp);
-                        all.add(ParserFactory.getCache().getSourcePath(gset));
+                        all.add(AppServices.require().cache().getSourcePath(gset));
                         FxFileChooserUtil.registerOpened(tmp);
                     } catch (Throwable t) {
                         klog.error(t.getMessage(), t);
@@ -272,7 +273,7 @@ public final class FxGeneSetChooserDialog {
                             List<String> paths = new ArrayList<>();
                             for (PersistentObject obj : loaded) {
                                 try {
-                                    paths.add(ParserFactory.getCache().getSourcePath(obj));
+                                    paths.add(AppServices.require().cache().getSourcePath(obj));
                                 } catch (Exception ignore) {
                                 }
                             }
@@ -385,7 +386,7 @@ public final class FxGeneSetChooserDialog {
                     return;
                 }
                 if (item.source instanceof PersistentObject pob) {
-                    xapps.gsea.fx.FxPobListCells.applyPob(this, pob);
+                    xapps.gsea.fx.widgets.FxPobListCells.applyPob(this, pob);
                 } else {
                     setText(item.name);
                     setGraphic(null);
@@ -400,11 +401,11 @@ public final class FxGeneSetChooserDialog {
     private static void refreshCachedObjectList(ListView<CachedPathItem> list, Class<?> type) {
         try {
             @SuppressWarnings("unchecked")
-            List<Object> objs = ParserFactory.getCache().getCachedObjectsL(type);
+            List<Object> objs = AppServices.require().cache().getCachedObjectsL(type);
             List<CachedPathItem> items = new ArrayList<>();
             for (Object o : objs) {
                 try {
-                    String path = ParserFactory.getCache().getSourcePath(o);
+                    String path = AppServices.require().cache().getSourcePath(o);
                     String name = o instanceof edu.mit.broad.genome.objects.PersistentObject
                             ? ((edu.mit.broad.genome.objects.PersistentObject) o).getName()
                             : String.valueOf(o);
@@ -420,7 +421,7 @@ public final class FxGeneSetChooserDialog {
                     selectedPaths.add(sel.path);
                 }
             }
-            xapps.gsea.fx.FxSearchField.replaceItems(list, items);
+            xapps.gsea.fx.widgets.FxSearchField.replaceItems(list, items);
             list.getSelectionModel().clearSelection();
             for (CachedPathItem item : list.getItems()) {
                 if (item != null && selectedPaths.contains(item.path)) {
@@ -446,7 +447,7 @@ public final class FxGeneSetChooserDialog {
                     return;
                 }
                 if (item.source instanceof PersistentObject pob) {
-                    xapps.gsea.fx.FxPobListCells.applyPob(this, pob);
+                    xapps.gsea.fx.widgets.FxPobListCells.applyPob(this, pob);
                 } else {
                     setText(item.name);
                     setGraphic(null);
@@ -460,17 +461,17 @@ public final class FxGeneSetChooserDialog {
 
     private static void refreshAuxGeneSetList(ListView<CachedPathItem> list) {
         try {
-            List<GeneSet> aux = ParserFactory.getCache().getAuxGeneSets();
+            List<GeneSet> aux = AppServices.require().cache().getAuxGeneSets();
             List<CachedPathItem> items = new ArrayList<>();
             for (GeneSet gset : aux) {
                 try {
                     String path;
                     try {
-                        path = ParserFactory.getCache().getSourcePath(gset);
+                        path = AppServices.require().cache().getSourcePath(gset);
                     } catch (IllegalArgumentException notCached) {
                         File tmp = File.createTempFile(gset.getName() + "_", ".grp");
                         ParserFactory.save(gset, tmp);
-                        path = ParserFactory.getCache().getSourcePath(gset);
+                        path = AppServices.require().cache().getSourcePath(gset);
                     }
                     items.add(new CachedPathItem(gset.getName(true), path, gset));
                 } catch (Exception ex) {
@@ -483,7 +484,7 @@ public final class FxGeneSetChooserDialog {
                     selectedPaths.add(sel.path);
                 }
             }
-            xapps.gsea.fx.FxSearchField.replaceItems(list, items);
+            xapps.gsea.fx.widgets.FxSearchField.replaceItems(list, items);
             list.getSelectionModel().clearSelection();
             for (CachedPathItem item : list.getItems()) {
                 if (item != null && selectedPaths.contains(item.path)) {

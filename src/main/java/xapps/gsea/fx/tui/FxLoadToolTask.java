@@ -10,7 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import edu.mit.broad.xbench.core.api.Application;
-import xapps.gsea.fx.FxProgressMonitorRead;
+import xapps.gsea.fx.widgets.FxProgressMonitorRead;
 import xtools.api.Tool;
 import xtools.api.param.ParamSet;
 

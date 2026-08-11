@@ -5,14 +5,12 @@ package xapps.gsea.fx.viewers.report;
 
 import java.io.File;
 import java.util.List;
-import java.util.function.Consumer;
 
-import org.gsea_msigdb.gsea.ui.api.ViewPage;
+import org.gsea_msigdb.gsea.ui.api.FeatureHost;
 
 import edu.mit.broad.genome.reports.api.Report;
 import javafx.scene.Node;
 import javafx.scene.control.Tab;
-import xapps.gsea.fx.jobs.JobRuntime;
 
 /**
  * Results explorer for LeadingEdgeTool reports (heatmap + HTML Report tabs).
@@ -20,11 +18,11 @@ import xapps.gsea.fx.jobs.JobRuntime;
 public final class LeadingEdgeReportExplorer implements ReportExplorer {
 
     @Override
-    public Node create(Report report, Consumer<ViewPage> openPage, JobRuntime jobRuntime) {
+    public Node create(Report report, FeatureHost host) {
         File dir = ReportExplorerSupport.reportDir(report);
         List<Tab> tabs = LeadingEdgeOutputs.buildTabs(dir, false);
         if (tabs.isEmpty()) {
-            return new GenericFilesExplorer().create(report, openPage, jobRuntime);
+            return new GenericFilesExplorer().create(report, host);
         }
         return ReportExplorerSupport.tabPane(tabs.toArray(Tab[]::new));
     }

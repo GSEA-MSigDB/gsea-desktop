@@ -15,8 +15,9 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.stage.DirectoryChooser;
-import xapps.gsea.fx.FxButtons;
-import xapps.gsea.fx.FxEllipsisButton;
+import xapps.gsea.fx.widgets.FxButtons;
+import xapps.gsea.fx.widgets.FxEllipsisButton;
+import org.gsea_msigdb.gsea.runtime.AppServices;
 
 /**
  * Shared Leading Edge / Enrichment Map load chrome: cache chooser XOR folder field.
@@ -131,10 +132,10 @@ public final class FxGseaReportLoadUi {
 
     public void showXorMessage(FxGseaReportXor.Kind kind) {
         if (kind == FxGseaReportXor.Kind.CONFLICT) {
-            edu.mit.broad.xbench.core.api.Application.getWindowManager()
+            AppServices.require().dialogs()
                     .showMessage(FxGseaReportXor.CONFLICT_MESSAGE);
         } else if (kind == FxGseaReportXor.Kind.EMPTY) {
-            edu.mit.broad.xbench.core.api.Application.getWindowManager()
+            AppServices.require().dialogs()
                     .showMessage(FxGseaReportXor.EMPTY_MESSAGE);
         }
     }

@@ -25,7 +25,6 @@ import edu.mit.broad.genome.alg.ComparatorFactory;
 import edu.mit.broad.genome.objects.MSigDBSpecies;
 import edu.mit.broad.genome.objects.MSigDBVersion;
 import edu.mit.broad.genome.objects.PersistentObject;
-import edu.mit.broad.xbench.core.api.Application;
 import edu.mit.broad.xbench.prefs.XPreferencesFactory;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
@@ -49,7 +48,8 @@ import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Window;
 import xapps.gsea.GseaWebResources;
-import xapps.gsea.fx.FxProgressMonitorRead;
+import xapps.gsea.fx.widgets.FxProgressMonitorRead;
+import org.gsea_msigdb.gsea.runtime.AppServices;
 
 /**
  * Non-UI FTP listing helpers shared by JavaFX gene-set and chip choosers.
@@ -222,7 +222,7 @@ public final class FxFtpChooserSupport {
         listView.setItems(FXCollections.observableArrayList(files));
         applyLatestVersionBolding(listView, comparator);
         enableDoubleClickToFire(listView, okButton);
-        tab.setContent(xapps.gsea.fx.FxSearchField.wrapList(listView,
+        tab.setContent(xapps.gsea.fx.widgets.FxSearchField.wrapList(listView,
                 f -> f == null ? "" : searchText.apply(f)));
     }
 
@@ -284,7 +284,7 @@ public final class FxFtpChooserSupport {
                     return;
                 }
                 setText(item.getName());
-                setGraphic(xapps.gsea.fx.FxFileIcons.forResource("FTPFile.gif"));
+                setGraphic(xapps.gsea.fx.widgets.FxFileIcons.forResource("FTPFile.gif"));
                 boolean latest = highest != null && item.getName() != null
                         && item.getName().toLowerCase(java.util.Locale.ROOT)
                         .contains(highest.toLowerCase(java.util.Locale.ROOT));
@@ -308,7 +308,7 @@ public final class FxFtpChooserSupport {
         try {
             xapps.gsea.fx.FxDesktopUtil.openUrl(url);
         } catch (Throwable t) {
-            Application.getWindowManager().showError(url + ": unable to launch web browser", t);
+            AppServices.require().dialogs().showError(url + ": unable to launch web browser", t);
         }
     }
 
@@ -375,8 +375,8 @@ public final class FxFtpChooserSupport {
      */
     public static HBox importLocalFileRow(Runnable openAction) {
         Label label = new Label(IMPORT_LOCAL_FILE);
-        Button open = xapps.gsea.fx.FxEllipsisButton.create(IMPORT_LOCAL_FILE);
-        xapps.gsea.fx.FxButtons.styleSecondary(open);
+        Button open = xapps.gsea.fx.widgets.FxEllipsisButton.create(IMPORT_LOCAL_FILE);
+        xapps.gsea.fx.widgets.FxButtons.styleSecondary(open);
         open.setOnAction(e -> openAction.run());
         Region spacer = new Region();
         HBox row = new HBox(6, label, spacer, open);
@@ -458,7 +458,7 @@ public final class FxFtpChooserSupport {
         task.setOnFailed(e -> {
             Throwable t = task.getException();
             if (t != null && !(t instanceof InterruptedIOException)) {
-                Application.getWindowManager().showError("Could not load file", t);
+                AppServices.require().dialogs().showError("Could not load file", t);
             }
         });
         Thread th = new Thread(task, "load-local-chooser-file");

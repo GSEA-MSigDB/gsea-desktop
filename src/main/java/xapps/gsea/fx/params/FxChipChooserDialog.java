@@ -15,7 +15,6 @@ import org.slf4j.LoggerFactory;
 
 import edu.mit.broad.genome.alg.ComparatorFactory;
 import edu.mit.broad.genome.objects.MSigDBSpecies;
-import edu.mit.broad.genome.parsers.ParserFactory;
 import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
 import javafx.scene.control.Button;
@@ -36,6 +35,7 @@ import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Window;
 import xapps.gsea.GseaWebResources;
+import org.gsea_msigdb.gsea.runtime.AppServices;
 
 /**
  * JavaFX chip chooser: Human/Mouse MSigDB FTP chips or a single local .chip file.
@@ -87,7 +87,7 @@ public final class FxChipChooserDialog {
         FxFtpChooserSupport.enableDoubleClickToFire(cachedChips, okButton);
         tabs.getTabs().add(new Tab("Local Chips",
                 FxFtpChooserSupport.wrapLocalTab(
-                        xapps.gsea.fx.FxSearchField.wrapList(cachedChips,
+                        xapps.gsea.fx.widgets.FxSearchField.wrapList(cachedChips,
                                 c -> c == null ? "" : c.name + " " + (c.path != null ? c.path : "")),
                         () -> openLocalChipFile(owner, cachedChips))));
 
@@ -147,8 +147,8 @@ public final class FxChipChooserDialog {
         dialog.getDialogPane().setContent(root);
         dialog.getDialogPane().setPrefSize(800, 400);
         xapps.gsea.fx.FxTheme.apply(dialog);
-        xapps.gsea.fx.FxButtons.stylePrimary(okButton);
-        xapps.gsea.fx.FxButtons.styleSecondary(
+        xapps.gsea.fx.widgets.FxButtons.stylePrimary(okButton);
+        xapps.gsea.fx.widgets.FxButtons.styleSecondary(
                 (Button) dialog.getDialogPane().lookupButton(ButtonType.CANCEL));
 
         okButton.addEventFilter(javafx.event.ActionEvent.ACTION, event -> {
@@ -201,7 +201,7 @@ public final class FxChipChooserDialog {
                             refreshCachedChips(cachedChips);
                             try {
                                 selectCachedChipByPath(cachedChips,
-                                        ParserFactory.getCache().getSourcePath(loaded.get(0)));
+                                        AppServices.require().cache().getSourcePath(loaded.get(0)));
                             } catch (Exception ignore) {
                             }
                         }));
@@ -227,11 +227,11 @@ public final class FxChipChooserDialog {
     private static void refreshCachedChips(ListView<CachedChip> cachedChips) {
         try {
             @SuppressWarnings("unchecked")
-            List<Object> chips = ParserFactory.getCache().getCachedObjectsL(edu.mit.broad.vdb.chip.Chip.class);
+            List<Object> chips = AppServices.require().cache().getCachedObjectsL(edu.mit.broad.vdb.chip.Chip.class);
             List<CachedChip> items = new ArrayList<>();
             for (Object o : chips) {
                 try {
-                    String path = ParserFactory.getCache().getSourcePath(o);
+                    String path = AppServices.require().cache().getSourcePath(o);
                     String name = o instanceof edu.mit.broad.genome.objects.PersistentObject
                             ? ((edu.mit.broad.genome.objects.PersistentObject) o).getName()
                             : String.valueOf(o);
@@ -244,7 +244,7 @@ public final class FxChipChooserDialog {
             if (sel != null) {
                 selectedPath = sel.path;
             }
-            xapps.gsea.fx.FxSearchField.replaceItems(cachedChips, items);
+            xapps.gsea.fx.widgets.FxSearchField.replaceItems(cachedChips, items);
             cachedChips.getSelectionModel().clearSelection();
             if (selectedPath != null) {
                 for (CachedChip item : cachedChips.getItems()) {

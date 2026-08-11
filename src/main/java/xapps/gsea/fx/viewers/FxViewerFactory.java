@@ -3,6 +3,7 @@
  */
 package xapps.gsea.fx.viewers;
 
+import org.gsea_msigdb.gsea.ui.api.FeatureHost;
 import org.gsea_msigdb.gsea.ui.api.ViewPage;
 
 import edu.mit.broad.genome.objects.Dataset;
@@ -12,9 +13,7 @@ import edu.mit.broad.genome.objects.RankedList;
 import edu.mit.broad.genome.objects.Template;
 import edu.mit.broad.genome.reports.api.Report;
 import edu.mit.broad.vdb.chip.Chip;
-import xapps.gsea.fx.jobs.JobRuntime;
-
-import java.util.function.Consumer;
+import xapps.gsea.fx.viewers.report.FxReportOpen;
 
 /**
  * Dispatches PersistentObjects to the matching JavaFX viewer page.
@@ -28,7 +27,7 @@ public final class FxViewerFactory {
         return open(pob, null);
     }
 
-    public static ViewPage open(Object pob, Consumer<ViewPage> openPage) {
+    public static ViewPage open(Object pob, FeatureHost host) {
         if (pob == null) {
             throw new IllegalArgumentException("Object cannot be null");
         }
@@ -51,7 +50,10 @@ public final class FxViewerFactory {
             return new FxChipViewer((Chip) pob);
         }
         if (pob instanceof Report) {
-            return xapps.gsea.fx.FxReportOpen.viewPageFor((Report) pob, openPage, JobRuntime.require());
+            if (host == null) {
+                throw new IllegalStateException("FeatureHost is required to open a Report");
+            }
+            return FxReportOpen.viewPageFor((Report) pob, host);
         }
         throw new IllegalArgumentException("No viewer for type: " + pob.getClass().getName());
     }

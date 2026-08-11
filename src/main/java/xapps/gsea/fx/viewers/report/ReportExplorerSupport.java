@@ -39,6 +39,8 @@ import javafx.scene.control.TabPane;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextArea;
+import javafx.scene.control.ToggleButton;
+import javafx.scene.control.ToggleGroup;
 import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -48,7 +50,7 @@ import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
-import xapps.gsea.fx.FxButtons;
+import xapps.gsea.fx.widgets.FxButtons;
 import xapps.gsea.fx.FxDesktopUtil;
 import xapps.gsea.fx.viewers.FxViewerFactory;
 
@@ -429,6 +431,107 @@ public final class ReportExplorerSupport {
         } catch (Exception e) {
             Application.getWindowManager().showError("Could not open file", e);
         }
+    }
+
+    /**
+     * A titled content section for {@link #lazySectionHost}.
+     *
+     * @param loadOnSelectOnly when true, content builds only after the user selects this section
+     *                         (never on initial layout) — for heavy Interactive-style content
+     */
+    public record Section(String title, java.util.function.Supplier<Node> content, boolean loadOnSelectOnly) {
+        public Section(String title, java.util.function.Supplier<Node> content) {
+            this(title, content, false);
+        }
+    }
+
+    /**
+     * Flat section switcher: toggle bar + lazy/cached content host (no nested TabPane).
+     * First section is selected by default; non-{@code loadOnSelectOnly} sections build on first select
+     * (including the initial default). {@code loadOnSelectOnly} sections wait for a user click after init.
+     */
+    public static Node lazySectionHost(List<Section> sections) {
+        if (sections == null || sections.isEmpty()) {
+            return messagePane("No sections");
+        }
+        BorderPane contentHost = new BorderPane();
+        contentHost.setMinSize(0, 0);
+        VBox.setVgrow(contentHost, Priority.ALWAYS);
+
+        ToggleGroup group = new ToggleGroup();
+        HBox bar = new HBox(0);
+        bar.getStyleClass().add("gsea-section-bar");
+        bar.setAlignment(Pos.CENTER_LEFT);
+
+        java.util.Map<ToggleButton, Section> byButton = new java.util.LinkedHashMap<>();
+        java.util.Map<ToggleButton, Node> cache = new java.util.HashMap<>();
+        java.util.concurrent.atomic.AtomicBoolean acceptingClicks =
+                new java.util.concurrent.atomic.AtomicBoolean(false);
+
+        java.util.function.Consumer<ToggleButton> show = btn -> {
+            Section section = byButton.get(btn);
+            if (section == null) {
+                return;
+            }
+            Node cached = cache.get(btn);
+            if (cached != null) {
+                contentHost.setCenter(cached);
+                return;
+            }
+            try {
+                Node node = section.content().get();
+                cache.put(btn, node);
+                contentHost.setCenter(node);
+            } catch (Throwable t) {
+                Node err = messagePane("Could not load section: " + safeMessage(t));
+                cache.put(btn, err);
+                contentHost.setCenter(err);
+            }
+        };
+
+        for (Section section : sections) {
+            ToggleButton btn = new ToggleButton(section.title());
+            btn.setToggleGroup(group);
+            btn.getStyleClass().add("gsea-section-toggle");
+            btn.setFocusTraversable(false);
+            btn.addEventFilter(javafx.scene.input.MouseEvent.MOUSE_PRESSED, e -> {
+                if (btn.isSelected()) {
+                    e.consume();
+                }
+            });
+            byButton.put(btn, section);
+            bar.getChildren().add(btn);
+        }
+
+        group.selectedToggleProperty().addListener((obs, o, n) -> {
+            if (!(n instanceof ToggleButton btn)) {
+                return;
+            }
+            Section section = byButton.get(btn);
+            if (section == null) {
+                return;
+            }
+            if (section.loadOnSelectOnly() && !acceptingClicks.get()) {
+                contentHost.setCenter(messagePane("Select this section to load…"));
+                return;
+            }
+            show.accept(btn);
+        });
+
+        ToggleButton first = (ToggleButton) bar.getChildren().get(0);
+        group.selectToggle(first);
+        acceptingClicks.set(true);
+        Section firstSection = byButton.get(first);
+        if (firstSection != null && !firstSection.loadOnSelectOnly()) {
+            show.accept(first);
+        } else {
+            contentHost.setCenter(messagePane("Select this section to load…"));
+        }
+
+        VBox root = new VBox(4, bar, contentHost);
+        root.setMinSize(0, 0);
+        VBox.setVgrow(root, Priority.ALWAYS);
+        return root;
     }
 
     /**

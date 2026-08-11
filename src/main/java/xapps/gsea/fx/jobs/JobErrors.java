@@ -3,8 +3,8 @@
  */
 package xapps.gsea.fx.jobs;
 
-import edu.mit.broad.xbench.core.api.Application;
 import edu.mit.broad.xbench.tui.JobState;
+import org.gsea_msigdb.gsea.runtime.AppServices;
 
 /**
  * Central titles and dialogs for job parameter / execution errors.
@@ -37,7 +37,7 @@ public final class JobErrors {
             return;
         }
         Throwable err = job.getLastError();
-        Application.getWindowManager().showError(
+        AppServices.require().dialogs().showError(
                 titleFor(job),
                 err != null ? err : new IllegalStateException(titleFor(job)));
     }
@@ -48,7 +48,7 @@ public final class JobErrors {
             return;
         }
         Throwable err = job.getLastError();
-        Application.getWindowManager().showError(
+        AppServices.require().dialogs().showError(
                 INVALID_PARAM_TITLE,
                 err != null ? err : new IllegalStateException("Invalid parameters"));
     }

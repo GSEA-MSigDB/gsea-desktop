@@ -113,7 +113,7 @@ public class FxPhenotypeViewer implements ViewPage {
     }
 
     @Override
-    public Object getContent() {
+    public javafx.scene.Node getContent() {
         return root;
     }
 }

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2003-2026 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California. All rights reserved.
  */
-package xapps.gsea.fx;
+package xapps.gsea.fx.shell;
 
 import java.lang.reflect.Method;
 import java.util.Locale;
@@ -23,7 +23,7 @@ import javafx.stage.Window;
 /**
  * Windows dark title bar via DWM (JavaFX CSS cannot style the native frame).
  */
-final class FxWindowsDarkFrame {
+public final class FxWindowsDarkFrame {
 
     private static final Logger klog = LoggerFactory.getLogger(FxWindowsDarkFrame.class);
 
@@ -47,14 +47,14 @@ final class FxWindowsDarkFrame {
     private FxWindowsDarkFrame() {
     }
 
-    static boolean isWindows() {
+    public static boolean isWindows() {
         return System.getProperty("os.name", "").toLowerCase(Locale.ROOT).contains("win");
     }
 
     /**
      * @return true if DWM attributes were applied; false if HWND was not ready yet (caller may retry)
      */
-    static boolean apply(Window window, boolean dark) {
+    public static boolean apply(Window window, boolean dark) {
         if (!isWindows() || window == null || !window.isShowing()) {
             return false;
         }

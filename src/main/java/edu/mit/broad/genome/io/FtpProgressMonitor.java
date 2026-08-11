@@ -13,7 +13,7 @@ import com.enterprisedt.net.ftp.EventListener;
 import com.enterprisedt.net.ftp.FTPException;
 
 import javafx.stage.Window;
-import xapps.gsea.fx.FxFtpProgressDialog;
+import xapps.gsea.fx.widgets.FxFtpProgressDialog;
 import xapps.gsea.fx.shell.FxWorkspaceWindowManager;
 import xapps.gsea.fx.shell.GseaFxShell;
 import edu.mit.broad.xbench.core.api.Application;

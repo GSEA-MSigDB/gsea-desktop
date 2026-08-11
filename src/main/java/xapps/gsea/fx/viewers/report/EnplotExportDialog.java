@@ -37,6 +37,7 @@ import org.w3c.dom.NodeList;
 import edu.mit.broad.xbench.core.api.Application;
 import javafx.geometry.Insets;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Dialog;
@@ -46,7 +47,9 @@ import javafx.scene.control.SpinnerValueFactory;
 import javafx.scene.layout.GridPane;
 import javafx.stage.FileChooser;
 import javafx.stage.Window;
+import xapps.gsea.fx.FxTheme;
 import xapps.gsea.fx.params.FxFileChooserUtil;
+import xapps.gsea.fx.widgets.FxButtons;
 
 /**
  * Save-as dialog for on-demand enrichment plots: width/height (px), DPI scaling, and format.
@@ -155,7 +158,8 @@ public final class EnplotExportDialog {
         if (owner != null) {
             dialog.initOwner(owner);
         }
-        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+        ButtonType saveType = new ButtonType("Save", ButtonBar.ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().addAll(saveType, ButtonType.CANCEL);
 
         Spinner<Integer> width = intSpinner(defaultWidthPx, 50, 20000);
         Spinner<Integer> height = intSpinner(defaultHeightPx, 50, 20000);
@@ -191,13 +195,14 @@ public final class EnplotExportDialog {
         dialog.getDialogPane().setContent(grid);
         dialog.getDialogPane().setPrefWidth(420);
 
-        Button ok = (Button) dialog.getDialogPane().lookupButton(ButtonType.OK);
-        xapps.gsea.fx.FxButtons.stylePrimary(ok);
+        FxTheme.apply(dialog);
+        Button save = (Button) dialog.getDialogPane().lookupButton(saveType);
+        FxButtons.stylePrimary(save);
         Button cancel = (Button) dialog.getDialogPane().lookupButton(ButtonType.CANCEL);
-        xapps.gsea.fx.FxButtons.styleSecondary(cancel);
+        FxButtons.styleSecondary(cancel);
 
         dialog.setResultConverter(bt -> {
-            if (bt != ButtonType.OK) {
+            if (bt != saveType) {
                 return null;
             }
             commitSpinner(width);

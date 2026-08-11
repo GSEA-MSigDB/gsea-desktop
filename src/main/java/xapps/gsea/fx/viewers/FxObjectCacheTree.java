@@ -26,7 +26,6 @@ import edu.mit.broad.genome.parsers.ParseUtils;
 import edu.mit.broad.genome.parsers.ParserFactory;
 import edu.mit.broad.genome.reports.api.Report;
 import edu.mit.broad.vdb.chip.Chip;
-import edu.mit.broad.xbench.core.api.Application;
 import javafx.geometry.Insets;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
@@ -43,10 +42,11 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
-import xapps.gsea.fx.jobs.JobRuntime;
+import org.gsea_msigdb.gsea.runtime.AppServices;
+import org.gsea_msigdb.gsea.ui.api.FeatureHost;
 
 /**
- * Tree of objects currently held in {@link ParserFactory#getCache()}, organized by type.
+ * Tree of objects currently held in the workspace object cache, organized by type.
  */
 public class FxObjectCacheTree {
 
@@ -54,19 +54,21 @@ public class FxObjectCacheTree {
 
     private final BorderPane root = new BorderPane();
     private final TreeView<CacheNode> treeView = new TreeView<>();
+    private final FeatureHost host;
     private final Consumer<ViewPage> openPage;
-    private final JobRuntime jobRuntime;
+    private final AppServices svc;
     private String filterQuery = "";
 
-    public FxObjectCacheTree(Consumer<ViewPage> openPage, JobRuntime jobRuntime) {
-        this.openPage = openPage != null ? openPage : page -> { };
-        this.jobRuntime = jobRuntime;
+    public FxObjectCacheTree(FeatureHost host) {
+        this.host = java.util.Objects.requireNonNull(host, "host");
+        this.openPage = host::openPage;
+        this.svc = host.services();
 
         Label header = new Label("Object cache\n(objects already loaded & ready for use)");
         header.getStyleClass().add("gsea-section-header");
         header.setPadding(new Insets(4, 0, 4, 0));
 
-        javafx.scene.control.TextField filterField = xapps.gsea.fx.FxSearchField.bind(q -> {
+        javafx.scene.control.TextField filterField = xapps.gsea.fx.widgets.FxSearchField.bind(q -> {
             filterQuery = q;
             refresh();
         });
@@ -86,7 +88,7 @@ public class FxObjectCacheTree {
                 }
                 javafx.scene.image.ImageView icon = null;
                 if (item.payload instanceof PersistentObject) {
-                    icon = xapps.gsea.fx.FxFileIcons.forObject(item.payload);
+                    icon = xapps.gsea.fx.widgets.FxFileIcons.forObject(item.payload);
                     File src = sourceFileOf(item.payload);
                     setTooltip(new Tooltip(src != null ? src.getAbsolutePath() : "Unknown path for object"));
                 } else if (item.payload == null && item.label != null
@@ -131,7 +133,7 @@ public class FxObjectCacheTree {
         });
 
         try {
-            ParserFactory.getCache().addPathAdditionsListener(evt ->
+            svc.cache().addPathAdditionsListener(evt ->
                     javafx.application.Platform.runLater(this::refresh));
         } catch (Throwable t) {
             klog.debug("Could not attach cache path listener", t);
@@ -153,10 +155,10 @@ public class FxObjectCacheTree {
         treeView.setOnDragDetected(e -> {
             List<PersistentObject> pobs = selectedPobs();
             if (!pobs.isEmpty()) {
-                xapps.gsea.fx.FxPobTransferSupport.startPobDrag(treeView, pobs, e);
+                xapps.gsea.fx.widgets.FxPobTransferSupport.startPobDrag(treeView, pobs, e);
             }
         });
-        treeView.setOnDragDone(e -> xapps.gsea.fx.FxPobTransferSupport.clear());
+        treeView.setOnDragDone(e -> xapps.gsea.fx.widgets.FxPobTransferSupport.clear());
         treeView.setOnKeyPressed(e -> {
             if (e.isControlDown() && e.getCode() == javafx.scene.input.KeyCode.C) {
                 copySelectedFiles();
@@ -207,7 +209,7 @@ public class FxObjectCacheTree {
                 "Objects in memory [shift-click to expand all]", null));
         rootItem.setExpanded(true);
 
-        ObjectCache cache = ParserFactory.getCache();
+        ObjectCache cache = svc.cache();
         for (Class<?> cl : cache.getCachedRepresentationClasses()) {
             @SuppressWarnings("unchecked")
             List<Object> objs = cache.getCachedObjectsL(cl);
@@ -314,7 +316,7 @@ public class FxObjectCacheTree {
         } else {
             cat.setExpanded(false);
         }
-        boolean categoryLabelMatch = xapps.gsea.fx.FxSearchField.matches(label, filterQuery);
+        boolean categoryLabelMatch = xapps.gsea.fx.widgets.FxSearchField.matches(label, filterQuery);
         for (Object obj : objs) {
             CacheNode leaf = leafNode(obj);
             if (filterQuery != null && !filterQuery.isEmpty() && !categoryLabelMatch) {
@@ -326,7 +328,7 @@ public class FxObjectCacheTree {
                 if (src != null) {
                     hay = hay + " " + src.getAbsolutePath();
                 }
-                if (!xapps.gsea.fx.FxSearchField.matches(hay, filterQuery)) {
+                if (!xapps.gsea.fx.widgets.FxSearchField.matches(hay, filterQuery)) {
                     continue;
                 }
             }
@@ -364,7 +366,7 @@ public class FxObjectCacheTree {
         try {
             if (pob instanceof EnrichmentDb edb) {
                 File dir = edb.getEdbDir();
-                FxLeadingEdgePane pane = new FxLeadingEdgePane(jobRuntime);
+                FxLeadingEdgePane pane = new FxLeadingEdgePane(host);
                 if (dir != null && dir.isDirectory()) {
                     pane.loadFromDirectory(dir);
                 }
@@ -372,18 +374,18 @@ public class FxObjectCacheTree {
                 return;
             }
             if (pob instanceof SampleAnnot) {
-                Application.getWindowManager().showMessage(
+                svc.dialogs().showMessage(
                         "Sample annotations",
                         "No dedicated viewer for sample annotations.\n"
                                 + ((PersistentObject) pob).getName());
                 return;
             }
             if (pob instanceof PersistentObject persistent) {
-                FxFileActions.viewObject(persistent, openPage);
+                FxFileActions.viewObject(persistent, host);
             }
         } catch (Exception ex) {
             klog.error("Could not open viewer for {}", pob, ex);
-            Application.getWindowManager().showError("Could not open viewer", ex);
+            svc.dialogs().showError("Could not open viewer", ex);
         }
     }
 
@@ -392,17 +394,17 @@ public class FxObjectCacheTree {
         Object pob = selectedObject();
         File src = sourceFileOf(pob);
         if (src == null || !src.isFile()) {
-            Application.getWindowManager().showError("No source file available to force-reload.");
+            svc.dialogs().showError("No source file available to force-reload.");
             return;
         }
         final File file = src;
         Thread worker = new Thread(() -> {
             try {
                 ParserFactory.read(file, false);
-                Application.getFileManager().getRecentFilesStore().refresh(file.getPath());
+                svc.files().getRecentFilesStore().refresh(file.getPath());
                 javafx.application.Platform.runLater(() -> {
                     refresh();
-                    Application.getWindowManager().showMessage(
+                    svc.dialogs().showMessage(
                             "<html><body><b>Successfully reloaded: "
                                     + (pob instanceof PersistentObject
                                     ? ((PersistentObject) pob).getName()
@@ -412,7 +414,7 @@ public class FxObjectCacheTree {
             } catch (Throwable t) {
                 klog.error("Force reload failed for {}", file, t);
                 javafx.application.Platform.runLater(() ->
-                        Application.getWindowManager().showError("Could not force-reload file", t));
+                        svc.dialogs().showError("Could not force-reload file", t));
             }
         }, "gsea-cache-force-reload");
         worker.setDaemon(true);
@@ -448,7 +450,7 @@ public class FxObjectCacheTree {
 
     private void copySelectedFiles() {
         List<File> files = selectedSourceFiles();
-        xapps.gsea.fx.FxFileTransferSupport.copyFilesToClipboard(files);
+        xapps.gsea.fx.widgets.FxFileTransferSupport.copyFilesToClipboard(files);
     }
 
     private void revealSelected() {
@@ -457,10 +459,10 @@ public class FxObjectCacheTree {
             return;
         }
         try {
-            ObjectCache cache = ParserFactory.getCache();
+            ObjectCache cache = svc.cache();
             File src = cache.getSourceFile(pob);
             if (src == null) {
-                Application.getWindowManager().showError("No source path for this object");
+                svc.dialogs().showError("No source path for this object");
                 return;
             }
             File parent = src.isDirectory() ? src : src.getParentFile();
@@ -469,11 +471,11 @@ public class FxObjectCacheTree {
             } else if (src.exists()) {
                 xapps.gsea.fx.FxDesktopUtil.openFile(src);
             } else {
-                Application.getWindowManager().showError("Path does not exist:\n" + src.getAbsolutePath());
+                svc.dialogs().showError("Path does not exist:\n" + src.getAbsolutePath());
             }
         } catch (Exception ex) {
             klog.error("Reveal failed", ex);
-            Application.getWindowManager().showError("Could not reveal in OS", ex);
+            svc.dialogs().showError("Could not reveal in OS", ex);
         }
     }
 
@@ -483,18 +485,18 @@ public class FxObjectCacheTree {
             return;
         }
         try {
-            String path = ParserFactory.getCache().getSourcePath(pob);
+            String path = svc.cache().getSourcePath(pob);
             ClipboardContent content = new ClipboardContent();
             content.putString(path);
             Clipboard.getSystemClipboard().setContent(content);
         } catch (Exception ex) {
-            Application.getWindowManager().showError("Could not copy path", ex);
+            svc.dialogs().showError("Could not copy path", ex);
         }
     }
 
     private File sourceFileOf(Object pob) {
         try {
-            return ParserFactory.getCache().getSourceFile(pob);
+            return svc.cache().getSourceFile(pob);
         } catch (Exception ex) {
             return null;
         }
@@ -507,7 +509,7 @@ public class FxObjectCacheTree {
         }
         File src = sourceFileOf(pob);
         if (src == null || !src.getName().toLowerCase().endsWith(".grp")) {
-            Application.getWindowManager().showError(
+            svc.dialogs().showError(
                     "Only .grp files allowed - cannot perform this action on: "
                             + (src != null ? src.getName() : "(no source path)"));
             return;
@@ -517,12 +519,12 @@ public class FxObjectCacheTree {
             GeneSet gset = (GeneSet) ParserFactory.read(src);
             ParserFactory.save(gset, src);
             refresh();
-            Application.getWindowManager().showMessage(
+            svc.dialogs().showMessage(
                     "Successfully removed duplicates from the GeneSet. Before: "
                             + before + " after: " + gset.getNumMembers());
         } catch (Throwable t) {
             klog.error("Remove duplicates failed", t);
-            Application.getWindowManager().showError("Error removing duplicates from GeneSet", t);
+            svc.dialogs().showError("Error removing duplicates from GeneSet", t);
         }
     }
 
@@ -535,12 +537,12 @@ public class FxObjectCacheTree {
             GeneSetMatrix gm = (GeneSetMatrix) pob;
             ParserFactory.extractGeneSets(gm);
             refresh();
-            Application.getWindowManager().showMessage(
+            svc.dialogs().showMessage(
                     "Successfully created " + gm.getNumGeneSets()
                             + " GeneSets from the GeneSetMatrix " + gm.getName());
         } catch (Throwable t) {
             klog.error("Extract GeneSets failed", t);
-            Application.getWindowManager().showError("Error creating GeneSets from GeneSetMatrix", t);
+            svc.dialogs().showError("Error creating GeneSets from GeneSetMatrix", t);
         }
     }
 
@@ -552,15 +554,15 @@ public class FxObjectCacheTree {
         try {
             GeneSetMatrix gm = (GeneSetMatrix) pob;
             GeneSet gset = ParserFactory.combineIntoOne(gm);
-            File tmp = new File(Application.getVdbManager().getTmpDir(), gset.getName(true));
+            File tmp = new File(svc.vdb().getTmpDir(), gset.getName(true));
             ParserFactory.save(gset, tmp);
             refresh();
-            Application.getWindowManager().showMessage(
+            svc.dialogs().showMessage(
                     "Successfully created a GeneSet from the GeneSetMatrix " + gm.getName()
                             + " into: " + tmp.getPath());
         } catch (Throwable t) {
             klog.error("Convert to GeneSet failed", t);
-            Application.getWindowManager().showError("Error creating a GeneSet from GeneSetMatrix", t);
+            svc.dialogs().showError("Error creating a GeneSet from GeneSetMatrix", t);
         }
     }
 

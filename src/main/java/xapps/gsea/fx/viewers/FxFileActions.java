@@ -10,6 +10,7 @@ import java.util.Locale;
 import java.util.function.Consumer;
 
 import org.gsea_msigdb.gsea.ui.api.ViewPage;
+import org.gsea_msigdb.gsea.ui.api.FeatureHost;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,11 +20,11 @@ import edu.mit.broad.genome.objects.GeneSetMatrix;
 import edu.mit.broad.genome.objects.PersistentObject;
 import edu.mit.broad.genome.parsers.ParseUtils;
 import edu.mit.broad.genome.parsers.ParserFactory;
-import edu.mit.broad.xbench.core.api.Application;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.SeparatorMenuItem;
-import xapps.gsea.fx.FxFileIcons;
+import xapps.gsea.fx.widgets.FxFileIcons;
+import org.gsea_msigdb.gsea.runtime.AppServices;
 
 /** Type-specific actions for files / cached objects. */
 public final class FxFileActions {
@@ -89,7 +90,7 @@ public final class FxFileActions {
         Runnable refresh = afterChange != null ? afterChange : () -> { };
         File src = null;
         try {
-            src = ParserFactory.getCache().getSourceFile(pob);
+            src = AppServices.require().cache().getSourceFile(pob);
         } catch (Throwable ignored) {
             // no source
         }
@@ -118,7 +119,7 @@ public final class FxFileActions {
             try {
                 xapps.gsea.fx.FxDesktopUtil.openUri(file.toURI());
             } catch (Exception e) {
-                Application.getWindowManager().showError("Could not open file", e);
+                AppServices.require().dialogs().showError("Could not open file", e);
             }
             return;
         }
@@ -132,11 +133,11 @@ public final class FxFileActions {
                                     "Only files can be choosen - a directory was specified: " + file.getPath());
                         }
                         edu.mit.broad.genome.objects.PersistentObject pob =
-                                xapps.gsea.fx.FxProgressMonitorRead.read(file);
+                                xapps.gsea.fx.widgets.FxProgressMonitorRead.read(file);
                         if (pob == null) {
                             throw new RuntimeException("Loading of file '" + file.getName() + "' canceled.");
                         }
-                        Application.getFileManager().registerRecentlyOpenedFile(file);
+                        AppServices.require().files().registerRecentlyOpenedFile(file);
                         return pob;
                     }
                 };
@@ -151,12 +152,12 @@ public final class FxFileActions {
                 buf.append("<br><br><b>There were warnings. See the [+] console log for details.</b>");
             }
             buf.append("</html>");
-            Application.getWindowManager().showMessage(buf.toString());
+            AppServices.require().dialogs().showMessage(buf.toString());
         });
         task.setOnFailed(e -> {
             Throwable t = task.getException();
             klog.error("Default open failed for {}", file, t);
-            Application.getWindowManager().showError("Could not open file", t);
+            AppServices.require().dialogs().showError("Could not open file", t);
         });
         xapps.gsea.fx.FxWorkers.start(task, "gsea-default-file-open");
     }
@@ -242,7 +243,7 @@ public final class FxFileActions {
             try {
                 xapps.gsea.fx.FxDesktopUtil.openUri(file.toURI());
             } catch (Exception ex) {
-                Application.getWindowManager().showError("Trouble launching File on path '" + file.getPath() + "'", ex);
+                AppServices.require().dialogs().showError("Trouble launching File on path '" + file.getPath() + "'", ex);
             }
         });
     }
@@ -265,14 +266,26 @@ public final class FxFileActions {
     }
 
     /** Open the default viewer for a cached object (primary action). */
+    public static void viewObject(PersistentObject pob, FeatureHost host) {
+        if (pob == null || host == null) {
+            return;
+        }
+        try {
+            host.openPage(FxViewerFactory.open(pob, host));
+        } catch (Exception ex) {
+            AppServices.require().dialogs().showError("Could not open viewer", ex);
+        }
+    }
+
     public static void viewObject(PersistentObject pob, Consumer<ViewPage> openPage) {
         if (pob == null || openPage == null) {
             return;
         }
         try {
-            openPage.accept(FxViewerFactory.open(pob, openPage));
+            // Non-Report objects do not need FeatureHost.
+            openPage.accept(FxViewerFactory.open(pob));
         } catch (Exception ex) {
-            Application.getWindowManager().showError("Could not open viewer", ex);
+            AppServices.require().dialogs().showError("Could not open viewer", ex);
         }
     }
 
@@ -286,7 +299,7 @@ public final class FxFileActions {
             try {
                 xapps.gsea.fx.FxDesktopUtil.openUri(file.toURI());
             } catch (Exception e) {
-                Application.getWindowManager().showError("Could not open file", e);
+                AppServices.require().dialogs().showError("Could not open file", e);
             }
             return;
         }
@@ -294,7 +307,7 @@ public final class FxFileActions {
             try {
                 xapps.gsea.fx.FxDesktopUtil.openUri(file.toURI());
             } catch (Exception e) {
-                Application.getWindowManager().showError("Could not open file", e);
+                AppServices.require().dialogs().showError("Could not open file", e);
             }
             return;
         }
@@ -302,14 +315,19 @@ public final class FxFileActions {
             try {
                 Object obj = ParserFactory.read(file, useCache);
                 if (useCache) {
-                    Application.getFileManager().registerRecentlyOpenedFile(file);
+                    AppServices.require().files().registerRecentlyOpenedFile(file);
                 } else {
-                    Application.getFileManager().getRecentFilesStore().refresh(file.getPath());
+                    AppServices.require().files().getRecentFilesStore().refresh(file.getPath());
                 }
                 if (openViewer && obj != null && openPage != null) {
                     javafx.application.Platform.runLater(() -> {
                         try {
-                            openPage.accept(FxViewerFactory.open(obj, openPage));
+                            if (obj instanceof edu.mit.broad.genome.reports.api.Report) {
+                                AppServices.require().dialogs().showMessage(
+                                        "Open this report from Analysis History or Jobs.");
+                            } else {
+                                openPage.accept(FxViewerFactory.open(obj));
+                            }
                         } catch (Exception ex) {
                             klog.debug("No viewer for {}", obj.getClass().getName());
                         }
@@ -318,11 +336,11 @@ public final class FxFileActions {
                     final Object reloaded = obj;
                     javafx.application.Platform.runLater(() -> {
                         if (reloaded instanceof PersistentObject pob) {
-                            Application.getWindowManager().showMessage(
+                            AppServices.require().dialogs().showMessage(
                                     "<html><body><b>Successfully reloaded: " + pob.getName()
                                             + "</b><br>From file: " + file + "</body></html>");
                         } else {
-                            Application.getWindowManager().showMessage(
+                            AppServices.require().dialogs().showMessage(
                                     "Force reload", "Reloaded: " + file.getName());
                         }
                     });
@@ -330,7 +348,7 @@ public final class FxFileActions {
             } catch (Throwable t) {
                 klog.error("Failed to open {}", file, t);
                 javafx.application.Platform.runLater(() ->
-                        Application.getWindowManager().showError("Could not open file", t));
+                        AppServices.require().dialogs().showError("Could not open file", t));
             }
         }, "gsea-open-file");
         worker.setDaemon(true);
@@ -339,7 +357,7 @@ public final class FxFileActions {
 
     private static void removeGeneSetDuplicates(File file, Runnable afterChange) {
         if (file == null || !file.getName().toLowerCase(Locale.ROOT).endsWith(".grp")) {
-            Application.getWindowManager().showError(
+            AppServices.require().dialogs().showError(
                     "Only .grp files allowed - cannot perform this action on file: " + file);
             return;
         }
@@ -350,14 +368,14 @@ public final class FxFileActions {
                 ParserFactory.save(gset, file);
                 javafx.application.Platform.runLater(() -> {
                     afterChange.run();
-                    Application.getWindowManager().showMessage(
+                    AppServices.require().dialogs().showMessage(
                             "Successfully removed duplicates from the GeneSet. Before: "
                                     + before + " after: " + gset.getNumMembers());
                 });
             } catch (Throwable t) {
                 klog.error("Remove duplicates failed", t);
                 javafx.application.Platform.runLater(() ->
-                        Application.getWindowManager().showError("Error removing duplicates from GeneSet", t));
+                        AppServices.require().dialogs().showError("Error removing duplicates from GeneSet", t));
             }
         }, "gsea-remove-dups");
         worker.setDaemon(true);
@@ -384,14 +402,14 @@ public final class FxFileActions {
                 final GeneSetMatrix done = gm;
                 javafx.application.Platform.runLater(() -> {
                     afterChange.run();
-                    Application.getWindowManager().showMessage(
+                    AppServices.require().dialogs().showMessage(
                             "Successfully created " + done.getNumGeneSets()
                                     + " GeneSets from the GeneSetMatrix " + done.getName());
                 });
             } catch (Throwable t) {
                 klog.error("Extract GeneSets failed", t);
                 javafx.application.Platform.runLater(() ->
-                        Application.getWindowManager().showError("Error creating GeneSets from GeneSetMatrix", t));
+                        AppServices.require().dialogs().showError("Error creating GeneSets from GeneSetMatrix", t));
             }
         }, "gsea-extract-gsets");
         worker.setDaemon(true);
@@ -415,19 +433,19 @@ public final class FxFileActions {
                             "Only GeneSetMatrix or File Objects allowed. Got: " + fileOrMatrix);
                 }
                 GeneSet gset = ParserFactory.combineIntoOne(gm);
-                File tmp = new File(Application.getVdbManager().getTmpDir(), gset.getName(true));
+                File tmp = new File(AppServices.require().vdb().getTmpDir(), gset.getName(true));
                 ParserFactory.save(gset, tmp);
                 final GeneSetMatrix done = gm;
                 javafx.application.Platform.runLater(() -> {
                     afterChange.run();
-                    Application.getWindowManager().showMessage(
+                    AppServices.require().dialogs().showMessage(
                             "Successfully created a GeneSet from the GeneSetMatrix " + done.getName()
                                     + " into: " + tmp.getPath());
                 });
             } catch (Throwable t) {
                 klog.error("Convert to GeneSet failed", t);
                 javafx.application.Platform.runLater(() ->
-                        Application.getWindowManager().showError("Error creating a GeneSet from GeneSetMatrix", t));
+                        AppServices.require().dialogs().showError("Error creating a GeneSet from GeneSetMatrix", t));
             }
         }, "gsea-convert-gset");
         worker.setDaemon(true);
@@ -438,7 +456,7 @@ public final class FxFileActions {
         try {
             xapps.gsea.fx.FxDesktopUtil.openInOsExplorer(file);
         } catch (Exception e) {
-            Application.getWindowManager().showError("Trouble launching File Explorer on path '" + file.getPath() + "'", e);
+            AppServices.require().dialogs().showError("Trouble launching File Explorer on path '" + file.getPath() + "'", e);
         }
     }
 

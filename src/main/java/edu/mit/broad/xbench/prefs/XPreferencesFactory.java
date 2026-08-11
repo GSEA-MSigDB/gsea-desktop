@@ -9,14 +9,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
 
-import java.awt.Dimension;
-import java.awt.GraphicsEnvironment;
-import java.awt.Toolkit;
 import java.io.File;
 import java.util.prefs.BackingStoreException;
 
 /**
- * Application preferences (values only; no Swing preference UI).
+ * Application preferences (values only; no UI toolkit dependency).
  */
 public class XPreferencesFactory {
     private static final Logger klog = LoggerFactory.getLogger(XPreferencesFactory.class);
@@ -79,26 +76,15 @@ public class XPreferencesFactory {
     public static final StringPreference kLastToolName = new StringPreference("Last Tool Run", "Dont change me", "",
             true, true);
 
-    private static Dimension screenSize = null;
-
-    static {
-        try {
-            if (!GraphicsEnvironment.isHeadless()) {
-                screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-            } else {
-                screenSize = new Dimension(800, 600);
-            }
-        } catch (Throwable t) {
-            klog.error(MarkerFactory.getMarker("FATAL"), "Unexpected trouble", t);
-            screenSize = new Dimension(800, 600);
-        }
-    }
+    /** Fallback defaults when no prior window size is stored (no AWT/Toolkit dependency). */
+    private static final int DEFAULT_SCREEN_WIDTH = 1440;
+    private static final int DEFAULT_SCREEN_HEIGHT = 900;
 
     public static final IntPreference kAppWidth = new IntPreference("Last app width", "Dont change me",
-            screenSize.width - 400, false, true);
+            DEFAULT_SCREEN_WIDTH - 400, false, true);
 
     public static final IntPreference kAppHeight = new IntPreference("Last app height", "Dont change me",
-            screenSize.height - 400, false, true);
+            DEFAULT_SCREEN_HEIGHT - 400, false, true);
 
     public static final IntPreference kAppXPosition = new IntPreference("Last app x position", "Dont change me", 50,
             false, true);

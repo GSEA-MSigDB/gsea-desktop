@@ -78,6 +78,31 @@ public class FxDockWorkspaceTest {
         }
     }
 
+    @Test
+    void leftColumnNotResizableWithParent() throws Exception {
+        AtomicReference<AssertionError> failure = new AtomicReference<>();
+        CountDownLatch done = new CountDownLatch(1);
+        Platform.runLater(() -> {
+            try {
+                FxDockWorkspace workspace = new FxDockWorkspace();
+                workspace.buildLayout(new Region(), new Region(), new Region());
+                assertEquals(Boolean.FALSE, javafx.scene.control.SplitPane.isResizableWithParent(workspace.getLeftColumn()));
+            } catch (AssertionError e) {
+                failure.set(e);
+            } catch (Throwable t) {
+                failure.set(new AssertionError(t));
+            } finally {
+                done.countDown();
+            }
+        });
+        if (!done.await(20, TimeUnit.SECONDS)) {
+            throw new IllegalStateException("FX test timed out");
+        }
+        if (failure.get() != null) {
+            throw failure.get();
+        }
+    }
+
     private static ViewPage stubPage(String title) {
         Label content = new Label(title);
         return new ViewPage() {
@@ -92,7 +117,7 @@ public class FxDockWorkspaceTest {
             }
 
             @Override
-            public Object getContent() {
+            public javafx.scene.Node getContent() {
                 return content;
             }
         };

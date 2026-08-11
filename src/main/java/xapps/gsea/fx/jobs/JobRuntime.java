@@ -25,9 +25,9 @@ import edu.mit.broad.genome.Conf;
 import edu.mit.broad.genome.reports.api.Report;
 import edu.mit.broad.genome.reports.api.ToolReport;
 import edu.mit.broad.xbench.tui.JobState;
-import edu.mit.broad.xbench.tui.RunContext;
 import edu.mit.broad.xbench.tui.RunLogOutputStream;
 import edu.mit.broad.xbench.tui.ToolFactory;
+import org.gsea_msigdb.gsea.runtime.RunContext;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
@@ -66,27 +66,16 @@ public final class JobRuntime {
     private PrintStream previousErr;
     private Handler julHandler;
 
-    private static volatile JobRuntime current;
+    /** When true, also tee System.out/err (legacy debug). Default false. */
+    private static volatile boolean captureSystemStreams;
 
     public JobRuntime(ApplicationLog applicationLog) {
         this.applicationLog = Objects.requireNonNull(applicationLog, "applicationLog");
-        current = this;
     }
 
-    /**
-     * Runtime installed by the shell. Prefer constructor injection; this supports
-     * relaunch / secondary panes created after the shell is up.
-     */
-    public static JobRuntime current() {
-        return current;
-    }
-
-    public static JobRuntime require() {
-        JobRuntime runtime = current;
-        if (runtime == null) {
-            throw new IllegalStateException("JobRuntime is not available");
-        }
-        return runtime;
+    /** Enable legacy System.out/err tee (off by default). Call before {@link #installCapture()}. */
+    public static void setCaptureSystemStreams(boolean enabled) {
+        captureSystemStreams = enabled;
     }
 
     public ApplicationLog getApplicationLog() {
@@ -125,17 +114,23 @@ public final class JobRuntime {
         }
     }
 
-    /** Install JUL + System.out/err routing once (call from the shell). */
+    /**
+     * Install JUL routing (and optionally System.out/err tee when
+     * {@link #setCaptureSystemStreams(boolean)} is enabled). Call from the shell.
+     * Primary per-job logs come from {@link AbstractTool#setOutputStream} + MDC.
+     */
     public synchronized void installCapture() {
         if (captureInstalled) {
             return;
         }
-        previousOut = System.out;
-        previousErr = System.err;
-        PrintStream routing = RunLogOutputStream.printStream(null,
-                (ignored, text) -> appendLog(currentRunId(), text));
-        System.setOut(routing);
-        System.setErr(routing);
+        if (captureSystemStreams) {
+            previousOut = System.out;
+            previousErr = System.err;
+            PrintStream routing = RunLogOutputStream.printStream(null,
+                    (ignored, text) -> appendLog(currentRunId(), text));
+            System.setOut(routing);
+            System.setErr(routing);
+        }
 
         julHandler = new Handler() {
             private final SimpleFormatter formatter = new SimpleFormatter();
@@ -248,20 +243,19 @@ public final class JobRuntime {
         }
         workers.clear();
         if (captureInstalled) {
-            if (previousOut != null) {
-                System.setOut(previousOut);
-            }
-            if (previousErr != null) {
-                System.setErr(previousErr);
+            if (captureSystemStreams) {
+                if (previousOut != null) {
+                    System.setOut(previousOut);
+                }
+                if (previousErr != null) {
+                    System.setErr(previousErr);
+                }
             }
             if (julHandler != null) {
                 Logger.getLogger("").removeHandler(julHandler);
                 julHandler = null;
             }
             captureInstalled = false;
-        }
-        if (current == this) {
-            current = null;
         }
     }
 

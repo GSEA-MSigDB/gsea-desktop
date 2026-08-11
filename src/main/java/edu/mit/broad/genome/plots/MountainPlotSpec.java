@@ -260,8 +260,8 @@ public final class MountainPlotSpec extends AbstractPlotSpec {
             g2.draw(new Line2D.Double(peakX, rect.getY(), peakX, rect.getMaxY()));
             g2.setStroke(new BasicStroke(1f));
 
-            String ann = String.format("ES=%.3f  NES=%.2f  NOM pVal=%.3f  FDR=%.3f%npeak at rank %d",
-                    spec.es, spec.nes, spec.np, spec.fdr, spec.peakRank);
+            // Stats are already in the title caption; keep only the peak-rank callout here.
+            String ann = String.format("peak at rank %d", spec.peakRank);
             drawLabelBox(g2, ann, peakX, zy, spec.peakEs >= 0, rect.getMaxX(), true);
         }
 

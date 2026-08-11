@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2003-2026 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California. All rights reserved.
  */
-package xapps.gsea.fx;
+package xapps.gsea.fx.widgets;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -15,6 +15,7 @@ import javafx.scene.control.ProgressBar;
 import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Window;
+import xapps.gsea.fx.FxTheme;
 
 /** Shared modal progress + Cancel chrome. */
 public final class FxCancellableProgressDialog {

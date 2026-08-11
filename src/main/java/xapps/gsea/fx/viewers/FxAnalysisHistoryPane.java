@@ -14,8 +14,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
-import java.util.function.Consumer;
 
+import org.gsea_msigdb.gsea.ui.api.FeatureHost;
 import org.gsea_msigdb.gsea.ui.api.ViewPage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,7 +24,6 @@ import edu.mit.broad.genome.objects.esmatrix.db.EnrichmentDb;
 import edu.mit.broad.genome.parsers.ParserFactory;
 import edu.mit.broad.genome.reports.api.Report;
 import edu.mit.broad.genome.utils.DateUtils;
-import edu.mit.broad.xbench.core.api.Application;
 import edu.mit.broad.xbench.tui.ReportStub;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
@@ -45,14 +44,14 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
-import xapps.gsea.fx.FxReportOpen;
+import xapps.gsea.fx.viewers.report.FxReportOpen;
 import xapps.gsea.fx.jobs.JobDisplay;
-import xapps.gsea.fx.jobs.JobRuntime;
 import xapps.gsea.fx.tui.FxToolRelaunch;
 import xapps.gsea.fx.viewers.report.ReportExplorerSupport;
 import xapps.gsea.fx.viewers.report.ReportKind;
 import xapps.gsea.fx.viewers.report.ReportParamsTable;
 import xapps.gsea.fx.viewers.report.ReportStatChips;
+import org.gsea_msigdb.gsea.runtime.AppServices;
 
 /**
  * Analysis history browser / Past Analysis:
@@ -66,7 +65,8 @@ public class FxAnalysisHistoryPane implements ViewPage {
     private final BorderPane root = new BorderPane();
     private final TreeView<HistoryNode> tree = new TreeView<>();
     private final BorderPane detailHost = new BorderPane();
-    private final Consumer<ViewPage> openPage;
+    private final AppServices svc;
+    private final FeatureHost host;
     private final Set<String> sessionReportNames = new HashSet<>();
     private PropertyChangeListener sessionListener;
     /** Bumped on each open request so stale async loads cannot open a superseded report. */
@@ -74,8 +74,9 @@ public class FxAnalysisHistoryPane implements ViewPage {
     /** Bumped on each selection so stale preview loads are ignored. */
     private int detailSeq = 0;
 
-    public FxAnalysisHistoryPane(Consumer<ViewPage> openPage) {
-        this.openPage = openPage != null ? openPage : page -> { };
+    public FxAnalysisHistoryPane(FeatureHost host) {
+        this.host = java.util.Objects.requireNonNull(host, "host");
+        this.svc = host.services();
 
         tree.setShowRoot(true);
         tree.setCellFactory(tv -> new javafx.scene.control.TreeCell<>() {
@@ -94,7 +95,7 @@ public class FxAnalysisHistoryPane implements ViewPage {
                     time.getStyleClass().add("gsea-muted");
                     setText(null);
                     setGraphic(new HBox(4,
-                            xapps.gsea.fx.FxFileIcons.reportStubIcon(),
+                            xapps.gsea.fx.widgets.FxFileIcons.reportStubIcon(),
                             new HBox(name, time)));
                     if (item.report != null && item.report.getQuickInfo() != null) {
                         setTooltip(new javafx.scene.control.Tooltip(item.report.getQuickInfo()));
@@ -150,7 +151,7 @@ public class FxAnalysisHistoryPane implements ViewPage {
                 Platform.runLater(this::rebuildTree);
             }
         };
-        ParserFactory.getCache().addReportAdditionsListener(sessionListener);
+        svc.cache().addReportAdditionsListener(sessionListener);
     }
 
     private void rebuildTree() {
@@ -169,7 +170,7 @@ public class FxAnalysisHistoryPane implements ViewPage {
         session.setExpanded(expandedLabels.isEmpty() || expandedLabels.contains("Current Session"));
         try {
             @SuppressWarnings("unchecked")
-            List<Object> pobs = ParserFactory.getCache().getCachedObjectsL(Report.class);
+            List<Object> pobs = svc.cache().getCachedObjectsL(Report.class);
             List<Report> reports = new ArrayList<>();
             for (Object o : pobs) {
                 if (o instanceof Report) {
@@ -191,7 +192,7 @@ public class FxAnalysisHistoryPane implements ViewPage {
         TreeItem<HistoryNode> history = new TreeItem<>(new HistoryNode("History", null, null));
         history.setExpanded(expandedLabels.isEmpty() || expandedLabels.contains("History"));
         try {
-            ReportStub[] stubs = Application.getToolManager().getReportsInCache();
+            ReportStub[] stubs = svc.tools().getReportsInCache();
             Map<String, List<ReportStub>> byDay = new HashMap<>();
             Map<String, Long> dayTs = new HashMap<>();
             for (ReportStub stub : stubs) {
@@ -219,7 +220,7 @@ public class FxAnalysisHistoryPane implements ViewPage {
             }
         } catch (Throwable t) {
             klog.warn("Could not load analysis history", t);
-            Application.getWindowManager().showError("Could not load analysis history", t);
+            svc.dialogs().showError("Could not load analysis history", t);
         }
 
         rootItem.getChildren().addAll(session, history);
@@ -298,15 +299,15 @@ public class FxAnalysisHistoryPane implements ViewPage {
         HBox.setHgrow(title, Priority.ALWAYS);
 
         Button openBtn = new Button("Open report");
-        xapps.gsea.fx.FxButtons.stylePrimary(openBtn);
-        xapps.gsea.fx.FxButtons.sizeToContent(openBtn);
-        openBtn.setOnAction(e -> FxReportOpen.openInApp(report, openPage, JobRuntime.require()));
+        xapps.gsea.fx.widgets.FxButtons.stylePrimary(openBtn);
+        xapps.gsea.fx.widgets.FxButtons.sizeToContent(openBtn);
+        openBtn.setOnAction(e -> FxReportOpen.openInApp(report, host));
 
         Button relaunchBtn = new Button("Show in ToolRunner");
-        xapps.gsea.fx.FxButtons.styleSecondary(relaunchBtn);
-        xapps.gsea.fx.FxButtons.sizeToContent(relaunchBtn);
+        xapps.gsea.fx.widgets.FxButtons.styleSecondary(relaunchBtn);
+        xapps.gsea.fx.widgets.FxButtons.sizeToContent(relaunchBtn);
         relaunchBtn.setOnAction(e -> FxToolRelaunch.showInToolRunner(
-                report, true, openPage, JobRuntime.require()));
+                report, true, host));
 
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
@@ -426,7 +427,7 @@ public class FxAnalysisHistoryPane implements ViewPage {
         final int seq = ++openSeq;
         try {
             if (node.report != null) {
-                FxReportOpen.openInApp(node.report, openPage, JobRuntime.require());
+                FxReportOpen.openInApp(node.report, host);
                 return;
             }
             final ReportStub stub = node.stub;
@@ -438,9 +439,9 @@ public class FxAnalysisHistoryPane implements ViewPage {
                             return;
                         }
                         if (report != null) {
-                            FxReportOpen.openInApp(report, openPage, JobRuntime.require());
+                            FxReportOpen.openInApp(report, host);
                         } else {
-                            Application.getWindowManager().showMessage("Could not load report");
+                            svc.dialogs().showMessage("Could not load report");
                         }
                     });
                 } catch (Throwable err) {
@@ -449,7 +450,7 @@ public class FxAnalysisHistoryPane implements ViewPage {
                         if (seq != openSeq) {
                             return;
                         }
-                        Application.getWindowManager().showError("Bad reports file", err);
+                        svc.dialogs().showError("Bad reports file", err);
                         if (stub.getReportFile() != null) {
                             stub.getReportFile().deleteOnExit();
                         }
@@ -460,7 +461,7 @@ public class FxAnalysisHistoryPane implements ViewPage {
             t.start();
         } catch (Throwable t) {
             klog.warn("Could not open report from history", t);
-            Application.getWindowManager().showError("Bad reports file", t);
+            svc.dialogs().showError("Bad reports file", t);
             if (node.stub != null && node.stub.getReportFile() != null) {
                 node.stub.getReportFile().deleteOnExit();
             }
@@ -524,7 +525,7 @@ public class FxAnalysisHistoryPane implements ViewPage {
     }
 
     @Override
-    public Object getContent() {
+    public javafx.scene.Node getContent() {
         return root;
     }
 

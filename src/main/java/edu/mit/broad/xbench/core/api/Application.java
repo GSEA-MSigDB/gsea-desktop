@@ -4,7 +4,8 @@
 package edu.mit.broad.xbench.core.api;
 
 /**
- * Application services facade.
+ * Headless / tool-layer services facade (CLI, reports, genome IO).
+ * The JavaFX shell uses {@link org.gsea_msigdb.gsea.runtime.AppServices} instead.
  */
 public class Application {
 

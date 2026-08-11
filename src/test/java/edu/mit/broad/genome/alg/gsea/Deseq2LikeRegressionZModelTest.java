@@ -377,7 +377,10 @@ class Deseq2LikeRegressionZModelTest {
             boolean[].class,
             boolean[].class,
             boolean.class,
-            frozenCtxClass);
+            frozenCtxClass,
+            boolean.class,
+            double[].class,
+            double.class);
         fitInternal.setAccessible(true);
 
         final double[] condition = new double[] {
@@ -396,7 +399,10 @@ class Deseq2LikeRegressionZModelTest {
             new boolean[dataset.getNumRow()],
             replaceableSamples.clone(),
             true,
-            null);
+            null,
+            true,
+            null,
+            Double.NaN);
         final Deseq2LikeRegressionZModel withoutReplacement = (Deseq2LikeRegressionZModel) invokeStaticObject(
             fitInternal,
             dataset,
@@ -407,7 +413,10 @@ class Deseq2LikeRegressionZModelTest {
             new boolean[dataset.getNumRow()],
             replaceableSamples.clone(),
             false,
-            null);
+            null,
+            true,
+            null,
+            Double.NaN);
 
         final List<Deseq2LikeRegressionZModel.MainStat> withReplacementRows =
             withReplacement.computeMainStatsForTemplate(template, markerScoresWithReplacement);

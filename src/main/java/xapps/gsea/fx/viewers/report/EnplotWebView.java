@@ -25,7 +25,7 @@ import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
+import javafx.scene.layout.StackPane;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
 import javafx.stage.Window;
@@ -72,7 +72,7 @@ public final class EnplotWebView extends BorderPane {
             }
         });
 
-        viewerUrl = EnplotViewerResources.viewerPageUrl();
+        viewerUrl = EnplotSupport.viewerPageUrl();
         if (viewerUrl == null) {
             klog.error("EnPlot viewer page URL could not be resolved");
             return;
@@ -108,7 +108,7 @@ public final class EnplotWebView extends BorderPane {
         String geneSetName = result.getGeneSet().getName(true);
         GeneSetScoringTable scoringTable = scoring != null ? scoring.table() : null;
         int listSize = result.getRankedList().getSize();
-        File jsonFile = EnplotPayloadLoader.jsonFile(reportDir, geneSetName);
+        File jsonFile = EnplotSupport.jsonFile(reportDir, geneSetName);
 
         BorderPane host = new BorderPane();
         host.setMinSize(0, 0);
@@ -116,11 +116,11 @@ public final class EnplotWebView extends BorderPane {
         ReportExplorerSupport.loadAsync(host,
                 "gsea-enplot-interactive",
                 "Loading interactive EnPlot v2…",
-                () -> EnplotPayloadLoader.readCachedJson(jsonFile, listSize),
+                () -> EnplotSupport.readCachedJson(jsonFile, listSize),
                 cachedJson -> {
                     String json = cachedJson;
                     if (json == null) {
-                        json = EnplotPayloadLoader.buildFromResult(result, classA, classB, scoringTable, metricName);
+                        json = EnplotSupport.buildFromResult(result, classA, classB, scoringTable, metricName);
                     }
                     if (json == null || json.isBlank()) {
                         return ReportExplorerSupport.messagePane("Interactive EnPlot v2 unavailable.");
@@ -134,22 +134,20 @@ public final class EnplotWebView extends BorderPane {
         return host;
     }
 
+    /** Save control overlaid on the plot — same placement as static EnPlot views. */
     private static Node withSaveBar(EnplotWebView view, String geneSetName) {
-        Button save = new Button("Save plot…");
-        xapps.gsea.fx.FxButtons.styleSecondary(save);
+        Button save = new Button("Save…");
+        xapps.gsea.fx.widgets.FxButtons.styleSecondary(save);
+        xapps.gsea.fx.widgets.FxButtons.sizeToContent(save);
         save.setOnAction(e -> view.saveSnapshot(geneSetName));
 
-        HBox bar = new HBox(8, save);
-        bar.setAlignment(Pos.CENTER_LEFT);
-        bar.setPadding(new Insets(6, 8, 6, 8));
-        bar.getStyleClass().add("gsea-report-action-bar");
-
-        BorderPane pane = new BorderPane();
-        pane.setTop(bar);
-        pane.setCenter(view);
-        pane.setMinSize(0, 0);
-        pane.setPrefHeight(MIN_VIEWER_HEIGHT);
-        return pane;
+        StackPane stack = new StackPane(view, save);
+        stack.setMinSize(0, 0);
+        stack.setPrefHeight(MIN_VIEWER_HEIGHT);
+        StackPane.setAlignment(save, Pos.TOP_RIGHT);
+        // Clear of typical ScrollPane / WebView scrollbar gutter.
+        StackPane.setMargin(save, new Insets(6, 22, 0, 0));
+        return stack;
     }
 
     public void saveSnapshot(String geneSetName) {

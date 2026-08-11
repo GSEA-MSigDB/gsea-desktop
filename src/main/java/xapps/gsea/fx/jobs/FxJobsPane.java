@@ -7,9 +7,9 @@ import java.io.File;
 import java.util.Properties;
 import java.util.function.Consumer;
 
-import org.gsea_msigdb.gsea.ui.api.ViewPage;
+import org.gsea_msigdb.gsea.runtime.AppServices;
+import org.gsea_msigdb.gsea.ui.api.FeatureHost;
 
-import edu.mit.broad.xbench.core.api.Application;
 import edu.mit.broad.xbench.tui.JobState;
 import javafx.animation.Animation;
 import javafx.animation.KeyFrame;
@@ -34,9 +34,9 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.util.Duration;
-import xapps.gsea.fx.FxButtons;
+import xapps.gsea.fx.widgets.FxButtons;
 import xapps.gsea.fx.FxDesktopUtil;
-import xapps.gsea.fx.FxReportOpen;
+import xapps.gsea.fx.viewers.report.FxReportOpen;
 import xapps.gsea.fx.tui.FxToolRelaunch;
 import xtools.api.Tool;
 
@@ -51,7 +51,8 @@ public final class FxJobsPane {
     private static final double LOG_CHROME_PX = 72;
 
     private final JobRuntime runtime;
-    private final Consumer<ViewPage> openPage;
+    private final FeatureHost host;
+    private final AppServices svc;
     private final BorderPane root = new BorderPane();
     private final ListView<JobRecord> list = new ListView<>();
     private final TextArea logArea = new TextArea();
@@ -75,9 +76,10 @@ public final class FxJobsPane {
             (obs, o, n) -> updateActions(list.getSelectionModel().getSelectedItem());
     private final Timeline elapsedTick;
 
-    public FxJobsPane(JobRuntime runtime, Consumer<ViewPage> openPage) {
-        this.runtime = runtime;
-        this.openPage = openPage != null ? openPage : page -> { };
+    public FxJobsPane(FeatureHost host) {
+        this.host = java.util.Objects.requireNonNull(host, "host");
+        this.runtime = host.jobs();
+        this.svc = host.services();
 
         list.setItems(runtime.getJobs());
         list.setPlaceholder(new Label("No jobs yet"));
@@ -317,17 +319,17 @@ public final class FxJobsPane {
             return;
         }
         if (state != null && state.isSuccess()) {
-            FxReportOpen.openFromJob(job, openPage, runtime);
+            FxReportOpen.openFromJob(job, host);
         }
     }
 
     private void cancelSelected() {
         JobRecord job = list.getSelectionModel().getSelectedItem();
         if (job == null || !job.getState().isActive()) {
-            Application.getWindowManager().showMessage("No running job to cancel");
+            svc.dialogs().showMessage("No running job to cancel");
             return;
         }
-        if (Application.getWindowManager().showConfirm(
+        if (svc.dialogs().showConfirm(
                 "Cancel job",
                 "Cancel running job \"" + job.getName() + "\"?")) {
             runtime.cancel(job);
@@ -343,11 +345,11 @@ public final class FxJobsPane {
         Tool tool = job.getTool();
         Properties paramSnapshot = job.getParamSnapshot();
         if (tool == null || paramSnapshot == null) {
-            Application.getWindowManager().showMessage("No saved parameters",
+            svc.dialogs().showMessage("No saved parameters",
                     "No saved parameters are available to reopen " + job.getName() + ".");
             return;
         }
-        FxToolRelaunch.showInToolRunner(tool, paramSnapshot, openPage, runtime);
+        FxToolRelaunch.showInToolRunner(tool, paramSnapshot, host);
     }
 
     private void openFolder() {
@@ -357,7 +359,7 @@ public final class FxJobsPane {
             dir = job.getReportDir();
         }
         if (dir == null) {
-            dir = Application.getVdbManager().getDefaultOutputDir();
+            dir = svc.vdb().getDefaultOutputDir();
         }
         if (dir == null) {
             return;
@@ -365,7 +367,7 @@ public final class FxJobsPane {
         try {
             FxDesktopUtil.openInOsExplorer(dir);
         } catch (Exception e) {
-            Application.getWindowManager().showError(
+            svc.dialogs().showError(
                     "Trouble launching File Explorer on path '" + dir.getPath() + "'", e);
         }
     }

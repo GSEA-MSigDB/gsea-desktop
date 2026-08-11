@@ -52,12 +52,12 @@ module org.gsea_msigdb.gsea {
     exports xtools.gsea;
     exports xtools.munge;
     exports org.gsea_msigdb.gsea.ui.api;
+    exports org.gsea_msigdb.gsea.runtime;
     exports xapps.gsea.fx;
     exports xapps.gsea.fx.shell;
     exports xapps.gsea.fx.params;
-    exports xapps.gsea.fx.tui;
+    exports xapps.gsea.fx.widgets;
     exports xapps.gsea.fx.viewers;
-    exports xapps.gsea.fx.viewers.coremap;
 
     requires algorithms;
     requires batik.awt.util;
@@ -93,5 +93,4 @@ module org.gsea_msigdb.gsea {
 
     opens xapps.gsea.fx to javafx.graphics;
     opens xapps.gsea.fx.shell to javafx.graphics;
-    opens xapps.gsea.fx.viewers.coremap to javafx.web;
 }

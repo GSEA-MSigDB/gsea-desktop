@@ -6,18 +6,15 @@ package xapps.gsea.fx.tui;
 import java.io.File;
 import java.util.Objects;
 import java.util.Properties;
-import java.util.function.Consumer;
 
-import org.gsea_msigdb.gsea.ui.api.ViewPage;
+import org.gsea_msigdb.gsea.ui.api.FeatureHost;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import edu.mit.broad.genome.reports.api.Report;
-import edu.mit.broad.xbench.core.api.Application;
 import edu.mit.broad.xbench.tui.ToolFactory;
 import javafx.application.Platform;
-import xapps.gsea.fx.FxProgressMonitorRead;
-import xapps.gsea.fx.jobs.JobRuntime;
+import xapps.gsea.fx.widgets.FxProgressMonitorRead;
 import xtools.api.Tool;
 import xtools.api.param.ParamSet;
 
@@ -31,17 +28,12 @@ public final class FxToolRelaunch {
     private FxToolRelaunch() {
     }
 
-    public static void showInToolRunner(Report report, boolean loadData, Consumer<ViewPage> openPage,
-            JobRuntime jobRuntime) {
+    public static void showInToolRunner(Report report, boolean loadData, FeatureHost host) {
+        Objects.requireNonNull(host, "host");
         if (report == null) {
-            Application.getWindowManager().showError("No report selected");
+            host.dialogs().showError("No report selected");
             return;
         }
-        if (openPage == null) {
-            Application.getWindowManager().showError("No workspace available to open the tool");
-            return;
-        }
-        JobRuntime runtime = Objects.requireNonNull(jobRuntime, "jobRuntime");
         javafx.concurrent.Task<Void> task = new javafx.concurrent.Task<>() {
             @Override
             protected Void call() throws Exception {
@@ -51,42 +43,37 @@ public final class FxToolRelaunch {
                 }
                 Tool tool = ToolFactory.createTool(producer.getName());
                 Properties params = report.getParametersUsed();
-                relaunch(tool, params, report.getName(), loadData, true, openPage, runtime);
+                relaunch(tool, params, report.getName(), loadData, true, host);
                 return null;
             }
         };
         task.setOnFailed(e -> {
             Throwable t = task.getException();
             klog.error("Show in ToolRunner failed", t);
-            Application.getWindowManager().showError("Could not open tool from report", t);
+            host.dialogs().showError("Could not open tool from report", t);
         });
         xapps.gsea.fx.FxWorkers.start(task, "gsea-tool-relaunch");
     }
 
     /** Jobs panel Relaunch with a saved parameter snapshot. */
-    public static void showInToolRunner(Tool sourceTool, Properties paramSnapshot, Consumer<ViewPage> openPage,
-            JobRuntime jobRuntime) {
+    public static void showInToolRunner(Tool sourceTool, Properties paramSnapshot, FeatureHost host) {
+        Objects.requireNonNull(host, "host");
         if (sourceTool == null || paramSnapshot == null) {
-            Application.getWindowManager().showError("No saved parameters available for this run");
+            host.dialogs().showError("No saved parameters available for this run");
             return;
         }
-        if (openPage == null) {
-            Application.getWindowManager().showError("No workspace available to open the tool");
-            return;
-        }
-        JobRuntime runtime = Objects.requireNonNull(jobRuntime, "jobRuntime");
         javafx.concurrent.Task<Void> task = new javafx.concurrent.Task<>() {
             @Override
             protected Void call() throws Exception {
                 Tool tool = ToolFactory.createTool(sourceTool.getClass().getName());
-                relaunch(tool, paramSnapshot, null, false, false, openPage, runtime);
+                relaunch(tool, paramSnapshot, null, false, false, host);
                 return null;
             }
         };
         task.setOnFailed(e -> {
             Throwable t = task.getException();
             klog.error("Show in ToolRunner failed", t);
-            Application.getWindowManager().showError("Could not reopen tool with saved parameters", t);
+            host.dialogs().showError("Could not reopen tool with saved parameters", t);
         });
         xapps.gsea.fx.FxWorkers.start(task, "gsea-tool-relaunch");
     }
@@ -96,7 +83,7 @@ public final class FxToolRelaunch {
      * @param showToast toast vs silent process-table relaunch
      */
     private static void relaunch(Tool tool, Properties params, String tabTitleOpt, boolean loadData,
-            boolean showToast, Consumer<ViewPage> openPage, JobRuntime jobRuntime) throws Exception {
+            boolean showToast, FeatureHost host) throws Exception {
         ParamSet.FoundMissingFile fmf = tool.getParamSet().fileCheckingFill(params);
 
         StringBuilder missing = new StringBuilder();
@@ -110,7 +97,7 @@ public final class FxToolRelaunch {
 
         final String missingText = missing.toString();
         if (!missingText.isEmpty()) {
-            boolean proceed = Application.getWindowManager().showConfirm("Some Files Missing",
+            boolean proceed = host.dialogs().showConfirm("Some Files Missing",
                     "Some parameter files were not found:\n" + missingText
                             + "\n\nContinue opening the tool with available parameters?");
             if (!proceed) {
@@ -133,16 +120,16 @@ public final class FxToolRelaunch {
                 }
             }
             if (errs.length() > 0) {
-                Platform.runLater(() -> Application.getWindowManager().showMessage(
+                Platform.runLater(() -> host.dialogs().showMessage(
                         "Load warnings", "Some files could not be loaded:\n" + errs));
             }
         }
 
         final String tabTitle = tabTitleOpt != null ? tabTitleOpt : tool.getName();
         Platform.runLater(() -> {
-            openPage.accept(FxToolLauncherPane.forTool(tool, tabTitle, "ToolLauncher.gif", true, jobRuntime));
+            host.openPage(FxToolLauncherPane.forTool(tool, tabTitle, "ToolLauncher.gif", true, host));
             if (showToast) {
-                Application.getWindowManager().showMessage(
+                host.dialogs().showMessage(
                         "Created a new ToolRunner with parameters from the earlier run. "
                                 + "Data files (when found) were automagically imported");
             }
