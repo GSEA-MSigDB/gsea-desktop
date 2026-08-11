@@ -54,10 +54,10 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
 # ---------------------------------------------------------------------------
-# JDK configuration (Adoptium Temurin 17)
+# JDK configuration (Adoptium Temurin 21; must match build.gradle options.release)
 # ---------------------------------------------------------------------------
-JDK_VERSION="17.0.11+9"
-JDK_VERSION_SHORT="17"
+JDK_VERSION="21.0.12+8"
+JDK_VERSION_SHORT="21"
 JDK_CACHE_DIR="${SCRIPT_DIR}/build/jdk-cache"
 mkdir -p "$JDK_CACHE_DIR"
 
