@@ -91,6 +91,12 @@ public class GeneSetScoringTables {
         public float getMissScore(String name) { return misspoints; }
     }
 
+    private static void warnZeroWeight(final GeneSet gset, final RankedList rl) {
+        klog.warn("Every member of gene set {} present in ranked list {} has a ranking score of 0; its hits are"
+                + " given equal weights.  Its enrichment score depends only on where the tied genes sit in the list.",
+                gset.getName(), rl.getName());
+    }
+
     // Needed as cdna give some nans for the class metric
     private static final float _abs(float score) {
         return (Float.isFinite(score)) ? Math.abs(score) : 0.01f;
@@ -122,6 +128,7 @@ public class GeneSetScoringTables {
 
             final float nTotal = rankedList.getSize();
             this.miss_score = 1.0f / (nTotal - nhExpected);
+            if (totalWeight == 0) { warnZeroWeight(gset, rl); }
         }
 
         public String getName() { return NAME; }
@@ -133,6 +140,9 @@ public class GeneSetScoringTables {
         }
 
         public float getHitScore(final String name) {
+            // All members scored 0: |score|^p / N_R is 0/0.  Equal scores mean equal weights, so use 1 / N_H
+            // (the limit of the weighted scheme), instead of letting NaN into the running sum.
+            if (totalWeight == 0) { return 1.0f / nhExpected; }
             float score = rankedList.getScore(name);
             score = _abs(score);
             return score / totalWeight;
@@ -168,6 +178,7 @@ public class GeneSetScoringTables {
 
             final float nTotal = rankedList.getSize();
             this.miss_score = 1.0f / (nTotal - nhExpected);
+            if (totalWeight_sq == 0) { warnZeroWeight(gset, rl); }
         }
 
         public String getName() { return NAME; }
@@ -179,6 +190,7 @@ public class GeneSetScoringTables {
         }
 
         public float getHitScore(String name) {
+            if (totalWeight_sq == 0) { return 1.0f / nhExpected; } // see Weighted.getHitScore
             float score = rankedList.getScore(name);
             float hitScore = (score * score) / totalWeight_sq;
             return Float.isFinite(hitScore) ? hitScore : 0.000001f;
@@ -213,6 +225,7 @@ public class GeneSetScoringTables {
 
             final float nTotal = rankedList.getSize();
             this.miss_score = 1.0f / (nTotal - nhExpected);
+            if (totalWeight_sq == 0) { warnZeroWeight(gset, rl); }
         }
 
         public String getName() { return NAME; }
@@ -224,6 +237,7 @@ public class GeneSetScoringTables {
         }
 
         public float getHitScore(String name) {
+            if (totalWeight_sq == 0) { return 1.0f / nhExpected; } // see Weighted.getHitScore
             float score = rankedList.getScore(name);
             float ss = (float) Math.pow(score, 1.5);
             float hitScore = ss / totalWeight_sq;
