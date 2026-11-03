@@ -24,7 +24,7 @@ final class FilePathEditor extends AbstractBoundEditor {
         Button browse = xapps.gsea.fx.widgets.FxEllipsisButton.create("Browse");
         browse.setOnAction(e -> {
             FileChooser chooser = new FileChooser();
-            chooser.setTitle(param.getNameEnglish() != null ? param.getNameEnglish() : param.getName());
+            chooser.setTitle(ParamEditorSupport.displayEnglish(param));
             if (filters != null) {
                 chooser.getExtensionFilters().addAll(filters);
             }

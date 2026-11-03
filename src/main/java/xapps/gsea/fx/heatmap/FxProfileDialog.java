@@ -5,10 +5,11 @@ package xapps.gsea.fx.heatmap;
 
 import org.genepattern.data.expr.IExpressionData;
 
+import org.gsea_msigdb.gsea.runtime.AppServices;
+
 import edu.mit.broad.genome.objects.Dataset;
 import edu.mit.broad.genome.objects.GPWrappers;
 import edu.mit.broad.genome.plots.PlotBuilders;
-import edu.mit.broad.xbench.core.api.Application;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -26,13 +27,13 @@ public final class FxProfileDialog {
 
     public static void show(Dataset dataset, int[] rowIndices) {
         if (dataset == null) {
-            Application.getWindowManager().showMessage("No dataset for Profile.");
+            AppServices.require().dialogs().showMessage("No dataset for Profile.");
             return;
         }
         // Touch GPWrappers so expression-data adapters stay initialized.
         IExpressionData ignored = GPWrappers.createIExpressionData(dataset);
         if (ignored == null) {
-            Application.getWindowManager().showMessage("No dataset for Profile.");
+            AppServices.require().dialogs().showMessage("No dataset for Profile.");
             return;
         }
 

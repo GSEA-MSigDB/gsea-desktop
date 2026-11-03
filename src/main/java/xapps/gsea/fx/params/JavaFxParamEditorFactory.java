@@ -132,7 +132,7 @@ public class JavaFxParamEditorFactory implements ParamEditorFactory {
 
     /** Build a labeled row for a param editor (used by forms). */
     public static HBox labeledRow(Param param, ParamEditor editor) {
-        String name = param.getNameEnglish() != null ? param.getNameEnglish() : param.getName();
+        String name = ParamEditorSupport.displayEnglish(param);
         Label label = new Label(name != null ? name : "");
         label.setStyle("-fx-font-weight: bold;");
         setExactWidth(label, LABEL_COL_WIDTH);

@@ -56,7 +56,7 @@ final class EditableComboEditor extends AbstractBoundEditor {
                 return Integer.valueOf(t);
             } catch (NumberFormatException nfe) {
                 throw new IllegalArgumentException(
-                        "Parameter '" + param.getNameEnglish() + "' must be a valid integer. Specified: " + t);
+                        "Parameter '" + ParamEditorSupport.displayEnglish(param) + "' must be a valid integer. Specified: " + t);
             }
         }
         return t;

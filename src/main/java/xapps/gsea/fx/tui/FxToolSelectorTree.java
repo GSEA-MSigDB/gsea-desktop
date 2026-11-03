@@ -10,8 +10,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
+import org.gsea_msigdb.gsea.runtime.AppServices;
+
 import edu.mit.broad.genome.JarResources;
-import edu.mit.broad.xbench.core.api.Application;
 import javafx.scene.control.Tooltip;
 import javafx.scene.control.TreeCell;
 import javafx.scene.control.TreeItem;
@@ -123,7 +124,7 @@ public class FxToolSelectorTree {
 
     private void initToLastToolRun() {
         try {
-            String last = Application.getToolManager().getLastToolName();
+            String last = AppServices.require().tools().getLastToolName();
             if (last != null) {
                 selectTool(last);
             }

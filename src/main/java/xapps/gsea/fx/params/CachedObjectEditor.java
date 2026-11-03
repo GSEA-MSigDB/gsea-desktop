@@ -75,7 +75,7 @@ final class CachedObjectEditor extends AbstractBoundEditor {
         }
         FxChooserSupport.browseLocalFiles(
                 FxFileChooserUtil.windowOf(combo),
-                param.getNameEnglish() != null ? param.getNameEnglish() : param.getName(),
+                ParamEditorSupport.displayEnglish(param),
                 filters,
                 false,
                 seed,

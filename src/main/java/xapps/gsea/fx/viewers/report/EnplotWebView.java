@@ -10,6 +10,7 @@ import java.util.Base64;
 
 import javax.imageio.ImageIO;
 
+import org.gsea_msigdb.gsea.runtime.AppServices;
 import org.json.simple.JSONValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,7 +18,6 @@ import org.slf4j.LoggerFactory;
 import edu.mit.broad.genome.alg.gsea.GeneSetScoringTable;
 import edu.mit.broad.genome.objects.esmatrix.db.EnrichmentResult;
 import edu.mit.broad.genome.reports.EnrichmentEsProfiles;
-import edu.mit.broad.xbench.core.api.Application;
 import javafx.application.Platform;
 import javafx.concurrent.Worker;
 import javafx.geometry.Insets;
@@ -164,14 +164,14 @@ public final class EnplotWebView extends BorderPane {
                             + "})()");
             Capture capture = parseCapture(result);
             if (capture == null) {
-                Application.getWindowManager().showMessage("Could not capture the interactive plot. "
+                AppServices.require().dialogs().showMessage("Could not capture the interactive plot. "
                         + "Wait for it to finish loading, then try again.");
                 return;
             }
             byte[] bytes = Base64.getDecoder().decode(capture.base64());
             BufferedImage image = ImageIO.read(new ByteArrayInputStream(bytes));
             if (image == null) {
-                Application.getWindowManager().showMessage("Could not decode the interactive plot image.");
+                AppServices.require().dialogs().showMessage("Could not decode the interactive plot image.");
                 return;
             }
             Window owner = getScene() != null ? getScene().getWindow() : null;
@@ -181,7 +181,7 @@ public final class EnplotWebView extends BorderPane {
             int defH = capture.height() > 1 ? capture.height() : image.getHeight();
             EnplotExportDialog.saveImage(owner, image, safe + "_enplot_v2", defW, defH);
         } catch (Throwable t) {
-            Application.getWindowManager().showError("Save plot failed", t);
+            AppServices.require().dialogs().showError("Save plot failed", t);
         }
     }
 

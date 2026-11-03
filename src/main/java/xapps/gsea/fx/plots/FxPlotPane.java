@@ -7,10 +7,11 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.function.IntConsumer;
 
+import org.gsea_msigdb.gsea.runtime.AppServices;
+
 import edu.mit.broad.genome.plots.HistogramPlotSpec;
 import edu.mit.broad.genome.plots.PlotRasterExporter;
 import edu.mit.broad.genome.plots.PlotSpec;
-import edu.mit.broad.xbench.core.api.Application;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.ScrollPane;
@@ -155,7 +156,7 @@ public final class FxPlotPane {
             }
             PlotRasterExporter.savePng(spec, target, chartWidth, chartHeight);
         } catch (Exception ex) {
-            Application.getWindowManager().showError("Could not save plot", ex);
+            AppServices.require().dialogs().showError("Could not save plot", ex);
         }
     }
 }

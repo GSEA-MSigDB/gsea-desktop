@@ -303,7 +303,7 @@ public class FxAnalysisHistoryPane implements ViewPage {
         xapps.gsea.fx.widgets.FxButtons.sizeToContent(openBtn);
         openBtn.setOnAction(e -> FxReportOpen.openInApp(report, host));
 
-        Button relaunchBtn = new Button("Show in ToolRunner");
+        Button relaunchBtn = new Button("Open tool");
         xapps.gsea.fx.widgets.FxButtons.styleSecondary(relaunchBtn);
         xapps.gsea.fx.widgets.FxButtons.sizeToContent(relaunchBtn);
         relaunchBtn.setOnAction(e -> FxToolRelaunch.showInToolRunner(

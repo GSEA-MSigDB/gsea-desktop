@@ -14,7 +14,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import edu.mit.broad.genome.parsers.ParserFactory;
-import edu.mit.broad.xbench.core.api.Application;
 import edu.mit.broad.xbench.core.api.FileManager;
 import edu.mit.broad.xbench.core.api.XStore;
 import javafx.application.Platform;
@@ -63,12 +62,13 @@ public class FxLoadDataPane implements ViewPage {
     private final List<File> stagedFiles = new ArrayList<>();
     private final ListView<String> stagedList = new ListView<>();
     private final FxObjectCacheTree cacheTree;
+    private final FeatureHost host;
     private final Consumer<ViewPage> openPage;
     private volatile boolean loadCancelled;
     private volatile boolean loadInProgress;
 
     public FxLoadDataPane(FeatureHost host) {
-        java.util.Objects.requireNonNull(host, "host");
+        this.host = java.util.Objects.requireNonNull(host, "host");
         this.openPage = host::openPage;
         this.cacheTree = new FxObjectCacheTree(host);
 
@@ -157,7 +157,7 @@ public class FxLoadDataPane implements ViewPage {
         xapps.gsea.fx.widgets.FxButtons.stylePrimary(loadStaged);
         loadStaged.setOnAction(e -> {
             if (stagedFiles.isEmpty()) {
-                Application.getWindowManager().showMessage(
+                host.dialogs().showMessage(
                         "No files to import!\nDrag and drop files into the box and try again");
                 return;
             }
@@ -224,7 +224,7 @@ public class FxLoadDataPane implements ViewPage {
                     File file = new File(path);
                     FxFileActions.runDefaultFileAction(file, openPage);
                     try {
-                        Application.getFileManager().getRecentFilesStore().refresh(path);
+                        host.files().getRecentFilesStore().refresh(path);
                         refreshRecentFiles();
                     } catch (Exception ignored) {
                     }
@@ -279,7 +279,7 @@ public class FxLoadDataPane implements ViewPage {
                 for (edu.mit.broad.genome.objects.PersistentObject pob :
                         xapps.gsea.fx.widgets.FxPobTransferSupport.takeDragPobs(e)) {
                     try {
-                        File src = ParserFactory.getCache().getSourceFile(pob);
+                        File src = host.cache().getSourceFile(pob);
                         if (src != null) {
                             incoming.add(src);
                         }
@@ -307,7 +307,7 @@ public class FxLoadDataPane implements ViewPage {
     private void forceReloadSelected() {
         List<String> selected = recentList.getSelectionModel().getSelectedItems();
         if (selected == null || selected.isEmpty()) {
-            Application.getWindowManager().showMessage("Select a recent file to force-reload.");
+            host.dialogs().showMessage("Select a recent file to force-reload.");
             return;
         }
         List<File> files = new ArrayList<>();
@@ -328,7 +328,7 @@ public class FxLoadDataPane implements ViewPage {
         importSel.setOnAction(e -> {
             for (File f : files) {
                 try {
-                    Application.getFileManager().getRecentFilesStore().refresh(f.getPath());
+                    host.files().getRecentFilesStore().refresh(f.getPath());
                 } catch (Throwable ignored) {
                 }
             }
@@ -363,7 +363,7 @@ public class FxLoadDataPane implements ViewPage {
     }
 
     private void purgeSelectedRecent(List<File> files) {
-        boolean proceed = Application.getWindowManager().showConfirm(
+        boolean proceed = host.dialogs().showConfirm(
                 "Delete file history for selected file(s)?",
                 "<html><body><b>This will remove these files from this list "
                         + "(but NOT delete the files themselves)</b></body></html>");
@@ -375,15 +375,15 @@ public class FxLoadDataPane implements ViewPage {
             for (File f : files) {
                 toRemove.add(f.getAbsolutePath());
             }
-            Application.getFileManager().getRecentFilesStore().removeAndSave(toRemove);
+            host.files().getRecentFilesStore().removeAndSave(toRemove);
             refreshRecentFiles();
         } catch (Throwable t) {
-            Application.getWindowManager().showError("Could not purge selected files", t);
+            host.dialogs().showError("Could not purge selected files", t);
         }
     }
 
     private void purgeAllRecent() {
-        boolean proceed = Application.getWindowManager().showConfirm(
+        boolean proceed = host.dialogs().showConfirm(
                 "Delete file history?",
                 "<html><body><b>This will remove recently used files from this list "
                         + "(but NOT delete the files themselves)</b></body></html>");
@@ -391,10 +391,10 @@ public class FxLoadDataPane implements ViewPage {
             return;
         }
         try {
-            Application.getFileManager().getRecentFilesStore().clearAll();
+            host.files().getRecentFilesStore().clearAll();
             refreshRecentFiles();
         } catch (Throwable t) {
-            Application.getWindowManager().showError("Could not clear recent files", t);
+            host.dialogs().showError("Could not clear recent files", t);
         }
     }
 
@@ -429,11 +429,11 @@ public class FxLoadDataPane implements ViewPage {
     private void loadLastAnalysisFiles() {
         Thread worker = new Thread(() -> {
             try {
-                edu.mit.broad.xbench.tui.ReportStub rs = Application.getToolManager()
+                edu.mit.broad.xbench.tui.ReportStub rs = host.tools()
                         .getLastReportStub(xtools.gsea.Gsea.class.getName());
                 if (rs == null) {
                     appendStatus("No analysis history available — nothing loaded.");
-                    Platform.runLater(() -> Application.getWindowManager()
+                    Platform.runLater(() -> host.dialogs()
                             .showMessage("Load last analysis", "No history available, nothing loaded!"));
                     return;
                 }
@@ -454,7 +454,7 @@ public class FxLoadDataPane implements ViewPage {
                         return;
                     }
                 }
-                Application.getWindowManager().showMessage(
+                host.dialogs().showMessage(
                         "Data from the last run of this tool is being automagically loaded. "
                                 + "They will soon be available as parameter options");
                 List<File> toLoad = new ArrayList<>();
@@ -474,7 +474,7 @@ public class FxLoadDataPane implements ViewPage {
             } catch (Throwable t) {
                 klog.error("Load last analysis failed", t);
                 appendStatus("ERROR: " + t.getMessage());
-                Platform.runLater(() -> Application.getWindowManager().showError("Load last analysis failed", t));
+                Platform.runLater(() -> host.dialogs().showError("Load last analysis failed", t));
             }
         }, "gsea-load-last");
         worker.setDaemon(true);
@@ -482,20 +482,20 @@ public class FxLoadDataPane implements ViewPage {
     }
 
     /** @return true if the user wants to continue despite missing files */
-    private static boolean confirmMissingFiles(File[] files) {
+    private boolean confirmMissingFiles(File[] files) {
         StringBuilder buf = new StringBuilder(
                 "The following file(s) were not found on the local file system:\n\n");
         for (File f : files) {
             buf.append(f).append('\n');
         }
         buf.append("\nContinue loading the files that were found?");
-        return Application.getWindowManager().showConfirm("Some Files Missing", buf.toString());
+        return host.dialogs().showConfirm("Some Files Missing", buf.toString());
     }
 
     private void browseAndLoad() {
         FileChooser chooser = new FileChooser();
         chooser.setTitle("Open");
-        File lastDir = Application.getFileManager().getLastDirAccesessed();
+        File lastDir = host.files().getLastDirAccesessed();
         if (lastDir != null && lastDir.isDirectory()) {
             chooser.setInitialDirectory(lastDir);
         }
@@ -510,7 +510,7 @@ public class FxLoadDataPane implements ViewPage {
             for (File file : files) {
                 if (!edu.mit.broad.genome.parsers.AuxUtils.isAuxFile(file)) {
                     try {
-                        Application.getFileManager().registerRecentlyOpenedFile(file);
+                        host.files().registerRecentlyOpenedFile(file);
                     } catch (Throwable ignored) {
                         // keep loading even if history registration fails
                     }
@@ -540,7 +540,7 @@ public class FxLoadDataPane implements ViewPage {
         javafx.concurrent.Task<Void> task = new javafx.concurrent.Task<>() {
             @Override
             protected Void call() {
-            FileManager fm = Application.getFileManager();
+            FileManager fm = host.files();
             int ok = 0;
             int fail = 0;
             int warned = 0;
@@ -661,11 +661,11 @@ public class FxLoadDataPane implements ViewPage {
                     return;
                 }
                 if (cancelledFinal) {
-                    Application.getWindowManager().showError(
+                    host.dialogs().showError(
                             "Load cancelled after " + okFinal + " / " + totalFinal + " files."
                                     + (okFinal > 0 ? "\n\nLoaded before cancel:\n" + loadedText : ""));
                 } else if (failFinal > 0) {
-                    Application.getWindowManager().showError(
+                    host.dialogs().showError(
                             "Some files failed to load (" + failFinal + " of " + totalFinal + "):\n" + errText
                                     + (okFinal > 0 ? "\nLoaded OK:\n" + loadedText : ""));
                 } else {
@@ -679,7 +679,7 @@ public class FxLoadDataPane implements ViewPage {
                         buf.append("<br><br><b>There were warnings. See the [+] console log for details.</b>");
                     }
                     buf.append("</html>");
-                    Application.getWindowManager().showMessage(buf.toString());
+                    host.dialogs().showMessage(buf.toString());
                 }
             });
             return null;
@@ -691,7 +691,7 @@ public class FxLoadDataPane implements ViewPage {
     public void refreshRecentFiles() {
         recentItems.clear();
         try {
-            XStore store = Application.getFileManager().getRecentFilesStore();
+            XStore store = host.files().getRecentFilesStore();
             for (int i = 0; i < store.getSize(); i++) {
                 recentItems.add(store.getElementAt(i));
             }
@@ -710,11 +710,11 @@ public class FxLoadDataPane implements ViewPage {
         });
     }
 
-    private static void openUrl(String url) {
+    private void openUrl(String url) {
         try {
             xapps.gsea.fx.FxDesktopUtil.openUrl(url);
         } catch (Exception e) {
-            Application.getWindowManager().showError("Could not open URL", e);
+            host.dialogs().showError("Could not open URL", e);
         }
     }
 

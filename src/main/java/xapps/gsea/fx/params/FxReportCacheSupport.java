@@ -8,13 +8,13 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
+import org.gsea_msigdb.gsea.runtime.AppServices;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import edu.mit.broad.genome.parsers.DataFormat;
 import edu.mit.broad.genome.reports.api.Report;
 import edu.mit.broad.genome.utils.DateUtils;
-import edu.mit.broad.xbench.core.api.Application;
 import edu.mit.broad.xbench.tui.ReportStub;
 
 /**
@@ -49,7 +49,7 @@ public final class FxReportCacheSupport {
         List<CachedReport> out = new ArrayList<>();
         File dir;
         try {
-            dir = Application.getVdbManager().getReportsCacheDir();
+            dir = AppServices.require().vdb().getReportsCacheDir();
         } catch (Throwable t) {
             klog.warn("No report cache dir", t);
             return out;

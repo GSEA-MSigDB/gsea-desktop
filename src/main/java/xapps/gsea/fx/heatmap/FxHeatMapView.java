@@ -14,6 +14,7 @@ import org.genepattern.heatmap.ColorScheme;
 import org.genepattern.heatmap.image.DisplaySettings;
 import org.genepattern.heatmap.image.HeatMap;
 import org.genepattern.io.ImageUtil;
+import org.gsea_msigdb.gsea.runtime.AppServices;
 
 import edu.mit.broad.genome.alg.AlgUtils;
 import edu.mit.broad.genome.math.Matrix;
@@ -22,7 +23,6 @@ import edu.mit.broad.genome.objects.DefaultDataset;
 import edu.mit.broad.genome.objects.GPWrappers;
 import edu.mit.broad.genome.objects.GeneSet;
 import edu.mit.broad.genome.parsers.ParserFactory;
-import edu.mit.broad.xbench.core.api.Application;
 import edu.mit.broad.xbench.heatmap.DisplayState;
 import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
@@ -626,7 +626,7 @@ public class FxHeatMapView {
 
     private void openGeneSetHtml(String gsetName) {
         if (htmlLookupDir == null || gsetName == null) {
-            Application.getWindowManager().showMessage("No report directory available for gene-set HTML.");
+            AppServices.require().dialogs().showMessage("No report directory available for gene-set HTML.");
             return;
         }
         String lookup = gsetName.replaceAll("_signal", "");
@@ -640,13 +640,13 @@ public class FxHeatMapView {
             }
         }
         if (!html.exists()) {
-            Application.getWindowManager().showMessage("No HTML report found for:\n" + gsetName);
+            AppServices.require().dialogs().showMessage("No HTML report found for:\n" + gsetName);
             return;
         }
         try {
             xapps.gsea.fx.FxDesktopUtil.openUri(html.toURI());
         } catch (Exception ex) {
-            Application.getWindowManager().showError("Could not open gene-set HTML", ex);
+            AppServices.require().dialogs().showError("Could not open gene-set HTML", ex);
         }
     }
 
@@ -655,7 +655,7 @@ public class FxHeatMapView {
         if (rows.length == 0 && dataset != null) {
             String noun = featureUIString == null || featureUIString.isBlank() ? "feature" : featureUIString;
             String lower = Character.toLowerCase(noun.charAt(0)) + noun.substring(1) + "s";
-            Application.getWindowManager().showMessage("Please select " + lower + " to view.");
+            AppServices.require().dialogs().showMessage("Please select " + lower + " to view.");
             return;
         }
         if (profileHandler != null) {
@@ -667,7 +667,7 @@ public class FxHeatMapView {
 
     private void saveImage() {
         if (heatMap == null) {
-            Application.getWindowManager().showMessage("No heatmap to save.");
+            AppServices.require().dialogs().showMessage("No heatmap to save.");
             return;
         }
         FileChooser chooser = new FileChooser();
@@ -695,9 +695,9 @@ public class FxHeatMapView {
                 javax.imageio.ImageIO.write(heatMap.snapshot(), format, target);
             }
             FxFileChooserUtil.registerOpened(target);
-            Application.getWindowManager().showMessage("Saved:\n" + target.getAbsolutePath());
+            AppServices.require().dialogs().showMessage("Saved:\n" + target.getAbsolutePath());
         } catch (Exception ex) {
-            Application.getWindowManager().showError("Could not save image", ex);
+            AppServices.require().dialogs().showError("Could not save image", ex);
         }
     }
 
@@ -743,7 +743,7 @@ public class FxHeatMapView {
         saveBtn.addEventFilter(javafx.event.ActionEvent.ACTION, e -> {
             String pathname = pathField.getText() != null ? pathField.getText().trim() : "";
             if (pathname.isEmpty()) {
-                Application.getWindowManager().showError("Please enter an output file.");
+                AppServices.require().dialogs().showError("Please enter an output file.");
                 e.consume();
                 return;
             }
@@ -763,9 +763,9 @@ public class FxHeatMapView {
                 }
                 ParserFactory.save(toSave, target);
                 FxFileChooserUtil.registerOpened(target);
-                Application.getWindowManager().showMessage("Saved dataset:\n" + target.getAbsolutePath());
+                AppServices.require().dialogs().showMessage("Saved dataset:\n" + target.getAbsolutePath());
             } catch (Exception ex) {
-                Application.getWindowManager().showError("Could not save dataset", ex);
+                AppServices.require().dialogs().showError("Could not save dataset", ex);
                 e.consume();
             }
         });

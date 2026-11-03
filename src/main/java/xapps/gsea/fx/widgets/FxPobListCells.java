@@ -5,14 +5,16 @@ package xapps.gsea.fx.widgets;
 
 import java.io.File;
 
+import org.gsea_msigdb.gsea.runtime.AppServices;
+
 import edu.mit.broad.genome.objects.PersistentObject;
-import edu.mit.broad.genome.parsers.ParserFactory;
+import edu.mit.broad.genome.parsers.ObjectCache;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.Tooltip;
 import javafx.scene.layout.HBox;
 
-/** List/combo cells {@code GeneSetMatrixChooserWindow.NonFTPGeneSetsRenderer}. */
+/** List and combo cells for cached persistent objects. */
 public final class FxPobListCells {
 
     private FxPobListCells() {
@@ -31,8 +33,9 @@ public final class FxPobListCells {
             cell.setText(pob.getName());
         }
         try {
-            if (ParserFactory.getCache().isCached(pob)) {
-                File f = ParserFactory.getCache().getSourceFile(pob);
+            ObjectCache cache = AppServices.require().cache();
+            if (cache.isCached(pob)) {
+                File f = cache.getSourceFile(pob);
                 cell.setTooltip(f != null ? new Tooltip(f.getAbsolutePath()) : new Tooltip("Unknown origins of file"));
             } else {
                 cell.setTooltip(new Tooltip("Unknown origins of file"));

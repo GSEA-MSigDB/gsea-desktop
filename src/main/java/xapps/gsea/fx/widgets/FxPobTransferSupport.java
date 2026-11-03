@@ -7,8 +7,9 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.gsea_msigdb.gsea.runtime.AppServices;
+
 import edu.mit.broad.genome.objects.PersistentObject;
-import edu.mit.broad.genome.parsers.ParserFactory;
 import javafx.scene.Node;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.DataFormat;
@@ -40,7 +41,7 @@ public final class FxPobTransferSupport {
         List<File> files = new ArrayList<>();
         for (PersistentObject pob : snapshot) {
             try {
-                File f = ParserFactory.getCache().getSourceFile(pob);
+                File f = AppServices.require().cache().getSourceFile(pob);
                 if (f != null) {
                     files.add(f);
                 }

@@ -29,7 +29,7 @@ final class DirectoryEditor extends AbstractBoundEditor {
         Button browse = xapps.gsea.fx.widgets.FxEllipsisButton.create("Browse");
         browse.setOnAction(e -> {
             DirectoryChooser chooser = new DirectoryChooser();
-            chooser.setTitle(param.getNameEnglish() != null ? param.getNameEnglish() : param.getName());
+            chooser.setTitle(ParamEditorSupport.displayEnglish(param));
             FxFileChooserUtil.seedInitialDirectory(chooser, field.getText());
             File f = chooser.showDialog(FxFileChooserUtil.windowOf(field));
             if (f != null) {

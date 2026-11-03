@@ -17,13 +17,13 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
+import org.gsea_msigdb.gsea.runtime.AppServices;
 import org.gsea_msigdb.gsea.ui.api.ViewPage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import edu.mit.broad.genome.parsers.ParserFactory;
 import edu.mit.broad.genome.reports.api.Report;
-import edu.mit.broad.xbench.core.api.Application;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -429,7 +429,7 @@ public final class ReportExplorerSupport {
         try {
             FxDesktopUtil.openUri(file.toURI());
         } catch (Exception e) {
-            Application.getWindowManager().showError("Could not open file", e);
+            AppServices.require().dialogs().showError("Could not open file", e);
         }
     }
 

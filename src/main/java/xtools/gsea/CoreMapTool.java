@@ -27,7 +27,7 @@ public class CoreMapTool extends AbstractTool {
         super.init(args);
     }
 
-    /** Param-set interrogation only — not executable from ToolRunner. */
+    /** Param-set interrogation only — not launched as a tool page. */
     public CoreMapTool() {
         declareParams();
     }

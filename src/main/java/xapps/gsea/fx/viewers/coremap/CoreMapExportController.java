@@ -55,7 +55,8 @@ final class CoreMapExportController {
         String dataUri = selectedOnly ? host.graphView().exportSelectedPngDataUri()
                 : host.graphView().exportPngDataUri();
         if (dataUri == null || !dataUri.contains(",")) {
-            host.services().dialogs().showMessage("Graph PNG export is not ready yet.");
+            host.services().dialogs().showMessage(
+                    "The graph has not finished loading. Wait for the map to draw, then export the PNG again.");
             return;
         }
         FileChooser chooser = new FileChooser();
@@ -91,7 +92,8 @@ final class CoreMapExportController {
     void exportCurrentJson() {
         String json = host.graphView().exportCurrentJson();
         if (json == null || json.isBlank()) {
-            host.services().dialogs().showMessage("Current graph view is not ready yet.");
+            host.services().dialogs().showMessage(
+                    "The graph has not finished loading. Wait for the map to draw, then export this view again.");
             return;
         }
         saveJsonFile(json, "Export current CoreMap JSON", "coremap-current.json");
@@ -189,6 +191,7 @@ final class CoreMapExportController {
         String label = labelOpt.get().trim().replace(' ', '_');
         CoreMapJob job = host.buildJobSnapshot();
         byte[] png = CoreMapJobStore.decodePngDataUri(host.graphView().exportPngDataUri());
+        final boolean previewMissing = png == null;
         host.setBusy(true, "Saving CoreMap job…");
         Thread t = new Thread(() -> {
             try {
@@ -196,8 +199,12 @@ final class CoreMapExportController {
                 Platform.runLater(() -> {
                     host.setBusy(false, "Saved CoreMap job.");
                     FxFileChooserUtil.registerOpenedDir(reportDir);
-                    host.services().dialogs().showMessage(
-                            "Saved CoreMap job (listed in Analysis History):\n" + reportDir.getAbsolutePath());
+                    String message = "Saved CoreMap job (listed in Analysis History):\n"
+                            + reportDir.getAbsolutePath();
+                    if (previewMissing) {
+                        message += "\n\nThe graph preview image was not included because the map had not finished loading.";
+                    }
+                    host.services().dialogs().showMessage(message);
                 });
             } catch (Throwable ex) {
                 klog.error("Could not save CoreMap job", ex);

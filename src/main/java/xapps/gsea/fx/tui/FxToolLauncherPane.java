@@ -200,7 +200,8 @@ public class FxToolLauncherPane implements ViewPage {
     }
 
     /**
-     * confirm, then {@link FxLoadToolTask} on a throwaway tool clone with {@code launchANewToolWindow=false} (cache side-effects only — live form unchanged).
+     * Confirm, then {@link FxLoadToolTask} on a throwaway tool clone.
+     * Files land in the cache only; the live form is unchanged.
      */
     private void loadLastRunParams() {
         last.setDisable(true);
@@ -226,7 +227,7 @@ public class FxToolLauncherPane implements ViewPage {
                         try {
                             Properties props = rs.getReport(true).getParametersUsed();
                             Tool fillTool = ToolFactory.createTool(tool.getClass().getName());
-                            FxLoadToolTask.create(fillTool, rs.getName(), true, props, false).run();
+                            FxLoadToolTask.create(fillTool, rs.getName(), true, props).run();
                             javafx.application.Platform.runLater(() -> {
                                 refreshRunEnabled();
                                 last.setDisable(false);

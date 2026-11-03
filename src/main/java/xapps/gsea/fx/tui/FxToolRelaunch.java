@@ -49,7 +49,7 @@ public final class FxToolRelaunch {
         };
         task.setOnFailed(e -> {
             Throwable t = task.getException();
-            klog.error("Show in ToolRunner failed", t);
+            klog.error("Could not open tool from report", t);
             host.dialogs().showError("Could not open tool from report", t);
         });
         xapps.gsea.fx.FxWorkers.start(task, "gsea-tool-relaunch");
@@ -72,7 +72,7 @@ public final class FxToolRelaunch {
         };
         task.setOnFailed(e -> {
             Throwable t = task.getException();
-            klog.error("Show in ToolRunner failed", t);
+            klog.error("Could not reopen tool with saved parameters", t);
             host.dialogs().showError("Could not reopen tool with saved parameters", t);
         });
         xapps.gsea.fx.FxWorkers.start(task, "gsea-tool-relaunch");
@@ -130,8 +130,8 @@ public final class FxToolRelaunch {
             host.openPage(FxToolLauncherPane.forTool(tool, tabTitle, "ToolLauncher.gif", true, host));
             if (showToast) {
                 host.dialogs().showMessage(
-                        "Created a new ToolRunner with parameters from the earlier run. "
-                                + "Data files (when found) were automagically imported");
+                        "Opened a tool with the parameters from that run. "
+                                + "Data files that were found were imported.");
             }
         });
     }

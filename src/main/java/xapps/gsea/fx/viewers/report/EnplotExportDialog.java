@@ -29,12 +29,12 @@ import javax.imageio.stream.ImageOutputStream;
 
 import org.apache.batik.dom.GenericDOMImplementation;
 import org.apache.batik.svggen.SVGGraphics2D;
+import org.gsea_msigdb.gsea.runtime.AppServices;
 import org.w3c.dom.DOMImplementation;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
-import edu.mit.broad.xbench.core.api.Application;
 import javafx.geometry.Insets;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonBar;
@@ -127,10 +127,10 @@ public final class EnplotExportDialog {
         try {
             writeImage(image, target, spec);
             FxFileChooserUtil.registerOpened(target);
-            Application.getWindowManager().showMessage("Saved:\n" + target.getAbsolutePath());
+            AppServices.require().dialogs().showMessage("Saved:\n" + target.getAbsolutePath());
             return Optional.of(target);
         } catch (Exception ex) {
-            Application.getWindowManager().showError("Could not save enrichment plot", ex);
+            AppServices.require().dialogs().showError("Could not save enrichment plot", ex);
             return Optional.empty();
         }
     }

@@ -22,7 +22,6 @@ import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import edu.mit.broad.xbench.core.api.Application;
 import edu.mit.broad.xbench.prefs.XPreferencesFactory;
 
 public class CytoscapeCyrest {
@@ -86,7 +85,12 @@ public class CytoscapeCyrest {
         return false;
     }
 
-    public boolean createEM_get() throws IOException, URISyntaxException {
+    /**
+     * Ask Cytoscape to build the enrichment map.
+     *
+     * @return an error message when Cytoscape rejects the command, or null when the map was created
+     */
+    public String createEnrichmentMap() throws IOException, URISyntaxException {
         int port = XPreferencesFactory.kCytoscapeRESTPort.getInt();
         URIBuilder builder = new URIBuilder();
         builder.setScheme("http").setHost("localhost").setPort(port)
@@ -120,11 +124,9 @@ public class CytoscapeCyrest {
                 klog.info("status: {}", statusLine.getReasonPhrase());
                 if (!"ok".equalsIgnoreCase(statusLine.getReasonPhrase())) {
                     String message = EntityUtils.toString(entity);
-                    Application.getWindowManager().showMessage(
-                            "Unable to create Enrichment Map: " + statusLine.getReasonPhrase() + "\n" + message);
-                    return false;
+                    return "Unable to create Enrichment Map: " + statusLine.getReasonPhrase() + "\n" + message;
                 }
-                return true;
+                return null;
             }
         }
     }

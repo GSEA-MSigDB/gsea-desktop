@@ -22,7 +22,7 @@ final class MultiLineTextEditor extends AbstractBoundEditor {
         Button ellipsis = xapps.gsea.fx.widgets.FxEllipsisButton.create();
         ellipsis.setOnAction(e -> {
             javafx.scene.control.Dialog<String> dialog = new javafx.scene.control.Dialog<>();
-            dialog.setTitle(param.getNameEnglish() != null ? param.getNameEnglish() : param.getName());
+            dialog.setTitle(ParamEditorSupport.displayEnglish(param));
             dialog.setHeaderText("Enter one or more values (commas, tabs, or newlines)");
             TextArea area = new TextArea(field.getText() != null ? field.getText().replace(',', '\n') : "");
             area.setPrefRowCount(10);

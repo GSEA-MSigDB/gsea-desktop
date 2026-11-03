@@ -79,6 +79,12 @@ final class ParamEditorSupport {
         return el.toString().trim();
     }
 
+    /** English label when set, otherwise the param name. */
+    static String displayEnglish(Param param) {
+        String english = param.getNameEnglish();
+        return english != null ? english : param.getName();
+    }
+
     /**
      * Prefer each Param's own string form (e.g. {@code GeneSetMatrixMultiChooserParam} path list);
      * fall back to {@link #displayText}.

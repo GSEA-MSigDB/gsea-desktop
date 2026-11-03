@@ -34,7 +34,7 @@ import xapps.gsea.fx.viewers.report.ReportParamsTable;
 
 /**
  * Native report explorer shell: type-aware Results tab, plus Parameters and Files.
- * Keeps Open HTML report / Show in ToolRunner as secondary actions.
+ * Keeps Open HTML report / Open tool as secondary actions.
  */
 public class FxReportViewer implements ViewPage {
 
@@ -73,7 +73,7 @@ public class FxReportViewer implements ViewPage {
         loadDataCheck.setTooltip(new javafx.scene.control.Tooltip(
                 "Follow files specified in params and load their data"));
 
-        Button showInToolRunner = new Button("Show in ToolRunner");
+        Button showInToolRunner = new Button("Open tool");
         showInToolRunner.setGraphic(xapps.gsea.fx.widgets.FxFileIcons.forResource("ToolLauncher.gif"));
         xapps.gsea.fx.widgets.FxButtons.stylePrimary(showInToolRunner);
         xapps.gsea.fx.widgets.FxButtons.sizeToContent(showInToolRunner);

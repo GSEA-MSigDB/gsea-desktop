@@ -500,10 +500,13 @@ public class FxEnrichmentMapPane implements ViewPage {
                         }
                     }
                     if (cyto.CytoscapeRestActive() && cyto.CytoscapeRestCommandEM()) {
-                        if (cyto.createEM_get()) {
+                        String error = cyto.createEnrichmentMap();
+                        if (error == null) {
                             Platform.runLater(() -> svc.dialogs().showMessage(
                                     "An Enrichment map was successfully loaded and created in cytoscape.  "
                                             + "Please navigate to cytoscape to view results"));
+                        } else {
+                            Platform.runLater(() -> svc.dialogs().showMessage(error));
                         }
                     }
                 } catch (java.io.IOException e) {
