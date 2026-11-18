@@ -15,13 +15,13 @@ import java.util.List;
  *
  * @maint Add a new param and you should check to see if it needs to be sorted in a particular way
  */
-public class ParamComparator implements Comparator {
+public class ParamComparator implements Comparator<Param> {
 
-    private static final List kSortOrder;
+    private static final List<String> kSortOrder;
 
     static {
 
-        kSortOrder = new ArrayList();
+        kSortOrder = new ArrayList<String>();
 
         kSortOrder.add(Param.RES);
         kSortOrder.add(Param.RNK);
@@ -55,10 +55,7 @@ public class ParamComparator implements Comparator {
     /**
      * Return -1 if o1 is less than o2, 0 if they're equal, +1 if o1 is greater than o2.
      */
-    public int compare(Object pn1, Object pn2) {
-
-        Param p1 = (Param) pn1;
-        Param p2 = (Param) pn2;
+    public int compare(Param p1, Param p2) {
 
         String s1 = p1.getName();
         String s2 = p2.getName();

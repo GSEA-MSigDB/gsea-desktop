@@ -332,7 +332,7 @@ final class CoreMapSetTables {
         n.setCellValueFactory(c -> c.getValue().leCount);
         n.setPrefWidth(50);
 
-        table.getColumns().setAll(include, pass, id, nes, np, fdr, n);
+        table.getColumns().setAll(List.of(include, pass, id, nes, np, fdr, n));
         table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
     }
 

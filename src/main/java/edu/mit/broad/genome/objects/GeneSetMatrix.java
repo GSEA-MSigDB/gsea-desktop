@@ -61,7 +61,7 @@ public interface GeneSetMatrix extends PersistentObject, Versioned {
      */
     public String[] getAllMemberNamesOnlyOnce();
 
-    public Set getAllMemberNamesOnlyOnceS();
+    public Set<String> getAllMemberNamesOnlyOnceS();
 
     public String getGeneSetName(final int i);
 }

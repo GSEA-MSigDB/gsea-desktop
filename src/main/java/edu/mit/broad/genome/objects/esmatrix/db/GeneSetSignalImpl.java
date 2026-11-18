@@ -59,7 +59,7 @@ public class GeneSetSignalImpl implements GeneSetSignal {
     public GeneSet getAsGeneSet() {
         if (fCoreGeneSet == null) {
             RankedList rl = fEr.getRankedList();
-            final Set set = new HashSet();
+            final Set<String> set = new HashSet<String>();
             for (int i = 0; i < fCoreRanks.size(); i++) {
                 //System.out.println("rank: " + fCoreRanks.get(i));
                 set.add(rl.getRankName(fCoreRanks.get(i)));

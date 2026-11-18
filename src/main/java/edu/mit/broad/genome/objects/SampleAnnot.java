@@ -12,7 +12,7 @@ import java.util.List;
  */
 public class SampleAnnot extends AbstractObject {
 
-    private List fSampleNames;
+    private List<String> fSampleNames;
 
     private ColorMap.Columns fColorMap;
 
@@ -20,7 +20,7 @@ public class SampleAnnot extends AbstractObject {
      * Class constructor
      * @param sampleNames
      */
-    public SampleAnnot(final String name, final List sampleNames) {
+    public SampleAnnot(final String name, final List<String> sampleNames) {
         initHere(name, sampleNames, null);
     }
 
@@ -36,7 +36,7 @@ public class SampleAnnot extends AbstractObject {
             throw new IllegalArgumentException("Param sampleNames cannot be null");
         }
 
-        List names = new ArrayList();
+        List<String> names = new ArrayList<String>();
         for (int i = 0; i < sampleNames.length; i++) {
             names.add(sampleNames[i]);
         }
@@ -45,7 +45,7 @@ public class SampleAnnot extends AbstractObject {
     }
 
     // does the core init
-    private void initHere(final String name, final List sampleNames, final ColorMap.Columns cm_opt) {
+    private void initHere(final String name, final List<String> sampleNames, final ColorMap.Columns cm_opt) {
         super.initialize(name);
         if (sampleNames == null) {
             throw new IllegalArgumentException("Param sampleNames cannot be null");

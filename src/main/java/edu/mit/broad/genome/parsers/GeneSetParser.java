@@ -62,7 +62,6 @@ public class GeneSetParser extends AbstractParser {
     private void _export(GeneSet gset, File file) throws Exception {
         PrintWriter pw = startExport(gset, file);
         for (int i = 0; i < gset.getNumMembers(); i++) {
-            //System.out.println(">>>> " + m.getMember(i));
             pw.println(gset.getMember(i));
         }
 
@@ -73,7 +72,7 @@ public class GeneSetParser extends AbstractParser {
     /**
      * Parses in FSet files.
      */
-    public List parse(String sourcepath, InputStream is) throws Exception {
+    public List<? extends PersistentObject> parse(String sourcepath, InputStream is) throws Exception {
         startImport(sourcepath);
         GeneSet fset = parse(sourcepath, new BufferedReader(new InputStreamReader(is)));
         doneImport();
@@ -84,7 +83,7 @@ public class GeneSetParser extends AbstractParser {
     protected GeneSet parse(String sourcepath, BufferedReader buf) throws IOException {
         String currLine = nextLine(buf);
 
-        List lines = new ArrayList();
+        List<String> lines = new ArrayList<String>();
         while (currLine != null) {
             lines.add(currLine);
             currLine = nextLine(buf);
@@ -93,7 +92,7 @@ public class GeneSetParser extends AbstractParser {
 
         buf.close();
 
-        final String[] members = (String[]) lines.toArray(new String[lines.size()]);
+        final String[] members = lines.toArray(new String[lines.size()]);
 
         // assume no desc for fset
         return new GeneSet(sourcepath, null, members);

@@ -32,8 +32,8 @@ import java.util.List;
 // intentionally differntiate this from a dataset
 public class Dataframe extends AbstractObject implements IDataframe {
     private Matrix fMatrix;
-    private List fRowNames;
-    private List fColNames;
+    private List<String> fRowNames;
+    private List<String> fColNames;
 
     /**
      * subclasses MUST call init after using this form of the constructor.
@@ -52,7 +52,7 @@ public class Dataframe extends AbstractObject implements IDataframe {
      * @param shareRowNames
      * @param shareColNames
      */
-    public Dataframe(final String name, final Matrix matrix, final List rowNames, final List colNames,
+    public Dataframe(final String name, final Matrix matrix, final List<String> rowNames, final List<String> colNames,
                      final boolean shareMatrix, final boolean shareRowNames, final boolean shareColNames) {
         if (matrix == null) {
             throw new IllegalArgumentException("Param matrix cant be null");
@@ -67,8 +67,8 @@ public class Dataframe extends AbstractObject implements IDataframe {
         }
 
         Matrix dmatrix;
-        List drowNames;
-        List dcolNames;
+        List<String> drowNames;
+        List<String> dcolNames;
 
         if (shareMatrix) {
             dmatrix = matrix;
@@ -79,13 +79,13 @@ public class Dataframe extends AbstractObject implements IDataframe {
         if (shareRowNames) {
             drowNames = rowNames;
         } else {
-            drowNames = new ArrayList(rowNames);
+            drowNames = new ArrayList<String>(rowNames);
         }
 
         if (shareColNames) {
             dcolNames = colNames;
         } else {
-            dcolNames = new ArrayList(colNames);
+            dcolNames = new ArrayList<String>(colNames);
         }
 
         init(name, dmatrix, drowNames, dcolNames);
@@ -96,7 +96,7 @@ public class Dataframe extends AbstractObject implements IDataframe {
      * i.e callers within this method are responsible for passing me
      * already duplicated data.
      */
-    private void init(String dsname, Matrix matrix, List rowNames, List colNames) {
+    private void init(String dsname, Matrix matrix, List<String> rowNames, List<String> colNames) {
         super.initialize(dsname);
 
         if (matrix == null) {
@@ -138,11 +138,11 @@ public class Dataframe extends AbstractObject implements IDataframe {
     }
 
     public String getRowName(int rown) {
-        return (String) fRowNames.get(rown);
+        return fRowNames.get(rown);
     }
 
     public String getColumnName(int coln) {
-        return (String) fColNames.get(coln);
+        return fColNames.get(coln);
     }
 
     public int getNumRow() {

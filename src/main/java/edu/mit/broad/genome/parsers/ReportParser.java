@@ -76,12 +76,12 @@ public class ReportParser extends AbstractParser {
      * NO ann buiisness
      * @see above for format
      */
-    public List parse(final String sourcepath, final InputStream is) throws Exception {
+    public List<? extends PersistentObject> parse(final String sourcepath, final InputStream is) throws Exception {
 
         BufferedReader bin = new BufferedReader(new InputStreamReader(is));
         String currLine = nextLine(bin);
 
-        List filesList = new ArrayList();
+        List<File> filesList = new ArrayList<File>();
         Properties params = new Properties();
         Class cl = null;
         long ts = 0; // beginning of time if no ts info available
@@ -127,7 +127,7 @@ public class ReportParser extends AbstractParser {
 
         bin.close();
 
-        File[] files = (File[]) filesList.toArray(new File[filesList.size()]);
+        File[] files = filesList.toArray(new File[filesList.size()]);
 
         Report report = new DefaultReport(sourcepath, ts, cl, files, params, false);
 

@@ -14,7 +14,7 @@ import java.util.Map;
  */
 public class ColumnsImpl implements ColorMap.Columns {
 
-    private Map fName_nc_Map;
+    private Map<String, NamedColor> fName_nc_Map;
 
     /**
      * Class constructor
@@ -27,18 +27,18 @@ public class ColumnsImpl implements ColorMap.Columns {
             ncs[i] = new NamedColor(sampleNames[i], Color.WHITE);
         }
 
-        this.fName_nc_Map = new HashMap();
+        this.fName_nc_Map = new HashMap<String, NamedColor>();
         for (int i = 0; i < ncs.length; i++) {
             fName_nc_Map.put(ncs[i].getName(), ncs[i]);
         }
     }
 
     public Color getColor(final String rowName, final String colName) {
-        Object obj = fName_nc_Map.get(colName);
-        if (obj == null) {
+        NamedColor named = fName_nc_Map.get(colName);
+        if (named == null) {
             return Color.WHITE;
         } else {
-            return ((NamedColor) obj).getColor();
+            return named.getColor();
         }
     }
 

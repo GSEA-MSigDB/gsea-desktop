@@ -76,7 +76,7 @@ public class ChipParser extends AbstractParser {
         }
     }
 
-    public List parse(String sourcepath, InputStream is) throws Exception {
+    public List<? extends PersistentObject> parse(String sourcepath, InputStream is) throws Exception {
         startImport(sourcepath);
         MSigDBVersion msigDBVersion;
         String pathLC = sourcepath.toLowerCase();

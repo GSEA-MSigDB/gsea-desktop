@@ -18,8 +18,8 @@ import java.util.*;
  * @author Aravind Subramanian
  */
 public class ToolParamSet implements ParamSet {
-    private final List fReqdParams;
-    private final List fOptParams;
+    private final List<Param> fReqdParams;
+    private final List<Param> fOptParams;
     private final Logger log = LoggerFactory.getLogger(ToolParamSet.class);
 
     /**
@@ -28,8 +28,8 @@ public class ToolParamSet implements ParamSet {
      * @param name
      */
     public ToolParamSet() {
-        this.fReqdParams = new ArrayList();
-        this.fOptParams = new ArrayList();
+        this.fReqdParams = new ArrayList<Param>();
+        this.fOptParams = new ArrayList<Param>();
     }
 
     /**
@@ -160,7 +160,7 @@ public class ToolParamSet implements ParamSet {
         }
 
         // sanity checks
-        final Set badParamNames = new HashSet();
+        final Set<String> badParamNames = new HashSet<String>();
         for (Iterator it = prop.keySet().iterator(); it.hasNext();) {
             String key = it.next().toString();
             Param p = getParam(key);
@@ -182,9 +182,9 @@ public class ToolParamSet implements ParamSet {
 
     public FoundMissingFile fileCheckingFill(final Properties prop) {
 
-        List foundFiles = new ArrayList();
-        List missingFiles = new ArrayList();
-        List foundFilesParamNames = new ArrayList();
+        List<File> foundFiles = new ArrayList<File>();
+        List<File> missingFiles = new ArrayList<File>();
+        List<String> foundFilesParamNames = new ArrayList<String>();
 
         //log.debug("fileCheckinFill ToolParamSet with properties: " + prop);
         // reqd ones
@@ -261,9 +261,9 @@ public class ToolParamSet implements ParamSet {
         }
 
         FoundMissingFile fmf = new FoundMissingFile();
-        fmf.foundFiles = (File[]) foundFiles.toArray(new File[foundFiles.size()]);
-        fmf.foundFilesParamNames = (String[]) foundFilesParamNames.toArray(new String[foundFilesParamNames.size()]);
-        fmf.missingFiles = (File[]) missingFiles.toArray(new File[missingFiles.size()]);
+        fmf.foundFiles = foundFiles.toArray(new File[foundFiles.size()]);
+        fmf.foundFilesParamNames = foundFilesParamNames.toArray(new String[foundFilesParamNames.size()]);
+        fmf.missingFiles = missingFiles.toArray(new File[missingFiles.size()]);
 
         return fmf;
     }
@@ -296,7 +296,7 @@ public class ToolParamSet implements ParamSet {
 
         // check
         StringBuffer errors = new StringBuffer("\n\nError: Missing the following required parameters:\n");
-        List missingParams = new ArrayList();
+        List<Param> missingParams = new ArrayList<Param>();
 
         for (int i = 0; i < fReqdParams.size(); i++) {
             Param param = (Param) fReqdParams.get(i);
@@ -313,7 +313,7 @@ public class ToolParamSet implements ParamSet {
         errors.append(getUsage());
 
         if (!missingParams.isEmpty()) {
-            throw new MissingReqdParamException((Param[]) missingParams.toArray(new Param[missingParams.size()]));
+            throw new MissingReqdParamException(missingParams.toArray(new Param[missingParams.size()]));
         }
     }
 
@@ -337,7 +337,7 @@ public class ToolParamSet implements ParamSet {
      */
     public Param[] getParams() {
 
-        List all = new ArrayList();
+        List<Param> all = new ArrayList<Param>();
 
         for (int i = 0; i < fReqdParams.size(); i++) {
             all.add(fReqdParams.get(i));
@@ -347,12 +347,12 @@ public class ToolParamSet implements ParamSet {
             all.add(fOptParams.get(i));
         }
 
-        return (Param[]) all.toArray(new Param[all.size()]);
+        return all.toArray(new Param[all.size()]);
     }
 
     public Param[] getParams(Param.Type thisType, boolean excludeCommonOnes) {
         Param[] params = getParams();
-        List use = new ArrayList();
+        List<Param> use = new ArrayList<Param>();
         for (int i = 0; i < params.length; i++) {
 
             if (excludeCommonOnes && params[i] instanceof GuiParam) { // @note
@@ -362,7 +362,7 @@ public class ToolParamSet implements ParamSet {
             }
         }
 
-        return (Param[]) use.toArray(new Param[use.size()]);
+        return use.toArray(new Param[use.size()]);
     }
 
     /**

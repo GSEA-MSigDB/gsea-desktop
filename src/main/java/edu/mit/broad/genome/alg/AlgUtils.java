@@ -27,7 +27,7 @@ public class AlgUtils {
 
     public static int unionAllCount(final GeneSet[] gsets) {
 
-        Set all = new HashSet();
+        Set<String> all = new HashSet<String>();
         for (int f = 0; f < gsets.length; f++) {
             for (int i = 0; i < gsets[f].getNumMembers(); i++) {
                 all.add(gsets[f].getMember(i));
@@ -65,7 +65,7 @@ public class AlgUtils {
 
     public static int intersectSize(final GeneSet a, final GeneSet b) {
 
-        Set common = new HashSet();
+        Set<String> common = new HashSet<String>();
 
         for (int i = 0; i < a.getNumMembers(); i++) {
             String member = a.getMember(i);

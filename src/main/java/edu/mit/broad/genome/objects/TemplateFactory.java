@@ -104,9 +104,9 @@ public class TemplateFactory extends TemplateImpl {
         return createTemplate_ordered_assign(name, items, classes, continuous);
     }
 
-    private static int _getColumnIndex(final List colNames, final String colName) {
+    private static int _getColumnIndex(final List<String> colNames, final String colName) {
         for (int c = 0; c < colNames.size(); c++) {
-            final String cn = colNames.get(c).toString();
+            final String cn = colNames.get(c);
             if (colName.equalsIgnoreCase(cn)) {
                 return c;
             }
@@ -125,7 +125,7 @@ public class TemplateFactory extends TemplateImpl {
     }
 
     public static synchronized Template createCategoricalTemplate(final String name,
-                                                                  final List all_col_names_ordered,
+                                                                  final List<String> all_col_names_ordered,
                                                                   final String classAName,
                                                                   final String[] classASampleNames,
                                                                   final String classBName,
@@ -147,7 +147,7 @@ public class TemplateFactory extends TemplateImpl {
     }
 
     public static synchronized Template createCategoricalTemplate(final String name,
-                                                                  final List all_col_names_ordered,
+                                                                  final List<String> all_col_names_ordered,
                                                                   final GeneSet[] gsets_sample_names) {
         TemplateImpl template = new TemplateImpl(name);
 
@@ -223,7 +223,7 @@ public class TemplateFactory extends TemplateImpl {
             throw new IllegalArgumentException("Null items not allowed parameter");
         }
 
-        final List classNames = new ArrayList();
+        final List<String> classNames = new ArrayList<String>();
 
         // IMP need to sort the items by profile pos
         final Item[] items_sorted = getProfilePositionsSorted(items);
@@ -236,7 +236,7 @@ public class TemplateFactory extends TemplateImpl {
 
         final Class[] classes = new Class[classNames.size()];
         for (int i = 0; i < classNames.size(); i++) {
-            classes[i] = new TemplateImpl.ClassImpl(classNames.get(i).toString());
+            classes[i] = new TemplateImpl.ClassImpl(classNames.get(i));
         }
 
         return createTemplate_ordered_assign(name, items, classes, continuous); // @note which items are sent doesnt matter (i think)
@@ -303,7 +303,7 @@ public class TemplateFactory extends TemplateImpl {
             throw new IllegalArgumentException("Parameter origT cannot be null");
         }
 
-        List options = new ArrayList();
+        List<Template> options = new ArrayList<Template>();
         if (includeOrigT) {
             options.add(origT);
         }
@@ -316,7 +316,6 @@ public class TemplateFactory extends TemplateImpl {
             options.add(straight);
             Template rev = TemplateFactory.createReversedBiphasicTemplate(origT);
             options.add(rev);
-            //System.out.println(">> " + options);
         } else if (!origT.isContinuous()) {
 
             // bludgeon our way through -- Template making is inexpensive
@@ -343,7 +342,7 @@ public class TemplateFactory extends TemplateImpl {
             }
         }
 
-        return (Template[]) options.toArray(new Template[options.size()]);
+        return options.toArray(new Template[options.size()]);
     }
 
     /**
@@ -356,12 +355,12 @@ public class TemplateFactory extends TemplateImpl {
      */
     public static Template[] extractAll2ClassTemplates(final Template parentMultiClassTemplate,
                                                        final boolean onlyForwardOvas) {
-        List templates = new ArrayList();
+        List<Template> templates = new ArrayList<Template>();
 
         if (parentMultiClassTemplate.getNumClasses() == 2) {
             templates.add(parentMultiClassTemplate);
             templates.add(TemplateFactory.createReversedBiphasicTemplate(parentMultiClassTemplate));
-            return (Template[]) templates.toArray(new Template[templates.size()]);
+            return templates.toArray(new Template[templates.size()]);
         }
 
         Template[] ovas = TemplateFactory.extractAllOvaTemplates(parentMultiClassTemplate, onlyForwardOvas);
@@ -376,7 +375,7 @@ public class TemplateFactory extends TemplateImpl {
         }
 
         //klog.debug("Generated # aux: " + templates.size() + " from orig: " + parentMultiClassTemplate.getName() + " # classes: " + parentMultiClassTemplate.getNumClasses());
-        return (Template[]) templates.toArray(new Template[templates.size()]);
+        return templates.toArray(new Template[templates.size()]);
     }
 
     /**
@@ -394,7 +393,7 @@ public class TemplateFactory extends TemplateImpl {
         }
 
         // lets do all pairs including reverse ones
-        List templatePairs = new ArrayList();
+        List<Class[]> templatePairs = new ArrayList<Class[]>();
         //Map idTemplateMap = new HashMap();
         for (int i = 0; i < parentMultiClassTemplate.getNumClasses(); i++) {
             Template.Class a = parentMultiClassTemplate.getClass(i);
@@ -408,10 +407,10 @@ public class TemplateFactory extends TemplateImpl {
             }
         }
 
-        List templates = new ArrayList(templatePairs.size());
+        List<Template> templates = new ArrayList<Template>(templatePairs.size());
 
         for (int t = 0; t < templatePairs.size(); t++) {
-            final Template.Class[] pair = (Template.Class[]) templatePairs.get(t);
+            final Class[] pair = templatePairs.get(t);
             // @maint naming convention
             final String newtName = parentMultiClassTemplate.getName() + "#" + pair[0].getName() + VS + pair[1].getName();
             final TemplateImpl newT = new TemplateImpl(newtName);
@@ -440,7 +439,7 @@ public class TemplateFactory extends TemplateImpl {
             templates.add(newT);
         }
 
-        return (Template[]) templates.toArray(new Template[templates.size()]);
+        return templates.toArray(new Template[templates.size()]);
     }
 
     /**
@@ -454,7 +453,7 @@ public class TemplateFactory extends TemplateImpl {
             throw new IllegalArgumentException("At least 3 Template classes needed to make a set of ova templates but found: " + multiClassTemplate.getNumClasses() + "\n" + multiClassTemplate.getAsString(false));
         }
 
-        List ovas = new ArrayList();
+        List<Template> ovas = new ArrayList<Template>();
 
         for (int c = 0; c < multiClassTemplate.getNumClasses(); c++) {
             Template.Class one = multiClassTemplate.getClass(c);
@@ -469,7 +468,7 @@ public class TemplateFactory extends TemplateImpl {
 
         // if (!sortByFreq)
         //klog.debug("From master template with # classes: " + multiClassTemplate.getNumClasses() + " made ovas #: " + ovas.size());
-        return (Template[]) ovas.toArray(new Template[ovas.size()]);
+        return ovas.toArray(new Template[ovas.size()]);
     }
 
     /**

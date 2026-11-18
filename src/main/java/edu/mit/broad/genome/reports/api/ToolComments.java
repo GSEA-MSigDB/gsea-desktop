@@ -16,12 +16,12 @@ import java.util.List;
  */
 // A simple container
 public class ToolComments {
-    private List fComments;
+    private List<String> fComments;
 
     private Logger log = LoggerFactory.getLogger(ToolComments.class);
 
     public ToolComments() {
-        this.fComments = new ArrayList();
+        this.fComments = new ArrayList<String>();
     }
 
     public void add(String comment) {
@@ -43,7 +43,7 @@ public class ToolComments {
         UL ul = new UL();
 
         for (int i = 0; i < fComments.size(); i++) {
-            ul.addElement(new LI(fComments.get(i).toString()));
+            ul.addElement(new LI(fComments.get(i)));
         }
 
         return ul;

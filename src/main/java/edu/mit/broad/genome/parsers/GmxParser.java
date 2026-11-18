@@ -58,7 +58,6 @@ public class GmxParser extends AbstractParser {
         GeneSet[] gsets = gm.getGeneSets();
 
         for (int f = 0; f < gsets.length; f++) {
-            //System.out.println(">" + fsets[f].getName() + "<");
             buf.append(gsets[f].getName()).append('\t');
         }
 
@@ -117,7 +116,7 @@ public class GmxParser extends AbstractParser {
      * all columns need to have same number of rows!
      * Else very hard to parse robustly. So use the null method.
      */
-    public List parse(String sourcepath, InputStream is) throws Exception {
+    public List<? extends PersistentObject> parse(String sourcepath, InputStream is) throws Exception {
 
         startImport(sourcepath);
 
@@ -130,10 +129,9 @@ public class GmxParser extends AbstractParser {
         currLine = nextLine(bin);
         final String[] namesEnglish = parseNames(currLine); // Or color
 
-        final List[] members = new ArrayList[gsetNames.length];
-        // init
+        final List<List<String>> members = new ArrayList<List<String>>(gsetNames.length);
         for (int i = 0; i < gsetNames.length; i++) {
-            members[i] = new ArrayList();
+            members.add(new ArrayList<String>());
         }
 
         // cant trim data lines as tabs are meaningful
@@ -163,7 +161,7 @@ public class GmxParser extends AbstractParser {
             */
 
             // added no need for padding Oct 2005
-            final List fields = string2stringsV2(currLine, gsetNames.length);
+            final List<String> fields = string2stringsV2(currLine, gsetNames.length);
 
             if (fields.size() != expected) {
                 throw new ParserException("Bad format on line: " + currLine +
@@ -174,7 +172,7 @@ public class GmxParser extends AbstractParser {
                 if (isNull(fields.get(i))) {
                     // dont add
                 } else {
-                    members[i].add(fields.get(i));
+                    members.get(i).add(fields.get(i));
                 }
             }
 
@@ -185,12 +183,12 @@ public class GmxParser extends AbstractParser {
         bin.close();
 
 
-        final GeneSet[] gsets = new GeneSet[members.length];
-        for (int i = 0; i < members.length; i++) {
+        final GeneSet[] gsets = new GeneSet[members.size()];
+        for (int i = 0; i < members.size(); i++) {
             //@note convention
             // TODO: is it really necessary to force Gene Set names to uppercase?
             final String gsetName = sourcepath.concat("#").concat(gsetNames[i].toUpperCase()); // @note the UC'ing 
-            gsets[i] = new GeneSet(gsetName, namesEnglish[i], members[i], fCheckForDuplicates);
+            gsets[i] = new GeneSet(gsetName, namesEnglish[i], members.get(i), fCheckForDuplicates);
         }
 
         doneImport();

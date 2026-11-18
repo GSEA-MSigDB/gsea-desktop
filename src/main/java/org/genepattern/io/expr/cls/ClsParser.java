@@ -86,7 +86,7 @@ public class ClsParser {
         String[] names = null;
         String dataLine = null;
         String[] assignments = null;
-        Map classNumber2NameMap = new HashMap();
+        Map<Integer, String> classNumber2NameMap = new HashMap<Integer, String>();
 
         if (hasClassNames(classifierLine)) {
             names = readClassNamesLine(classifierLine);
@@ -188,7 +188,7 @@ public class ClsParser {
      * @throws org.genepattern.io.ParseException
      *          Description of the Exception
      */
-    private String[] processData(String data_line, Map classNumber2ClassNameMap)
+    private String[] processData(String data_line, Map<Integer, String> classNumber2ClassNameMap)
             throws ParseException {
         // data line <int0> <space> <int1> <space> <int2> <space> ...
         if (data_line == null) {
@@ -220,7 +220,7 @@ public class ClsParser {
                                     + " All data for this file must be in the range 0-"
                                     + (numClasses - 1) + ".");
                 }
-                String name = (String) classNumber2ClassNameMap.get(classNumber);
+                String name = classNumber2ClassNameMap.get(classNumber);
                 assignments[i] = name;
             }
 

@@ -20,12 +20,12 @@ public interface Parser {
     /**
      * Parser the source and produce one or more objects
      */
-    public List parse(String objname, File file) throws Exception;
+    public List<? extends PersistentObject> parse(String objname, File file) throws Exception;
 
     /**
      * sourcepath is the path to the where the data is coming from
      */
-    public List parse(String sourcepath, InputStream is) throws Exception;
+    public List<? extends PersistentObject> parse(String sourcepath, InputStream is) throws Exception;
 
     /**
      * Save the specified pob to a store

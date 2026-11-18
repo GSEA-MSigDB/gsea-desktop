@@ -85,7 +85,7 @@ public class DataframeParser extends AbstractParser {
         doneExport();
     }    // End export
 
-    public List parse(String sourcepath, InputStream is) throws Exception {
+    public List<? extends PersistentObject> parse(String sourcepath, InputStream is) throws Exception {
 
         BufferedReader bin = new BufferedReader(new InputStreamReader(is));
         return _parse(sourcepath, bin);
@@ -101,7 +101,7 @@ public class DataframeParser extends AbstractParser {
         // FIRST GET THE COL NAMES
         // 1st  non-empty, non-comment line is the col header:
         // First fields is to be ignored
-        List colNames = ParseUtils.string2stringsList(currLine, " \t");
+        List<String> colNames = ParseUtils.string2stringsList(currLine, " \t");
 
         colNames.remove(0); // first elem is always nonesense (i.e Name)
 
@@ -110,11 +110,11 @@ public class DataframeParser extends AbstractParser {
         currLine = nextLine(bin);
 
         TFloatArrayList floats = new TFloatArrayList();
-        List rowNames = new ArrayList();
+        List<String> rowNames = new ArrayList<String>();
 
         // save all rows so that we can determine how many rows exist
         while (currLine != null) {
-            List fields = ParseUtils.string2stringsList(currLine, " \t"); // spaces NOT allowed in name field, so tokenize them
+            List<String> fields = ParseUtils.string2stringsList(currLine, " \t"); // spaces NOT allowed in name field, so tokenize them
 
             if (fields.size() != colNames.size() + 1) {
                 throw new ParserException("Bad format - expect ncols: " + (colNames.size() + 1)
@@ -122,7 +122,7 @@ public class DataframeParser extends AbstractParser {
                         + currLine);
             }
 
-            String rowName = (String) fields.get(0);
+            String rowName = fields.get(0);
             rowNames.add(rowName);
 
             for (int f = 1; f < fields.size(); f++) { // from 1 as first field is the Name
@@ -150,7 +150,7 @@ public class DataframeParser extends AbstractParser {
     /// does the real parsing
     // expects the bin to be untouched
     // KEEP THIS LEAN AND MEAN
-    private List _parse(String sourcepath, BufferedReader bin) throws Exception {
+    private List<PersistentObject> _parse(String sourcepath, BufferedReader bin) throws Exception {
 
         Dataframe df = parseDf(sourcepath, bin);
 

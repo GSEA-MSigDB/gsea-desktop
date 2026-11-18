@@ -70,7 +70,7 @@ public class PclParser extends AbstractParser {
         doneExport();
     }
 
-    public List parse(String hackINeedFullPath, InputStream is) throws Exception {
+    public List<? extends PersistentObject> parse(String hackINeedFullPath, InputStream is) throws Exception {
         startImport(hackINeedFullPath);
         int nlines = FileUtils.countLines(hackINeedFullPath, true);
         int nfloatlines = nlines - 2;
@@ -99,7 +99,6 @@ public class PclParser extends AbstractParser {
             int r = 0;
             currLine = nextLineTrimless(bin); // first line of float data @note trimless as may be missing fields
             while (currLine != null) {
-                //System.out.println(">> " + currLine);
                 List<String> fields = string2stringsV2(currLine, expectedNCols); // spaces allowed in name & desc field so DONT tokenize them
     
                 if (fields.size() != expectedNCols) { // silly check

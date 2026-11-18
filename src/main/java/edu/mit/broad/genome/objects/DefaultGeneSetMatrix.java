@@ -33,8 +33,8 @@ public class DefaultGeneSetMatrix extends AbstractGeneSetMatrix {
         }
     }
 
-    public DefaultGeneSetMatrix(final String name, final List gsets, final MSigDBVersion msigDBVersion) {
+    public DefaultGeneSetMatrix(final String name, final List<GeneSet> gsets, final MSigDBVersion msigDBVersion) {
         setMSigDBVersion(msigDBVersion);
-        initMatrix(name, (GeneSet[]) gsets.toArray(new GeneSet[gsets.size()]));
+        initMatrix(name, gsets.toArray(new GeneSet[gsets.size()]));
     }
 }

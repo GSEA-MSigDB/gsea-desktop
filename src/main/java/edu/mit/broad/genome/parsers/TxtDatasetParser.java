@@ -72,7 +72,7 @@ public class TxtDatasetParser extends AbstractParser {
      * YAL005C	    some	    0.61	-0.07	-1.29	-1.29	-2	    -1.84	-2.25
      */
 
-    public List parse(String sourcepath, InputStream is) throws Exception {
+    public List<? extends PersistentObject> parse(String sourcepath, InputStream is) throws Exception {
         startImport(sourcepath);
 
         try (BufferedReader bin = new BufferedReader(new InputStreamReader(is))) {

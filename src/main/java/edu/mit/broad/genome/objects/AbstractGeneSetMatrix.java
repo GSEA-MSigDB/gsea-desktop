@@ -224,7 +224,7 @@ public abstract class AbstractGeneSetMatrix extends AbstractObject implements Ge
     }
 
     // does the real stuff
-    public Set getAllMemberNamesOnlyOnceS() {
+    public Set<String> getAllMemberNamesOnlyOnceS() {
         return GeneSetMatrixHelper.getAllMemberNamesS(fGeneSets);
     }
 

@@ -29,7 +29,7 @@ public final class ReportParamsTable {
         TableColumn<Row, String> valueCol = new TableColumn<>("Parameter value");
         valueCol.setCellValueFactory(c -> c.getValue().valueProperty());
         valueCol.setPrefWidth(420);
-        table.getColumns().addAll(nameCol, valueCol);
+        table.getColumns().addAll(List.of(nameCol, valueCol));
         table.setEditable(false);
         table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
         table.setPlaceholder(new Label(""));

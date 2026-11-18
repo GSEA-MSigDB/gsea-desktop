@@ -59,7 +59,7 @@ public abstract class AbstractParser implements Parser {
         throw new NotImplementedException();
     }
 
-    public List parse(String objname, File file) throws Exception {
+    public List<? extends PersistentObject> parse(String objname, File file) throws Exception {
         this._importFile = file;
         this._importObjName = objname;
         return parse(objname, new FileInputStream(file));
@@ -76,9 +76,9 @@ public abstract class AbstractParser implements Parser {
     /**
      * Utility method to tourn a pob into an unmodifiable list
      */
-    protected static List unmodlist(PersistentObject pob) {
+    protected static <T extends PersistentObject> List<T> unmodlist(T pob) {
 
-        List list = new ArrayList(1);
+        List<T> list = new ArrayList<T>(1);
 
         list.add(pob);
 
@@ -88,9 +88,9 @@ public abstract class AbstractParser implements Parser {
     /**
      * Utility method to place specified pobs in an unmodifiable list
      */
-    protected static List unmodlist(PersistentObject[] pobs) {
+    protected static <T extends PersistentObject> List<T> unmodlist(T[] pobs) {
 
-        List list = new ArrayList(pobs.length);
+        List<T> list = new ArrayList<T>(pobs.length);
 
         for (int i = 0; i < pobs.length; i++) {
             list.add(pobs[i]);
@@ -120,7 +120,6 @@ public abstract class AbstractParser implements Parser {
         currLine = currLine.trim();
 
         while ((currLine != null) && ((currLine.length() == 0) || (currLine.startsWith(Constants.COMMENT_CHAR)))) {
-            // System.out.println(">>> " + currLine);
             if (currLine.startsWith(Constants.COMMENT_CHAR) && autoAdd2Comment) {
                 fComment.add(currLine);
             }
@@ -259,7 +258,7 @@ public abstract class AbstractParser implements Parser {
         }
     }
 
-    protected List parseTextMatrixToDataset(String objName, List<String> lines, List<String> colNames, boolean hasDesc) throws Exception {
+    protected List<PersistentObject> parseTextMatrixToDataset(String objName, List<String> lines, List<String> colNames, boolean hasDesc) throws Exception {
         final int lineCount = lines.size();
         List<String> rowNames = new ArrayList<String>(lineCount);
         List<String> rowDescs = hasDesc ? new ArrayList<String>(lineCount) : null;

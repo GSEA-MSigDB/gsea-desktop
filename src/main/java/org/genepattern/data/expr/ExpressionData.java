@@ -18,7 +18,7 @@ import java.util.Map;
 public class ExpressionData implements IExpressionData {
     protected DoubleMatrix2D dataset;
 
-    protected Map matrices;
+    protected Map<String, ObjectMatrix2D> matrices;
 
     protected MetaData rowMetaData;
 
@@ -53,7 +53,7 @@ public class ExpressionData implements IExpressionData {
             columnMetaData.setMetaData(ExpressionConstants.DESC,
                     _columnDescriptions);
         }
-        matrices = new HashMap();
+        matrices = new HashMap<String, ObjectMatrix2D>();
     }
 
     /**
@@ -64,13 +64,13 @@ public class ExpressionData implements IExpressionData {
      * @param columnMetaData the column meta data
      */
     public ExpressionData(DoubleMatrix2D dataset, MetaData rowMetaData,
-                          MetaData columnMetaData, Map matrices) {
+                          MetaData columnMetaData, Map<String, ObjectMatrix2D> matrices) {
         this.dataset = dataset;
         this.rowMetaData = rowMetaData;
         this.columnMetaData = columnMetaData;
         this.matrices = matrices;
         if (this.matrices == null) {
-            this.matrices = new HashMap();
+            this.matrices = new HashMap<String, ObjectMatrix2D>();
         }
     }
 
@@ -106,10 +106,9 @@ public class ExpressionData implements IExpressionData {
 
         MetaData newRowMetaData = rowMetaData.slice(rowIndices);
         MetaData newColumnMetaData = columnMetaData.slice(columnIndices);
-        HashMap newMatrices = new HashMap();
-        for (Iterator it = matrices.keySet().iterator(); it.hasNext();) {
-            String key = (String) it.next();
-            ObjectMatrix2D m = (ObjectMatrix2D) matrices.get(key);
+        HashMap<String, ObjectMatrix2D> newMatrices = new HashMap<String, ObjectMatrix2D>();
+        for (String key : matrices.keySet()) {
+            ObjectMatrix2D m = matrices.get(key);
             newMatrices.put(key, m.slice(rowIndices, columnIndices));
         }
 
@@ -164,7 +163,7 @@ public class ExpressionData implements IExpressionData {
     }
 
     public Object getData(int row, int column, String name) {
-        ObjectMatrix2D matrix = (ObjectMatrix2D) matrices.get(name);
+        ObjectMatrix2D matrix = matrices.get(name);
         return matrix != null ? matrix.get(row, column) : null;
     }
 
@@ -177,7 +176,7 @@ public class ExpressionData implements IExpressionData {
     }
 
     public String getDataName(int index) {
-        return ((String[]) matrices.keySet().toArray(new String[0]))[index];
+        return matrices.keySet().toArray(new String[0])[index];
     }
 
     public int getDataCount() {

@@ -230,6 +230,7 @@ public final class CoreMapGraphView extends BorderPane {
         }
     }
 
+    @SuppressWarnings("unchecked") // json-simple JSONArray and JSONObject extend raw collections
     private static String elementChunk(org.json.simple.JSONArray items, int start, int batch, boolean nodes) {
         JSONObject chunk = new JSONObject();
         org.json.simple.JSONArray slice = new org.json.simple.JSONArray();
@@ -453,6 +454,7 @@ public final class CoreMapGraphView extends BorderPane {
         }
     }
 
+    @SuppressWarnings("unchecked") // json-simple JSONArray extends the raw ArrayList
     private static String toJsonArray(List<String> ids) {
         JSONArray arr = new JSONArray();
         if (ids != null) {
@@ -465,6 +467,7 @@ public final class CoreMapGraphView extends BorderPane {
         return arr.toJSONString();
     }
 
+    @SuppressWarnings("unchecked") // json-simple JSONArray extends the raw ArrayList
     private static String toJsonArray(Set<String> ids) {
         JSONArray arr = new JSONArray();
         if (ids != null) {

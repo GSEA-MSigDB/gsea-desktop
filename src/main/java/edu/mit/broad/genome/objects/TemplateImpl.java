@@ -48,12 +48,12 @@ public class TemplateImpl extends AbstractTemplate {
     /**
      * Elements are Template.Class objects - the classes that TemplateItems belong to
      */
-    private ArrayList fClasses;
+    private List<Class> fClasses;
 
     /**
      * Elements are Template.Item objects -> List of TemplateItems
      */
-    private ArrayList fItems;
+    private List<Item> fItems;
 
     /**
      * Flag for whether this Template is continuous or not
@@ -77,8 +77,8 @@ public class TemplateImpl extends AbstractTemplate {
      */
     protected TemplateImpl(final String name) {
         super(name);
-        fClasses = new ArrayList();
-        fItems = new ArrayList();
+        fClasses = new ArrayList<Class>();
+        fItems = new ArrayList<Item>();
     }
 
     /**
@@ -92,7 +92,7 @@ public class TemplateImpl extends AbstractTemplate {
     }
 
     protected Template.Item[] _getItems() {
-        return (Item[]) fItems.toArray(new Item[fItems.size()]);
+        return fItems.toArray(new Item[fItems.size()]);
     }
 
     /**
@@ -277,7 +277,7 @@ public class TemplateImpl extends AbstractTemplate {
         }
     }
 
-    protected ArrayList runChecksInit() {
+    protected List<String> runChecksInit() {
         if (this.fClasses == null) {
             throw new RuntimeException("Cannot call method as Template has no associated Template.Class's");
         }
@@ -287,7 +287,7 @@ public class TemplateImpl extends AbstractTemplate {
         }
 
         // Check 1: check to make sure profile pos in template hasnt been reused (i.e each item needs a uniq profile pos)
-        final List ual = new ArrayList(getNumItems());
+        final List<Integer> ual = new ArrayList<Integer>(getNumItems());
 
         for (int i = 0; i < getNumItems(); i++) {
             Template.Item item = (Template.Item) fItems.get(i);
@@ -302,7 +302,7 @@ public class TemplateImpl extends AbstractTemplate {
         }
 
         // Check 2: unique Item id's
-        final ArrayList unique_item_ids_ordered_by_profile_pos = new ArrayList();
+        final List<String> unique_item_ids_ordered_by_profile_pos = new ArrayList<String>();
         final Template.Item[] items_ordered = getItemsOrderedByProfilePos();
         for (int i = 0; i < items_ordered.length; i++) {
             if (!unique_item_ids_ordered_by_profile_pos.contains(items_ordered[i].getId())) {
@@ -324,7 +324,7 @@ public class TemplateImpl extends AbstractTemplate {
     }
 
     protected void runChecksPost() {
-        Set classNames = new HashSet();
+        Set<String> classNames = new HashSet<String>();
         // check: final (after adding items): Obvious error such as 2 classes and items swapped names
         for (int c = 0; c < fClasses.size(); c++) {
             Class cl = (Class) fClasses.get(c);
@@ -359,14 +359,14 @@ public class TemplateImpl extends AbstractTemplate {
             }
         }
 
-        final ArrayList unique_item_ids_ordered_by_profile_pos = runChecksInit();
+        final List<String> unique_item_ids_ordered_by_profile_pos = runChecksInit();
 
         // Check 4: Make sure the profile order of items is the same as the order of classes
 
         // ok, all looks good, associate ids and classes
         // @note Here is where the first id is automatically (and blindly) associated with the first class
         // This may not be what you want always!!
-        final Hashtable idClassHash = new Hashtable();
+        final Map<String, Class> idClassHash = new Hashtable<String, Class>();
 
         for (int i = 0; i < unique_item_ids_ordered_by_profile_pos.size(); i++) {
             idClassHash.put(unique_item_ids_ordered_by_profile_pos.get(i), fClasses.get(i));
@@ -452,11 +452,11 @@ public class TemplateImpl extends AbstractTemplate {
         /**
          * list of Template.Items
          */
-        protected ArrayList fItems;
+        protected List<Item> fItems;
 
         public ClassImpl(final String className) {
             this.fName = className;
-            fItems = new ArrayList();
+            fItems = new ArrayList<Item>();
         }
 
         /**
@@ -471,7 +471,7 @@ public class TemplateImpl extends AbstractTemplate {
         }
 
         public Template.Item[] getItemsOrderedByProfilePos() {
-            final Item[] items = (Item[]) fItems.toArray(new Item[fItems.size()]);
+            final Item[] items = fItems.toArray(new Item[fItems.size()]);
             final TIntObjectHashMap map = hashProfilePosItemMap(items);
             final int[] pp = getProfilePositionsSorted(map);
 

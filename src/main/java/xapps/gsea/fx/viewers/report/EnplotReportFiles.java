@@ -31,11 +31,11 @@ public final class EnplotReportFiles {
             return null;
         }
         String lowerName = geneSetName.toLowerCase(Locale.ROOT);
-        return ReportExplorerSupport.findFirst(reportDir, n -> {
+        return ReportFiles.findFirst(reportDir, n -> {
             String lower = n.toLowerCase(Locale.ROOT);
             return lower.startsWith("enplot_" + lowerName)
                     && !lower.startsWith("enplot2_")
-                    && ReportExplorerSupport.isImageName(n);
+                    && ReportFiles.isImageName(n);
         });
     }
 
@@ -48,9 +48,9 @@ public final class EnplotReportFiles {
             return null;
         }
         String lowerName = geneSetName.toLowerCase(Locale.ROOT);
-        return ReportExplorerSupport.findFirst(reportDir, n -> {
+        return ReportFiles.findFirst(reportDir, n -> {
             String lower = n.toLowerCase(Locale.ROOT);
-            return lower.startsWith("enplot2_" + lowerName) && ReportExplorerSupport.isImageName(n);
+            return lower.startsWith("enplot2_" + lowerName) && ReportFiles.isImageName(n);
         });
     }
 
@@ -90,7 +90,7 @@ public final class EnplotReportFiles {
 
     public static File resolveReportImage(File reportDir, String src) {
         String name = fileName(src);
-        if (!ReportExplorerSupport.isImageName(name)) {
+        if (!ReportFiles.isImageName(name)) {
             return null;
         }
         if (reportDir != null) {

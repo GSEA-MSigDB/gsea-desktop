@@ -69,7 +69,7 @@ public class GmtParser extends AbstractParser {
      * second col is assumed to be colors
      * third line onwards gene names data -- need NOT be equal number of cols
      */
-    public List parse(String sourcepath, InputStream is) throws Exception {
+    public List<? extends PersistentObject> parse(String sourcepath, InputStream is) throws Exception {
         startImport(sourcepath);
         MSigDBVersion msigDBVersion;
         String pathLC = sourcepath.toLowerCase();

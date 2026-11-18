@@ -44,7 +44,7 @@ public class HtmlReportIndexPage extends HtmlPage {
 
     private ToolReport fToolReport;
 
-    private List fErrors;
+    private List<String> fErrors;
 
     /**
      * Class constructor
@@ -75,7 +75,7 @@ public class HtmlReportIndexPage extends HtmlPage {
 
     public void addError(String error) {
         if (fErrors == null) {
-            fErrors = new ArrayList();
+            fErrors = new ArrayList<String>();
         }
         fErrors.add(error);
     }

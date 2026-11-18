@@ -252,6 +252,7 @@ public final class EnrichmentMath {
         return out;
     }
 
+    @SafeVarargs
     public static Map<String, Double> mergeGeneRankMaps(Map<String, Double>... maps) {
         Map<String, Double> out = new HashMap<>();
         for (Map<String, Double> m : maps) {

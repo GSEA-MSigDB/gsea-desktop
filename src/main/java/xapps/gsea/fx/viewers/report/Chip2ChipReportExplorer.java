@@ -38,26 +38,26 @@ public final class Chip2ChipReportExplorer implements ReportExplorer {
     }
 
     private static Artifacts discover(File dir) {
-        File mapped = ReportExplorerSupport.findFirst(dir, n -> {
+        File mapped = ReportFiles.findFirst(dir, n -> {
             String lower = n.toLowerCase(Locale.ROOT);
             return (lower.endsWith(".gmt") || lower.endsWith(".gmx")) && lower.contains("mapped");
         });
         if (mapped == null) {
-            mapped = ReportExplorerSupport.findFirst(dir,
-                    n -> ReportExplorerSupport.endsWithIgnoreCase(n, ".gmt")
-                            || ReportExplorerSupport.endsWithIgnoreCase(n, ".gmx"));
+            mapped = ReportFiles.findFirst(dir,
+                    n -> ReportFiles.endsWithIgnoreCase(n, ".gmt")
+                            || ReportFiles.endsWithIgnoreCase(n, ".gmx"));
         }
-        File summaryTsv = ReportExplorerSupport.findFirst(dir, n -> {
+        File summaryTsv = ReportFiles.findFirst(dir, n -> {
             String lower = n.toLowerCase(Locale.ROOT);
             return lower.endsWith(".tsv") && !lower.contains("etiology");
         });
         // Prefer a single summary etiology table/text over dozens of per-set tabs.
-        File etiologySummary = ReportExplorerSupport.findFirst(dir, n -> {
+        File etiologySummary = ReportFiles.findFirst(dir, n -> {
             String lower = n.toLowerCase(Locale.ROOT);
             return lower.contains("etiology") && lower.endsWith(".tsv");
         });
         if (etiologySummary == null) {
-            etiologySummary = ReportExplorerSupport.findFirst(dir, n -> {
+            etiologySummary = ReportFiles.findFirst(dir, n -> {
                 String lower = n.toLowerCase(Locale.ROOT);
                 return lower.contains("etiology") && lower.endsWith(".txt");
             });

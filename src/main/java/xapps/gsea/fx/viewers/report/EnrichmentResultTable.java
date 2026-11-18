@@ -113,7 +113,7 @@ public final class EnrichmentResultTable {
         leCol.setCellValueFactory(c -> c.getValue().leadingEdgeProperty());
         leCol.setPrefWidth(180);
 
-        table.getColumns().addAll(nameCol, sizeCol, esCol, nesCol, nomCol, fdrCol, fwerCol, rankCol, leCol);
+        table.getColumns().addAll(List.of(nameCol, sizeCol, esCol, nesCol, nomCol, fdrCol, fwerCol, rankCol, leCol));
     }
 
     private static List<EnrichmentResultRow> toRows(EnrichmentResult[] results) {

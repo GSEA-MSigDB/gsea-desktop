@@ -34,15 +34,15 @@ public final class CollapseDatasetReportExplorer implements ReportExplorer {
     }
 
     private static Artifacts discover(File dir) {
-        File gct = ReportExplorerSupport.findFirst(dir,
-                n -> ReportExplorerSupport.endsWithIgnoreCase(n, ".gct"));
-        File etiology = ReportExplorerSupport.findFirst(dir, n -> {
+        File gct = ReportFiles.findFirst(dir,
+                n -> ReportFiles.endsWithIgnoreCase(n, ".gct"));
+        File etiology = ReportFiles.findFirst(dir, n -> {
             String lower = n.toLowerCase(Locale.ROOT);
             return lower.endsWith(".tsv") && (lower.contains("etiology") || lower.contains("collapse"));
         });
         if (etiology == null) {
-            etiology = ReportExplorerSupport.findFirst(dir,
-                    n -> ReportExplorerSupport.endsWithIgnoreCase(n, ".tsv"));
+            etiology = ReportFiles.findFirst(dir,
+                    n -> ReportFiles.endsWithIgnoreCase(n, ".tsv"));
         }
         return new Artifacts(gct, etiology);
     }

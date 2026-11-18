@@ -13,7 +13,7 @@ import java.util.Set;
  */
 public class PreTemplateImpl extends AbstractPreTemplate {
     private Pair[] fPairs;
-    private Map fSampleNamePairMap;
+    private Map<String, Pair> fSampleNamePairMap;
 
     private boolean fContinuous;
 
@@ -45,8 +45,8 @@ public class PreTemplateImpl extends AbstractPreTemplate {
         this.fPairs = pairs;
         this.fContinuous = continuous;
 
-        this.fSampleNamePairMap = new HashMap();
-        Set uniqValues = new HashSet();
+        this.fSampleNamePairMap = new HashMap<String, Pair>();
+        Set<Object> uniqValues = new HashSet<Object>();
         for (int p = 0; p < pairs.length; p++) {
             if (pairs[p] == null) {
                 throw new IllegalArgumentException("Param pairs cannot be null at index: " + p);

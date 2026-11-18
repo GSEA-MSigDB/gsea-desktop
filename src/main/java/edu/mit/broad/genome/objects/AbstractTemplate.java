@@ -46,7 +46,7 @@ public abstract class AbstractTemplate extends AbstractObject implements Templat
     protected abstract Item[] _getItems();
 
     private String[] _getClassNamesOrderedByProfilePos_CAREFUL() {
-        final List classNames = new ArrayList();
+        final List<String> classNames = new ArrayList<String>();
 
         // @note for profile pos blindly as profile posn need not start from 0 to n-1
         // they can be anything
@@ -64,7 +64,7 @@ public abstract class AbstractTemplate extends AbstractObject implements Templat
             throw new IllegalStateException("Odd: className.length: " + classNames.size() + " getNumClasses: " + getNumClasses() + " " + classNames);
         }
 
-        return (String[]) classNames.toArray(new String[classNames.size()]);
+        return classNames.toArray(new String[classNames.size()]);
     }
 
     public Class getClass(final Item item) {
@@ -269,17 +269,17 @@ public abstract class AbstractTemplate extends AbstractObject implements Templat
     // they can be anything
     public Template.Item[] getItemsOrderedByProfilePos() {
         int[] sorted_profile_positions = getProfilePositionsOrdered();
-        final List list = new ArrayList();
+        final List<Item> list = new ArrayList<Item>();
         for (int i = 0; i < sorted_profile_positions.length; i++) {
             list.add(getItemByProfilePos(sorted_profile_positions[i]));
         }
 
-        return (Item[]) list.toArray(new Item[list.size()]);
+        return list.toArray(new Item[list.size()]);
     }
 
     public Template.Item[] getItemsOrderedByClassFirstAndThenProfilePos() {
 
-        List list = new ArrayList();
+        List<Item> list = new ArrayList<Item>();
 
         for (int c = 0; c < getNumClasses(); c++) {
             Template.Class cl = getClass(c); // @note that the class order is set on construction and NOT by profile
@@ -289,7 +289,7 @@ public abstract class AbstractTemplate extends AbstractObject implements Templat
             }
         }
 
-        return (Item[]) list.toArray(new Item[list.size()]);
+        return list.toArray(new Item[list.size()]);
     }
 
     public Template.Item getItemByProfilePos(final int profilePos) {

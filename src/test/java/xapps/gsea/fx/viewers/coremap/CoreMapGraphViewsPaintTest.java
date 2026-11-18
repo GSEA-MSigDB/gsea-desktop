@@ -25,84 +25,84 @@ public class CoreMapGraphViewsPaintTest {
     public void evidenceLineStyleMatchesCoreMapRules() {
         GraphEdgeData membership = new GraphEdgeData();
         membership.edgeKind = "membership";
-        assertEquals("dashed", CoreMapGraphViews.evidenceLineStyle(membership));
+        assertEquals("dashed", CoreMapGraphPaint.evidenceLineStyle(membership));
 
         GraphEdgeData stringOnly = new GraphEdgeData();
         stringOnly.provider = "string";
-        assertEquals("dotted", CoreMapGraphViews.evidenceLineStyle(stringOnly));
+        assertEquals("dotted", CoreMapGraphPaint.evidenceLineStyle(stringOnly));
 
         GraphEdgeData fused = new GraphEdgeData();
         fused.providers = List.of("signor", "string");
         fused.direct = true;
-        assertEquals("solid", CoreMapGraphViews.evidenceLineStyle(fused));
+        assertEquals("solid", CoreMapGraphPaint.evidenceLineStyle(fused));
 
         GraphEdgeData indirect = new GraphEdgeData();
         indirect.provider = "signor";
         indirect.direct = false;
-        assertEquals("dashed", CoreMapGraphViews.evidenceLineStyle(indirect));
+        assertEquals("dashed", CoreMapGraphPaint.evidenceLineStyle(indirect));
 
         GraphEdgeData fusedStringOnly = new GraphEdgeData();
         fusedStringOnly.provider = "fused";
         fusedStringOnly.providers = List.of("string");
-        assertEquals("dotted", CoreMapGraphViews.evidenceLineStyle(fusedStringOnly));
+        assertEquals("dotted", CoreMapGraphPaint.evidenceLineStyle(fusedStringOnly));
 
         GraphEdgeData fusedBoth = new GraphEdgeData();
         fusedBoth.provider = "fused";
         fusedBoth.providers = List.of("signor", "string");
         fusedBoth.direct = true;
-        assertEquals("solid", CoreMapGraphViews.evidenceLineStyle(fusedBoth));
+        assertEquals("solid", CoreMapGraphPaint.evidenceLineStyle(fusedBoth));
     }
 
     @Test
     public void mixHexBlendsTowardTarget() {
-        assertEquals("#d97706", CoreMapGraphViews.mixHex("#F5D08A", "#D97706", 1.0).toLowerCase());
-        assertEquals("#f5d08a", CoreMapGraphViews.mixHex("#F5D08A", "#D97706", 0.0).toLowerCase());
+        assertEquals("#d97706", CoreMapGraphPaint.mixHex("#F5D08A", "#D97706", 1.0).toLowerCase());
+        assertEquals("#f5d08a", CoreMapGraphPaint.mixHex("#F5D08A", "#D97706", 0.0).toLowerCase());
     }
 
     @Test
     public void edgeArrowsMatchCoreMapSignorSemantics() {
-        assertEquals("activation", CoreMapGraphViews.resolveEdgeArrowRole(edge(
+        assertEquals("activation", CoreMapGraphPaint.resolveEdgeArrowRole(edge(
                 true, 1, "up-regulates activity")));
-        assertEquals("triangle", CoreMapGraphViews.edgeTargetArrowShape(edge(
+        assertEquals("triangle", CoreMapGraphPaint.edgeTargetArrowShape(edge(
                 true, 1, "up-regulates activity")));
 
-        assertEquals("inhibition", CoreMapGraphViews.resolveEdgeArrowRole(edge(
+        assertEquals("inhibition", CoreMapGraphPaint.resolveEdgeArrowRole(edge(
                 true, -1, "down-regulates activity")));
-        assertEquals("tee", CoreMapGraphViews.edgeTargetArrowShape(edge(
+        assertEquals("tee", CoreMapGraphPaint.edgeTargetArrowShape(edge(
                 true, -1, "down-regulates activity")));
 
-        assertEquals("complex", CoreMapGraphViews.resolveEdgeArrowRole(edge(
+        assertEquals("complex", CoreMapGraphPaint.resolveEdgeArrowRole(edge(
                 true, 0, "form complex")));
-        assertEquals("square", CoreMapGraphViews.edgeTargetArrowShape(edge(
+        assertEquals("square", CoreMapGraphPaint.edgeTargetArrowShape(edge(
                 true, 0, "form complex")));
 
-        assertEquals("unknown", CoreMapGraphViews.resolveEdgeArrowRole(edge(
+        assertEquals("unknown", CoreMapGraphPaint.resolveEdgeArrowRole(edge(
                 true, 0, "unknown")));
-        assertEquals("circle", CoreMapGraphViews.edgeTargetArrowShape(edge(
+        assertEquals("circle", CoreMapGraphPaint.edgeTargetArrowShape(edge(
                 true, 0, "unknown")));
     }
 
     @Test
     public void edgeArrowsMatchCoreMapStringModes() {
-        assertEquals("none", CoreMapGraphViews.resolveEdgeArrowRole(edge(
+        assertEquals("none", CoreMapGraphPaint.resolveEdgeArrowRole(edge(
                 false, 0, "associates")));
-        assertEquals("none", CoreMapGraphViews.edgeTargetArrowShape(edge(
+        assertEquals("none", CoreMapGraphPaint.edgeTargetArrowShape(edge(
                 false, 0, "associates")));
 
         GraphEdgeData binds = edge(false, 0, "binds");
-        assertEquals("complex", CoreMapGraphViews.resolveEdgeArrowRole(binds));
-        assertEquals("square", CoreMapGraphViews.edgeTargetArrowShape(binds));
-        assertEquals("square", CoreMapGraphViews.edgeSourceArrowShape(binds));
+        assertEquals("complex", CoreMapGraphPaint.resolveEdgeArrowRole(binds));
+        assertEquals("square", CoreMapGraphPaint.edgeTargetArrowShape(binds));
+        assertEquals("square", CoreMapGraphPaint.edgeSourceArrowShape(binds));
 
-        assertEquals("activation", CoreMapGraphViews.resolveEdgeArrowRole(edge(
+        assertEquals("activation", CoreMapGraphPaint.resolveEdgeArrowRole(edge(
                 true, 1, "up-regulates")));
-        assertEquals("inhibition", CoreMapGraphViews.resolveEdgeArrowRole(edge(
+        assertEquals("inhibition", CoreMapGraphPaint.resolveEdgeArrowRole(edge(
                 true, -1, "down-regulates")));
-        assertEquals("unknown", CoreMapGraphViews.resolveEdgeArrowRole(edge(
+        assertEquals("unknown", CoreMapGraphPaint.resolveEdgeArrowRole(edge(
                 true, 0, "regulates")));
-        assertEquals("circle", CoreMapGraphViews.edgeTargetArrowShape(edge(
+        assertEquals("circle", CoreMapGraphPaint.edgeTargetArrowShape(edge(
                 true, 0, "regulates")));
-        assertEquals("none", CoreMapGraphViews.edgeSourceArrowShape(edge(
+        assertEquals("none", CoreMapGraphPaint.edgeSourceArrowShape(edge(
                 true, 0, "regulates")));
     }
 
@@ -110,17 +110,17 @@ public class CoreMapGraphViewsPaintTest {
     public void edgeSignFallsBackToChannelsLikeCoreMap() {
         GraphEdgeData e = edge(true, 0, "down-regulates");
         e.channels = Map.of("sign", -1.0);
-        assertEquals(-1, CoreMapGraphViews.edgeSign(e));
-        assertEquals("inhibition", CoreMapGraphViews.resolveEdgeArrowRole(e));
-        assertEquals("tee", CoreMapGraphViews.edgeTargetArrowShape(e));
+        assertEquals(-1, CoreMapGraphPaint.edgeSign(e));
+        assertEquals("inhibition", CoreMapGraphPaint.resolveEdgeArrowRole(e));
+        assertEquals("tee", CoreMapGraphPaint.edgeTargetArrowShape(e));
     }
 
     @Test
     public void membershipEdgesHideArrows() {
         GraphEdgeData e = edge(true, 1, "up-regulates");
         e.edgeKind = "membership";
-        assertEquals("none", CoreMapGraphViews.resolveEdgeArrowRole(e));
-        assertEquals("none", CoreMapGraphViews.edgeTargetArrowShape(e));
+        assertEquals("none", CoreMapGraphPaint.resolveEdgeArrowRole(e));
+        assertEquals("none", CoreMapGraphPaint.edgeTargetArrowShape(e));
     }
 
     @Test

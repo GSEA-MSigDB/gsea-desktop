@@ -92,7 +92,6 @@ public class ParseUtils {
             throw new NullPointerException("Cannot work on null String");
         }
 
-        //System.out.println("##### delim>" + delims + "<");
         StringTokenizer tok = new StringTokenizer(s, delims);
         return _doFloatParse(tok);
     }

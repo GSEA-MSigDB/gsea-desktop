@@ -27,7 +27,7 @@ public class ToolManagerImpl implements ToolManager {
     private static final Logger klog = LoggerFactory.getLogger(ToolManagerImpl.class);
 
     // both for opt and because we dont want to pick up this instances report stub
-    private static Map kToolNameReporStubMap;
+    private static Map<String, ReportStub> kToolNameReporStubMap;
 
     /**
      * Class constructor
@@ -47,7 +47,7 @@ public class ToolManagerImpl implements ToolManager {
     // Might return null if none
     public ReportStub getLastReportStub(String toolName) {
         if (kToolNameReporStubMap == null) {
-            kToolNameReporStubMap = new HashMap();
+            kToolNameReporStubMap = new HashMap<String, ReportStub>();
         }
 
         toolName = ClassUtils.shorten(toolName);
@@ -86,7 +86,7 @@ public class ToolManagerImpl implements ToolManager {
 
     public ReportStub[] getReportsInCache() {
         final File[] files = _getReportFiles();
-        List reports = new ArrayList();
+        List<ReportStub> reports = new ArrayList<ReportStub>();
         for (int i = 0; i < files.length; i++) {
             //klog.debug("Found reports: " + files[i]);
             try {
@@ -99,7 +99,7 @@ public class ToolManagerImpl implements ToolManager {
             }
         }
 
-        return (ReportStub[]) reports.toArray(new ReportStub[reports.size()]);
+        return reports.toArray(new ReportStub[reports.size()]);
     }
 
     private File[] _getReportFiles() {

@@ -83,7 +83,7 @@ public final class GseaReportExplorer implements ReportExplorer {
         ReportExplorerSupport.loadAsync(host, "gsea-report-explorer",
                 "Loading enrichment results…",
                 () -> {
-                    File edbDir = ReportExplorerSupport.resolveEdbDir(reportDir);
+                    File edbDir = ReportFiles.resolveEdbDir(reportDir);
                     EnrichmentEsProfiles.ScoringResolution scoring = EnrichmentEsProfiles.resolveScoring(
                             report != null ? report.getParametersUsed() : null);
                     return new Loaded(reportDir, edbDir, ParserFactory.readEdb(edbDir, true), scoring);
@@ -497,9 +497,9 @@ public final class GseaReportExplorer implements ReportExplorer {
             return plots;
         }
         String lowerName = geneSetName.toLowerCase(Locale.ROOT);
-        File heatmap = ReportExplorerSupport.findFirst(reportDir, n -> {
+        File heatmap = ReportFiles.findFirst(reportDir, n -> {
             String lower = n.toLowerCase(Locale.ROOT);
-            return lower.startsWith(lowerName + "_") && ReportExplorerSupport.isImageName(n)
+            return lower.startsWith(lowerName + "_") && ReportFiles.isImageName(n)
                     && !lower.startsWith("enplot");
         });
         if (heatmap != null) {

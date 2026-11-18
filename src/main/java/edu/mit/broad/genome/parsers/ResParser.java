@@ -132,7 +132,7 @@ public class ResParser extends AbstractParser {
      * @done Add AP call parsing and include in the dara structure
      * <br>-> there is one AP call per float and these get fed into a parallel BooleanMatrix
      */
-    public List parse(String sourcepath, InputStream is) throws Exception {
+    public List<? extends PersistentObject> parse(String sourcepath, InputStream is) throws Exception {
 
         startImport(sourcepath);
         int currLineNum = 0;
@@ -173,8 +173,6 @@ public class ResParser extends AbstractParser {
             }
 
             while (st.hasMoreTokens()) {
-
-                // System.out.println(st.nextToken());
                 colArr.add(st.nextToken());
             }
         }
@@ -236,14 +234,11 @@ public class ResParser extends AbstractParser {
             // Upshot is that that the buffer (in our case a whole line) never gets freed
             // Solution is to explicitly create a string from the substring
             int ind1 = currLine.indexOf(theDelim);
-
-            //System.out.println(">>>PPP " + currLine);
             checkIndex(ind1, currLineNum);
 
             String desc = currLine.substring(0, ind1);
             int ind2 = currLine.indexOf(theDelim, ind1 + 1);
             checkIndex(ind2, currLineNum);
-            //System.out.println(">>>TTT " + currLine);
             String name = currLine.substring(ind1 + 1, ind2);
             rowNames.add(name);
 
@@ -255,13 +250,11 @@ public class ResParser extends AbstractParser {
 
             ind1 = ind2;
 
-            //System.out.println(">>> " + currLine);
             for (int i = 0; i < numCols; ++i) {
                 ind2 = currLine.indexOf(theDelim, ind1 + 1);
 
                 checkIndex(ind2, currLineNum);
 
-                //System.out.println(">>>RRR " + currLine);
                 // get expression level
                 String floatStr = currLine.substring(ind1 + 1, ind2);
 
@@ -276,8 +269,6 @@ public class ResParser extends AbstractParser {
                         ind1 + 1 + floatStr.length() + 1 + 1);
 
                 theCalls[i] = APMMatrix.valueOf(apStr);
-
-                //System.out.println(">> " + apStr);
                 ind1 = currLine.indexOf(theDelim, ind2 + 1);
             }
 

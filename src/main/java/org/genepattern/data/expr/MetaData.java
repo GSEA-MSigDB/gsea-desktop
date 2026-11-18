@@ -34,7 +34,7 @@ public class MetaData {
      */
     public MetaData slice(int[] indices) {
         MetaData slicedMetaData = new MetaData(indices.length);
-        slicedMetaData.metaDataName2Depth = (HashMap<String, Integer>) this.metaDataName2Depth.clone();
+        slicedMetaData.metaDataName2Depth = new HashMap<String, Integer>(this.metaDataName2Depth);
         slicedMetaData.metaDataList = new ArrayList<String[]>();
         for (int i = 0, size = this.metaDataList.size(); i < size; i++) {
             String[] obj = (String[]) this.metaDataList.get(i);

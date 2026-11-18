@@ -57,7 +57,7 @@ public class CmdLineArgs {
 
         StringTokenizer tok = new StringTokenizer(argline, "-"); // IMP spaces are NOT delimiters at this stage
         //klog.debug("# of tokens: " + tok.countTokens());
-        Set keyval = new HashSet();
+        Set<String> keyval = new HashSet<String>();
         while (tok.hasMoreElements()) {
             String kv = tok.nextToken();
             keyval.add(kv);
@@ -65,7 +65,7 @@ public class CmdLineArgs {
         }
 
         // now fill them up
-        Iterator it = keyval.iterator();
+        Iterator<String> it = keyval.iterator();
         while (it.hasNext()) {
             String kv = it.next().toString();
             tok = new StringTokenizer(kv, " ="); // '=' as a favor to human errors

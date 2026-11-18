@@ -125,9 +125,9 @@ public class ClsParser extends AbstractParser implements Constants {
      * @param bin
      * @return
      */
-    private List parseContinuousTemplate(final String fileName, final BufferedReader bin) throws IOException, ParserException {
+    private List<Template> parseContinuousTemplate(final String fileName, final BufferedReader bin) throws IOException, ParserException {
 
-        Map nameProfileMap = new HashMap();
+        Map<String, String> nameProfileMap = new HashMap<String, String>();
 
         // String currLine = firstLine; // #numeric ignore
         String currLine = nextNonEmptyLine(bin);
@@ -151,11 +151,10 @@ public class ClsParser extends AbstractParser implements Constants {
             currLine = nextNonEmptyLine(bin);
         }
 
-        Iterator it = nameProfileMap.keySet().iterator();
-        List templates = new ArrayList();
-        while (it.hasNext()) {
-            String name = (String) it.next();
-            String profile = (String) nameProfileMap.get(name);
+        List<Template> templates = new ArrayList<Template>();
+        for (Map.Entry<String, String> entry : nameProfileMap.entrySet()) {
+            String name = entry.getKey();
+            String profile = entry.getValue();
             // 206.0 31.0 252.0 -20.0 -169.0 -66.0 230.0 -23.0 67.0
             float[] floats = ParseUtils.string2floats(profile);
 
@@ -172,12 +171,12 @@ public class ClsParser extends AbstractParser implements Constants {
         return Collections.unmodifiableList(templates);
     }
 
-    private List parseProbeTemplate(final String fileName, final BufferedReader bin) throws IOException {
+    private List<ProbePreTemplate> parseProbeTemplate(final String fileName, final BufferedReader bin) throws IOException {
 
         // firstLine is #probes, ignore
         String currLine = nextNonEmptyLine(bin);
 
-        List probePreTemplates = new ArrayList();
+        List<ProbePreTemplate> probePreTemplates = new ArrayList<ProbePreTemplate>();
 
         while (currLine != null) {
             //log.debug("Adding new ProbePreTemplate: " + currLine);
@@ -193,7 +192,7 @@ public class ClsParser extends AbstractParser implements Constants {
      * @return The first line that is NOT empty nor a comment line
      * @throws ParserException
      */
-    public List parse(final String fileName, final InputStream is) throws Exception {
+    public List<? extends PersistentObject> parse(final String fileName, final InputStream is) throws Exception {
         startImport(fileName);
 
         BufferedReader bin = new BufferedReader(new InputStreamReader(is));
@@ -230,7 +229,7 @@ public class ClsParser extends AbstractParser implements Constants {
         }
     }
 
-    private List _parse_genecluster_style_categorical(final String sourcepath, final BufferedReader bin, String firstLine) throws Exception {
+    private List<Template> _parse_genecluster_style_categorical(final String sourcepath, final BufferedReader bin, String firstLine) throws Exception {
 
         String currLine = firstLine;
 
@@ -266,13 +265,13 @@ public class ClsParser extends AbstractParser implements Constants {
      * @return The first line that is NOT empty nor a comment line
      * @throws ParserException
      */
-    private List _parse_new_style(String sourceFileName, BufferedReader buf, String firstLine) throws Exception {
+    private List<PreTemplateImpl> _parse_new_style(String sourceFileName, BufferedReader buf, String firstLine) throws Exception {
 
         // read in the entire file
         final StringDataframe sdf = new StringDataframeParser().parseSdf(sourceFileName, buf, firstLine);
         // 'row' names are the sample names
         final String[] sampleNames = sdf.getRowNamesArray();
-        final List preTemplates = new ArrayList();
+        final List<PreTemplateImpl> preTemplates = new ArrayList<PreTemplateImpl>();
 
         for (int c = 0; c < sdf.getNumCol(); c++) {
             final String colName = sdf.getColumnName(c);
@@ -391,14 +390,14 @@ public class ClsParser extends AbstractParser implements Constants {
                                                              String name,
                                                              String sampleNames[],
                                                              String[] values) {
-        List pairs = new ArrayList();
+        List<PreTemplateImpl.Pair> pairs = new ArrayList<PreTemplateImpl.Pair>();
         for (int i = 0; i < sampleNames.length; i++) {
             if (sampleNames[i] != null && values[i] != null) {
                 pairs.add(new PreTemplateImpl.NumPair(sampleNames[i], values[i])); // values can be null (i.e na in the cls file)
             }
         }
 
-        return new PreTemplateImpl(sourceFileName, name, (PreTemplateImpl.Pair[]) pairs.toArray(new PreTemplateImpl.Pair[pairs.size()]), true);
+        return new PreTemplateImpl(sourceFileName, name, pairs.toArray(new PreTemplateImpl.Pair[pairs.size()]), true);
     }
 
     private static PreTemplateImpl _createCategoricalPreTemplate(final String sourceFileName,
@@ -406,14 +405,14 @@ public class ClsParser extends AbstractParser implements Constants {
                                                                  final String sampleNames[],
                                                                  final String[] values) {
 
-        List pairs = new ArrayList();
+        List<PreTemplateImpl.Pair> pairs = new ArrayList<PreTemplateImpl.Pair>();
         for (int i = 0; i < sampleNames.length; i++) {
             if (sampleNames[i] != null && values[i] != null) { // values can be null (i.e na in the cls file
                 pairs.add(new PreTemplateImpl.StringPair(sampleNames[i], values[i]));
             }
         }
 
-        return new PreTemplateImpl(sourceFileName, name, (PreTemplateImpl.Pair[]) pairs.toArray(new PreTemplateImpl.Pair[pairs.size()]), false);
+        return new PreTemplateImpl(sourceFileName, name, pairs.toArray(new PreTemplateImpl.Pair[pairs.size()]), false);
     }
 
     private static boolean isCommentColumn(final String colName) {

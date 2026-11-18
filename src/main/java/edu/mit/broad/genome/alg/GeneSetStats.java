@@ -48,11 +48,11 @@ public class GeneSetStats {
     public RedStruc calcRedundancy(final GeneSet[] gsets, final boolean do2mersalso) {
         RedStruc rs = new RedStruc();
         if (do2mersalso) {
-            rs.allFoundTwoMers = new HashSet();
+            rs.allFoundTwoMers = new HashSet<TwoMer>();
             for (int i = 0; i < gsets.length; i++) {
                 int n = gsets[i].getNumMembers();
                 int num = n * (n - 1) / 2;
-                Set s = hashTwoMers(gsets[i]);
+                Set<TwoMer> s = hashTwoMers(gsets[i]);
                 if (s.size() != num) { log.warn("Bad: {} {}", s.size(), num); }
                 rs.allFoundTwoMers.addAll(s);
                 rs.totNumPairsPossible += num;
@@ -88,8 +88,8 @@ public class GeneSetStats {
     }
 
     // @todo optimize
-    public Set hashTwoMers(final GeneSet gset) {
-        Set set = new HashSet();
+    public Set<TwoMer> hashTwoMers(final GeneSet gset) {
+        Set<TwoMer> set = new HashSet<TwoMer>();
         for (int i = 0; i < gset.getNumMembers(); i++) {
             String a = gset.getMember(i);
             for (int j = 0; j < gset.getNumMembers(); j++) {
@@ -105,7 +105,7 @@ public class GeneSetStats {
     public static class RedStruc {
 
         public int totNumPairsPossible;
-        public Set allFoundTwoMers;
+        public Set<TwoMer> allFoundTwoMers;
 
         public float jaccardMean;
         public TFloatIntHashMap jaccardDistrib;

@@ -106,7 +106,6 @@ public class EdbFolderParser extends AbstractParser {
             float fwer = Float.parseFloat(el.attribute(FWER).getValue());
             float corrAtES = Float.parseFloat(el.attribute(RANK_SCORE_AT_ES).getValue());
             int rankAtES = (int) Float.parseFloat(el.attribute(RANK_AT_ES).getValue());
-            //System.out.println(">> " + rankAtES + " " + corrAtES);
             final Vector rndESS = _toVectorReqd(RND_ES, el);
             final Vector esProfile = _toVectorReqd(ES_PROFILE, el);
             final int[] hitIndices = ParseUtils.string2ints(el.attribute(HIT_INDICES).getValue(), DELIM);
@@ -123,7 +122,7 @@ public class EdbFolderParser extends AbstractParser {
             dtgs.add(new EnrichmentResult(rl, template_opt, gset, chip, score, rndESS, null));
 
             if (cnt % 500 == 0) {
-                System.out.println("read in from edb dtg: " + (cnt + 1));
+                log.info("Read {} enrichment results from the edb file", cnt + 1);
             }
 
             cnt++;
@@ -241,7 +240,7 @@ public class EdbFolderParser extends AbstractParser {
     }
 
     // The top level gsea result dir
-    public List parse(String sourcepath, InputStream fis) throws Exception {
+    public List<? extends PersistentObject> parse(String sourcepath, InputStream fis) throws Exception {
         startImport(sourcepath);
         EnrichmentDb edb = parseEdb(new File(sourcepath));
         return unmodlist(edb);

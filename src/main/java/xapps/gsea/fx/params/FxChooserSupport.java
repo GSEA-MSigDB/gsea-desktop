@@ -290,7 +290,7 @@ public final class FxChooserSupport {
                 Throwable t = task.getException();
                 String msg = t != null ? t.getMessage() : "Unknown error";
                 klog.error(msg, t);
-                releaseItem.getChildren().setAll(new TreeItem<>("Error: " + msg));
+                releaseItem.getChildren().setAll(List.of(new TreeItem<Object>("Error: " + msg)));
             });
             Thread th = new Thread(task, "msigdb-file-catalog-" + release.getReleaseName());
             th.setDaemon(true);

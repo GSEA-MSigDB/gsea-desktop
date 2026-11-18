@@ -76,180 +76,93 @@ public class ParserFactory implements Constants {
     }
 
     public static GeneSet combineIntoOne(final GeneSetMatrix gm) {
-        final Set names = gm.getAllMemberNamesOnlyOnceS();
+        final Set<String> names = gm.getAllMemberNamesOnlyOnceS();
         final GeneSet gset = new GeneSet("combo_" + names.size() + "_" + gm.getName(), names);
         _getCache().makeVisible(gset, GeneSet.class);
         return gset;
     }
 
     public static Dataset readDataset(File file, boolean useCache, boolean add2cache) throws Exception {
-        return readDataset(file.getPath(), createInputStream(file), useCache, add2cache);
+        return readExpressionDataset(DatasetKind.RES, file.getPath(), createInputStream(file), useCache, add2cache);
     }
 
-    private static Dataset readDataset(String path, InputStream is, boolean useCache) throws Exception {
-        return readDataset(path, is, useCache, true);
+    /**
+     * The parser used when the file extension does not name a different dataset format.
+     * RES, GCT, and PCL still hand a mismatched extension to the reader that matches it.
+     * A PCL or RES entry keeps a .txt file, because those readers always parsed txt themselves.
+     */
+    private enum DatasetKind {
+        RES, GCT, TXT, PCL
     }
 
-    private static Dataset readDataset(String path, InputStream is, boolean useCache,
-                                      boolean add2cache) throws Exception {
+    private static Dataset readExpressionDataset(DatasetKind requested, String path, InputStream is,
+                                                 boolean useCache, boolean add2cache) throws Exception {
         try {
             if (path == null) {
                 throw new IllegalArgumentException("Param file cannot be null");
             }
-
-            if (useCache && (_getCache().isCached(path, Dataset.class))) {
+            if (useCache && _getCache().isCached(path, Dataset.class)) {
                 return (Dataset) _getCache().get(path, Dataset.class);
             }
-
-            // as a help to make datasets ext agnostic
-            String ext = NamingConventions.getExtension(path);
-            if (ext.equals(Constants.GCT)) {
-                return readDatasetGct(path, is, useCache, add2cache);
-            }
-
-            if (ext.equals(Constants.PCL)) {
-                return readDatasetPcl(path, is, useCache, add2cache);
-            }
-
-            Dataset ds;
-            Parser parser = new ResParser();
-            parser.setSilentMode(false);
-            List list = parser.parse(toName(path), is);
-            ds = (Dataset) list.get(0);
-
-            // sometimes might not want to for memory reasons
-            if (add2cache) {
-                _getCache().add(path, ds, Dataset.class);
-            }
-            return ds;
-        } finally {
-            closeQuietly(is);
-        }
-    }
-
-    private static Dataset readDatasetGct(String path, InputStream is, boolean useCache) throws Exception {
-        return readDatasetGct(path, is, useCache, true);
-    }
-
-    private static Dataset readDatasetGct(String path, InputStream is,
-                                         boolean useCache,
-                                         boolean add2cache) throws Exception {
-        if (path == null) {
-            throw new IllegalArgumentException("Param file cannot be null");
-        }
-
-        if (is == null) {
-            throw new IllegalArgumentException("Param is cannot be null");
-        }
-
-        try {
-            if (useCache && (_getCache().isCached(path, Dataset.class))) {
-                return (Dataset) _getCache().get(path, Dataset.class);
-            }
-
-            // as a help to make datasets ext agnostic
-            String ext = NamingConventions.getExtension(path);
-            if (ext.equals(Constants.RES)) {
-                return readDataset(path, is, useCache);
-            }
-
-            if (ext.equals(Constants.PCL)) {
-                return readDatasetPcl(path, is, useCache);
-            }
-
-            GctParser parser = new GctParser();
-            parser.setSilentMode(false);
-            List list = parser.parse(toName(path), is);
-
-            Dataset ds = (Dataset) list.get(0);
-
-            if (add2cache) {
-                _getCache().add(path, ds, Dataset.class);
-            }
-            return ds;
-        } finally {
-            closeQuietly(is);
-        }
-    }
-
-    private static Dataset readDatasetTXT(String path, InputStream is, boolean useCache) throws Exception {
-        try {
-            if (path == null) {
-                throw new IllegalArgumentException("Param file cannot be null");
-            }
-
             if (is == null) {
                 throw new IllegalArgumentException("Param is cannot be null");
             }
 
-            if (useCache && (_getCache().isCached(path, Dataset.class))) {
-                return (Dataset) _getCache().get(path, Dataset.class);
+            DatasetKind redirected = redirectedDatasetKind(requested, NamingConventions.getExtension(path));
+            if (redirected != null) {
+                return readExpressionDataset(redirected, path, is, useCache, add2cache);
             }
 
-            // as a help to make datasets ext agnostic
-            String ext = NamingConventions.getExtension(path);
-            if (ext.equals(Constants.RES)) {
-                return readDataset(path, is, useCache);
+            Parser parser = datasetParser(requested);
+            String sourceName = requested == DatasetKind.PCL ? path : toName(path);
+            Dataset ds = (Dataset) parser.parse(sourceName, is).get(0);
+            if (requested == DatasetKind.TXT || add2cache) {
+                _getCache().add(path, ds, Dataset.class);
             }
-
-            if (ext.equals(Constants.GCT)) {
-                return readDatasetGct(path, is, useCache);
-            }
-
-            if (ext.equals(Constants.PCL)) {
-                return readDatasetPcl(path, is, useCache);
-            }
-
-            TxtDatasetParser parser = new TxtDatasetParser();
-            parser.setSilentMode(false);
-            List list = parser.parse(toName(path), is);
-            Dataset ds = (Dataset) list.get(0);
-
-            _getCache().add(path, ds, Dataset.class);
             return ds;
         } finally {
             closeQuietly(is);
         }
     }
 
-    private static Dataset readDatasetPcl(String path, InputStream is, boolean useCache) throws Exception {
-        return readDatasetPcl(path, is, useCache, true);
+    private static DatasetKind redirectedDatasetKind(DatasetKind requested, String ext) {
+        DatasetKind named = datasetKindForExtension(ext);
+        if (named == null || named == requested) {
+            return null;
+        }
+        if (named == DatasetKind.TXT && requested != DatasetKind.TXT) {
+            return null;
+        }
+        return named;
     }
 
-    private static Dataset readDatasetPcl(String path, InputStream is, boolean useCache, boolean add2cache) throws Exception {
-        try {
-            if (path == null) {
-                throw new IllegalArgumentException("Param file cannot be null");
-            }
+    private static DatasetKind datasetKindForExtension(String ext) {
+        if (Constants.RES.equals(ext)) {
+            return DatasetKind.RES;
+        }
+        if (Constants.GCT.equals(ext)) {
+            return DatasetKind.GCT;
+        }
+        if (Constants.PCL.equals(ext)) {
+            return DatasetKind.PCL;
+        }
+        if (Constants.TXT.equals(ext)) {
+            return DatasetKind.TXT;
+        }
+        return null;
+    }
 
-            if (is == null) {
-                throw new IllegalArgumentException("Param is cannot be null");
-            }
-
-            if (useCache && (_getCache().isCached(path, Dataset.class))) {
-                return (Dataset) _getCache().get(path, Dataset.class);
-            }
-
-            // as a help to make datasets ext agnostic
-            String ext = NamingConventions.getExtension(path);
-            if (ext.equals(Constants.RES)) {
-                return readDataset(path, is, useCache);
-            }
-
-            if (ext.equals(Constants.GCT)) {
-                return readDatasetGct(path, is, useCache);
-            }
-
-            Parser parser = new PclParser();
-            List list = parser.parse(path, is); // @note IMP special hack for PCL parser
-            Dataset ds = (Dataset) list.get(0);
-
-            if (add2cache) {
-                _getCache().add(path, ds, Dataset.class);
-            }
-            return ds;
-        } finally {
-            closeQuietly(is);
+    private static Parser datasetParser(DatasetKind kind) {
+        switch (kind) {
+            case GCT:
+                return new GctParser();
+            case TXT:
+                return new TxtDatasetParser();
+            case PCL:
+                return new PclParser();
+            case RES:
+            default:
+                return new ResParser();
         }
     }
 
@@ -322,14 +235,14 @@ public class ParserFactory implements Constants {
         }
 
         try {
-            Set baseTemplates = new LinkedHashSet();
+            Set<Template> baseTemplates = new LinkedHashSet<Template>();
             File basefile;
             String base_path = AuxUtils.getBasePathFromAuxPath(path);
             basefile = new File(base_path);
 
             if (useCache && _getCache().isCached(base_path, Template.class)) {
                 Object obj = _getCache().get(base_path, Template.class);
-                baseTemplates.add(obj);
+                baseTemplates.add((Template) obj);
             } else {
 
                 Parser parser = new ClsParser();
@@ -337,19 +250,16 @@ public class ParserFactory implements Constants {
 
                 if (AuxUtils.isAux(path)) {
                     basefile = AuxUtils.getBaseFileFromAuxFile(new File(path));
-                    List list = parser.parse(basefile.getName(), basefile);
-                    // multiple only for numeric templates
-                    baseTemplates.addAll(list);
+                    addTemplates(baseTemplates, parser.parse(basefile.getName(), basefile));
                 } else {
-                    List list = parser.parse(toName(path), is);
-                    baseTemplates.addAll(list); // multiple only for numeric templates
+                    addTemplates(baseTemplates, parser.parse(toName(path), is));
                     // just one
                     basefile = new File(path);
                 }
             }
 
-            final List allTemplates = new ArrayList();
-            Template[] allTss = (Template[]) baseTemplates.toArray(new Template[baseTemplates.size()]);
+            final List<Template> allTemplates = new ArrayList<Template>();
+            Template[] allTss = baseTemplates.toArray(new Template[baseTemplates.size()]);
 
             for (int j = 0; j < allTss.length; j++) { // Typically for non-continuous templates, only done once
 
@@ -368,9 +278,15 @@ public class ParserFactory implements Constants {
                 }
             }
 
-            return (Template[]) allTemplates.toArray(new Template[allTemplates.size()]);
+            return allTemplates.toArray(new Template[allTemplates.size()]);
         } finally {
             closeQuietly(is);
+        }
+    }
+
+    private static void addTemplates(Set<Template> into, List<? extends PersistentObject> parsed) {
+        for (PersistentObject obj : parsed) {
+            into.add((Template) obj);
         }
     }
 
@@ -379,11 +295,11 @@ public class ParserFactory implements Constants {
      * used to overwrite that key, so a second read returned a different phenotype.
      * Aux phenotypes keep their pseudo paths.
      */
-    private static void cacheTemplates(File basefile, List allTemplates, boolean silentMode) {
+    private static void cacheTemplates(File basefile, List<Template> allTemplates, boolean silentMode) {
         boolean havePrimary = _getCache().isCached(basefile.getPath(), Template.class);
         int lastStored = -1;
         for (int t = 0; t < allTemplates.size(); t++) {
-            Template tm = (Template) allTemplates.get(t);
+            Template tm = allTemplates.get(t);
             if (tm.isAux() || !havePrimary) {
                 lastStored = t;
                 if (!tm.isAux()) {
@@ -393,7 +309,7 @@ public class ParserFactory implements Constants {
         }
         havePrimary = _getCache().isCached(basefile.getPath(), Template.class);
         for (int t = 0; t < allTemplates.size(); t++) {
-            Template tm = (Template) allTemplates.get(t);
+            Template tm = allTemplates.get(t);
             boolean fire = !silentMode && t == lastStored;
             if (tm.isAux()) {
                 File pseudo = new File(basefile.getParentFile(), tm.getName());
@@ -763,13 +679,13 @@ public class ParserFactory implements Constants {
             final String ext = NamingConventions.getExtensionLiberal(tmp).toLowerCase();
 
             if (ext.equalsIgnoreCase(RES)) {
-                return readDataset(path, is, useCache);
+                return readExpressionDataset(DatasetKind.RES, path, is, useCache, true);
             } else if (ext.equalsIgnoreCase(GCT)) {
-                return readDatasetGct(path, is, useCache);
+                return readExpressionDataset(DatasetKind.GCT, path, is, useCache, true);
             } else if (ext.equalsIgnoreCase(TXT)) {
-                return readDatasetTXT(path, is, useCache);
+                return readExpressionDataset(DatasetKind.TXT, path, is, useCache, true);
             } else if (ext.equalsIgnoreCase(PCL)) {
-                return readDatasetPcl(path, is, useCache);
+                return readExpressionDataset(DatasetKind.PCL, path, is, useCache, true);
             } else if (ext.startsWith(CLS)) { // IMP note -- special for the aux hash
                 return readTemplate(path, is, useCache, useCache, false);
             } else if (ext.equalsIgnoreCase(GRP)) {

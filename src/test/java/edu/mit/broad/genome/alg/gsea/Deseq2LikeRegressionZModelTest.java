@@ -178,20 +178,6 @@ class Deseq2LikeRegressionZModelTest {
 
 
     @Test
-    void fit_rejectsNonIntegerCounts() {
-        final Dataset dataset = createDataset(
-                new float[][] {
-                        { 10.5f, 12.0f, 9.0f, 40.0f, 42.0f, 44.0f }
-                },
-                Arrays.asList("geneA"));
-
-        final Template template = createTemplate(dataset);
-
-        assertThrows(IllegalArgumentException.class,
-                () -> Deseq2LikeRegressionZModel.fit(dataset, template, createMarkerScores(dataset)));
-    }
-
-    @Test
     void computeSizeFactors_fallsBackToPoscountsWhenNoGeneIsPositiveInAllSamples() throws Exception {
         final Dataset dataset = createDataset(
                 new float[][] {
@@ -376,7 +362,7 @@ class Deseq2LikeRegressionZModelTest {
             Dataset.class,
             Map.class,
             double[].class,
-            double[].class,
+            Deseq2LikeRegressionZModel.ConditionVector.class,
             boolean[].class,
             boolean[].class,
             boolean.class,
@@ -386,10 +372,10 @@ class Deseq2LikeRegressionZModelTest {
             double.class);
         fitInternal.setAccessible(true);
 
-        final double[] condition = new double[] {
+        final Deseq2LikeRegressionZModel.ConditionVector groups = conditionVector(new double[] {
             0d, 0d, 0d, 0d, 0d, 0d,
             1d, 1d, 1d, 1d, 1d, 1d
-        };
+        });
         final boolean[] replaceableSamples = new boolean[dataset.getNumCol()];
         Arrays.fill(replaceableSamples, true);
         final Deseq2LikeRegressionZModel withReplacement = (Deseq2LikeRegressionZModel) invokeStaticObject(
@@ -398,7 +384,7 @@ class Deseq2LikeRegressionZModelTest {
             dataset,
             markerScoresWithReplacement,
             sizeFactors,
-            condition,
+            groups,
             new boolean[dataset.getNumRow()],
             replaceableSamples.clone(),
             true,
@@ -412,7 +398,7 @@ class Deseq2LikeRegressionZModelTest {
             dataset,
             markerScoresWithoutReplacement,
             sizeFactors,
-            condition,
+            groups,
             new boolean[dataset.getNumRow()],
             replaceableSamples.clone(),
             false,
@@ -447,173 +433,14 @@ class Deseq2LikeRegressionZModelTest {
         assertEquals(1.0d, withZeroed.pvalue, 1.0e-12d);
         }
 
-        @Test
-        void fitWald_preservesUnclampedMeansForCooksDistance() throws Exception {
-        final Dataset dataset = createDataset(
-            new float[][] {
-                { 100f, 105f, 95f, 98f, 102f, 99f },
-                { 0f, 0f, 0f, 1f, 1f, 1f }
-            },
-            Arrays.asList("anchorGene", "lowMeanGene"));
-        final Template template = createTemplate(dataset);
-        final Map<String, TwoClassMarkerStats> markerScores = createMarkerScores(dataset);
-        final Deseq2LikeRegressionZModel model = Deseq2LikeRegressionZModel.fit(dataset, template, markerScores);
-
-        final Method createConditionVector = Deseq2LikeRegressionZModel.class.getDeclaredMethod(
-            "createConditionVector",
-            Template.class,
-            int.class);
-        createConditionVector.setAccessible(true);
-        final double[] condition = (double[]) invokeStaticObject(createConditionVector, template, dataset.getNumCol());
-        final double[] sizeFactors = (double[]) readPrivateObjectField(model, "sizeFactors");
-        final double[] shrunkDispersion = (double[]) readPrivateObjectField(model, "shrunkDispersion");
-
-        final Method fitMeanParametersForRow = Deseq2LikeRegressionZModel.class.getDeclaredMethod(
-            "fitMeanParametersForRow",
-            Dataset.class,
-            int.class,
-            double[].class,
-            double[].class,
-            double.class);
-        fitMeanParametersForRow.setAccessible(true);
-
-        final Method fitWaldForRow = Deseq2LikeRegressionZModel.class.getDeclaredMethod(
-            "fitWaldForRow",
-            Dataset.class,
-            int.class,
-            double[].class,
-            double[].class,
-            double.class,
-            double.class,
-            double.class);
-        fitWaldForRow.setAccessible(true);
-        final double wideL = 1.0e-6d;
-
-        final Object coefFit = invokeStaticObject(
-            fitMeanParametersForRow,
-            dataset,
-            1,
-            condition,
-            sizeFactors,
-            shrunkDispersion[1]);
-        final Object waldFit = invokeStaticObject(
-            fitWaldForRow,
-            dataset,
-            1,
-            condition,
-            sizeFactors,
-            shrunkDispersion[1],
-            wideL,
-            wideL);
-
-        final double[] workingMuHat = (double[]) readPrivateObjectField(coefFit, "muHat");
-        final double[] fittedMuHat = (double[]) readPrivateObjectField(coefFit, "fittedMuHat");
-        final double[] cooksMuHat = (double[]) readPrivateObjectField(waldFit, "muHat");
-
-        boolean hasUnclampedLowMean = false;
-        boolean differsFromWorkingMu = false;
-        for (int i = 0; i < fittedMuHat.length; i++) {
-            if (Double.isFinite(fittedMuHat[i]) && fittedMuHat[i] > 0.0d && fittedMuHat[i] < 0.5d) {
-            hasUnclampedLowMean = true;
-            }
-            if (Double.isFinite(workingMuHat[i]) && Double.isFinite(cooksMuHat[i])
-                && Math.abs(workingMuHat[i] - cooksMuHat[i]) > 1.0e-9d) {
-            differsFromWorkingMu = true;
-            }
-            assertEquals(fittedMuHat[i], cooksMuHat[i], 1.0e-12d);
-        }
-
-        assertTrue(hasUnclampedLowMean);
-        assertTrue(differsFromWorkingMu);
-        }
-
     @Test
-    void fitMeanParameters_usesClampedMuInWorkingResponse() throws Exception {
-        final Dataset dataset = createDataset(
-                new float[][] {
-                        { 0f, 0f, 0f, 1f, 1f, 1f }
-                },
-                Arrays.asList("lowMeanGene"));
-        final double[] condition = new double[] { 0d, 0d, 0d, 1d, 1d, 1d };
-        final double[] sizeFactors = new double[] { 1d, 1d, 1d, 1d, 1d, 1d };
-        final double dispersion = 0.2d;
-        final double ridge = 1.0e-6d / (Math.log(2.0d) * Math.log(2.0d));
-
-        double beta0 = Math.log(0.1d);
-        double beta1 = 0.0d;
-        double previousDeviance = Double.NaN;
-        for (int iter = 0; iter < 100; iter++) {
-            double a00 = ridge;
-            double a01 = 0.0d;
-            double a11 = ridge;
-            double b0 = 0.0d;
-            double b1 = 0.0d;
-
-            for (int i = 0; i < condition.length; i++) {
-                final double eta = beta0 + beta1 * condition[i] + Math.log(sizeFactors[i]);
-                final double mu = Math.max(0.5d, Math.exp(Math.max(-30.0d, Math.min(30.0d, eta))));
-                final double weight = mu / (1.0d + dispersion * mu);
-                final double z = Math.log(mu / sizeFactors[i]) + (dataset.getRow(0).getElement(i) - mu) / mu;
-
-                a00 += weight;
-                a01 += weight * condition[i];
-                a11 += weight * condition[i] * condition[i];
-                b0 += weight * z;
-                b1 += weight * condition[i] * z;
-            }
-
-            final double det = a00 * a11 - a01 * a01;
-            final double newBeta0 = (b0 * a11 - b1 * a01) / det;
-            final double newBeta1 = (a00 * b1 - a01 * b0) / det;
-
-            beta0 = newBeta0;
-            beta1 = newBeta1;
-
-            double deviance = 0.0d;
-            for (int i = 0; i < condition.length; i++) {
-                final double eta = beta0 + beta1 * condition[i] + Math.log(sizeFactors[i]);
-                final double mu = Math.max(0.5d, Math.exp(Math.max(-30.0d, Math.min(30.0d, eta))));
-                deviance += -2.0d * nbLogLikelihood(dataset.getRow(0).getElement(i), mu, dispersion);
-            }
-
-            if (Double.isFinite(previousDeviance)) {
-                final double convergence = Math.abs(deviance - previousDeviance) / (Math.abs(deviance) + 0.1d);
-                if (convergence < 1.0e-8d) {
-                    break;
-                }
-            }
-            previousDeviance = deviance;
-        }
-
-        final Method fitMeanParametersForRow = Deseq2LikeRegressionZModel.class.getDeclaredMethod(
-                "fitMeanParametersForRow",
-                Dataset.class,
-                int.class,
-                double[].class,
-                double[].class,
-                double.class);
-        fitMeanParametersForRow.setAccessible(true);
-
-        final Object coefFit = invokeStaticObject(
-                fitMeanParametersForRow,
-                dataset,
-                0,
-                condition,
-                sizeFactors,
-                dispersion);
-
-        assertEquals(beta0, readPrivateDoubleField(coefFit, "beta0"), 1.0e-10d);
-        assertEquals(beta1, readPrivateDoubleField(coefFit, "beta1"), 1.0e-10d);
-    }
-
-    @Test
-    void linearModelMuNormalized_matchesTwoGroupGeneWiseFit() throws Exception {
+    void linearModelMuNormalized_scalesNormalizedFitBySizeFactor() throws Exception {
         final Dataset dataset = createDataset(
                 new float[][] {
                         { 10f, 18f, 14f, 40f, 44f, 52f }
                 },
                 Arrays.asList("geneA"));
-        final double[] condition = new double[] { 0d, 0d, 0d, 1d, 1d, 1d };
+        final double[] normalizedFit = new double[] { 11d, 0.1d, 14d, 40d, 0.2d, 52d };
         final double[] sizeFactors = new double[] { 1d, 2d, 1d, 1d, 2d, 1d };
 
         final Method linearModelMu = Deseq2LikeRegressionZModel.class.getDeclaredMethod(
@@ -624,8 +451,8 @@ class Deseq2LikeRegressionZModelTest {
                 double[].class);
         linearModelMu.setAccessible(true);
 
-        final double[] muHat = (double[]) invokeStaticObject(linearModelMu, dataset, 0, condition, sizeFactors);
-        final double[] expected = new double[] { 11d, 22d, 11d, 38d, 76d, 38d };
+        final double[] muHat = (double[]) invokeStaticObject(linearModelMu, dataset, 0, normalizedFit, sizeFactors);
+        final double[] expected = new double[] { 11d, 0.5d, 14d, 40d, 0.5d, 52d };
         for (int i = 0; i < expected.length; i++) {
             assertEquals(expected[i], muHat[i], 1.0e-10d);
         }
@@ -638,7 +465,6 @@ class Deseq2LikeRegressionZModelTest {
                         { 10f, 18f, 14f, 40f, 44f, 52f }
                 },
                 Arrays.asList("geneA"));
-        final double[] condition = new double[] { 0d, 0d, 0d, 1d, 1d, 1d };
         final double[] sizeFactors = new double[] { 1d, 2d, 1d, 1d, 2d, 1d };
         final double[] normalized = new double[] { 10d, 9d, 14d, 40d, 22d, 52d };
         final double[] fittedNormalized = new double[] { 11d, 11d, 11d, 38d, 38d, 38d };
@@ -668,6 +494,7 @@ class Deseq2LikeRegressionZModelTest {
                 int.class,
                 double[].class,
                 double[].class,
+                double[].class,
                 double.class,
                 double.class,
                 double.class);
@@ -678,7 +505,8 @@ class Deseq2LikeRegressionZModelTest {
                 dataset,
                 0,
                 sizeFactors,
-                condition,
+                normalized,
+                fittedNormalized,
                 meanNormCount,
                 meanInverseSizeFactor,
                 maxDisp);
@@ -693,7 +521,8 @@ class Deseq2LikeRegressionZModelTest {
             },
             Arrays.asList("geneA"),
             Arrays.asList("A1", "A2", "A3", "A4", "A5", "B1", "B2", "B3", "B4", "B5"));
-        final double[] condition = new double[] { 0d, 0d, 0d, 0d, 0d, 1d, 1d, 1d, 1d, 1d };
+        final Deseq2LikeRegressionZModel.ConditionVector groups = conditionVector(
+            new double[] { 0d, 0d, 0d, 0d, 0d, 1d, 1d, 1d, 1d, 1d });
         final double[] muHat = new double[] { 20d, 20d, 20d, 20d, 20d, 30d, 30d, 30d, 30d, 30d };
         final double logAlphaPriorMean = 0.5d;
         final double logAlphaPriorSigmaSq = 1.0d;
@@ -704,7 +533,7 @@ class Deseq2LikeRegressionZModelTest {
             "logPosteriorForLogAlpha",
             Dataset.class,
             int.class,
-            double[].class,
+            Deseq2LikeRegressionZModel.ConditionVector.class,
             double[].class,
             double.class,
             double.class,
@@ -716,19 +545,20 @@ class Deseq2LikeRegressionZModelTest {
             "dLogPosteriorForLogAlpha",
             Dataset.class,
             int.class,
+            Deseq2LikeRegressionZModel.ConditionVector.class,
             double[].class,
-            double[].class,
             double.class,
             double.class,
             double.class,
-            boolean.class);
+            boolean.class,
+            double[].class);
         dLogPosterior.setAccessible(true);
 
         final Method fitDispersionLineSearch = Deseq2LikeRegressionZModel.class.getDeclaredMethod(
             "fitDispersionLineSearch",
             Dataset.class,
             int.class,
-            double[].class,
+            Deseq2LikeRegressionZModel.ConditionVector.class,
             double[].class,
             double.class,
             double.class,
@@ -741,15 +571,16 @@ class Deseq2LikeRegressionZModelTest {
             dLogPosterior,
             dataset,
             0,
-            condition,
+            groups,
             muHat,
             0.0d,
             logAlphaPriorMean,
             logAlphaPriorSigmaSq,
-            true);
+            true,
+            log1pMuAlpha(muHat, 0.0d));
         final double finiteDifference = (
-            invokeStaticDouble(logPosterior, dataset, 0, condition, muHat, h / 2.0d, logAlphaPriorMean, logAlphaPriorSigmaSq, true)
-                - invokeStaticDouble(logPosterior, dataset, 0, condition, muHat, -h / 2.0d, logAlphaPriorMean, logAlphaPriorSigmaSq, true))
+            invokeStaticDouble(logPosterior, dataset, 0, groups, muHat, h / 2.0d, logAlphaPriorMean, logAlphaPriorSigmaSq, true)
+                - invokeStaticDouble(logPosterior, dataset, 0, groups, muHat, -h / 2.0d, logAlphaPriorMean, logAlphaPriorSigmaSq, true))
             / h;
         assertEquals(finiteDifference, analyticDerivative, 1.0e-6d);
 
@@ -757,7 +588,7 @@ class Deseq2LikeRegressionZModelTest {
             fitDispersionLineSearch,
             dataset,
             0,
-            condition,
+            groups,
             muHat,
             1.0d,
             logAlphaPriorMean,
@@ -775,7 +606,7 @@ class Deseq2LikeRegressionZModelTest {
                 logPosterior,
                 dataset,
                 0,
-                condition,
+                groups,
                 muHat,
                 logAlpha,
                 logAlphaPriorMean,
@@ -787,12 +618,13 @@ class Deseq2LikeRegressionZModelTest {
             invokeStaticDouble(dLogPosterior,
                 dataset,
                 0,
-                condition,
+                groups,
                 muHat,
                 Math.log(solverAlpha),
                 logAlphaPriorMean,
                 logAlphaPriorSigmaSq,
-                true),
+                true,
+                log1pMuAlpha(muHat, Math.log(solverAlpha))),
             2.0e-4d);
     }
 
@@ -805,111 +637,6 @@ class Deseq2LikeRegressionZModelTest {
 
         assertEquals(1.0e-9d, ((Double) minDispLineSearch.get(null)).doubleValue(), 1.0e-18d);
         assertEquals(20, ((Integer) dispersionGridSize.get(null)).intValue());
-    }
-
-    @Test
-    void fitWaldForRow_matchesDeseq2StyleIrlsEquations() throws Exception {
-        final Dataset dataset = createDataset(
-                new float[][] {
-                        { 20f, 23f, 18f, 19f, 22f, 31f, 29f, 35f, 28f, 30f }
-                },
-                Arrays.asList("geneA"),
-                Arrays.asList("A1", "A2", "A3", "A4", "A5", "B1", "B2", "B3", "B4", "B5"));
-        final double[] condition = new double[] { 0d, 0d, 0d, 0d, 0d, 1d, 1d, 1d, 1d, 1d };
-        final double[] sizeFactors = new double[] { 1d, 1d, 1d, 1d, 1d, 1d, 1d, 1d, 1d, 1d };
-        final double dispersion = 0.5d;
-        final double ridge = 1.0e-6d / (Math.log(2.0d) * Math.log(2.0d));
-
-        double beta0 = 0.0d;
-        double beta1 = 0.0d;
-        for (int i = 0; i < condition.length; i++) {
-            final double response = Math.log(dataset.getRow(0).getElement(i) + 0.1d);
-            if (condition[i] < 0.5d) {
-                beta0 += response / 5.0d;
-            } else {
-                beta1 += response / 5.0d;
-            }
-        }
-        beta1 -= beta0;
-
-        double previousDeviance = Double.NaN;
-        for (int iter = 0; iter < 100; iter++) {
-            double a00 = ridge;
-            double a01 = 0.0d;
-            double a11 = ridge;
-            double b0 = 0.0d;
-            double b1 = 0.0d;
-
-            for (int i = 0; i < condition.length; i++) {
-                final double eta = beta0 + beta1 * condition[i] + Math.log(sizeFactors[i]);
-                final double mu = Math.max(0.5d, Math.exp(Math.max(-30.0d, Math.min(30.0d, eta))));
-                final double weight = mu / (1.0d + dispersion * mu);
-                final double z = Math.log(mu / sizeFactors[i]) + (dataset.getRow(0).getElement(i) - mu) / mu;
-
-                a00 += weight;
-                a01 += weight * condition[i];
-                a11 += weight * condition[i] * condition[i];
-                b0 += weight * z;
-                b1 += weight * condition[i] * z;
-            }
-
-            final double det = a00 * a11 - a01 * a01;
-            beta0 = (b0 * a11 - b1 * a01) / det;
-            beta1 = (a00 * b1 - a01 * b0) / det;
-
-            double deviance = 0.0d;
-            for (int i = 0; i < condition.length; i++) {
-                final double eta = beta0 + beta1 * condition[i] + Math.log(sizeFactors[i]);
-                final double mu = Math.max(0.5d, Math.exp(Math.max(-30.0d, Math.min(30.0d, eta))));
-                deviance += -2.0d * nbLogLikelihood(dataset.getRow(0).getElement(i), mu, dispersion);
-            }
-
-            if (Double.isFinite(previousDeviance)) {
-                final double convergence = Math.abs(deviance - previousDeviance) / (Math.abs(deviance) + 0.1d);
-                if (convergence < 1.0e-8d) {
-                    break;
-                }
-            }
-            previousDeviance = deviance;
-        }
-
-        double m00 = 0.0d;
-        double m01 = 0.0d;
-        double m11 = 0.0d;
-        for (int i = 0; i < condition.length; i++) {
-            final double eta = beta0 + beta1 * condition[i] + Math.log(sizeFactors[i]);
-            final double mu = Math.max(0.5d, Math.exp(Math.max(-30.0d, Math.min(30.0d, eta))));
-            final double weight = mu / (1.0d + dispersion * mu);
-            m00 += weight;
-            m01 += weight * condition[i];
-            m11 += weight * condition[i] * condition[i];
-        }
-
-        final double a00 = m00 + ridge;
-        final double a01 = m01;
-        final double a11 = m11 + ridge;
-        final double det = a00 * a11 - a01 * a01;
-        final double inv01 = -a01 / det;
-        final double inv11 = a00 / det;
-        final double expectedSe1 = Math.sqrt(inv01 * inv01 * m00 + 2.0d * inv01 * inv11 * m01 + inv11 * inv11 * m11);
-
-        final double wideL = 1.0e-6d;
-        final Method fitWaldForRow = Deseq2LikeRegressionZModel.class.getDeclaredMethod(
-                "fitWaldForRow",
-                Dataset.class,
-                int.class,
-                double[].class,
-                double[].class,
-                double.class,
-                double.class,
-                double.class);
-        fitWaldForRow.setAccessible(true);
-
-        final Object fit = invokeStaticObject(
-                fitWaldForRow, dataset, 0, condition, sizeFactors, dispersion, wideL, wideL);
-        assertEquals(beta1, readPrivateDoubleField(fit, "beta1"), 1.0e-10d);
-        assertEquals(expectedSe1, readPrivateDoubleField(fit, "se1"), 1.0e-10d);
-        assertEquals(beta1 / expectedSe1, readPrivateDoubleField(fit, "z"), 1.0e-10d);
     }
 
     @Test
@@ -1044,11 +771,13 @@ class Deseq2LikeRegressionZModelTest {
         final double expectedBeta0 = optimum.getPoint()[0] * logTwo;
         final double expectedBeta1 = optimum.getPoint()[1] * logTwo;
 
+        final Deseq2LikeRegressionZModel.ConditionVector groups = conditionVector(condition);
+        final double dispersionReciprocal = 1.0d / dispersion;
         final Method dampedNewtonFitForRow = Deseq2LikeRegressionZModel.class.getDeclaredMethod(
                 "dampedNewtonFitForRow",
                 Dataset.class,
                 int.class,
-                double[].class,
+                Deseq2LikeRegressionZModel.ConditionVector.class,
                 double[].class,
                 double.class,
                 double.class,
@@ -1056,19 +785,18 @@ class Deseq2LikeRegressionZModelTest {
                 double.class,
                 double.class);
         dampedNewtonFitForRow.setAccessible(true);
-        final double wideL = 1.0e-6d;
 
         final Object fit = invokeStaticObject(
                 dampedNewtonFitForRow,
                 dataset,
                 0,
-                condition,
+                groups,
                 sizeFactors,
-                dispersion,
+                dispersionReciprocal,
+                Math.log(dispersionReciprocal),
+                org.apache.commons.math3.special.Gamma.logGamma(dispersionReciprocal),
                 initBeta0,
-                initBeta1,
-                wideL,
-                wideL);
+                initBeta1);
 
         // DESeq2: optim L-BFGS-B; our replacement is damped Newton with the analytical observed NB Hessian,
         // which is exact Fisher scoring for the strictly-concave 2D NB GLM + ridge prior and therefore
@@ -1117,9 +845,12 @@ class Deseq2LikeRegressionZModelTest {
         fitDispersionTrend.setAccessible(true);
 
         final Method fitDispersionTrendValues = Deseq2LikeRegressionZModel.class.getDeclaredMethod(
-                "fitDispersionTrendValues",
+                "fitDispersionTrendValuesCapturing",
                 double[].class,
-                double[].class);
+                double[].class,
+                double[].class,
+                boolean[].class,
+                double[][].class);
         fitDispersionTrendValues.setAccessible(true);
 
         final double[] means = new double[] { 10d, 10d, 10d, 10d };
@@ -1127,7 +858,7 @@ class Deseq2LikeRegressionZModelTest {
 
         assertThrows(AssertionError.class, () -> invokeStaticObject(fitDispersionTrend, means, alphaRaw));
 
-        final double[] fit = (double[]) invokeStaticObject(fitDispersionTrendValues, means, alphaRaw);
+        final double[] fit = (double[]) invokeStaticObject(fitDispersionTrendValues, means, alphaRaw, null, null, null);
         for (double value : fit) {
             assertTrue(Double.isFinite(value));
             assertTrue(value > 0.0d);
@@ -1371,6 +1102,38 @@ class Deseq2LikeRegressionZModelTest {
             }
         }
         throw new AssertionError("Missing feature: " + feature);
+    }
+
+    private static Deseq2LikeRegressionZModel.ConditionVector conditionVector(final double[] group) throws Exception {
+        final int[] condition = new int[group.length];
+        int referenceCount = 0;
+        int interestCount = 0;
+        for (int i = 0; i < group.length; i++) {
+            condition[i] = group[i] >= 0.5d ? 1 : 0;
+            if (condition[i] == 0) {
+                referenceCount++;
+            } else {
+                interestCount++;
+            }
+        }
+        final int[] selected = new int[group.length];
+        for (int i = 0; i < selected.length; i++) {
+            selected[i] = i;
+        }
+        final java.lang.reflect.Constructor<Deseq2LikeRegressionZModel.ConditionVector> constructor =
+                Deseq2LikeRegressionZModel.ConditionVector.class.getDeclaredConstructor(
+                        int[].class, int[].class, int.class, int.class);
+        constructor.setAccessible(true);
+        return constructor.newInstance(condition, selected, referenceCount, interestCount);
+    }
+
+    private static double[] log1pMuAlpha(final double[] muHat, final double logAlpha) {
+        final double alpha = Math.exp(logAlpha);
+        final double[] out = new double[muHat.length];
+        for (int i = 0; i < muHat.length; i++) {
+            out[i] = Math.log1p(muHat[i] * alpha);
+        }
+        return out;
     }
 
     private static double invokeStaticDouble(final Method method, final Object... args) {

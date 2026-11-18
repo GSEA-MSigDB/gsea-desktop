@@ -42,17 +42,17 @@ public final class SsGseaReportExplorer implements ReportExplorer {
     }
 
     private static Artifacts discover(File dir) {
-        File scores = ReportExplorerSupport.findFirst(dir,
+        File scores = ReportFiles.findFirst(dir,
                 n -> n.toLowerCase(Locale.ROOT).endsWith("_ssgsea_scores.gct"));
-        List<File> bubbles = ReportExplorerSupport.findImages(
+        List<File> bubbles = ReportFiles.findImages(
                 dir != null ? new File(dir, "ssgsea_bubble_plots") : null, null);
-        List<File> resultTsvs = ReportExplorerSupport.findAll(dir, n -> {
+        List<File> resultTsvs = ReportFiles.findAll(dir, n -> {
             String lower = n.toLowerCase(Locale.ROOT);
             return lower.endsWith(".tsv") && lower.contains(".results");
         });
-        List<File> rocPlots = ReportExplorerSupport.findImages(
+        List<File> rocPlots = ReportFiles.findImages(
                 dir != null ? new File(dir, "ssgsea_roc_plots") : null, null);
-        List<File> mccSnaps = ReportExplorerSupport.findImages(dir, n -> {
+        List<File> mccSnaps = ReportFiles.findImages(dir, n -> {
             String lower = n.toLowerCase(Locale.ROOT);
             return lower.contains("mccpos") || lower.contains("mccneg")
                     || lower.contains("ssgsea_roc_mcc");

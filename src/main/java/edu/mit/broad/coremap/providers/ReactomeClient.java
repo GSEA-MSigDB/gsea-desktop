@@ -143,7 +143,8 @@ public final class ReactomeClient {
     }
 
     private static int seedHitCount(JSONObject event, Set<String> seeds) {
-        String text = String.valueOf(event.getOrDefault("displayName", "")).toUpperCase(Locale.ROOT);
+        Object displayName = event.get("displayName");
+        String text = String.valueOf(displayName == null ? "" : displayName).toUpperCase(Locale.ROOT);
         int hits = 0;
         for (String seed : seeds) {
             if (!seed.isEmpty() && text.contains(seed)) {

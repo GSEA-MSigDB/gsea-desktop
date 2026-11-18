@@ -126,10 +126,6 @@ public class Deseq2LikeRegressionZModel {
                     + Metrics.Wald.NAME + " (DESeq2-like count) scoring");
         }
 
-        // We already check this in the KSTests call so this is redundant.
-        // TODO: clean up so that the validation control flow is clear
-        //validateRawIntegerCounts(ds);
-
         final int colCount = ds.getNumCol();
         final double[] sizeFactors = computeSizeFactors(ds);
         if (sizeFactors.length != colCount) {
@@ -1225,29 +1221,6 @@ public class Deseq2LikeRegressionZModel {
         }
         return new FDistribution(coefficientCount, sampleCount - coefficientCount)
                 .inverseCumulativeProbability(DEFAULT_COOKS_QUANTILE);
-    }
-
-    private static void validateRawIntegerCounts(final Dataset ds) {
-        for (int rowIndex = 0; rowIndex < ds.getNumRow(); rowIndex++) {
-            for (int columnIndex = 0; columnIndex < ds.getNumCol(); columnIndex++) {
-                final double value = ds.getElement(rowIndex, columnIndex);
-                if (!Double.isFinite(value)) {
-                    continue;
-                }
-                if (value < 0.0d) {
-                    throw new IllegalArgumentException(Metrics.Wald.NAME
-                            + " requires non-negative raw count data");
-                }
-                final double nearestInteger = Math.rint(value);
-                final float nearestAsFloat = (float) nearestInteger;
-                final double tolerance = Math.max(1.0e-4d,
-                        4.0d * (double) Math.ulp(nearestAsFloat == 0.0f ? 1.0f : nearestAsFloat));
-                if (Math.abs(value - nearestInteger) > tolerance) {
-                    throw new IllegalArgumentException(Metrics.Wald.NAME
-                            + " requires raw integer count data");
-                }
-            }
-        }
     }
 
     private static double[] computeMeanNormalizedCounts(final Dataset ds,

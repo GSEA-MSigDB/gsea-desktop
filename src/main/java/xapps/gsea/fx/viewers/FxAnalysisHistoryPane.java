@@ -48,6 +48,7 @@ import xapps.gsea.fx.viewers.report.FxReportOpen;
 import xapps.gsea.fx.jobs.JobDisplay;
 import xapps.gsea.fx.tui.FxToolRelaunch;
 import xapps.gsea.fx.viewers.report.ReportExplorerSupport;
+import xapps.gsea.fx.viewers.report.ReportFiles;
 import xapps.gsea.fx.viewers.report.ReportKind;
 import xapps.gsea.fx.viewers.report.ReportParamsTable;
 import xapps.gsea.fx.viewers.report.ReportStatChips;
@@ -223,7 +224,7 @@ public class FxAnalysisHistoryPane implements ViewPage {
             svc.dialogs().showError("Could not load analysis history", t);
         }
 
-        rootItem.getChildren().addAll(session, history);
+        rootItem.getChildren().addAll(List.of(session, history));
         tree.setRoot(rootItem);
         if (previouslySelected != null) {
             TreeItem<HistoryNode> match = findHistoryNode(rootItem, previouslySelected);
@@ -351,7 +352,7 @@ public class FxAnalysisHistoryPane implements ViewPage {
     private void loadGseaSummaryAsync(Report report, File reportDir, BorderPane summaryHost, int seq) {
         Thread t = new Thread(() -> {
             try {
-                File edbDir = ReportExplorerSupport.resolveEdbDir(reportDir);
+                File edbDir = ReportFiles.resolveEdbDir(reportDir);
                 EnrichmentDb edb = ParserFactory.readEdb(edbDir, true);
                 Platform.runLater(() -> {
                     if (seq != detailSeq) {

@@ -21,10 +21,10 @@ class GeneSetMatrixHelper {
      *
      * @return
      */
-    static int getMaxMemberCount(final List genesets) {
+    static int getMaxMemberCount(final List<GeneSet> genesets) {
         int max = 0;
         for (int i = 0; i < genesets.size(); i++) {
-            GeneSet gset = (GeneSet) genesets.get(i);
+            GeneSet gset = genesets.get(i);
             if (max < gset.getNumMembers()) {
                 max = gset.getNumMembers();
             }
@@ -39,30 +39,30 @@ class GeneSetMatrixHelper {
      *
      * @return
      */
-    static String[] getAllMemberNames(final List genesets) {
-        Set names = getAllMemberNamesS(genesets);
-        return (String[]) names.toArray(new String[names.size()]);
+    static String[] getAllMemberNames(final List<GeneSet> genesets) {
+        Set<String> names = getAllMemberNamesS(genesets);
+        return names.toArray(new String[names.size()]);
     }
 
     // does the real stuff
-    static Set getAllMemberNamesS(final List genesets) {
-        Set names = new HashSet();
+    static Set<String> getAllMemberNamesS(final List<GeneSet> genesets) {
+        Set<String> names = new HashSet<String>();
         for (int i = 0; i < genesets.size(); i++) {
-            GeneSet gset = (GeneSet) genesets.get(i);
+            GeneSet gset = genesets.get(i);
             names.addAll(gset.getMembers());
         }
 
         return names;
     }
 
-    static String[] getAllMemberNameOccurrences(final List genesets) {
-        List names = new ArrayList();
+    static String[] getAllMemberNameOccurrences(final List<GeneSet> genesets) {
+        List<String> names = new ArrayList<String>();
         for (int i = 0; i < genesets.size(); i++) {
-            GeneSet gset = (GeneSet) genesets.get(i);
+            GeneSet gset = genesets.get(i);
             names.addAll(gset.getMembers());
         }
 
-        return (String[]) names.toArray(new String[names.size()]);
+        return names.toArray(new String[names.size()]);
     }
 
 } // End GeneSetGeneSetMatrixHelper

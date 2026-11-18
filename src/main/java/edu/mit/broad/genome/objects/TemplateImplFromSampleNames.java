@@ -219,7 +219,7 @@ public class TemplateImplFromSampleNames extends AbstractObject implements Templ
 
     private static String[] _toUniques(final String[] ss) {
 
-        java.util.List list = new ArrayList();
+        java.util.List<String> list = new ArrayList<String>();
         for (int i = 0; i < ss.length; i++) {
             String s = ss[i].trim();
             if (s.length() != 0 && list.contains(s) == false) {
@@ -227,7 +227,7 @@ public class TemplateImplFromSampleNames extends AbstractObject implements Templ
             }
         }
 
-        return (String[]) list.toArray(new String[list.size()]);
+        return list.toArray(new String[list.size()]);
     }
 
 } // End interface TemplateImplFromSampleNames
