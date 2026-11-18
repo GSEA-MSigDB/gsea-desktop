@@ -226,7 +226,7 @@ public final class MechanismNetwork {
                     "One layer loaded. Hubs are ranked within that layer; load the other GSEA result for bridges and shared drivers.");
         } else if (bridges.isEmpty()) {
             result.stats.put("message",
-                    "No bridges from mechanistic to phenotypic sets; enrichment genes may still appear.");
+                    "No bridges from Layer 1 to Layer 2 sets; enrichment genes may still appear.");
         } else if (sharedDrivers.isEmpty()) {
             result.stats.put("message", "Bridges found, but no shared drivers across both layers.");
         }

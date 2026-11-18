@@ -133,21 +133,21 @@ final class CoreMapExploreStage {
         legendStrip.getChildren().clear();
         if (!"genes".equals(mode)) {
             legendStrip.getChildren().addAll(
-                    legendSwatch("#D97706", "Mechanistic set", 3),
-                    legendSwatch("#E11D48", "Phenotypic set", 8));
+                    legendSwatch("#D97706", "Layer 1 set", 3),
+                    legendSwatch("#E11D48", "Layer 2 set", 8));
         }
         if (!"sets".equals(mode)) {
             legendStrip.getChildren().addAll(
                     legendSharedDriver("Shared driver"),
-                    legendGlyph("▲", "#D97706", "Mechanistic gene"),
-                    legendGlyph("⬡", "#E11D48", "Phenotypic gene"),
+                    legendGlyph("▲", "#D97706", "Layer 1 gene"),
+                    legendGlyph("⬡", "#E11D48", "Layer 2 gene"),
                     legendGlyph("●", "#9AA7B8", "Intermediate"));
         }
         legendStrip.getChildren().addAll(
-                legendSwatch("#D97706", "Mech hot (+)", 2),
-                legendSwatch("#0E7490", "Mech cold (−)", 2),
-                legendSwatch("#E11D48", "Pheno hot (+)", 2),
-                legendSwatch("#4338CA", "Pheno cold (−)", 2),
+                legendSwatch("#D97706", "Layer 1 hot (+)", 2),
+                legendSwatch("#0E7490", "Layer 1 cold (−)", 2),
+                legendSwatch("#E11D48", "Layer 2 hot (+)", 2),
+                legendSwatch("#4338CA", "Layer 2 cold (−)", 2),
                 legendSwatch("#9AA7B8", "Unsigned", 2),
                 legendEdgeStyle("solid", "Solid = curated causal"),
                 legendEdgeStyle("dotted", "Dotted = STRING"),

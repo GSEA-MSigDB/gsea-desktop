@@ -96,14 +96,18 @@ public final class CoreMapSelectionCards {
             card.getChildren().add(row);
         }
         if (n.roles != null && !n.roles.isEmpty()) {
-            card.getChildren().add(body("Roles: " + String.join(", ", n.roles)));
+            List<String> labels = new ArrayList<>();
+            for (String r : n.roles) {
+                labels.add(CoreMapInsightStyles.roleLabel(r));
+            }
+            card.getChildren().add(body("Roles: " + String.join(", ", labels)));
         } else if (n.role != null) {
-            card.getChildren().add(body("Role: " + n.role.wire()));
+            card.getChildren().add(body("Role: " + CoreMapInsightStyles.roleLabel(n.role.wire())));
         }
         String conf = String.format(Locale.ROOT, "Confidence: %.3f", n.confidence);
         if ((n.mechanisticConfidence != null && n.mechanisticConfidence > 0)
                 || (n.phenotypicConfidence != null && n.phenotypicConfidence > 0)) {
-            conf += String.format(Locale.ROOT, " (mech %.3f, pheno %.3f)",
+            conf += String.format(Locale.ROOT, " (Layer 1 %.3f, Layer 2 %.3f)",
                     n.mechanisticConfidence != null ? n.mechanisticConfidence : 0.0,
                     n.phenotypicConfidence != null ? n.phenotypicConfidence : 0.0);
         }
@@ -126,7 +130,7 @@ public final class CoreMapSelectionCards {
         if (n.fdr != null) {
             card.getChildren().add(body(String.format(Locale.ROOT, "Best FDR: %.2e", n.fdr)));
         }
-        card.getChildren().add(body(String.format(Locale.ROOT, "Polarity: mechanistic %s, phenotypic %s",
+        card.getChildren().add(body(String.format(Locale.ROOT, "Polarity: Layer 1 %s, Layer 2 %s",
                 CoreMapInsightStyles.polarityLabel(n.mechanisticPolarity),
                 CoreMapInsightStyles.polarityLabel(n.phenotypicPolarity))));
 
@@ -144,14 +148,14 @@ public final class CoreMapSelectionCards {
             }
         }
         if (n.mechanisticSetNames != null && !n.mechanisticSetNames.isEmpty()) {
-            card.getChildren().add(body("Mechanistic sets: " + String.join("; ", n.mechanisticSetNames)));
+            card.getChildren().add(body("Layer 1 sets: " + String.join("; ", n.mechanisticSetNames)));
         } else if (n.mechanisticSets != null && !n.mechanisticSets.isEmpty()) {
-            card.getChildren().add(body("Mechanistic sets: " + String.join(", ", n.mechanisticSets)));
+            card.getChildren().add(body("Layer 1 sets: " + String.join(", ", n.mechanisticSets)));
         }
         if (n.phenotypicSetNames != null && !n.phenotypicSetNames.isEmpty()) {
-            card.getChildren().add(body("Phenotypic sets: " + String.join("; ", n.phenotypicSetNames)));
+            card.getChildren().add(body("Layer 2 sets: " + String.join("; ", n.phenotypicSetNames)));
         } else if (n.phenotypicSets != null && !n.phenotypicSets.isEmpty()) {
-            card.getChildren().add(body("Phenotypic sets: " + String.join(", ", n.phenotypicSets)));
+            card.getChildren().add(body("Layer 2 sets: " + String.join(", ", n.phenotypicSets)));
         }
         return card;
     }
@@ -381,7 +385,7 @@ public final class CoreMapSelectionCards {
         String title = m.setName != null && !m.setName.isBlank() ? m.setName : m.setId;
         card.getChildren().add(heading(title));
         if (m.layer != null) {
-            card.getChildren().add(body("Layer: " + m.layer.wire() + " set"));
+            card.getChildren().add(body(CoreMapInsightStyles.layerLabel(m.layer.wire()) + " set"));
         }
         card.getChildren().add(body("Set ID: " + m.setId));
         if (m.sourcePlatform != null || m.sourceAccession != null) {

@@ -46,8 +46,4 @@ public final class PageRegistry {
     public ViewPage peekSingleton(PageId id) {
         return singletons.get(id);
     }
-
-    public ViewPage getSingleton(PageId id) {
-        return get(id);
-    }
 }

@@ -62,7 +62,7 @@ public final class CoreMapLayerLoadUi {
         HBox.setHgrow(cacheChooser.getNode(), Priority.ALWAYS);
         HBox cacheRow = new HBox(8, new Label(title + " cache"), cacheChooser.getNode(), clearBtn);
         HBox dirRow = new HBox(8, new Label("or folder"), folderField, browse);
-        root.getChildren().addAll(new Label(title + " layer"), cacheRow, dirRow);
+        root.getChildren().addAll(new Label(title), cacheRow, dirRow);
         root.setPadding(new Insets(4));
         root.getStyleClass().add("coremap-layer-frame");
     }

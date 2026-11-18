@@ -179,7 +179,7 @@ public class FxToolLauncherPane implements ViewPage {
             boolean showInitializedBanner, FeatureHost host) {
         Objects.requireNonNull(host, "host");
         return new FxToolLauncherPane(tool, title, iconResourceId, showInitializedBanner,
-                host.services(), host.jobs());
+                host.services(), host.services().jobs());
     }
 
     private void runTool() {

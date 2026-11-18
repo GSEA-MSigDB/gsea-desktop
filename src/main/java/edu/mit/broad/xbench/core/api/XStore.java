@@ -70,7 +70,7 @@ public class XStore {
         }
     }
 
-    public void clearAll() {
+    public synchronized void clearAll() {
         fLinesByFileExt.clear();
         fLinesByLoadOrder.clear();
         save();
@@ -113,7 +113,7 @@ public class XStore {
         }
     }
 
-    public void trim(final int maxNumLines) {
+    public synchronized void trim(final int maxNumLines) {
         if (!fLoaded) {
             load();
         }
@@ -126,7 +126,7 @@ public class XStore {
         }
     }
 
-    public void removeAndSave(final List<String> items) {
+    public synchronized void removeAndSave(final List<String> items) {
         fLinesByLoadOrder.removeAll(items);
         fLinesByFileExt.removeAll(items);
         save();
@@ -136,20 +136,20 @@ public class XStore {
         Collections.sort(fLinesByFileExt, new ComparatorFactory.FileExtComparator());
     }
 
-    public void addAndSave(final String text) {
+    public synchronized void addAndSave(final String text) {
         this.add(text);
         this.save();
         this.sort();
     }
 
-    public Collection<String> getLines() {
+    public synchronized Collection<String> getLines() {
         if (!fLoaded) {
             load();
         }
         return fLinesByFileExt;
     }
 
-    public void refresh(String item) {
+    public synchronized void refresh(String item) {
         if (fLinesByLoadOrder.contains(item)) {
             fLinesByLoadOrder.remove(item);
             fLinesByLoadOrder.add(item);
@@ -157,21 +157,21 @@ public class XStore {
         }
     }
 
-    public int getSize() {
+    public synchronized int getSize() {
         if (!fLoaded) {
             load();
         }
         return fLinesByFileExt.size();
     }
 
-    public String getElementAt(final int index) {
+    public synchronized String getElementAt(final int index) {
         if (!fLoaded) {
             load();
         }
         return fLinesByFileExt.get(index);
     }
 
-    public boolean contains(final String str) {
+    public synchronized boolean contains(final String str) {
         // Swing XStore.contains: do not call load() — AdditionDecider.addThis uses contains during load.
         return fLinesByFileExt.contains(str);
     }

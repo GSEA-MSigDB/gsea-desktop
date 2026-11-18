@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.gsea_msigdb.gsea.ui.api.ViewPage;
@@ -20,7 +19,6 @@ import org.slf4j.LoggerFactory;
 import edu.mit.broad.coremap.CoreMapJob;
 import edu.mit.broad.coremap.CoreMapJobStore;
 import edu.mit.broad.coremap.CoreMapPipeline;
-import edu.mit.broad.coremap.CoreMapPipeline.IntegrateRequest;
 import edu.mit.broad.coremap.CoreMapTypes.Bridge;
 import edu.mit.broad.coremap.CoreMapTypes.BuildProgress;
 import edu.mit.broad.coremap.CoreMapTypes.BuildProgressPhase;
@@ -33,8 +31,6 @@ import edu.mit.broad.coremap.CoreMapTypes.NodeElement;
 import edu.mit.broad.coremap.CoreMapTypes.SetEnrichmentMetric;
 import edu.mit.broad.coremap.CoreMapTypes.SharedDriverSummary;
 import edu.mit.broad.coremap.CoreMapTypes.StringMode;
-import edu.mit.broad.coremap.EdbEnrichmentParser;
-import edu.mit.broad.coremap.EnrichmentMath;
 import edu.mit.broad.coremap.IntegrationOptions;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
@@ -70,10 +66,10 @@ public class FxCoreMapPane implements ViewPage {
     private static final Logger klog = LoggerFactory.getLogger(FxCoreMapPane.class);
 
     private final BorderPane root = new BorderPane();
-    private final Label statusLabel = new Label("Load one or both GSEA result folders (mechanistic and phenotypic).");
+    private final Label statusLabel = new Label("Load one or both GSEA result folders (Layer 1 and Layer 2).");
 
-    private final CoreMapLayerLoadUi mechLoad = new CoreMapLayerLoadUi("Mechanistic", true, layerLoadHost());
-    private final CoreMapLayerLoadUi phenoLoad = new CoreMapLayerLoadUi("Phenotypic", false, layerLoadHost());
+    private final CoreMapLayerLoadUi mechLoad = new CoreMapLayerLoadUi(CoreMapInsightStyles.LAYER_1, true, layerLoadHost());
+    private final CoreMapLayerLoadUi phenoLoad = new CoreMapLayerLoadUi(CoreMapInsightStyles.LAYER_2, false, layerLoadHost());
 
     private final Button integrateBtn = new Button("Integrate");
     private final Button cancelBtn = new Button("Cancel");
@@ -258,9 +254,9 @@ public class FxCoreMapPane implements ViewPage {
         exportJsonMenu.getItems().setAll(exportSelectedJsonItem, exportCurrentJsonItem, exportCompleteJsonItem);
         exportPngMenu.getItems().setAll(exportPngViewItem, exportPngSelectedItem);
 
-        integrateBtn.setOnAction(e -> runIntegrate());
+        integrateBtn.setOnAction(e -> integrateController.runIntegrate());
         cancelBtn.setOnAction(e -> cancelFlag.set(true));
-        rescoreBtn.setOnAction(e -> runRescore());
+        rescoreBtn.setOnAction(e -> integrateController.runRescore());
         helpBtn.setOnAction(e -> showGuideStage());
         adjustSetsBtn.setOnAction(e -> showSetupStage());
         exportPngViewItem.setOnAction(e -> exportIo.exportPng(false));
@@ -699,42 +695,11 @@ public class FxCoreMapPane implements ViewPage {
         setBusy(true, "Parsing enrichment catalog…");
         Thread t = new Thread(() -> {
             try {
-                CompletableFuture<EnrichmentParseResult> mechFut = mechDir != null
-                        ? CompletableFuture.supplyAsync(() -> {
-                            try {
-                                return EdbEnrichmentParser.parseReportDirectory(mechDir, 0, 1, 1, false);
-                            } catch (Exception ex) {
-                                throw new RuntimeException(ex);
-                            }
-                        })
-                        : CompletableFuture.completedFuture(null);
-                CompletableFuture<EnrichmentParseResult> phenoFut = phenoDir != null
-                        ? CompletableFuture.supplyAsync(() -> {
-                            try {
-                                return EdbEnrichmentParser.parseReportDirectory(phenoDir, 0, 1, 1, false);
-                            } catch (Exception ex) {
-                                throw new RuntimeException(ex);
-                            }
-                        })
-                        : CompletableFuture.completedFuture(null);
-                EnrichmentParseResult mech;
-                EnrichmentParseResult pheno;
-                try {
-                    mech = mechFut.join();
-                    pheno = phenoFut.join();
-                } catch (RuntimeException ex) {
-                    Throwable cause = ex.getCause() != null ? ex.getCause() : ex;
-                    if (cause instanceof Exception e) {
-                        throw e;
-                    }
-                    throw ex;
-                }
-                List<GeneSetSummary> mechSets = mech != null
-                        ? EnrichmentMath.summarizeGenesets(mech.rows, 0, 1, 1)
-                        : List.of();
-                List<GeneSetSummary> phenoSets = pheno != null
-                        ? EnrichmentMath.summarizeGenesets(pheno.rows, 0, 1, 1)
-                        : List.of();
+                CoreMapCatalogLoader.Layers layers = CoreMapCatalogLoader.load(mechDir, phenoDir);
+                EnrichmentParseResult mech = layers.mech;
+                EnrichmentParseResult pheno = layers.pheno;
+                List<GeneSetSummary> mechSets = layers.mechSets;
+                List<GeneSetSummary> phenoSets = layers.phenoSets;
                 Platform.runLater(() -> {
                     if (gen != catalogParseGen) {
                         return;
@@ -762,7 +727,7 @@ public class FxCoreMapPane implements ViewPage {
                     integrateBtn.setDisable(mechParsed == null && phenoParsed == null);
                     updateIntegrateButtonLabel();
                     setBusy(false, String.format(Locale.ROOT,
-                            "Ready — %d mech sets, %d pheno sets%s.",
+                            "Ready — %d Layer 1 sets, %d Layer 2 sets%s.",
                             mechSets.size(), phenoSets.size(),
                             (mechParsed == null) != (phenoParsed == null)
                                     ? " (one layer only)"
@@ -783,24 +748,8 @@ public class FxCoreMapPane implements ViewPage {
         t.start();
     }
 
-    private void runIntegrate() {
-        integrateController.runIntegrate();
-    }
-
-    private void runRescore() {
-        integrateController.runRescore();
-    }
-
-    private IntegrateRequest buildRequest() {
-        return integrateController.buildRequest();
-    }
-
     private IntegrationOptions buildOptions() {
         return CoreMapIntegrateController.buildOptions(optionsPanel.optionsSnapshot());
-    }
-
-    private static List<String> parseCsv(String raw) {
-        return CoreMapIntegrateController.parseCsv(raw);
     }
 
     private void applyResult(IntegrationResult result) {
@@ -997,17 +946,10 @@ public class FxCoreMapPane implements ViewPage {
         updateIntegrateButtonLabel();
     }
 
-    /** Dual-layer “Integrate” vs single-layer “Integrate (one layer)”. */
+    /** One loaded layer says so. Both layers, or neither, stay "Integrate". */
     private void updateIntegrateButtonLabel() {
-        boolean both = mechParsed != null && phenoParsed != null;
-        boolean neither = mechParsed == null && phenoParsed == null;
-        if (neither) {
-            integrateBtn.setText("Integrate");
-        } else if (both) {
-            integrateBtn.setText("Integrate");
-        } else {
-            integrateBtn.setText("Integrate (one layer)");
-        }
+        boolean oneLayer = (mechParsed != null) != (phenoParsed != null);
+        integrateBtn.setText(oneLayer ? "Integrate (one layer)" : "Integrate");
     }
 
     private void showNodeDetail(String id) {
@@ -1218,10 +1160,6 @@ public class FxCoreMapPane implements ViewPage {
         statusLabel.setText(msg);
     }
 
-    private static String summarize(IntegrationResult r) {
-        return CoreMapIntegrateController.summarize(r);
-    }
-
     private void invalidateAfterLayerClear(boolean mechanistic) {
         if (mechanistic) {
             mechParsed = null;
@@ -1292,13 +1230,13 @@ public class FxCoreMapPane implements ViewPage {
         return """
                 How it works
 
-                CoreMap links two precomputed GSEA results — a mechanistic layer and a phenotypic layer —
-                through a gene/set interactome. It ranks short paths (Bridges) from mechanistic sets to
-                phenotypic sets and finds shared drivers (genes in both leading edges). It does not run GSEA.
+                CoreMap links two precomputed GSEA results — Layer 1 and Layer 2 —
+                through a gene/set interactome. It ranks short paths (Bridges) from Layer 1 sets to
+                Layer 2 sets and finds shared drivers (genes in both leading edges). It does not run GSEA.
 
                 Scope
                 • Does: parse Broad GSEA EDB outputs, fetch a neighborhood interactome, score edges, search
-                  mech-set → pheno-set paths, and draw one Cytoscape.js map.
+                  Layer 1 set → Layer 2 set paths, and draw one Cytoscape.js map.
                 • Does not: run GSEA, prove causality, or apply tissue-specific expression filters. Ranked
                   Bridges are network candidates given the chosen interactome and search settings.
 
@@ -1312,7 +1250,7 @@ public class FxCoreMapPane implements ViewPage {
                 • Selection does not zoom the camera; green highlight matches the browser CoreMap.
 
                 Workflow
-                1. Load mechanistic and/or phenotypic GSEA result folders (or cache picks).
+                1. Load Layer 1 and/or Layer 2 GSEA result folders (or cache picks).
                    One layer builds hubs and a within-layer network; both layers add Bridges and
                    shared drivers.
                 2. Preview gene sets; adjust |NES| / NP / FDR; select sets to include.
@@ -1326,7 +1264,7 @@ public class FxCoreMapPane implements ViewPage {
                 without a catalog; optional MSigDB JSON improves ID resolution.
 
                 Bridge search & nulls
-                Bridges are short paths between leading-edge genes of mechanistic and phenotypic sets.
+                Bridges are short paths between leading-edge genes of Layer 1 and Layer 2 sets.
                 Optional null permutations estimate empirical_p by shuffling labels within degree buckets
                 (statistic: path_jaccard).
 

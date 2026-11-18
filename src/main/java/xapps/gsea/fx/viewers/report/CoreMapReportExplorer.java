@@ -54,7 +54,7 @@ public final class CoreMapReportExplorer implements ReportExplorer {
                 CoreMapWorkspace.openJob(dir, host);
             } catch (Throwable t) {
                 klog.error("Could not open CoreMap job", t);
-                host.dialogs().showError("Could not open CoreMap job", t);
+                host.services().dialogs().showError("Could not open CoreMap job", t);
             }
         });
 
@@ -80,8 +80,8 @@ public final class CoreMapReportExplorer implements ReportExplorer {
             StringBuilder sb = new StringBuilder();
             sb.append("Folder: ").append(dir.getAbsolutePath()).append('\n');
             append(sb, "Saved", o.get("saved_at"));
-            append(sb, "Mechanistic", o.get("mechanistic_path"));
-            append(sb, "Phenotypic", o.get("phenotypic_path"));
+            append(sb, "Layer 1", o.get("mechanistic_path"));
+            append(sb, "Layer 2", o.get("phenotypic_path"));
             append(sb, "View mode", o.get("view_mode"));
             append(sb, "Provider key", o.get("provider_key"));
             Object opts = o.get("options");

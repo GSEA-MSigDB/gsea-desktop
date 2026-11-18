@@ -11,6 +11,7 @@ import java.util.Base64;
 import javax.imageio.ImageIO;
 
 import org.gsea_msigdb.gsea.runtime.AppServices;
+import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,7 +30,6 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
 import javafx.stage.Window;
-import netscape.javascript.JSObject;
 
 /**
  * JavaFX host for the bundled interactive EnPlot v2 viewer ({@code xapps/gsea/fx/enplot/}).
@@ -159,8 +159,8 @@ public final class EnplotWebView extends BorderPane {
                             + "}"
                             + "var c=document.getElementById('enplot-canvas');"
                             + "if(!c) return null;"
-                            + "return {dataUrl:c.toDataURL('image/png'),"
-                            + "width:c.clientWidth||c.width,height:c.clientHeight||c.height};"
+                            + "return JSON.stringify({dataUrl:c.toDataURL('image/png'),"
+                            + "width:c.clientWidth||c.width,height:c.clientHeight||c.height});"
                             + "})()");
             Capture capture = parseCapture(result);
             if (capture == null) {
@@ -192,22 +192,19 @@ public final class EnplotWebView extends BorderPane {
         if (result == null) {
             return null;
         }
-        String dataUrl = null;
-        int width = 0;
-        int height = 0;
-        if (result instanceof String s) {
-            dataUrl = s;
-        } else if (result instanceof JSObject js) {
-            Object urlObj = js.getMember("dataUrl");
-            if (urlObj instanceof String s) {
-                dataUrl = s;
-            }
-            width = toInt(js.getMember("width"));
-            height = toInt(js.getMember("height"));
-        }
-        if (dataUrl == null || !dataUrl.startsWith("data:image/png;base64,")) {
+        if (!(result instanceof String json)) {
             return null;
         }
+        Object parsed = JSONValue.parse(json);
+        if (!(parsed instanceof JSONObject object)) {
+            return null;
+        }
+        Object urlObj = object.get("dataUrl");
+        if (!(urlObj instanceof String dataUrl) || !dataUrl.startsWith("data:image/png;base64,")) {
+            return null;
+        }
+        int width = toInt(object.get("width"));
+        int height = toInt(object.get("height"));
         String b64 = dataUrl.substring("data:image/png;base64,".length());
         return new Capture(b64, Math.max(0, width), Math.max(0, height));
     }

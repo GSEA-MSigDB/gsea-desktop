@@ -23,7 +23,7 @@ import javafx.concurrent.Worker;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
-import netscape.javascript.JSObject;
+import org.json.simple.JSONObject;
 import xapps.gsea.fx.viewers.coremap.CoreMapGraphViews.GeneVisibility;
 import xapps.gsea.fx.viewers.coremap.CoreMapGraphViews.ViewElements;
 import xapps.gsea.fx.viewers.coremap.CoreMapGraphViews.ViewMode;
@@ -48,13 +48,15 @@ public final class CoreMapGraphView extends BorderPane {
     private Consumer<String> edgeSelectedHandler;
     private Runnable backgroundTapHandler;
 
+    private static final String JAVA_ALERT_PREFIX = "gsea-java:";
+
     public CoreMapGraphView() {
         setCenter(webView);
         webView.setContextMenuEnabled(false);
+        engine.setOnAlert(event -> dispatchJavaAlert(event.getData()));
         engine.getLoadWorker().stateProperty().addListener((obs, old, state) -> {
             if (state == Worker.State.SUCCEEDED) {
                 ready = true;
-                installJavaBridge();
                 if (pendingElementsJson != null) {
                     loadElementsJson(pendingElementsJson,
                             pendingLayoutOpts != null ? pendingLayoutOpts : "{}");
@@ -71,13 +73,31 @@ public final class CoreMapGraphView extends BorderPane {
         }
     }
 
-    private void installJavaBridge() {
-        try {
-            JSObject window = (JSObject) engine.executeScript("window");
-            window.setMember("javaCoreMap", new JavaBridge());
-        } catch (Throwable t) {
-            klog.warn("Could not install CoreMap JS bridge", t);
+    private void dispatchJavaAlert(String data) {
+        if (data == null || !data.startsWith(JAVA_ALERT_PREFIX)) {
+            return;
         }
+        Object parsed = JSONValue.parse(data.substring(JAVA_ALERT_PREFIX.length()));
+        if (!(parsed instanceof JSONObject message)) {
+            return;
+        }
+        String method = String.valueOf(message.get("method"));
+        JSONArray args = message.get("args") instanceof JSONArray array ? array : new JSONArray();
+        JavaBridge bridge = new JavaBridge();
+        switch (method) {
+            case "onNodeSelected" -> bridge.onNodeSelected(arg(args, 0), arg(args, 1));
+            case "onEdgeSelected" -> bridge.onEdgeSelected(arg(args, 0));
+            case "onBackgroundTap" -> bridge.onBackgroundTap();
+            case "onLayoutComplete" -> bridge.onLayoutComplete();
+            default -> klog.debug("Ignored CoreMap page message {}", method);
+        }
+    }
+
+    private static String arg(JSONArray args, int index) {
+        if (index >= args.size() || args.get(index) == null) {
+            return "";
+        }
+        return String.valueOf(args.get(index));
     }
 
     public void setNodeSelectedHandler(Consumer<String> handler) {
@@ -164,31 +184,25 @@ public final class CoreMapGraphView extends BorderPane {
     private void loadElementsJson(String json, String layoutOpts) {
         try {
             String opts = layoutOpts != null ? layoutOpts : "{}";
-            JSObject bridge = (JSObject) engine.executeScript("window.coreMapBridge");
-            // Prefer batched inject: JavaFX WebKit terminates long LiveConnect calls that
-            // both marshal multi-MB JSON and run fcose synchronously (hubs → Genes=all).
-            if (!loadGraphBatched(bridge, json, opts)) {
-                try {
-                    bridge.call("loadGraph", json, opts);
-                } catch (Throwable callEx) {
-                    klog.warn("loadGraph call failed; retrying via chunked inject", callEx);
-                    injectJsonPayload(json);
-                    engine.executeScript(
-                            "window.coreMapBridge.loadGraph(window.__coreMapPayload, " + opts + ");"
-                                    + "window.__coreMapPayload = null;");
-                }
+            // Small executeScript batches. One script that both carries a multi-MB payload
+            // and runs layout is what WebKit drops.
+            if (!loadGraphBatched(json, opts)) {
+                injectJsonPayload(json);
+                engine.executeScript(
+                        "window.coreMapBridge.loadGraph(window.__coreMapPayload, "
+                                + JSONValue.toJSONString(opts) + ");"
+                                + "window.__coreMapPayload = null;");
             }
-            // Focus (if any) is applied from JavaBridge.onLayoutComplete after layout stop.
         } catch (Throwable t) {
             klog.error("Failed to load CoreMap graph", t);
         }
     }
 
     /**
-     * Add nodes/edges in small LiveConnect batches, then finish (layout deferred in JS).
-     * @return false if payload could not be parsed for batching
+     * Add nodes and edges in small scripts, then finish. Layout stays deferred in JS.
+     * @return false if the payload could not be parsed for batching
      */
-    private boolean loadGraphBatched(JSObject bridge, String json, String opts) {
+    private boolean loadGraphBatched(String json, String opts) {
         try {
             Object parsed = new org.json.simple.parser.JSONParser().parse(json);
             if (!(parsed instanceof org.json.simple.JSONObject root)) {
@@ -198,34 +212,33 @@ public final class CoreMapGraphView extends BorderPane {
                     ? a : new org.json.simple.JSONArray();
             org.json.simple.JSONArray edges = root.get("edges") instanceof org.json.simple.JSONArray a
                     ? a : new org.json.simple.JSONArray();
-            bridge.call("beginGraphLoad");
+            engine.executeScript("window.coreMapBridge.beginGraphLoad()");
             final int batch = 40;
             for (int i = 0; i < nodes.size(); i += batch) {
-                org.json.simple.JSONObject chunk = new org.json.simple.JSONObject();
-                org.json.simple.JSONArray slice = new org.json.simple.JSONArray();
-                for (int j = i; j < Math.min(nodes.size(), i + batch); j++) {
-                    slice.add(nodes.get(j));
-                }
-                chunk.put("nodes", slice);
-                chunk.put("edges", new org.json.simple.JSONArray());
-                bridge.call("addGraphElements", chunk.toJSONString());
+                engine.executeScript("window.coreMapBridge.addGraphElements("
+                        + JSONValue.toJSONString(elementChunk(nodes, i, batch, true)) + ")");
             }
             for (int i = 0; i < edges.size(); i += batch) {
-                org.json.simple.JSONObject chunk = new org.json.simple.JSONObject();
-                org.json.simple.JSONArray slice = new org.json.simple.JSONArray();
-                for (int j = i; j < Math.min(edges.size(), i + batch); j++) {
-                    slice.add(edges.get(j));
-                }
-                chunk.put("nodes", new org.json.simple.JSONArray());
-                chunk.put("edges", slice);
-                bridge.call("addGraphElements", chunk.toJSONString());
+                engine.executeScript("window.coreMapBridge.addGraphElements("
+                        + JSONValue.toJSONString(elementChunk(edges, i, batch, false)) + ")");
             }
-            bridge.call("finishGraphLoad", opts);
+            engine.executeScript("window.coreMapBridge.finishGraphLoad(" + JSONValue.toJSONString(opts) + ")");
             return true;
         } catch (Throwable t) {
             klog.warn("Batched graph inject failed", t);
             return false;
         }
+    }
+
+    private static String elementChunk(org.json.simple.JSONArray items, int start, int batch, boolean nodes) {
+        JSONObject chunk = new JSONObject();
+        org.json.simple.JSONArray slice = new org.json.simple.JSONArray();
+        for (int j = start; j < Math.min(items.size(), start + batch); j++) {
+            slice.add(items.get(j));
+        }
+        chunk.put("nodes", nodes ? slice : new org.json.simple.JSONArray());
+        chunk.put("edges", nodes ? new org.json.simple.JSONArray() : slice);
+        return chunk.toJSONString();
     }
 
     /** Build a JS string in chunks so large graph JSON never sits in one executeScript source. */
@@ -278,8 +291,8 @@ public final class CoreMapGraphView extends BorderPane {
             return false;
         }
         try {
-            JSObject bridge = (JSObject) engine.executeScript("window.coreMapBridge");
-            Object r = bridge.call("focusNeighborhood", toJsonArray(geneIds));
+            Object r = engine.executeScript("window.coreMapBridge.focusNeighborhood("
+                    + JSONValue.toJSONString(toJsonArray(geneIds)) + ")");
             return asBoolean(r);
         } catch (Throwable t) {
             klog.warn("focusNeighborhood failed", t);
@@ -293,9 +306,9 @@ public final class CoreMapGraphView extends BorderPane {
             return false;
         }
         try {
-            JSObject bridge = (JSObject) engine.executeScript("window.coreMapBridge");
-            // JSONArray escapes tabs in "source\ttarget" pairs for JSON.parse in JS.
-            Object r = bridge.call("focusPath", toJsonArray(geneIds), toJsonArray(edgePairs));
+            Object r = engine.executeScript("window.coreMapBridge.focusPath("
+                    + JSONValue.toJSONString(toJsonArray(geneIds)) + ", "
+                    + JSONValue.toJSONString(toJsonArray(edgePairs)) + ")");
             return asBoolean(r);
         } catch (Throwable t) {
             klog.warn("focusPath failed", t);
@@ -313,8 +326,8 @@ public final class CoreMapGraphView extends BorderPane {
             return null;
         }
         try {
-            JSObject bridge = (JSObject) engine.executeScript("window.coreMapBridge");
-            Object r = bridge.call("findAndFocus", query.trim());
+            Object r = engine.executeScript("window.coreMapBridge.findAndFocus("
+                    + JSONValue.toJSONString(query.trim()) + ")");
             if (r == null || r instanceof Boolean b && !b) {
                 return null;
             }

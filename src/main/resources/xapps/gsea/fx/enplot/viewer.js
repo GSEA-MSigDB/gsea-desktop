@@ -1335,11 +1335,11 @@
       state.hoverAnn = null;
       tip.style.display = "none";
       draw();
-      return {
+      return JSON.stringify({
         dataUrl: canvas.toDataURL("image/png"),
         width: stage.clientWidth,
         height: stage.clientHeight
-      };
+      });
     };
   }
 

@@ -15,6 +15,9 @@ import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Recent-file / recent-dir persistence (no Swing dialogs).
@@ -25,12 +28,30 @@ public class FileManager {
     private XStore fRecentFilesStore_as_files;
     private XStore fRecentUrlsStore;
     private XStore fRecentDirsStore;
+    /** Disk writes for the recent-file list. Parser threads only enqueue. */
+    private final ExecutorService recentWrites = Executors.newSingleThreadExecutor(r -> {
+        Thread t = new Thread(r, "gsea-recent-files");
+        t.setDaemon(true);
+        return t;
+    });
 
     public FileManager() {
         ParserFactory.getCache().addPathAdditionsListener(new MyPropertyChangeListener());
     }
 
-    public void registerRecentlyOpenedFile(final File file) {
+    /**
+     * Block until recent-file writes queued so far have hit disk.
+     * Called on shutdown so a daemon writer cannot drop the last paths.
+     */
+    public void flushRecentWrites() {
+        try {
+            recentWrites.submit(() -> { }).get(5, TimeUnit.SECONDS);
+        } catch (Exception e) {
+            klog.warn("Could not flush recent-file writes", e);
+        }
+    }
+
+    public synchronized void registerRecentlyOpenedFile(final File file) {
         if (file == null) {
             return;
         }
@@ -41,21 +62,21 @@ public class FileManager {
         }
     }
 
-    public void registerRecentlyOpenedDir(final File dir) {
+    public synchronized void registerRecentlyOpenedDir(final File dir) {
         if (dir == null) {
             return;
         }
         getRecentDirsStore().addAndSave(dir.getPath());
     }
 
-    public void registerRecentlyOpenedURL(final String url) {
+    public synchronized void registerRecentlyOpenedURL(final String url) {
         if (url == null || url.isBlank()) {
             return;
         }
         getRecentUrlsStore().addAndSave(url);
     }
 
-    public File getLastDirAccesessed() {
+    public synchronized File getLastDirAccesessed() {
         XStore xs = getRecentDirsStore();
         if (xs.getSize() == 0) {
             return SystemUtils.getUserHome();
@@ -67,7 +88,7 @@ public class FileManager {
         return SystemUtils.getUserHome();
     }
 
-    public XStore getRecentFilesStore() {
+    public synchronized XStore getRecentFilesStore() {
         if (fRecentFilesStore_as_files == null) {
             this.fRecentFilesStore_as_files = new XStores.FilePathStore(new File(
                     Application.getVdbManager().getRuntimeHomeDir(), "recent_files.txt"));
@@ -88,7 +109,7 @@ public class FileManager {
         return fRecentFilesStore_as_files;
     }
 
-    public XStore getRecentDirsStore() {
+    public synchronized XStore getRecentDirsStore() {
         if (fRecentDirsStore == null) {
             this.fRecentDirsStore = new XStores.DirPathStore(new File(
                     Application.getVdbManager().getRuntimeHomeDir(), "recent_dirs.txt"));
@@ -97,7 +118,7 @@ public class FileManager {
         return fRecentDirsStore;
     }
 
-    public XStore getRecentUrlsStore() {
+    public synchronized XStore getRecentUrlsStore() {
         if (fRecentUrlsStore == null) {
             this.fRecentUrlsStore = new XStores.StringStore(new File(
                     Application.getVdbManager().getRuntimeHomeDir(), "recent_urls.txt"));
@@ -111,7 +132,8 @@ public class FileManager {
             if (ObjectCache.PROP_PATH_ADDED.equals(evt.getPropertyName())) {
                 Object obj = evt.getNewValue();
                 if (obj != null) {
-                    registerRecentlyOpenedFile(new File(obj.toString()));
+                    File file = new File(obj.toString());
+                    recentWrites.execute(() -> registerRecentlyOpenedFile(file));
                 }
             }
         }

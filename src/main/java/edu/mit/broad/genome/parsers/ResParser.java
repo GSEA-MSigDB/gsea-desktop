@@ -302,7 +302,7 @@ public class ResParser extends AbstractParser {
         final Dataset ds = new DefaultDataset(sourcepath, matrix, rowNames, colNames, new Annot(fann, sann), apmMatrix);
         ds.addComment(fComment.toString());
 
-        System.out.println(">>>>> DONE PARSING: " + apmMatrix.getQuickInfo());
+        log.info("Parsed RES dataset: {}", apmMatrix.getQuickInfo());
 
         return unmodlist(new PersistentObject[]{ds});
     }

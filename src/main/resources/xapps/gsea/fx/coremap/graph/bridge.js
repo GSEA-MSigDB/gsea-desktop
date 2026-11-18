@@ -150,12 +150,14 @@
     return peak >= Math.max(3, Math.ceil(nodes.length * 0.35));
   }
 
-  function notifyLayoutComplete() {
+  function notifyJava(method, args) {
     try {
-      if (window.javaCoreMap && typeof window.javaCoreMap.onLayoutComplete === "function") {
-        window.javaCoreMap.onLayoutComplete();
-      }
+      alert("gsea-java:" + JSON.stringify({ method: method, args: args || [] }));
     } catch (e) { /* ignore */ }
+  }
+
+  function notifyLayoutComplete() {
+    notifyJava("onLayoutComplete", []);
   }
 
   function markLayoutCleanAndFit() {
@@ -601,26 +603,21 @@
     var id = evt.target.id();
     var oe = evt.originalEvent;
     var additive = !!(oe && (oe.ctrlKey || oe.metaKey));
-    if (window.javaCoreMap && window.javaCoreMap.onNodeSelected) {
-      // Pass additive as string — JavaFX LiveConnect mishandles boolean overloads.
-      window.javaCoreMap.onNodeSelected(id, additive ? "true" : "false");
-    }
+    notifyJava("onNodeSelected", [id, additive ? "true" : "false"]);
   });
 
   cy.on("tap", "edge", function (evt) {
     var data = evt.target.data();
-    if (window.javaCoreMap && window.javaCoreMap.onEdgeSelected) {
-      try {
-        window.javaCoreMap.onEdgeSelected(JSON.stringify(data));
-      } catch (err) {
-        /* ignore */
-      }
+    try {
+      notifyJava("onEdgeSelected", [JSON.stringify(data)]);
+    } catch (err) {
+      /* ignore */
     }
   });
 
   cy.on("tap", function (evt) {
-    if (evt.target === cy && window.javaCoreMap && window.javaCoreMap.onBackgroundTap) {
-      window.javaCoreMap.onBackgroundTap();
+    if (evt.target === cy) {
+      notifyJava("onBackgroundTap", []);
     }
   });
 })();

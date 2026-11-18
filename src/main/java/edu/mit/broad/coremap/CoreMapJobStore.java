@@ -143,7 +143,7 @@ public final class CoreMapJobStore {
             return "";
         }
         StringBuilder sb = new StringBuilder();
-        sb.append("bridge_score\tmechanistic_set\tphenotypic_set\thops\tempirical_p\tpath\n");
+        sb.append("bridge_score\tlayer_1_set\tlayer_2_set\thops\tempirical_p\tpath\n");
         for (Bridge b : result.bridges) {
             sb.append(b.bridgeScore).append('\t')
                     .append(tsv(b.mechanisticSetName != null ? b.mechanisticSetName : b.mechanisticSet)).append('\t')

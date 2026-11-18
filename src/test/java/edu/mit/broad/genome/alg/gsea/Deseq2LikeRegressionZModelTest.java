@@ -1165,7 +1165,7 @@ class Deseq2LikeRegressionZModelTest {
 
     @Test
     void smoothRejectionCurve_matchesRLowessReferenceCase() throws Exception {
-        final Method smoothRejectionCurve = Deseq2LikeRegressionZModel.class.getDeclaredMethod(
+        final Method smoothRejectionCurve = Deseq2Statistics.class.getDeclaredMethod(
                 "smoothRejectionCurve",
                 double[].class,
                 double[].class);
@@ -1214,7 +1214,7 @@ class Deseq2LikeRegressionZModelTest {
 
     @Test
     void independentFilteringResidualMetric_usesRmseNotSampleSd() throws Exception {
-        final Method rmse = Deseq2LikeRegressionZModel.class.getDeclaredMethod(
+        final Method rmse = Deseq2Statistics.class.getDeclaredMethod(
                 "rmse",
                 double[].class);
         rmse.setAccessible(true);
@@ -1227,7 +1227,7 @@ class Deseq2LikeRegressionZModelTest {
 
     @Test
     void twoSidedPValueFromZ_preservesExtremeTailProbability() throws Exception {
-        final Method twoSidedPValueFromZ = Deseq2LikeRegressionZModel.class.getDeclaredMethod(
+        final Method twoSidedPValueFromZ = Deseq2Statistics.class.getDeclaredMethod(
                 "twoSidedPValueFromZ",
                 double.class);
         twoSidedPValueFromZ.setAccessible(true);
@@ -1240,7 +1240,7 @@ class Deseq2LikeRegressionZModelTest {
 
     @Test
     void robustMadSd_usesTrueMedianForEvenLengthInput() throws Exception {
-        final Method robustMadSd = Deseq2LikeRegressionZModel.class.getDeclaredMethod(
+        final Method robustMadSd = Deseq2Statistics.class.getDeclaredMethod(
                 "robustMadSd",
                 double[].class,
                 int.class);

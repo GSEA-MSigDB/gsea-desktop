@@ -8,7 +8,7 @@ import org.apache.tools.ant.filters.ReplaceTokens
 
 ext.moduleName = 'org.gsea_msigdb.gsea'
 ext.mainClassName = 'xapps.gsea.GSEA'
-ext.javafxVersion = '21.0.6'
+ext.javafxVersion = '25.0.5'
 
 repositories {
     mavenCentral()
@@ -70,7 +70,7 @@ jar {
 }
 
 compileJava {
-    options.release = 21
+    options.release = 25
     inputs.property("moduleName", moduleName)
     doFirst {
         options.compilerArgs = [
@@ -100,8 +100,11 @@ tasks.register('syncJavaFxToModules', Copy) {
         def dest = file('javafx-modules')
         if (dest.directory) {
             dest.eachFile { f ->
-                if (f.name.startsWith('javafx-') && f.name.endsWith('.jar')) {
-                    f.delete()
+                if (f.name.startsWith('javafx-') && f.name.endsWith('.jar')
+                        && !f.name.contains(javafxVersion)) {
+                    if (!f.delete()) {
+                        throw new GradleException("Could not remove old JavaFX jar (it may be in use): ${f}")
+                    }
                 }
             }
         }
@@ -117,6 +120,7 @@ tasks.register('runGseaFx', JavaExec) {
     classpath = files(jar.archiveFile) + files('modules') + files('javafx-modules') + sourceSets.main.runtimeClasspath
     jvmArgs = [
         '--module-path', classpath.asPath,
+        '--enable-native-access=javafx.graphics,javafx.web,javafx.media,com.sun.jna',
         '--add-opens', 'javafx.graphics/com.sun.javafx.stage=org.gsea_msigdb.gsea',
         '-Dgsea.ui=javafx',
         '-Djava.awt.headless=false',

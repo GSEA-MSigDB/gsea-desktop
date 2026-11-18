@@ -3,14 +3,22 @@
  */
 package edu.mit.broad.genome.parsers;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+
+import edu.mit.broad.genome.objects.GeneSet;
+import edu.mit.broad.genome.objects.Template;
 
 import edu.mit.broad.xbench.core.api.Application;
 import xtools.api.XToolsApplication;
@@ -46,5 +54,77 @@ class ParserFactoryTest {
 
         assertInstanceOf(IOException.class, thrown);
         assertTrue(thrown.getMessage().contains("FTP"), "Expected a clear FTP-not-supported message, got: " + thrown.getMessage());
+    }
+
+    @Test
+    void readClosesStreamAfterFailedGctParse(@TempDir java.nio.file.Path dir) throws Exception {
+        java.io.File file = dir.resolve("broken.gct").toFile();
+        Files.writeString(file.toPath(), "not a gct file\n", StandardCharsets.UTF_8);
+
+        assertThrows(Exception.class, () -> ParserFactory.read(file));
+
+        assertTrue(file.delete(), "parser left the GCT file open");
+    }
+
+    @Test
+    void secondGctReadClosesTheCacheHitStream(@TempDir java.nio.file.Path dir) throws Exception {
+        java.io.File file = dir.resolve("tiny.gct").toFile();
+        Files.writeString(file.toPath(), """
+                #1.2
+                1\t1
+                Name\tDescription\tSampleA
+                GENE1\tna\t1.5
+                """, StandardCharsets.UTF_8);
+
+        ParserFactory.read(file, false);
+        ParserFactory.read(file, true);
+        ParserFactory.read(file, true);
+
+        assertTrue(file.delete(), "cache-hit read left the GCT file open");
+    }
+
+    @Test
+    void multiClassClsRereadReturnsTheOriginalPhenotype(@TempDir java.nio.file.Path dir) throws Exception {
+        java.io.File file = dir.resolve("three.cls").toFile();
+        Files.writeString(file.toPath(), """
+                6 3 1
+                # A B C
+                0 0 1 1 2 2
+                """, StandardCharsets.UTF_8);
+
+        Template first = ParserFactory.readTemplate(file);
+        Template second = ParserFactory.readTemplate(file);
+
+        assertEquals(3, first.getNumClasses());
+        assertEquals(first.getNumClasses(), second.getNumClasses());
+        for (int i = 0; i < first.getNumClasses(); i++) {
+            assertEquals(first.getClassName(i), second.getClassName(i));
+        }
+    }
+
+    @Test
+    void concurrentReadersSurviveWrites() throws Exception {
+        ObjectCache cache = new ObjectCache();
+        AtomicReference<Throwable> failure = new AtomicReference<>();
+        Thread reader = new Thread(() -> {
+            try {
+                for (int i = 0; i < 400; i++) {
+                    cache.getCachedObjectsL(GeneSet.class);
+                    cache.getCachedRepresentationClasses();
+                    cache.getAuxGeneSets();
+                }
+            } catch (Throwable t) {
+                failure.set(t);
+            }
+        });
+        reader.start();
+        for (int i = 0; i < 200; i++) {
+            cache.add("mem/gs" + i, new GeneSet("gs" + i, new String[] { "A", "B" }), GeneSet.class);
+        }
+        reader.join();
+        if (failure.get() != null) {
+            throw new AssertionError(failure.get());
+        }
+        assertEquals(200, cache.getCachedObjectsL(GeneSet.class).size());
     }
 }

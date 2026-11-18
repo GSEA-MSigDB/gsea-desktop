@@ -98,7 +98,7 @@ public class FxLeadingEdgePane implements ViewPage {
     private int analysisRun = 0;
 
     public FxLeadingEdgePane(FeatureHost host) {
-        this(Objects.requireNonNull(host, "host").services(), host.jobs());
+        this(Objects.requireNonNull(host, "host").services(), host.services().jobs());
     }
 
     private FxLeadingEdgePane(AppServices svc, JobRuntime jobRuntime) {

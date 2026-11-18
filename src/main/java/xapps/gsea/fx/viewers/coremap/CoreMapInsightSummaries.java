@@ -70,7 +70,7 @@ public final class CoreMapInsightSummaries {
             return null;
         }
         String joined = String.join(", ", d.mechanisticSets);
-        return compact ? "Mech: " + joined : "Mechanistic sets: " + joined;
+        return compact ? "Layer 1: " + joined : "Layer 1 sets: " + joined;
     }
 
     public static String driverPhenoSets(SharedDriverSummary d, boolean compact) {
@@ -78,7 +78,7 @@ public final class CoreMapInsightSummaries {
             return null;
         }
         String joined = String.join(", ", d.phenotypicSets);
-        return compact ? "Pheno: " + joined : "Phenotypic sets: " + joined;
+        return compact ? "Layer 2: " + joined : "Layer 2 sets: " + joined;
     }
 
     public static String hubMeta(LayerHubSummary h, boolean includeLayerPrefix) {

@@ -54,7 +54,7 @@ final class CoreMapOptionsPanel {
             CoreMapConstants.DEFAULT_MAX_NP, 0.01));
     final Spinner<Double> maxFdr = new Spinner<>(new SpinnerValueFactory.DoubleSpinnerValueFactory(0, 1,
             CoreMapConstants.DEFAULT_MAX_FDR, 0.01));
-    final CheckBox separateLayerThresholds = new CheckBox("Separate phenotypic thresholds");
+    final CheckBox separateLayerThresholds = new CheckBox("Separate Layer 2 thresholds");
     final Spinner<Double> phenoMinNes = new Spinner<>(new SpinnerValueFactory.DoubleSpinnerValueFactory(0, 10,
             CoreMapConstants.DEFAULT_MIN_NES, 0.1));
     final Spinner<Double> phenoMaxNp = new Spinner<>(new SpinnerValueFactory.DoubleSpinnerValueFactory(0, 1,
@@ -258,7 +258,7 @@ final class CoreMapOptionsPanel {
         phenoMaxNp.setEditable(true);
         phenoMaxFdr.setEditable(true);
         phenoThresholdRow.getChildren().setAll(
-                new Label("Pheno min |NES|"), phenoMinNes,
+                new Label("Layer 2 min |NES|"), phenoMinNes,
                 new Label("Max NOM pVal"), phenoMaxNp,
                 new Label("Max FDR"), phenoMaxFdr);
         phenoThresholdRow.setVisible(false);

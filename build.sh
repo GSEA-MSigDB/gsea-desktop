@@ -54,10 +54,11 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
 # ---------------------------------------------------------------------------
-# JDK configuration (Adoptium Temurin 21; must match build.gradle options.release)
+# JDK configuration (Adoptium Temurin 25; must match build.gradle options.release).
+# JavaFX 25 class files do not load on JDK 21.
 # ---------------------------------------------------------------------------
-JDK_VERSION="21.0.12+8"
-JDK_VERSION_SHORT="21"
+JDK_VERSION="25.0.5+8"
+JDK_VERSION_SHORT="25"
 JDK_CACHE_DIR="${SCRIPT_DIR}/build/jdk-cache"
 mkdir -p "$JDK_CACHE_DIR"
 

@@ -81,7 +81,6 @@ module org.gsea_msigdb.gsea {
     requires javafx.controls;
     requires javafx.graphics;
     requires javafx.web;
-    requires jdk.jsobject;
     requires jdk.xml.dom;
     requires com.sun.jna;
     requires json.simple;

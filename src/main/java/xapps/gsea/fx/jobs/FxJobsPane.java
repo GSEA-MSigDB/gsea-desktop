@@ -78,7 +78,7 @@ public final class FxJobsPane {
 
     public FxJobsPane(FeatureHost host) {
         this.host = java.util.Objects.requireNonNull(host, "host");
-        this.runtime = host.jobs();
+        this.runtime = host.services().jobs();
         this.svc = host.services();
 
         list.setItems(runtime.getJobs());

@@ -546,7 +546,7 @@ public final class GseaReportExplorer implements ReportExplorer {
             host.openPage(pane);
             pane.loadFromDirectory(edbOrReportDir);
         } catch (Throwable t) {
-            host.dialogs().showError("Could not open Leading Edge", t);
+            host.services().dialogs().showError("Could not open Leading Edge", t);
         }
     }
 
@@ -558,7 +558,7 @@ public final class GseaReportExplorer implements ReportExplorer {
                 pane.loadFromDirectory(reportDir);
             }
         } catch (Throwable t) {
-            host.dialogs().showError("Could not open Enrichment Map", t);
+            host.services().dialogs().showError("Could not open Enrichment Map", t);
         }
     }
 
@@ -566,7 +566,7 @@ public final class GseaReportExplorer implements ReportExplorer {
         try {
             CoreMapWorkspace.openFromReport(edbOrReportDir, host);
         } catch (Throwable t) {
-            host.dialogs().showError("Could not open CoreMap", t);
+            host.services().dialogs().showError("Could not open CoreMap", t);
         }
     }
 }

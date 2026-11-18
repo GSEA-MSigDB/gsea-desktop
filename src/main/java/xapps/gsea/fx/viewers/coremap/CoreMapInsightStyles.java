@@ -8,6 +8,11 @@ import javafx.scene.control.Label;
 /** Shared insight / selection chrome styles (theme via gsea-fx.css / dark). */
 public final class CoreMapInsightStyles {
 
+    public static final String LAYER_1 = "Layer 1";
+    public static final String LAYER_2 = "Layer 2";
+    public static final String LAYER_1_SET = "Layer 1 set";
+    public static final String LAYER_2_SET = "Layer 2 set";
+
     private CoreMapInsightStyles() {
     }
 
@@ -35,12 +40,28 @@ public final class CoreMapInsightStyles {
 
     public static String layerLabel(String wire) {
         if ("mechanistic".equals(wire)) {
-            return "Mechanistic";
+            return LAYER_1;
         }
         if ("phenotypic".equals(wire)) {
-            return "Phenotypic";
+            return LAYER_2;
         }
         return wire != null ? wire : "";
+    }
+
+    /** User-facing name for a graph role wire value. */
+    public static String roleLabel(String wire) {
+        if (wire == null || wire.isBlank()) {
+            return "";
+        }
+        return switch (wire) {
+            case "mechanistic" -> LAYER_1;
+            case "phenotypic" -> LAYER_2;
+            case "mechanistic_set" -> LAYER_1_SET;
+            case "phenotypic_set" -> LAYER_2_SET;
+            case "shared_driver" -> "shared driver";
+            case "interactor" -> "interactor";
+            default -> wire.replace('_', ' ');
+        };
     }
 
     public static String providerLabel(String wire) {

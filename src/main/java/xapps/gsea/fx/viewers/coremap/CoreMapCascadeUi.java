@@ -321,10 +321,10 @@ public final class CoreMapCascadeUi {
         }
         List<String> parts = new ArrayList<>();
         if (!mech.isEmpty()) {
-            parts.add("Mech: " + String.join(", ", mech));
+            parts.add("Layer 1: " + String.join(", ", mech));
         }
         if (!pheno.isEmpty()) {
-            parts.add("Pheno: " + String.join(", ", pheno));
+            parts.add("Layer 2: " + String.join(", ", pheno));
         }
         return String.join(" · ", parts);
     }

@@ -32,6 +32,18 @@ public class ParserFactory implements Constants {
     
     private static final Logger klog = LoggerFactory.getLogger(ParserFactory.class);
 
+    /** Idempotent close so a parse error cannot leave a file handle open. */
+    private static void closeQuietly(Closeable closeable) {
+        if (closeable == null) {
+            return;
+        }
+        try {
+            closeable.close();
+        } catch (IOException e) {
+            klog.debug("Closing parser stream", e);
+        }
+    }
+
     /**
      * Privatized Class constructor
      * static methods only.
@@ -80,40 +92,39 @@ public class ParserFactory implements Constants {
 
     private static Dataset readDataset(String path, InputStream is, boolean useCache,
                                       boolean add2cache) throws Exception {
-        if (path == null) {
-            throw new IllegalArgumentException("Param file cannot be null");
+        try {
+            if (path == null) {
+                throw new IllegalArgumentException("Param file cannot be null");
+            }
+
+            if (useCache && (_getCache().isCached(path, Dataset.class))) {
+                return (Dataset) _getCache().get(path, Dataset.class);
+            }
+
+            // as a help to make datasets ext agnostic
+            String ext = NamingConventions.getExtension(path);
+            if (ext.equals(Constants.GCT)) {
+                return readDatasetGct(path, is, useCache, add2cache);
+            }
+
+            if (ext.equals(Constants.PCL)) {
+                return readDatasetPcl(path, is, useCache, add2cache);
+            }
+
+            Dataset ds;
+            Parser parser = new ResParser();
+            parser.setSilentMode(false);
+            List list = parser.parse(toName(path), is);
+            ds = (Dataset) list.get(0);
+
+            // sometimes might not want to for memory reasons
+            if (add2cache) {
+                _getCache().add(path, ds, Dataset.class);
+            }
+            return ds;
+        } finally {
+            closeQuietly(is);
         }
-
-        if (useCache && (_getCache().isCached(path, Dataset.class))) {
-            // TODO: very likely should be handled in try/finally
-            is.close();
-            return (Dataset) _getCache().get(path, Dataset.class);
-        }
-
-        // as a help to make datasets ext agnostic
-        String ext = NamingConventions.getExtension(path);
-        if (ext.equals(Constants.GCT)) {
-            return readDatasetGct(path, is, useCache, add2cache);
-        }
-
-        if (ext.equals(Constants.PCL)) {
-            return readDatasetPcl(path, is, useCache, add2cache);
-        }
-
-        Dataset ds;
-        Parser parser = new ResParser();
-        parser.setSilentMode(false);
-        List list = parser.parse(toName(path), is);
-        ds = (Dataset) list.get(0);
-
-        // sometimes might not want to for memory reasons
-        if (add2cache) {
-            _getCache().add(path, ds, Dataset.class);
-        }
-
-        // TODO: very likely should be handled in try/finally
-        is.close();
-        return ds;
     }
 
     private static Dataset readDatasetGct(String path, InputStream is, boolean useCache) throws Exception {
@@ -131,72 +142,74 @@ public class ParserFactory implements Constants {
             throw new IllegalArgumentException("Param is cannot be null");
         }
 
-        if (useCache && (_getCache().isCached(path, Dataset.class))) {
-            return (Dataset) _getCache().get(path, Dataset.class);
+        try {
+            if (useCache && (_getCache().isCached(path, Dataset.class))) {
+                return (Dataset) _getCache().get(path, Dataset.class);
+            }
+
+            // as a help to make datasets ext agnostic
+            String ext = NamingConventions.getExtension(path);
+            if (ext.equals(Constants.RES)) {
+                return readDataset(path, is, useCache);
+            }
+
+            if (ext.equals(Constants.PCL)) {
+                return readDatasetPcl(path, is, useCache);
+            }
+
+            GctParser parser = new GctParser();
+            parser.setSilentMode(false);
+            List list = parser.parse(toName(path), is);
+
+            Dataset ds = (Dataset) list.get(0);
+
+            if (add2cache) {
+                _getCache().add(path, ds, Dataset.class);
+            }
+            return ds;
+        } finally {
+            closeQuietly(is);
         }
-
-        // as a help to make datasets ext agnostic
-        String ext = NamingConventions.getExtension(path);
-        if (ext.equals(Constants.RES)) {
-            return readDataset(path, is, useCache);
-        }
-
-        if (ext.equals(Constants.PCL)) {
-            return readDatasetPcl(path, is, useCache);
-        }
-
-        GctParser parser = new GctParser();
-        parser.setSilentMode(false);
-        List list = parser.parse(toName(path), is);
-
-        Dataset ds = (Dataset) list.get(0);
-
-        if (add2cache) {
-            _getCache().add(path, ds, Dataset.class);
-        }
-
-        // TODO: very likely should be handled in try/finally
-        is.close();
-        return ds;
     }
 
     private static Dataset readDatasetTXT(String path, InputStream is, boolean useCache) throws Exception {
-        if (path == null) {
-            throw new IllegalArgumentException("Param file cannot be null");
+        try {
+            if (path == null) {
+                throw new IllegalArgumentException("Param file cannot be null");
+            }
+
+            if (is == null) {
+                throw new IllegalArgumentException("Param is cannot be null");
+            }
+
+            if (useCache && (_getCache().isCached(path, Dataset.class))) {
+                return (Dataset) _getCache().get(path, Dataset.class);
+            }
+
+            // as a help to make datasets ext agnostic
+            String ext = NamingConventions.getExtension(path);
+            if (ext.equals(Constants.RES)) {
+                return readDataset(path, is, useCache);
+            }
+
+            if (ext.equals(Constants.GCT)) {
+                return readDatasetGct(path, is, useCache);
+            }
+
+            if (ext.equals(Constants.PCL)) {
+                return readDatasetPcl(path, is, useCache);
+            }
+
+            TxtDatasetParser parser = new TxtDatasetParser();
+            parser.setSilentMode(false);
+            List list = parser.parse(toName(path), is);
+            Dataset ds = (Dataset) list.get(0);
+
+            _getCache().add(path, ds, Dataset.class);
+            return ds;
+        } finally {
+            closeQuietly(is);
         }
-        
-        if (is == null) {
-            throw new IllegalArgumentException("Param is cannot be null");
-        }
-        
-        if (useCache && (_getCache().isCached(path, Dataset.class))) {
-            return (Dataset) _getCache().get(path, Dataset.class);
-        }
-        
-        // as a help to make datasets ext agnostic
-        String ext = NamingConventions.getExtension(path);
-        if (ext.equals(Constants.RES)) {
-            return readDataset(path, is, useCache);
-        }
-        
-        if (ext.equals(Constants.GCT)) {
-            return readDatasetGct(path, is, useCache);
-        }
-        
-        if (ext.equals(Constants.PCL)) {
-            return readDatasetPcl(path, is, useCache);
-        }
-        
-        TxtDatasetParser parser = new TxtDatasetParser();
-        parser.setSilentMode(false);
-        List list = parser.parse(toName(path), is);
-        Dataset ds = (Dataset) list.get(0);
-        
-        _getCache().add(path, ds, Dataset.class);
-        
-        // TODO: very likely should be handled in try/finally
-        is.close();
-        return ds;
     }
 
     private static Dataset readDatasetPcl(String path, InputStream is, boolean useCache) throws Exception {
@@ -204,40 +217,40 @@ public class ParserFactory implements Constants {
     }
 
     private static Dataset readDatasetPcl(String path, InputStream is, boolean useCache, boolean add2cache) throws Exception {
+        try {
+            if (path == null) {
+                throw new IllegalArgumentException("Param file cannot be null");
+            }
 
-        if (path == null) {
-            throw new IllegalArgumentException("Param file cannot be null");
+            if (is == null) {
+                throw new IllegalArgumentException("Param is cannot be null");
+            }
+
+            if (useCache && (_getCache().isCached(path, Dataset.class))) {
+                return (Dataset) _getCache().get(path, Dataset.class);
+            }
+
+            // as a help to make datasets ext agnostic
+            String ext = NamingConventions.getExtension(path);
+            if (ext.equals(Constants.RES)) {
+                return readDataset(path, is, useCache);
+            }
+
+            if (ext.equals(Constants.GCT)) {
+                return readDatasetGct(path, is, useCache);
+            }
+
+            Parser parser = new PclParser();
+            List list = parser.parse(path, is); // @note IMP special hack for PCL parser
+            Dataset ds = (Dataset) list.get(0);
+
+            if (add2cache) {
+                _getCache().add(path, ds, Dataset.class);
+            }
+            return ds;
+        } finally {
+            closeQuietly(is);
         }
-
-        if (is == null) {
-            throw new IllegalArgumentException("Param is cannot be null");
-        }
-
-        if (useCache && (_getCache().isCached(path, Dataset.class))) {
-            return (Dataset) _getCache().get(path, Dataset.class);
-        }
-
-        // as a help to make datasets ext agnostic
-        String ext = NamingConventions.getExtension(path);
-        if (ext.equals(Constants.RES)) {
-            return readDataset(path, is, useCache);
-        }
-
-        if (ext.equals(Constants.GCT)) {
-            return readDatasetGct(path, is, useCache);
-        }
-
-        Parser parser = new PclParser();
-        List list = parser.parse(path, is); // @note IMP special hack for PCL parser
-        Dataset ds = (Dataset) list.get(0);
-
-        if (add2cache) {
-            _getCache().add(path, ds, Dataset.class);
-        }
-
-        // TODO: very likely should be handled in try/finally
-        is.close();
-        return ds;
     }
 
     /**
@@ -276,20 +289,20 @@ public class ParserFactory implements Constants {
     }
 
     private static Template readTemplate(String path_and_aux, InputStream is, boolean useCache, boolean add2cache, boolean silentMode) throws Exception {
-        if (path_and_aux == null) {
-            throw new IllegalArgumentException("Param path_and_aux cannot be null");
-        }
+        try {
+            if (path_and_aux == null) {
+                throw new IllegalArgumentException("Param path_and_aux cannot be null");
+            }
 
-        final Template[] templates = _readTemplates(path_and_aux, is, useCache, add2cache, silentMode);
+            final Template[] templates = _readTemplates(path_and_aux, is, useCache, add2cache, silentMode);
 
-        if (AuxUtils.isAux(path_and_aux)) {
-            // TODO: very likely should be handled in try/finally
-            is.close();
-            return findTemplate(toName(path_and_aux), templates);
-        } else {
-            // TODO: very likely should be handled in try/finally
-            is.close();
-            return templates[0];// our main template is always the first one (auxs are hidden unless specifically asked for)
+            if (AuxUtils.isAux(path_and_aux)) {
+                return findTemplate(toName(path_and_aux), templates);
+            }
+            // Parser order is preserved, and extraction lists the original template first.
+            return templates[0];
+        } finally {
+            closeQuietly(is);
         }
     }
 
@@ -308,75 +321,88 @@ public class ParserFactory implements Constants {
             throw new IllegalArgumentException("Param is cannot be null");
         }
 
-        Set baseTemplates = new HashSet();
-        File basefile;
-        String base_path = AuxUtils.getBasePathFromAuxPath(path);
-        basefile = new File(base_path);
+        try {
+            Set baseTemplates = new LinkedHashSet();
+            File basefile;
+            String base_path = AuxUtils.getBasePathFromAuxPath(path);
+            basefile = new File(base_path);
 
-        if (useCache && _getCache().isCached(base_path, Template.class)) {
-            Object obj = _getCache().get(base_path, Template.class);
-            baseTemplates.add(obj);
-            // TODO: very likely should be handled in try/finally
-            is.close();
-        } else {
-
-            Parser parser = new ClsParser();
-            parser.setSilentMode(silentMode);
-
-            if (AuxUtils.isAux(path)) {
-                basefile = AuxUtils.getBaseFileFromAuxFile(new File(path));
-                List list = parser.parse(basefile.getName(), basefile);
-                // multiple only for numeric templates
-                baseTemplates.addAll(list);
+            if (useCache && _getCache().isCached(base_path, Template.class)) {
+                Object obj = _getCache().get(base_path, Template.class);
+                baseTemplates.add(obj);
             } else {
-                List list = parser.parse(toName(path), is);
-                baseTemplates.addAll(list); // multiple only for numeric templates
-                // just one
-                basefile = new File(path);
+
+                Parser parser = new ClsParser();
+                parser.setSilentMode(silentMode);
+
+                if (AuxUtils.isAux(path)) {
+                    basefile = AuxUtils.getBaseFileFromAuxFile(new File(path));
+                    List list = parser.parse(basefile.getName(), basefile);
+                    // multiple only for numeric templates
+                    baseTemplates.addAll(list);
+                } else {
+                    List list = parser.parse(toName(path), is);
+                    baseTemplates.addAll(list); // multiple only for numeric templates
+                    // just one
+                    basefile = new File(path);
+                }
             }
+
+            final List allTemplates = new ArrayList();
+            Template[] allTss = (Template[]) baseTemplates.toArray(new Template[baseTemplates.size()]);
+
+            for (int j = 0; j < allTss.length; j++) { // Typically for non-continuous templates, only done once
+
+                final Template[] tss = TemplateFactory.extractAllPossibleTemplates(allTss[j], true); // @note here s where we turn a template into many subtemplates
+
+                for (int i = 0; i < tss.length; i++) {
+                    allTemplates.add(tss[i]);
+                }
+
+                if (!silentMode) {
+                    klog.debug("From: {} (and its supers & auxes) total # of templates made: {}", path, allTemplates.size());
+                }
+
+                if (add2cache) {
+                    cacheTemplates(basefile, allTemplates, silentMode);
+                }
+            }
+
+            return (Template[]) allTemplates.toArray(new Template[allTemplates.size()]);
+        } finally {
+            closeQuietly(is);
         }
+    }
 
-        // TODO: very likely should be handled in try/finally
-        is.close();
-
-        final List allTemplates = new ArrayList();
-        Template[] allTss = (Template[]) baseTemplates.toArray(new Template[baseTemplates.size()]);
-
-        for (int j = 0; j < allTss.length; j++) { // Typically for non-continuous templates, only done once
-
-            final Template[] tss = TemplateFactory.extractAllPossibleTemplates(allTss[j], true); // @note here s where we turn a template into many subtemplates
-
-            for (int i = 0; i < tss.length; i++) {
-                allTemplates.add(tss[i]);
-            }
-
-            if (!silentMode) {
-                klog.debug("From: {} (and its supers & auxes) total # of templates made: {}", path, allTemplates.size());
-            }
-
-            if (add2cache) {
-                boolean fire = false;
-                for (int t = 0; t < allTemplates.size(); t++) {
-                    Template tm = (Template) allTemplates.get(t);
-                    if (t == allTemplates.size() - 1) {
-                        fire = true;
-                    }
-
-                    if (silentMode) {
-                        fire = false; // @note
-                    }
-
-                    if (tm.isAux()) {
-                        File pseudo = new File(basefile.getParentFile(), tm.getName()); // note how a pseudo file is made
-                        _getCache().add(pseudo, tm, Template.class, fire);
-                    } else {
-                        _getCache().add(basefile, tm, Template.class, fire);
-                    }
+    /**
+     * Keep the first non-aux template on the file path. Later biphasic copies
+     * used to overwrite that key, so a second read returned a different phenotype.
+     * Aux phenotypes keep their pseudo paths.
+     */
+    private static void cacheTemplates(File basefile, List allTemplates, boolean silentMode) {
+        boolean havePrimary = _getCache().isCached(basefile.getPath(), Template.class);
+        int lastStored = -1;
+        for (int t = 0; t < allTemplates.size(); t++) {
+            Template tm = (Template) allTemplates.get(t);
+            if (tm.isAux() || !havePrimary) {
+                lastStored = t;
+                if (!tm.isAux()) {
+                    havePrimary = true;
                 }
             }
         }
-
-        return (Template[]) allTemplates.toArray(new Template[allTemplates.size()]);
+        havePrimary = _getCache().isCached(basefile.getPath(), Template.class);
+        for (int t = 0; t < allTemplates.size(); t++) {
+            Template tm = (Template) allTemplates.get(t);
+            boolean fire = !silentMode && t == lastStored;
+            if (tm.isAux()) {
+                File pseudo = new File(basefile.getParentFile(), tm.getName());
+                _getCache().add(pseudo, tm, Template.class, fire);
+            } else if (!havePrimary) {
+                _getCache().add(basefile, tm, Template.class, fire);
+                havePrimary = true;
+            }
+        }
     }
 
     /**
@@ -416,44 +442,41 @@ public class ParserFactory implements Constants {
     }
 
     private static GeneSet readGeneSet(String path, InputStream is, boolean useCache, boolean add2Cache) throws Exception {
+        try {
+            if (path == null) {
+                throw new IllegalArgumentException("Param path cannot be null");
+            }
 
-        if (path == null) {
-            throw new IllegalArgumentException("Param path cannot be null");
+            if (is == null) {
+                throw new IllegalArgumentException("Param is cannot be null");
+            }
+
+            if ((useCache) && (_getCache().isCached(path, GeneSet.class))) {
+                return (GeneSet) _getCache().get(path, GeneSet.class);
+            }
+
+            GeneSet gset;
+
+            if (AuxUtils.isAux(path)) {
+                String gsetName = AuxUtils.getAuxNameOnlyNoHash(path);
+                File f = AuxUtils.getBaseFileFromAuxFile(new File(path));
+                GeneSetMatrix gm = readGeneSetMatrix(f.getPath(), createInputStream(f), useCache, true, add2Cache);
+                return gm.getGeneSet(gsetName);
+            } else {
+                Parser parser = new GeneSetParser();
+                gset = (GeneSet) parser.parse(toName(path), is).get(0);
+                // for convenience make a genesetmatrix too (its not expensive)
+                // but be careful where you are adding -- dont want call to be recursive
+                _getCache().addInvisibly(path, new DefaultGeneSetMatrix(gset.getName(), new GeneSet[]{gset}));
+            }
+
+            if (add2Cache) {
+                _getCache().add(path, gset, GeneSet.class);
+            }
+            return gset;
+        } finally {
+            closeQuietly(is);
         }
-
-        if (is == null) {
-            throw new IllegalArgumentException("Param is cannot be null");
-        }
-
-        if ((useCache) && (_getCache().isCached(path, GeneSet.class))) {
-            // TODO: very likely should be handled in try/finally
-            is.close();
-            return (GeneSet) _getCache().get(path, GeneSet.class);
-        }
-
-        GeneSet gset;
-
-        if (AuxUtils.isAux(path)) {
-            String gsetName = AuxUtils.getAuxNameOnlyNoHash(path);
-            //System.out.println("was an aux");
-            File f = AuxUtils.getBaseFileFromAuxFile(new File(path));
-            GeneSetMatrix gm = readGeneSetMatrix(f.getPath(), createInputStream(f), useCache, true, add2Cache);
-            return gm.getGeneSet(gsetName);
-        } else {
-            Parser parser = new GeneSetParser();
-            gset = (GeneSet) parser.parse(toName(path), is).get(0);
-            // for convenience make a genesetmatrix too (its not expensive)
-            // but be careful where you are adding -- dont want call to be recursive
-            //kObjectCache.add(path, new DefaultGeneSetMatrix(gset.getName(), new GeneSet[]{gset}), GeneSetMatrix.class);
-            _getCache().addInvisibly(path, new DefaultGeneSetMatrix(gset.getName(), new GeneSet[]{gset}));
-        }
-
-        if (add2Cache) {
-            _getCache().add(path, gset, GeneSet.class);
-        }
-        // TODO: very likely should be handled in try/finally
-        is.close();
-        return gset;
     }
 
 
@@ -472,33 +495,29 @@ public class ParserFactory implements Constants {
     }
 
     private static Report readReport(String path, InputStream is, boolean useCache) throws Exception {
+        try {
+            if (path == null) {
+                throw new IllegalArgumentException("Param path cannot be null");
+            }
 
-        if (path == null) {
-            throw new IllegalArgumentException("Param path cannot be null");
+            if (is == null) {
+                throw new IllegalArgumentException("Param is cannot be null");
+            }
+
+            if ((useCache) && (_getCache().isCached(path, Report.class))) {
+                return (Report) _getCache().get(path, Report.class);
+            }
+
+            ReportParser parser = new ReportParser();
+            Report rpt = (Report) parser.parse(toName(path), is).get(0);
+
+            if (useCache) { // note special -- dont add
+                _getCache().add(path, rpt, Report.class);
+            }
+            return rpt;
+        } finally {
+            closeQuietly(is);
         }
-
-        if (is == null) {
-            throw new IllegalArgumentException("Param is cannot be null");
-        }
-
-
-        if ((useCache) && (_getCache().isCached(path, Report.class))) {
-            // TODO: very likely should be handled in try/finally
-            is.close();
-            return (Report) _getCache().get(path, Report.class);
-        }
-
-        //log.debug("Parsing Report from: " + path);
-        ReportParser parser = new ReportParser();
-        Report rpt = (Report) parser.parse(toName(path), is).get(0);
-
-        if (useCache) { // note special -- dont add
-            _getCache().add(path, rpt, Report.class);
-        }
-
-        // TODO: very likely should be handled in try/finally
-        is.close();
-        return rpt;
     }
 
 
@@ -507,33 +526,29 @@ public class ParserFactory implements Constants {
     }
 
     private static Chip readChip(String path, InputStream is, boolean useCache) throws Exception {
+        try {
+            if (path == null) {
+                throw new IllegalArgumentException("Param path cannot be null");
+            }
 
-        if (path == null) {
-            throw new IllegalArgumentException("Param path cannot be null");
+            if (is == null) {
+                throw new IllegalArgumentException("Param is cannot be null");
+            }
+
+            if ((useCache) && (_getCache().isCached(path, Chip.class))) {
+                return (Chip) _getCache().get(path, Chip.class);
+            }
+
+            Parser parser = new ChipParser();
+            Chip chip = (Chip) parser.parse(path, is).get(0);
+
+            if (useCache) {
+                _getCache().add(path, chip, Chip.class);
+            }
+            return chip;
+        } finally {
+            closeQuietly(is);
         }
-
-        if (is == null) {
-            throw new IllegalArgumentException("Param is cannot be null");
-        }
-
-        if ((useCache) && (_getCache().isCached(path, Chip.class))) {
-            // TODO: very likely should be handled in try/finally
-            is.close();
-            return (Chip) _getCache().get(path, Chip.class);
-        }
-
-        //log.debug("Parsing Report from: " + path);
-        Parser parser = new ChipParser();
-        Chip chip = (Chip) parser.parse(path, is).get(0);
-
-        if (useCache) {
-            _getCache().add(path, chip, Chip.class);
-        }
-
-        // TODO: very likely should be handled in try/finally
-        is.close();
-
-        return chip;
     }
 
     public static RankedList readRankedList(File file) throws Exception {
@@ -541,31 +556,28 @@ public class ParserFactory implements Constants {
     }
 
     private static RankedList readRankedList(String path, InputStream is, boolean useCache) throws Exception {
-        if (path == null) {
-            throw new IllegalArgumentException("Param path cannot be null");
+        try {
+            if (path == null) {
+                throw new IllegalArgumentException("Param path cannot be null");
+            }
+
+            if (is == null) {
+                throw new IllegalArgumentException("Param is cannot be null");
+            }
+
+            if (useCache && (_getCache().isCached(path, RankedList.class))) {
+                return (RankedList) _getCache().get(path, RankedList.class);
+            }
+
+            RankedListParser parser = new RankedListParser();
+            parser.setSilentMode(false);
+            RankedList rl = (RankedList) parser.parse(path, is).get(0);
+
+            _getCache().add(path, rl, RankedList.class);
+            return rl;
+        } finally {
+            closeQuietly(is);
         }
-        
-        if (is == null) {
-            throw new IllegalArgumentException("Param is cannot be null");
-        }
-        
-        if (useCache && (_getCache().isCached(path, RankedList.class))) {
-            // TODO: very likely should be handled in try/finally
-            is.close();
-            return (RankedList) _getCache().get(path, RankedList.class);
-        }
-        
-        //log.debug("Parsing Report from: " + path);
-        RankedListParser parser = new RankedListParser();
-        parser.setSilentMode(false);
-        RankedList rl = (RankedList) parser.parse(path, is).get(0);
-        
-        _getCache().add(path, rl, RankedList.class);
-        
-        // TODO: very likely should be handled in try/finally
-        is.close();
-        
-        return rl;
     }
 
     public static EnrichmentDb readEdb(final File gseaResultDir, final boolean useCache) throws Exception {
@@ -621,62 +633,60 @@ public class ParserFactory implements Constants {
                                                    final boolean useCache,
                                                    final boolean checkforduplicates,
                                                    final boolean add2Cache) throws Exception {
+        try {
+            if (path == null) {
+                throw new IllegalArgumentException("Param file cannot be null");
+            }
 
-        if (path == null) {
-            throw new IllegalArgumentException("Param file cannot be null");
-        }
+            if (is == null) {
+                throw new IllegalArgumentException("Param is cannot be null");
+            }
 
-        if (is == null) {
-            throw new IllegalArgumentException("Param is cannot be null");
-        }
+            // aux mechanism is a bit diff and much simpler from templates' we just strip it off
+            // and register the gsetnames with the gmx -- no new objects are created
+            if (AuxUtils.isAux(path)) {
+                path = AuxUtils.getBasePathFromAuxPath(path);
+            }
 
-        // aux mechanism is a bit diff and much simpler from templates' we just strip it off
-        // and register the gsetnames with the gmx -- no new objects are created
-        if (AuxUtils.isAux(path)) {
-            path = AuxUtils.getBasePathFromAuxPath(path);
-        }
+            String ext = NamingConventions.getExtension(path);
+            if (ext.equals(Constants.GMT)) {
+                return readGeneSetMatrixT(path, is, useCache, checkforduplicates, add2Cache);
+            }
 
-        String ext = NamingConventions.getExtension(path);
-        if (ext.equals(Constants.GMT)) {
-            return readGeneSetMatrixT(path, is, useCache, checkforduplicates, add2Cache);
-        }
+            if (ext.equals(Constants.GRP)) {
+                GeneSet gset = readGeneSet(path, is, useCache, add2Cache);
+                return new DefaultGeneSetMatrix(toName(path), new GeneSet[]{gset});
+            }
 
-        if (ext.equals(Constants.GRP)) {
-            GeneSet gset = readGeneSet(path, is, useCache, add2Cache);
-            return new DefaultGeneSetMatrix(toName(path), new GeneSet[]{gset});
-        }
+            if (useCache && (_getCache().isCached(path, GeneSetMatrix.class))) {
+                return (GeneSetMatrix) _getCache().get(path, GeneSetMatrix.class);
+            }
 
-        if (useCache && (_getCache().isCached(path, GeneSetMatrix.class))) {
-            // TODO: very likely should be handled in try/finally
-            is.close();
-            return (GeneSetMatrix) _getCache().get(path, GeneSetMatrix.class);
-        }
-
-        GmxParser parser = new GmxParser();
-        parser.setCheckForDuplicates(checkforduplicates);
-        GeneSetMatrix gmx = (GeneSetMatrix) parser.parse(toName(path), is).get(0);
-
-        if (add2Cache) {
-            _getCache().add(path, gmx, GeneSetMatrix.class);
-        }
-
-        // IMP also fetch and add all gsets in the gmx to cache
-        File parentFile = new File(path).getParentFile();
-        for (int i = 0; i < gmx.getNumGeneSets(); i++) {
-            File pseudo = new File(parentFile, gmx.getGeneSet(i).getName());
+            GmxParser parser = new GmxParser();
+            parser.setCheckForDuplicates(checkforduplicates);
+            GeneSetMatrix gmx = (GeneSetMatrix) parser.parse(toName(path), is).get(0);
 
             if (add2Cache) {
-                _getCache().addInvisibly(pseudo, gmx.getGeneSet(i));
+                _getCache().add(path, gmx, GeneSetMatrix.class);
             }
-        }
 
-        if (add2Cache) {
-            _getCache().hackAddAuxSets(gmx);
-        }
+            // IMP also fetch and add all gsets in the gmx to cache
+            File parentFile = new File(path).getParentFile();
+            for (int i = 0; i < gmx.getNumGeneSets(); i++) {
+                File pseudo = new File(parentFile, gmx.getGeneSet(i).getName());
 
-        // TODO: very likely should be handled in try/finally
-        is.close();
-        return gmx;
+                if (add2Cache) {
+                    _getCache().addInvisibly(pseudo, gmx.getGeneSet(i));
+                }
+            }
+
+            if (add2Cache) {
+                _getCache().hackAddAuxSets(gmx);
+            }
+            return gmx;
+        } finally {
+            closeQuietly(is);
+        }
     }
 
     private static GeneSetMatrix readGeneSetMatrixT(String path,
@@ -684,55 +694,52 @@ public class ParserFactory implements Constants {
                                                    boolean useCache,
                                                    boolean checkForDuplicates,
                                                    boolean add2Cache) throws Exception {
+        try {
+            if (path == null) {
+                throw new IllegalArgumentException("Param file cannot be null");
+            }
 
-        if (path == null) {
-            throw new IllegalArgumentException("Param file cannot be null");
+            if (is == null) {
+                throw new IllegalArgumentException("Param is cannot be null");
+            }
+
+            if (AuxUtils.isAux(path)) {
+                path = AuxUtils.getBasePathFromAuxPath(path);
+            }
+
+            // @note as a help to make gm ext agnostic
+            String ext = NamingConventions.getExtension(path);
+            if (ext.equals(Constants.GMX)) {
+                return readGeneSetMatrix(path, is, useCache, checkForDuplicates, add2Cache);
+            }
+
+            String path_name = toName(path);
+            if (ext.equals(Constants.GRP)) {
+                GeneSet gset = readGeneSet(path, is, useCache);
+                return new DefaultGeneSetMatrix(path_name, new GeneSet[]{gset});
+            }
+
+            if (useCache && (_getCache().isCached(path, GeneSetMatrix.class))) {
+                return (GeneSetMatrix) _getCache().get(path, GeneSetMatrix.class);
+            }
+
+            Parser parser = new GmtParser();
+            GeneSetMatrix gmx = (GeneSetMatrix) parser.parse(path, is).get(0);
+
+            _getCache().add(path, gmx, GeneSetMatrix.class);
+
+            // IMP also fetch and add all gsets in the gmx to cache
+            File parentFile = new File(path).getParentFile();
+            for (int i = 0; i < gmx.getNumGeneSets(); i++) {
+                File pseudo = new File(parentFile, gmx.getGeneSet(i).getName());
+                _getCache().addInvisibly(pseudo, gmx.getGeneSet(i));
+            }
+
+            _getCache().hackAddAuxSets(gmx);
+            return gmx;
+        } finally {
+            closeQuietly(is);
         }
-
-        if (is == null) {
-            throw new IllegalArgumentException("Param is cannot be null");
-        }
-
-        if (AuxUtils.isAux(path)) {
-            path = AuxUtils.getBasePathFromAuxPath(path);
-        }
-
-        // @note as a help to make gm ext agnostic
-        String ext = NamingConventions.getExtension(path);
-        if (ext.equals(Constants.GMX)) {
-            return readGeneSetMatrix(path, is, useCache, checkForDuplicates, add2Cache);
-        }
-
-        String path_name = toName(path);
-        if (ext.equals(Constants.GRP)) {
-            GeneSet gset = readGeneSet(path, is, useCache);
-            return new DefaultGeneSetMatrix(path_name, new GeneSet[]{gset});
-        }
-
-        if (useCache && (_getCache().isCached(path, GeneSetMatrix.class))) {
-            // TODO: very likely should be handled in try/finally
-            is.close();
-            return (GeneSetMatrix) _getCache().get(path, GeneSetMatrix.class);
-        }
-
-        Parser parser = new GmtParser();
-        GeneSetMatrix gmx = (GeneSetMatrix) parser.parse(path, is).get(0);
-
-        _getCache().add(path, gmx, GeneSetMatrix.class);
-
-        //disabled after advance chooser
-        // IMP also fetch and add all gsets in the gmx to cache
-        File parentFile = new File(path).getParentFile();
-        for (int i = 0; i < gmx.getNumGeneSets(); i++) {
-            File pseudo = new File(parentFile, gmx.getGeneSet(i).getName());
-            _getCache().addInvisibly(pseudo, gmx.getGeneSet(i));
-        }
-
-        _getCache().hackAddAuxSets(gmx);
-
-        // TODO: very likely should be handled in try/finally
-        is.close();
-        return gmx;
     }
 
     public static PersistentObject read(final String path, final InputStream is) throws Exception {
@@ -764,9 +771,6 @@ public class ParserFactory implements Constants {
             } else if (ext.equalsIgnoreCase(PCL)) {
                 return readDatasetPcl(path, is, useCache);
             } else if (ext.startsWith(CLS)) { // IMP note -- special for the aux hash
-                // TODO: fix CLS caching bug.
-                // We should really set add2cache=true here, but that causes us to have multiple
-                // copies of the CLS.
                 return readTemplate(path, is, useCache, useCache, false);
             } else if (ext.equalsIgnoreCase(GRP)) {
                 return readGeneSet(path, is, useCache);
@@ -790,7 +794,7 @@ public class ParserFactory implements Constants {
             klog.info("progress exception - possibly cancelled ... ignoring");
             return null;
         } finally {
-            is.close();
+            closeQuietly(is);
         }
     }
 

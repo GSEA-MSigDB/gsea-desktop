@@ -63,11 +63,11 @@ public final class CoreMapInsightSidebar extends VBox {
     private final TextField driverSearch = new TextField();
     private final TextField hubSearch = new TextField();
     private final ComboBox<String> bridgeSort = new ComboBox<>(FXCollections.observableArrayList(
-            "Score", "Mechanistic set", "Phenotypic set"));
+            "Score", CoreMapInsightStyles.LAYER_1_SET, CoreMapInsightStyles.LAYER_2_SET));
     private final ComboBox<String> hubLayer = new ComboBox<>(FXCollections.observableArrayList(
-            "All layers", "Mechanistic", "Phenotypic"));
+            "All layers", CoreMapInsightStyles.LAYER_1, CoreMapInsightStyles.LAYER_2));
     private final Label bridgeHelp = new Label(
-            "Ranked paths from mechanistic to phenotypic sets. "
+            "Ranked paths from Layer 1 to Layer 2 sets. "
                     + "Click to focus; Ctrl/Cmd+click to multi-select.");
     private final Label driverHelp = new Label(
             "Genes in both layers’ leading edges, ranked by effect size and sign agreement. "
@@ -341,9 +341,9 @@ public final class CoreMapInsightSidebar extends VBox {
         }
         String sort = bridgeSort.getValue() != null ? bridgeSort.getValue() : "Score";
         Comparator<Bridge> cmp = switch (sort) {
-            case "Mechanistic set" -> Comparator.comparing(CoreMapCascadeUi::mechLabel,
+            case CoreMapInsightStyles.LAYER_1_SET -> Comparator.comparing(CoreMapCascadeUi::mechLabel,
                     String.CASE_INSENSITIVE_ORDER);
-            case "Phenotypic set" -> Comparator.comparing(CoreMapCascadeUi::phenoLabel,
+            case CoreMapInsightStyles.LAYER_2_SET -> Comparator.comparing(CoreMapCascadeUi::phenoLabel,
                     String.CASE_INSENSITIVE_ORDER);
             default -> Comparator.comparingDouble((Bridge b) -> b.bridgeScore).reversed();
         };
@@ -410,10 +410,10 @@ public final class CoreMapInsightSidebar extends VBox {
         String layer = hubLayer.getValue() != null ? hubLayer.getValue() : "All layers";
         hubsFiltered.setPredicate(h -> {
             if (!"All layers".equals(layer) && h.layer != null) {
-                if ("Mechanistic".equals(layer) && !h.layer.wire().equals("mechanistic")) {
+                if (CoreMapInsightStyles.LAYER_1.equals(layer) && !h.layer.wire().equals("mechanistic")) {
                     return false;
                 }
-                if ("Phenotypic".equals(layer) && !h.layer.wire().equals("phenotypic")) {
+                if (CoreMapInsightStyles.LAYER_2.equals(layer) && !h.layer.wire().equals("phenotypic")) {
                     return false;
                 }
             }
@@ -446,10 +446,10 @@ public final class CoreMapInsightSidebar extends VBox {
         java.util.List<String> items = new java.util.ArrayList<>();
         items.add("All layers");
         if (hasMech) {
-            items.add("Mechanistic");
+            items.add(CoreMapInsightStyles.LAYER_1);
         }
         if (hasPheno) {
-            items.add("Phenotypic");
+            items.add(CoreMapInsightStyles.LAYER_2);
         }
         hubLayer.getItems().setAll(items);
         if (prev != null && items.contains(prev)) {
@@ -462,7 +462,7 @@ public final class CoreMapInsightSidebar extends VBox {
     private void updateEmptyStates() {
         setEmpty(bridgeEmpty, bridgeItems.isEmpty(),
                 partialLayerMessage(
-                        "Bridges need both mechanistic and phenotypic layers. Only one layer is loaded.",
+                        "Bridges need both Layer 1 and Layer 2. Only one layer is loaded.",
                         "No bridges."),
                 !bridgeItems.isEmpty() && bridgesFiltered.isEmpty(),
                 "No bridges match “" + safeQuery(bridgeSearch) + "”.");

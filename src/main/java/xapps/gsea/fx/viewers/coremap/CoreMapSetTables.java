@@ -58,8 +58,8 @@ final class CoreMapSetTables {
         Layer(boolean mechanistic) {
             this.mechanistic = mechanistic;
             status = new Label(mechanistic
-                    ? "Load a mechanistic GSEA result."
-                    : "Load a phenotypic GSEA result.");
+                    ? "Load a Layer 1 GSEA result."
+                    : "Load a Layer 2 GSEA result.");
         }
     }
 
@@ -87,8 +87,8 @@ final class CoreMapSetTables {
     }
 
     SplitPane buildSplitPane() {
-        VBox mechPicker = geneSetPickerPanel("Mechanistic gene sets", mech);
-        VBox phenoPicker = geneSetPickerPanel("Phenotypic gene sets", pheno);
+        VBox mechPicker = geneSetPickerPanel("Layer 1 gene sets", mech);
+        VBox phenoPicker = geneSetPickerPanel("Layer 2 gene sets", pheno);
         SplitPane setSplit = new SplitPane(mechPicker, phenoPicker);
         setSplit.setDividerPositions(0.5);
         VBox.setVgrow(setSplit, Priority.ALWAYS);

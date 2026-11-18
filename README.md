@@ -22,7 +22,7 @@ Joshua Gould (code) and Heidi Kuehn (docs) contributed greatly to **GSEA Desktop
 
 Thanks also to Vuk Pavlovic and Ruth Isserlin from the [Bader Lab at the University of Toronto](http://baderlab.org/) for their contribution of the Enrichment Map integration with Cytoscape.
 
-GSEA Desktop also includes a built-in **CoreMap** viewer for bridging mechanistic and phenotypic GSEA results on a gene interactome (SIGNOR/STRING) with ranked mech→pheno Bridges.
+GSEA Desktop also includes a built-in **CoreMap** viewer for bridging Layer 1 and Layer 2 GSEA results on a gene interactome (SIGNOR/STRING) with ranked Layer 1→Layer 2 Bridges.
 
 **GSEA Desktop 3.0** is the open-source release.  
 

@@ -20,22 +20,25 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 
 /**
  * In-memory cache of parsed PersistentObjects keyed by source path + class.
+ * Tool threads write this cache while the FX thread iterates it, so every map
+ * access is under {@link #lock} and listeners run after the lock is released.
  */
 public class ObjectCache {
     private final Logger log = LoggerFactory.getLogger(ObjectCache.class);
+    private final Object lock = new Object();
 
     private final Map<PathClass, Object> fPathClassObjectMap = new HashMap<>();
     private final Map<Object, String> fObjectPathStringMap = new HashMap<>();
     private final Map<PersistentObject, File> fInvisiblePobFileMap = new HashMap<>();
     private final Map fIdCachesExtra = new HashMap();
-    /** First-seen representation class order (Swing ObjectCache tree category order). */
-    private final java.util.LinkedHashSet<Class<?>> fRepresentationClassOrder = new java.util.LinkedHashSet<>();
+    /** First-seen representation class order (object-tree category order). */
+    private final LinkedHashSet<Class<?>> fRepresentationClassOrder = new LinkedHashSet<>();
 
     private final PropertyChangeSupport fPathChanges = new PropertyChangeSupport(this);
     private final PropertyChangeSupport fReportChanges = new PropertyChangeSupport(this);
@@ -47,7 +50,9 @@ public class ObjectCache {
     public static final String PROP_REPORT_ADDED = "pob_added";
 
     public boolean isCached(final String path, final Class cl) {
-        return fPathClassObjectMap.containsKey(new PathClass(path, cl));
+        synchronized (lock) {
+            return fPathClassObjectMap.containsKey(new PathClass(path, cl));
+        }
     }
 
     public boolean isCached(final File file, final Class cl) {
@@ -55,27 +60,33 @@ public class ObjectCache {
     }
 
     public boolean isCached(PersistentObject pob) {
-        return fObjectPathStringMap.containsKey(pob) || fInvisiblePobFileMap.containsKey(pob);
+        synchronized (lock) {
+            return fObjectPathStringMap.containsKey(pob) || fInvisiblePobFileMap.containsKey(pob);
+        }
     }
 
     public Object get(final String path, final Class cl) {
-        return fPathClassObjectMap.get(new PathClass(path, cl));
+        synchronized (lock) {
+            return fPathClassObjectMap.get(new PathClass(path, cl));
+        }
     }
 
     public Object get(final File file, final Class cl) {
-        return fPathClassObjectMap.get(new PathClass(file.getPath(), cl));
+        return get(file.getPath(), cl);
     }
 
     public String getSourcePath(final Object pob) {
         if (pob == null) {
             throw new IllegalArgumentException("Parameter obj cannot be null");
         }
-        Object fo = fObjectPathStringMap.get(pob);
-        if (fo == null && fInvisiblePobFileMap.containsKey(pob)) {
-            fo = fInvisiblePobFileMap.get(pob).getPath();
-        }
-        if (fo != null) {
-            return fo.toString();
+        synchronized (lock) {
+            Object fo = fObjectPathStringMap.get(pob);
+            if (fo == null && fInvisiblePobFileMap.containsKey(pob)) {
+                fo = fInvisiblePobFileMap.get(pob).getPath();
+            }
+            if (fo != null) {
+                return fo.toString();
+            }
         }
         throw new IllegalArgumentException("Unknown cache object -- use isCached() to check first if appropriate: "
                 + pob + " class: " + pob.getClass());
@@ -99,6 +110,26 @@ public class ObjectCache {
     }
 
     protected void add(String path, PersistentObject pob, Class cl, boolean fireAction) {
+        List<PropertyChangeEvent> pathEvents = new ArrayList<>();
+        List<PropertyChangeEvent> reportEvents = new ArrayList<>();
+        List<ExtraCache> extras = new ArrayList<>();
+        synchronized (lock) {
+            remember(path, pob, cl, fireAction, pathEvents, reportEvents);
+            for (Object key : fIdCachesExtra.keySet()) {
+                ExtraCache ex = (ExtraCache) fIdCachesExtra.get(key);
+                if (ex.isMember(path)) {
+                    extras.add(ex);
+                }
+            }
+        }
+        dispatch(pathEvents, reportEvents);
+        for (ExtraCache ex : extras) {
+            ex.fExCache.add(path, pob, cl, fireAction);
+        }
+    }
+
+    private void remember(String path, PersistentObject pob, Class cl, boolean fireAction,
+            List<PropertyChangeEvent> pathEvents, List<PropertyChangeEvent> reportEvents) {
         PathClass fc = new PathClass(path, cl);
         if (fObjectPathStringMap.containsKey(pob) && !(pob instanceof Template)) {
             if (log.isDebugEnabled()) {
@@ -110,20 +141,20 @@ public class ObjectCache {
         if (cl != null) {
             fRepresentationClassOrder.add(cl);
         }
-
         if (fireAction) {
-            firePathAdded(new PropertyChangeEvent(this, PROP_PATH_ADDED, null, path));
+            pathEvents.add(new PropertyChangeEvent(this, PROP_PATH_ADDED, null, path));
             if (pob instanceof Report) {
-                fireReportAdded(new PropertyChangeEvent(this, PROP_REPORT_ADDED, null, pob));
+                reportEvents.add(new PropertyChangeEvent(this, PROP_REPORT_ADDED, null, pob));
             }
         }
+    }
 
-        for (Iterator iterator = fIdCachesExtra.keySet().iterator(); iterator.hasNext();) {
-            Object key = iterator.next();
-            ExtraCache ex = (ExtraCache) fIdCachesExtra.get(key);
-            if (ex.isMember(path)) {
-                ex.fExCache.add(path, pob, cl, fireAction);
-            }
+    private void dispatch(List<PropertyChangeEvent> pathEvents, List<PropertyChangeEvent> reportEvents) {
+        for (PropertyChangeEvent evt : pathEvents) {
+            fPathChanges.firePropertyChange(evt);
+        }
+        for (PropertyChangeEvent evt : reportEvents) {
+            fReportChanges.firePropertyChange(evt);
         }
     }
 
@@ -131,57 +162,57 @@ public class ObjectCache {
         if (gm == null) {
             return;
         }
-        for (int i = 0; i < gm.getNumGeneSets(); i++) {
-            auxGeneSets.add(gm.getGeneSet(i));
+        synchronized (lock) {
+            for (int i = 0; i < gm.getNumGeneSets(); i++) {
+                auxGeneSets.add(gm.getGeneSet(i));
+            }
+            Collections.sort(auxGeneSets, ComparatorFactory.PERSISTENT_OBJECT_BY_NAME);
         }
-        Collections.sort(auxGeneSets, ComparatorFactory.PERSISTENT_OBJECT_BY_NAME);
     }
 
     /**
      * Gene sets derived from loaded gene-set matrices, sorted by name.
      */
     public List<GeneSet> getAuxGeneSets() {
-        return new ArrayList<>(auxGeneSets);
+        synchronized (lock) {
+            return new ArrayList<>(auxGeneSets);
+        }
     }
 
     /** Cached objects of {@code pobClass}, sorted by name. */
     @SuppressWarnings("unchecked")
     public List getCachedObjectsL(Class pobClass) {
         List<PersistentObject> pobs = new ArrayList<>();
-        for (PathClass pc : fPathClassObjectMap.keySet()) {
-            if (pc.cl.equals(pobClass)) {
-                pobs.add((PersistentObject) fPathClassObjectMap.get(pc));
+        synchronized (lock) {
+            for (PathClass pc : fPathClassObjectMap.keySet()) {
+                if (pc.cl.equals(pobClass)) {
+                    pobs.add((PersistentObject) fPathClassObjectMap.get(pc));
+                }
             }
         }
         Collections.sort(pobs, ComparatorFactory.PERSISTENT_OBJECT_BY_NAME);
         return pobs;
     }
 
-    /** Distinct representation classes currently present in the cache (Swing ObjectTree categories). */
+    /** Distinct representation classes currently present in the cache. */
     public java.util.Set<Class<?>> getCachedRepresentationClasses() {
-        java.util.LinkedHashSet<Class<?>> classes = new java.util.LinkedHashSet<>(fRepresentationClassOrder);
-        for (PathClass pc : fPathClassObjectMap.keySet()) {
-            if (pc.cl != null) {
-                classes.add(pc.cl);
+        synchronized (lock) {
+            LinkedHashSet<Class<?>> classes = new LinkedHashSet<>(fRepresentationClassOrder);
+            for (PathClass pc : fPathClassObjectMap.keySet()) {
+                if (pc.cl != null) {
+                    classes.add(pc.cl);
+                }
             }
+            return classes;
         }
-        return classes;
     }
 
     public void addPathAdditionsListener(PropertyChangeListener p) {
         fPathChanges.addPropertyChangeListener(p);
     }
 
-    private void firePathAdded(PropertyChangeEvent evt) {
-        fPathChanges.firePropertyChange(evt);
-    }
-
     public void addReportAdditionsListener(PropertyChangeListener p) {
         fReportChanges.addPropertyChangeListener(p);
-    }
-
-    private void fireReportAdded(PropertyChangeEvent evt) {
-        fReportChanges.firePropertyChange(evt);
     }
 
     public void makeVisible(PersistentObject pob, Class cl) {
@@ -189,12 +220,17 @@ public class ObjectCache {
     }
 
     public void makeVisible(PersistentObject[] pobs, Class cl) {
-        for (int i = 0; i < pobs.length; i++) {
-            Object file = fInvisiblePobFileMap.get(pobs[i]);
-            if (file != null) {
-                fInvisiblePobFileMap.remove(pobs[i]);
-                add((File) file, pobs[i], cl, false);
+        List<Object[]> pending = new ArrayList<>();
+        synchronized (lock) {
+            for (int i = 0; i < pobs.length; i++) {
+                File file = fInvisiblePobFileMap.remove(pobs[i]);
+                if (file != null) {
+                    pending.add(new Object[]{file, pobs[i]});
+                }
             }
+        }
+        for (Object[] pair : pending) {
+            add((File) pair[0], (PersistentObject) pair[1], cl, false);
         }
     }
 
@@ -205,10 +241,12 @@ public class ObjectCache {
         if (pob == null) {
             throw new IllegalArgumentException("Parameter pob cannot be null");
         }
-        if (fInvisiblePobFileMap.containsKey(pob)) {
-            log.warn("Already registered: {} overwriting", pob.getName());
+        synchronized (lock) {
+            if (fInvisiblePobFileMap.containsKey(pob)) {
+                log.warn("Already registered: {} overwriting", pob.getName());
+            }
+            fInvisiblePobFileMap.put(pob, file);
         }
-        fInvisiblePobFileMap.put(pob, file);
     }
 
     protected void addInvisibly(String source, PersistentObject pob) {

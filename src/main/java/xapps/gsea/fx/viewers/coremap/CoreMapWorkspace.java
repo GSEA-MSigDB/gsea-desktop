@@ -42,9 +42,9 @@ public final class CoreMapWorkspace {
             return;
         }
         if (pane.isLayerLoaded(asMechanistic)
-                && !host.dialogs().showConfirm(
+                && !host.services().dialogs().showConfirm(
                         "Replace the existing "
-                                + (asMechanistic ? "mechanistic" : "phenotypic")
+                                + (asMechanistic ? CoreMapInsightStyles.LAYER_1 : CoreMapInsightStyles.LAYER_2)
                                 + " CoreMap layer with this report?")) {
             return;
         }
@@ -58,7 +58,7 @@ public final class CoreMapWorkspace {
         }
         FxCoreMapPane pane = resolvePane(host);
         if (pane == null) {
-            host.dialogs().showMessage("Could not open CoreMap workspace.");
+            host.services().dialogs().showMessage("Could not open CoreMap workspace.");
             return;
         }
         pane.loadJob(jobDir);
@@ -78,15 +78,15 @@ public final class CoreMapWorkspace {
      * @return true = mechanistic, false = phenotypic, null = cancelled
      */
     static Boolean chooseLayerRole(FxCoreMapPane pane) {
-        String def = "Mechanistic";
+        String def = CoreMapInsightStyles.LAYER_1;
         if (pane != null) {
             if (pane.isLayerLoaded(true) && !pane.isLayerLoaded(false)) {
-                def = "Phenotypic";
+                def = CoreMapInsightStyles.LAYER_2;
             } else if (!pane.isLayerLoaded(true)) {
-                def = "Mechanistic";
+                def = CoreMapInsightStyles.LAYER_1;
             }
         }
-        ChoiceDialog<String> dialog = new ChoiceDialog<>(def, "Mechanistic", "Phenotypic");
+        ChoiceDialog<String> dialog = new ChoiceDialog<>(def, CoreMapInsightStyles.LAYER_1, CoreMapInsightStyles.LAYER_2);
         dialog.setTitle("CoreMap layer");
         dialog.setHeaderText("Load this GSEA result into CoreMap");
         dialog.setContentText("Layer:");
@@ -98,6 +98,6 @@ public final class CoreMapWorkspace {
         if (result.isEmpty()) {
             return null;
         }
-        return "Mechanistic".equals(result.get());
+        return CoreMapInsightStyles.LAYER_1.equals(result.get());
     }
 }

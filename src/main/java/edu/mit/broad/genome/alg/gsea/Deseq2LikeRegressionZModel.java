@@ -40,22 +40,22 @@ import org.slf4j.LoggerFactory;
 public class Deseq2LikeRegressionZModel {
     private static final Logger log = LoggerFactory.getLogger(Deseq2LikeRegressionZModel.class);
 
-    private static final double TARGET_FDR = 0.10d;
-    private static final int FILTER_GRID_POINTS = 50;
-    private static final double FILTER_SMOOTHING_SPAN = 0.20d;
+    static final double TARGET_FDR = 0.10d;
+    static final int FILTER_GRID_POINTS = 50;
+    static final double FILTER_SMOOTHING_SPAN = 0.20d;
     private static final double LOCAL_DISPERSION_SPAN = 0.70d;
-    private static final double LOWESS_DELTA_FRACTION = 0.01d;
+    static final double LOWESS_DELTA_FRACTION = 0.01d;
     private static final double DEFAULT_COOKS_QUANTILE = 0.99d;
 
-    private static final double EPS = 1.0e-8d;
-    private static final double MIN_DISP = 1.0e-8d;
+    static final double EPS = 1.0e-8d;
+    static final double MIN_DISP = 1.0e-8d;
     private static final double DISP_PRIOR_VAR_MIN = 0.25d;
     private static final int DISP_GRID_SIZE = 20;
     private static final int DISP_MAX_ITERS = 100;
     private static final double DISP_TOL = 1.0e-6d;
     private static final double DISP_ARMIJO_EPSILON = 1.0e-4d;
     private static final double DISP_KAPPA0 = 1.0d;
-    private static final double ROBUST_NORMAL_SD_QUANTILE = 0.6744897501960817d;
+    static final double ROBUST_NORMAL_SD_QUANTILE = 0.6744897501960817d;
     private static final double DISP_PRIOR_KL_MAX = 8.0d;
     private static final int DISP_PRIOR_KL_GRID_SIZE = 200;
     private static final int DISP_PRIOR_KL_FINE_GRID_SIZE = 1000;
@@ -358,7 +358,7 @@ public class Deseq2LikeRegressionZModel {
                         false,
                         maxDisp);
             }
-            dispersionRaw[rowIndex] = clamp(dispGeneEst, MIN_DISP, maxDisp);
+            dispersionRaw[rowIndex] = Deseq2Statistics.clamp(dispGeneEst, MIN_DISP, maxDisp);
         });
 
         // On the refit-after-outlier-replacement pass, DESeq2 reuses the ORIGINAL trend
@@ -383,11 +383,11 @@ public class Deseq2LikeRegressionZModel {
                     continue;
                 }
                 if (frozen.useParametricTrend) {
-                    fittedDispersionTrend[i] = trendDispersion(meanNormCounts[i], frozen.trendA, frozen.trendB);
+                    fittedDispersionTrend[i] = Deseq2Statistics.trendDispersion(meanNormCounts[i], frozen.trendA, frozen.trendB);
                 } else if (frozen.localTrendByRow != null && i < frozen.localTrendByRow.length) {
                     fittedDispersionTrend[i] = frozen.localTrendByRow[i];
                 } else {
-                    fittedDispersionTrend[i] = trendDispersion(meanNormCounts[i], 0.1d, 1.0d);
+                    fittedDispersionTrend[i] = Deseq2Statistics.trendDispersion(meanNormCounts[i], 0.1d, 1.0d);
                 }
             }
             priorVar = frozen.priorVar;
@@ -419,7 +419,7 @@ public class Deseq2LikeRegressionZModel {
             if (!Double.isFinite(meanNormCounts[rowIndex]) || meanNormCounts[rowIndex] <= 0.0d) {
                 return;
             }
-            final double trend = clamp(fittedDispersionTrend[rowIndex], MIN_DISP, maxDisp);
+            final double trend = Deseq2Statistics.clamp(fittedDispersionTrend[rowIndex], MIN_DISP, maxDisp);
             if (!Double.isFinite(dispersionRaw[rowIndex]) || dispersionRaw[rowIndex] <= 0.0d) {
                 shrunkDispersion[rowIndex] = trend;
                 return;
@@ -429,7 +429,7 @@ public class Deseq2LikeRegressionZModel {
                 return;
             }
 
-            final double raw = clamp(dispersionRaw[rowIndex], MIN_DISP, maxDisp);
+            final double raw = Deseq2Statistics.clamp(dispersionRaw[rowIndex], MIN_DISP, maxDisp);
             final double dispMapStart = raw > (0.1d * trend) ? raw : trend;
             final DispersionFit dispMapFit = fitDispersionLineSearch(fitDs, rowIndex, conditionVector,
                     geneWiseMu[rowIndex], dispMapStart, Math.log(trend), priorVar, true, maxDisp);
@@ -445,10 +445,10 @@ public class Deseq2LikeRegressionZModel {
                         true,
                         maxDisp);
             }
-            dispMap = clamp(dispMap, MIN_DISP, maxDisp);
+            dispMap = Deseq2Statistics.clamp(dispMap, MIN_DISP, maxDisp);
             final double residual = Math.log(raw) - Math.log(trend);
             final double finalDisp = (Double.isFinite(residual) && residual > outlierCutoff) ? raw : dispMap;
-            shrunkDispersion[rowIndex] = clamp(finalDisp, MIN_DISP, maxDisp);
+            shrunkDispersion[rowIndex] = Deseq2Statistics.clamp(finalDisp, MIN_DISP, maxDisp);
         });
 
         final Deseq2LikeRegressionZModel provisionalModel = new Deseq2LikeRegressionZModel(ds,
@@ -513,10 +513,10 @@ public class Deseq2LikeRegressionZModel {
             final boolean contrastAllZero = provisionalModel.contrastAllZeroForRow(rowIndex, conditionVector);
             // Match DESeq2 default (betaPrior=FALSE): p-value derived from MLE Wald z.
             realPValues[rowIndex] = cooks.outlier ? Double.NaN
-                    : (contrastAllZero ? 1.0d : twoSidedPValueFromZ(mleWald.z));
+                    : (contrastAllZero ? 1.0d : Deseq2Statistics.twoSidedPValueFromZ(mleWald.z));
         });
 
-        final double independentFilterThreshold = selectIndependentFilteringThreshold(meanNormCounts, realPValues);
+        final double independentFilterThreshold = Deseq2Statistics.selectIndependentFilteringThreshold(meanNormCounts, realPValues);
         for (int rowIndex = 0; rowIndex < rowCount; rowIndex++) {
             final TwoClassMarkerStats markerScore = markerScores.get(ds.getRowName(rowIndex));
             if (markerScore == null) {
@@ -703,10 +703,10 @@ public class Deseq2LikeRegressionZModel {
             final CooksResult cooks = computeCooksResult(rowIndex, mleWald, resultsContext);
             maxCooks[rowIndex] = cooks.maxCooks;
             cooksOutlier[rowIndex] = cooks.outlier;
-            pValues[rowIndex] = cooks.outlier ? Double.NaN : (contrastAllZero ? 1.0d : twoSidedPValueFromZ(mleWald.z));
+            pValues[rowIndex] = cooks.outlier ? Double.NaN : (contrastAllZero ? 1.0d : Deseq2Statistics.twoSidedPValueFromZ(mleWald.z));
         });
 
-        final double[] padj = applyIndependentFilteringAtThreshold(meanNormCounts, pValues, independentFilterThreshold);
+        final double[] padj = Deseq2Statistics.applyIndependentFilteringAtThreshold(meanNormCounts, pValues, independentFilterThreshold);
         final MainStat[] mainStats = new MainStat[rowCount];
         java.util.stream.IntStream.range(0, rowCount).parallel().forEach(rowIndex -> {
             mainStats[rowIndex] = new MainStat(
@@ -896,7 +896,7 @@ public class Deseq2LikeRegressionZModel {
         }
     }
 
-    private static final class LowessPointFit {
+    static final class LowessPointFit {
         final double y;
         final boolean ok;
 
@@ -1081,7 +1081,7 @@ public class Deseq2LikeRegressionZModel {
             normalized[count++] = value / sizeFactors[columnIndex];
         }
 
-        final double trimmed = trimmedMean(normalized, count, OUTLIER_REPLACEMENT_TRIM);
+        final double trimmed = Deseq2Statistics.trimmedMean(normalized, count, OUTLIER_REPLACEMENT_TRIM);
         return Double.isFinite(trimmed) ? Math.max(0.0d, trimmed) : 0.0d;
     }
 
@@ -1147,8 +1147,8 @@ public class Deseq2LikeRegressionZModel {
                 continue;
             }
 
-            final double trim = trimRatioForSampleCount(count);
-            final double mean = trimmedMean(values, count, trim);
+            final double trim = Deseq2Statistics.trimRatioForSampleCount(count);
+            final double mean = Deseq2Statistics.trimmedMean(values, count, trim);
             if (!Double.isFinite(mean)) {
                 continue;
             }
@@ -1158,7 +1158,7 @@ public class Deseq2LikeRegressionZModel {
                 final double delta = values[i] - mean;
                 sqError[i] = delta * delta;
             }
-            final double variance = scaleForTrimmedVariance(count) * trimmedMean(sqError, count, trim);
+            final double variance = Deseq2Statistics.scaleForTrimmedVariance(count) * Deseq2Statistics.trimmedMean(sqError, count, trim);
             if (!Double.isFinite(maxVariance) || variance > maxVariance) {
                 maxVariance = variance;
             }
@@ -1182,7 +1182,7 @@ public class Deseq2LikeRegressionZModel {
             return Double.NaN;
         }
 
-        final double mean = trimmedMean(values, count, 1.0d / 8.0d);
+        final double mean = Deseq2Statistics.trimmedMean(values, count, 1.0d / 8.0d);
         if (!Double.isFinite(mean)) {
             return Double.NaN;
         }
@@ -1192,7 +1192,7 @@ public class Deseq2LikeRegressionZModel {
             final double delta = values[i] - mean;
             sqError[i] = delta * delta;
         }
-        return 1.51d * trimmedMean(sqError, count, 1.0d / 8.0d);
+        return 1.51d * Deseq2Statistics.trimmedMean(sqError, count, 1.0d / 8.0d);
     }
 
     private static boolean[] samplesEligibleForCooks(final ConditionVector conditionVector) {
@@ -1333,7 +1333,7 @@ public class Deseq2LikeRegressionZModel {
                 logRatios[count++] = Math.log(value) - logGeometricMeans[rowIndex];
             }
             Arrays.sort(logRatios, 0, count);
-            sizeFactors[columnIndex] = Math.exp(medianOfSorted(logRatios, count));
+            sizeFactors[columnIndex] = Math.exp(Deseq2Statistics.medianOfSorted(logRatios, count));
         }
         return sizeFactors;
     }
@@ -1397,7 +1397,7 @@ public class Deseq2LikeRegressionZModel {
                 throw new IllegalArgumentException("no positive counts in a sample for poscounts size factors");
             }
             Arrays.sort(logRatios, 0, count);
-            sizeFactors[columnIndex] = Math.exp(medianOfSorted(logRatios, count));
+            sizeFactors[columnIndex] = Math.exp(Deseq2Statistics.medianOfSorted(logRatios, count));
         }
         return sizeFactors;
     }
@@ -1411,7 +1411,7 @@ public class Deseq2LikeRegressionZModel {
             final double meanInverseSizeFactor,
             final double maxDisp) {
         final double roughDisp = roughDispersionEstimate(normalized, normalizedFit);
-        final double baseVariance = sampleVariance(normalized);
+        final double baseVariance = Deseq2Statistics.sampleVariance(normalized);
         final double momentsDisp = (baseVariance - (meanInverseSizeFactor * meanNormCount))
                 / (meanNormCount * meanNormCount);
 
@@ -1419,7 +1419,7 @@ public class Deseq2LikeRegressionZModel {
         if (Double.isFinite(momentsDisp)) {
             alpha = Double.isFinite(alpha) ? Math.min(alpha, momentsDisp) : momentsDisp;
         }
-        return clamp(Double.isFinite(alpha) ? alpha : MIN_DISP, MIN_DISP, maxDisp);
+        return Deseq2Statistics.clamp(Double.isFinite(alpha) ? alpha : MIN_DISP, MIN_DISP, maxDisp);
     }
 
     private static double computeMeanInverseSizeFactor(final double[] sizeFactors) {
@@ -1552,7 +1552,7 @@ public class Deseq2LikeRegressionZModel {
             return new double[]{priorVar, 0.0d};
         }
 
-        final double madSd = robustMadSd(residuals, count);
+        final double madSd = Deseq2Statistics.robustMadSd(residuals, count);
         final double varLogDispEsts = Double.isFinite(madSd) ? madSd * madSd : 0.0d;
 
         if (residualDf > 0 && residualDf <= 3) {
@@ -1682,7 +1682,7 @@ public class Deseq2LikeRegressionZModel {
             final double logAlphaPriorSigmaSq,
             final boolean usePrior,
             final double maxDisp) {
-        double a = clamp(Math.log(clamp(alphaStart, MIN_DISP, maxDisp)), MIN_LOG_ALPHA_LINE_SEARCH, MAX_LOG_ALPHA);
+        double a = Deseq2Statistics.clamp(Math.log(Deseq2Statistics.clamp(alphaStart, MIN_DISP, maxDisp)), MIN_LOG_ALPHA_LINE_SEARCH, MAX_LOG_ALPHA);
         double[] log1pMuAlpha = new double[ds.getNumCol()];
         double lp = logPosteriorForLogAlpha(ds, rowIndex, conditionVector, muHat, a, logAlphaPriorMean, logAlphaPriorSigmaSq,
                 usePrior, log1pMuAlpha);
@@ -1777,7 +1777,7 @@ public class Deseq2LikeRegressionZModel {
             }
         }
 
-        return clamp(Math.exp(bestLogAlpha), MIN_DISP, maxDisp);
+        return Deseq2Statistics.clamp(Math.exp(bestLogAlpha), MIN_DISP, maxDisp);
     }
 
     private static double logPosteriorForLogAlpha(final Dataset ds,
@@ -2592,7 +2592,7 @@ public class Deseq2LikeRegressionZModel {
             final double[] fittedTrend = new double[means.length];
             for (int i = 0; i < means.length; i++) {
                 fittedTrend[i] = Double.isFinite(means[i]) && means[i] > EPS
-                        ? trendDispersion(means[i], trendParams[0], trendParams[1])
+                        ? Deseq2Statistics.trendDispersion(means[i], trendParams[0], trendParams[1])
                         : Double.NaN;
             }
             if (trendParamsOut != null && trendParamsOut.length >= 2) {
@@ -2624,7 +2624,7 @@ public class Deseq2LikeRegressionZModel {
             final double[] defaultTrend = new double[means.length];
             for (int i = 0; i < means.length; i++) {
                 defaultTrend[i] = Double.isFinite(means[i]) && means[i] > EPS
-                        ? trendDispersion(means[i], 0.1d, 1.0d)
+                        ? Deseq2Statistics.trendDispersion(means[i], 0.1d, 1.0d)
                         : Double.NaN;
             }
             if (trendParamsOut != null && trendParamsOut.length >= 2) {
@@ -2724,7 +2724,7 @@ public class Deseq2LikeRegressionZModel {
                     if (!(scaledDistance < 1.0d)) {
                         continue;
                     }
-                    weight *= cube(1.0d - cube(scaledDistance));
+                    weight *= Deseq2Statistics.cube(1.0d - Deseq2Statistics.cube(scaledDistance));
                 }
                 if (!(weight > 0.0d)) {
                     continue;
@@ -2926,506 +2926,6 @@ public class Deseq2LikeRegressionZModel {
         return (deltaA * deltaA) + (deltaB * deltaB);
     }
 
-    private static double trendDispersion(final double mean, final double a, final double b) {
-        return Math.max(MIN_DISP, a + b / Math.max(EPS, mean));
-    }
-
-    private static double selectIndependentFilteringThreshold(final double[] filter, final double[] pValues) {
-        final double[] safeFilter = sanitizeFilter(filter);
-        final double lowerQuantile = meanZeroFraction(safeFilter);
-        final double upperQuantile = lowerQuantile < 0.95d ? 0.95d : 1.0d;
-        if (upperQuantile <= lowerQuantile + EPS) {
-            return quantile(safeFilter, lowerQuantile);
-        }
-
-        final double[] theta = sequence(lowerQuantile, upperQuantile, FILTER_GRID_POINTS);
-        final double[] numRej = new double[theta.length];
-        for (int i = 0; i < theta.length; i++) {
-            final double cutoff = quantile(safeFilter, theta[i]);
-            final double[] filteredPadj = applyIndependentFilteringAtSafeThreshold(safeFilter, pValues, cutoff);
-            numRej[i] = countRejections(filteredPadj, TARGET_FDR);
-        }
-
-        final int selectedIndex;
-        if (max(numRej) <= 10.0d) {
-            selectedIndex = 0;
-        } else {
-            final double[] smooth = smoothRejectionCurve(theta, numRej);
-            final double[] residual = positiveResiduals(numRej, smooth);
-            final double maxFit = max(smooth);
-            final double residualRmse = rmse(residual);
-            final double threshold = maxFit - residualRmse;
-            if (anyGreaterThan(numRej, threshold)) {
-                selectedIndex = firstGreaterThan(numRej, threshold);
-            } else if (anyGreaterThan(numRej, 0.9d * maxFit)) {
-                selectedIndex = firstGreaterThan(numRej, 0.9d * maxFit);
-            } else if (anyGreaterThan(numRej, 0.8d * maxFit)) {
-                selectedIndex = firstGreaterThan(numRej, 0.8d * maxFit);
-            } else {
-                selectedIndex = 0;
-            }
-        }
-
-        final double selectedThreshold = quantile(safeFilter, theta[selectedIndex]);
-        if (log.isDebugEnabled()) {
-            log.debug("Selected independent filtering threshold {}", selectedThreshold);
-        }
-        return selectedThreshold;
-    }
-
-    private static double[] applyIndependentFilteringAtThreshold(final double[] filter,
-            final double[] pValues,
-            final double threshold) {
-        if (!Double.isFinite(threshold)) {
-            return benjaminiHochberg(pValues);
-        }
-        return applyIndependentFilteringAtSafeThreshold(sanitizeFilter(filter), pValues, threshold);
-    }
-
-    private static double[] applyIndependentFilteringAtSafeThreshold(final double[] safeFilter,
-            final double[] pValues,
-            final double threshold) {
-        final double[] adjusted = new double[pValues.length];
-        Arrays.fill(adjusted, Double.NaN);
-
-        int selected = 0;
-        for (int i = 0; i < pValues.length; i++) {
-            if (safeFilter[i] >= threshold && Double.isFinite(pValues[i])) {
-                selected++;
-            }
-        }
-        if (selected == 0) {
-            return adjusted;
-        }
-
-        final int[] indices = new int[selected];
-        final double[] selectedPValues = new double[selected];
-        int pos = 0;
-        for (int i = 0; i < pValues.length; i++) {
-            if (safeFilter[i] >= threshold && Double.isFinite(pValues[i])) {
-                indices[pos] = i;
-                selectedPValues[pos] = pValues[i];
-                pos++;
-            }
-        }
-
-        final double[] selectedAdjusted = benjaminiHochberg(selectedPValues);
-        for (int i = 0; i < selected; i++) {
-            adjusted[indices[i]] = selectedAdjusted[i];
-        }
-        return adjusted;
-    }
-
-    private static double[] benjaminiHochberg(final double[] pValues) {
-        final double[] adjusted = new double[pValues.length];
-        Arrays.fill(adjusted, Double.NaN);
-
-        int finite = 0;
-        for (double pValue : pValues) {
-            if (Double.isFinite(pValue)) {
-                finite++;
-            }
-        }
-        if (finite == 0) {
-            return adjusted;
-        }
-
-        final Integer[] order = new Integer[finite];
-        int pos = 0;
-        for (int i = 0; i < pValues.length; i++) {
-            if (Double.isFinite(pValues[i])) {
-                order[pos++] = i;
-            }
-        }
-        Arrays.sort(order, (left, right) -> Double.compare(pValues[left], pValues[right]));
-
-        double running = 1.0d;
-        for (int rank = finite - 1; rank >= 0; rank--) {
-            final int index = order[rank];
-            final double raw = pValues[index] * ((double) finite / (double) (rank + 1));
-            running = Math.min(running, raw);
-            adjusted[index] = clamp(running, 0.0d, 1.0d);
-        }
-        return adjusted;
-    }
-
-    private static double[] sanitizeFilter(final double[] filter) {
-        final double[] safe = new double[filter.length];
-        for (int i = 0; i < filter.length; i++) {
-            final double value = filter[i];
-            safe[i] = Double.isFinite(value) && value > 0.0d ? value : 0.0d;
-        }
-        return safe;
-    }
-
-    private static double meanZeroFraction(final double[] values) {
-        int zeros = 0;
-        for (double value : values) {
-            if (value == 0.0d) {
-                zeros++;
-            }
-        }
-        return values.length == 0 ? 0.0d : ((double) zeros / (double) values.length);
-    }
-
-    private static double[] sequence(final double start, final double end, final int length) {
-        final double[] values = new double[length];
-        if (length == 1) {
-            values[0] = start;
-            return values;
-        }
-        for (int i = 0; i < length; i++) {
-            values[i] = start + ((end - start) * i / (length - 1));
-        }
-        return values;
-    }
-
-    private static double[] smoothRejectionCurve(final double[] theta, final double[] numRej) {
-        try {
-            if (theta.length != numRej.length || theta.length == 0) {
-                return new double[0];
-            }
-            final double range = theta[theta.length - 1] - theta[0];
-            final double delta = range > 0.0d ? LOWESS_DELTA_FRACTION * range : 0.0d;
-            return lowess(theta, numRej, FILTER_SMOOTHING_SPAN, 3, delta);
-        } catch (RuntimeException ex) {
-            final double[] copy = new double[numRej.length];
-            System.arraycopy(numRej, 0, copy, 0, numRej.length);
-            return copy;
-        }
-    }
-
-    private static double[] lowess(final double[] x,
-            final double[] y,
-            final double f,
-            final int nsteps,
-            final double delta) {
-        return lowess(x, y, f, nsteps, delta, null);
-    }
-
-    private static double[] lowess(final double[] x,
-            final double[] y,
-            final double f,
-            final int nsteps,
-            final double delta,
-            final double[] priorWeights) {
-        final int n = x.length;
-        final double[] ys = Arrays.copyOf(y, n);
-        if (n < 2) {
-            return ys;
-        }
-
-        final int ns = Math.max(2, Math.min(n, (int) (f * n + 1.0e-7d)));
-        final double[] robustnessWeights = new double[n];
-        final double[] residuals = new double[n];
-        final double[] weights = new double[n];
-
-        int iter = 1;
-        while (iter <= nsteps + 1) {
-            int nleft = 0;
-            int nright = ns - 1;
-            int last = -1;
-            int i = 0;
-
-            while (true) {
-                if (nright < n - 1) {
-                    final double d1 = x[i] - x[nleft];
-                    final double d2 = x[nright + 1] - x[i];
-                    if (d1 > d2) {
-                        nleft++;
-                        nright++;
-                        continue;
-                    }
-                }
-
-                final LowessPointFit fit = lowessPoint(x, y, x[i], nleft, nright, weights, iter > 1, robustnessWeights,
-                        priorWeights);
-                ys[i] = fit.ok ? fit.y : y[i];
-
-                if (last < i - 1) {
-                    final double denom = x[i] - x[last];
-                    for (int j = last + 1; j < i; j++) {
-                        final double alpha = Math.abs(denom) <= EPS ? 0.0d : (x[j] - x[last]) / denom;
-                        ys[j] = alpha * ys[i] + (1.0d - alpha) * ys[last];
-                    }
-                }
-
-                last = i;
-                final double cut = x[last] + delta;
-                int nextI;
-                for (nextI = last + 1; nextI < n; nextI++) {
-                    if (x[nextI] > cut) {
-                        break;
-                    }
-                    if (x[nextI] == x[last]) {
-                        ys[nextI] = ys[last];
-                        last = nextI;
-                    }
-                }
-                i = Math.max(last + 1, nextI - 1);
-                if (last >= n - 1) {
-                    break;
-                }
-            }
-
-            double scale = 0.0d;
-            for (int j = 0; j < n; j++) {
-                residuals[j] = y[j] - ys[j];
-                scale += Math.abs(residuals[j]);
-            }
-            scale /= n;
-
-            if (iter > nsteps) {
-                break;
-            }
-
-            final double[] absResiduals = new double[n];
-            for (int j = 0; j < n; j++) {
-                absResiduals[j] = Math.abs(residuals[j]);
-            }
-            Arrays.sort(absResiduals);
-
-            final double cmad;
-            if ((n & 1) == 0) {
-                final int m1 = n / 2;
-                final int m2 = n - m1 - 1;
-                cmad = 3.0d * (absResiduals[m1] + absResiduals[m2]);
-            } else {
-                cmad = 6.0d * absResiduals[n / 2];
-            }
-
-            if (cmad < 1.0e-7d * scale) {
-                break;
-            }
-
-            final double c9 = 0.999d * cmad;
-            final double c1 = 0.001d * cmad;
-            for (int j = 0; j < n; j++) {
-                final double r = Math.abs(residuals[j]);
-                if (r <= c1) {
-                    robustnessWeights[j] = 1.0d;
-                } else if (r <= c9) {
-                    final double value = 1.0d - square(r / cmad);
-                    robustnessWeights[j] = square(value);
-                } else {
-                    robustnessWeights[j] = 0.0d;
-                }
-            }
-            iter++;
-        }
-
-        return ys;
-    }
-
-    private static LowessPointFit lowessPoint(final double[] x,
-            final double[] y,
-            final double xs,
-            final int nleft,
-            final int nright,
-            final double[] weights,
-            final boolean useRobustnessWeights,
-            final double[] robustnessWeights,
-            final double[] priorWeights) {
-        final int n = x.length;
-        final double range = x[n - 1] - x[0];
-        final double h = Math.max(xs - x[nleft], x[nright] - xs);
-        final double h9 = 0.999d * h;
-        final double h1 = 0.001d * h;
-
-        double weightSum = 0.0d;
-        int j = nleft;
-        while (j < n) {
-            weights[j] = 0.0d;
-            final double r = Math.abs(x[j] - xs);
-            if (r <= h9) {
-                if (r <= h1) {
-                    weights[j] = 1.0d;
-                } else {
-                    weights[j] = cube(1.0d - cube(r / h));
-                }
-                if (priorWeights != null) {
-                    weights[j] *= Math.max(0.0d, priorWeights[j]);
-                }
-                if (useRobustnessWeights) {
-                    weights[j] *= robustnessWeights[j];
-                }
-                weightSum += weights[j];
-            } else if (x[j] > xs) {
-                break;
-            }
-            j++;
-        }
-
-        final int nrt = j - 1;
-        if (!(weightSum > 0.0d)) {
-            return new LowessPointFit(Double.NaN, false);
-        }
-
-        for (j = nleft; j <= nrt; j++) {
-            weights[j] /= weightSum;
-        }
-        if (h > 0.0d) {
-            double weightedCenter = 0.0d;
-            for (j = nleft; j <= nrt; j++) {
-                weightedCenter += weights[j] * x[j];
-            }
-            double b = xs - weightedCenter;
-            double c = 0.0d;
-            for (j = nleft; j <= nrt; j++) {
-                c += weights[j] * square(x[j] - weightedCenter);
-            }
-            if (Math.sqrt(c) > 0.001d * range) {
-                b /= c;
-                for (j = nleft; j <= nrt; j++) {
-                    weights[j] *= (b * (x[j] - weightedCenter)) + 1.0d;
-                }
-            }
-        }
-
-        double ys = 0.0d;
-        for (j = nleft; j <= nrt; j++) {
-            ys += weights[j] * y[j];
-        }
-        return new LowessPointFit(ys, true);
-    }
-
-    private static double square(final double value) {
-        return value * value;
-    }
-
-    private static double cube(final double value) {
-        return value * value * value;
-    }
-
-    private static double[] positiveResiduals(final double[] numRej, final double[] smooth) {
-        int count = 0;
-        for (double value : numRej) {
-            if (value > 0.0d) {
-                count++;
-            }
-        }
-        if (count == 0) {
-            return new double[]{0.0d};
-        }
-
-        final double[] residual = new double[count];
-        int pos = 0;
-        for (int i = 0; i < numRej.length; i++) {
-            if (numRej[i] > 0.0d) {
-                residual[pos++] = numRej[i] - smooth[i];
-            }
-        }
-        return residual;
-    }
-
-    private static double rmse(final double[] values) {
-        if (values.length == 0) {
-            return 0.0d;
-        }
-        double sumSq = 0.0d;
-        for (double value : values) {
-            sumSq += value * value;
-        }
-        return Math.sqrt(sumSq / values.length);
-    }
-
-    private static double countRejections(final double[] adjustedPValues, final double alpha) {
-        int count = 0;
-        for (double value : adjustedPValues) {
-            if (Double.isFinite(value) && value < alpha) {
-                count++;
-            }
-        }
-        return count;
-    }
-
-    private static boolean anyGreaterThan(final double[] values, final double threshold) {
-        for (double value : values) {
-            if (value > threshold) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private static int firstGreaterThan(final double[] values, final double threshold) {
-        for (int i = 0; i < values.length; i++) {
-            if (values[i] > threshold) {
-                return i;
-            }
-        }
-        return 0;
-    }
-
-    private static double quantile(final double[] values, final double probability) {
-        final double[] sorted = values.clone();
-        Arrays.sort(sorted);
-        if (sorted.length == 0) {
-            return Double.NaN;
-        }
-        if (probability <= 0.0d) {
-            return sorted[0];
-        }
-        if (probability >= 1.0d) {
-            return sorted[sorted.length - 1];
-        }
-
-        final double h = 1.0d + ((sorted.length - 1.0d) * probability);
-        final int lower = (int) Math.floor(h) - 1;
-        final double fraction = h - Math.floor(h);
-        final double lowerValue = sorted[Math.max(0, lower)];
-        final double upperValue = sorted[Math.min(sorted.length - 1, lower + 1)];
-        return lowerValue + fraction * (upperValue - lowerValue);
-    }
-
-    private static double medianOfSorted(final double[] values, final int length) {
-        if (length <= 0) {
-            return Double.NaN;
-        }
-        if ((length & 1) == 1) {
-            return values[length / 2];
-        }
-        return (values[(length / 2) - 1] + values[length / 2]) / 2.0d;
-    }
-
-    private static double trimmedMean(final double[] values, final int length, final double trim) {
-        if (length <= 0) {
-            return Double.NaN;
-        }
-        final double[] copy = Arrays.copyOf(values, length);
-        Arrays.sort(copy);
-        final int trimCount = (int) Math.floor(trim * length);
-        final int start = Math.min(trimCount, length - 1);
-        final int end = Math.max(start + 1, length - trimCount);
-        double sum = 0.0d;
-        int count = 0;
-        for (int i = start; i < end; i++) {
-            sum += copy[i];
-            count++;
-        }
-        return count == 0 ? Double.NaN : sum / count;
-    }
-
-    private static double trimRatioForSampleCount(final int sampleCount) {
-        if (sampleCount <= 3) {
-            return 1.0d / 3.0d;
-        }
-        if (sampleCount <= 23) {
-            return 1.0d / 4.0d;
-        }
-        return 1.0d / 8.0d;
-    }
-
-    private static double scaleForTrimmedVariance(final int sampleCount) {
-        if (sampleCount <= 3) {
-            return 2.04d;
-        }
-        if (sampleCount <= 23) {
-            return 1.86d;
-        }
-        return 1.51d;
-    }
-    
     private static ConditionVector createConditionVector(final Template template, final int numCols) {
         final int[] condition = new int[numCols];
         Arrays.fill(condition, -1);
@@ -3492,67 +2992,4 @@ public class Deseq2LikeRegressionZModel {
         return anySelected && selectedAllZero && anyPositive;
     }
 
-    private static double sampleVariance(final double[] values) {
-        // TODO: evaluate a pre-pass to determine usable samples and lift the min count check above the loop.
-        double sum = 0.0d;
-        int count = 0;
-        for (double value : values) {
-            if (Double.isFinite(value)) {
-                sum += value;
-                count++;
-            }
-        }
-        if (count < 2) {
-            return Double.NaN;
-        }
-
-        final double mean = sum / count;
-        double sumSq = 0.0d;
-        for (double value : values) {
-            if (Double.isFinite(value)) {
-                final double delta = value - mean;
-                sumSq += delta * delta;
-            }
-        }
-        return sumSq / (count - 1);
-    }
-
-    private static double robustMadSd(final double[] values, final int length) {
-        if (length <= 0) {
-            return Double.NaN;
-        }
-        final double[] sorted = Arrays.copyOf(values, length);
-        Arrays.sort(sorted);
-        final double median = medianOfSorted(sorted, length);
-        final double[] absDev = new double[length];
-        for (int i = 0; i < length; i++) {
-            absDev[i] = Math.abs(sorted[i] - median);
-        }
-        Arrays.sort(absDev);
-        final double mad = medianOfSorted(absDev, length);
-        final double sd = mad / ROBUST_NORMAL_SD_QUANTILE;
-        return Double.isFinite(sd) && sd >= 0.0d ? sd : 0.0d;
-    }
-
-    private static double twoSidedPValueFromZ(final double z) {
-        if (!Double.isFinite(z)) {
-            return Double.NaN;
-        }
-        final double p = Erf.erfc(Math.abs(z) / Math.sqrt(2.0d));
-        return clamp(p, 0.0d, 1.0d);
-    }
-
-    private static double max(final double[] values) {
-        double max = Double.NEGATIVE_INFINITY;
-        for (double value : values) {
-            if (value > max) {
-                max = value;
-            }
-        }
-        return max;
-    }
-
-    private static double clamp(final double value, final double min, final double max) {
-        return Math.max(min, Math.min(max, value));
-    }
 }

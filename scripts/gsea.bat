@@ -23,7 +23,7 @@ if exist javafx-modules (
 ::https://raw.githubusercontent.com/GSEA-MSigDB/gsea-desktop/master/scripts/readme.txt 
 ::OpenJFX: run "gradlew syncJavaFxToModules" for local javafx-modules/, or use a dist that merges them into modules/.
 if exist "%USERPROFILE%\.gsea\java_arguments" (
-    start %JAVA_CMD% -showversion --module-path=%MODULE_PATH% --add-opens=javafx.graphics/com.sun.javafx.stage=org.gsea_msigdb.gsea -Xmx4g -Djava.awt.headless=false -Dgsea.ui=javafx @gsea.args -Djava.util.logging.config.file=logging.properties @"%USERPROFILE%\.gsea\java_arguments" --module=org.gsea_msigdb.gsea/xapps.gsea.GSEA  %*
+    start %JAVA_CMD% -showversion --module-path=%MODULE_PATH% --enable-native-access=javafx.graphics,javafx.web,javafx.media,com.sun.jna --add-opens=javafx.graphics/com.sun.javafx.stage=org.gsea_msigdb.gsea -Xmx4g -Djava.awt.headless=false -Dgsea.ui=javafx @gsea.args -Djava.util.logging.config.file=logging.properties @"%USERPROFILE%\.gsea\java_arguments" --module=org.gsea_msigdb.gsea/xapps.gsea.GSEA  %*
 ) else (
-    start %JAVA_CMD% -showversion --module-path=%MODULE_PATH% --add-opens=javafx.graphics/com.sun.javafx.stage=org.gsea_msigdb.gsea -Xmx4g -Djava.awt.headless=false -Dgsea.ui=javafx @gsea.args -Djava.util.logging.config.file=logging.properties --module=org.gsea_msigdb.gsea/xapps.gsea.GSEA  %*
+    start %JAVA_CMD% -showversion --module-path=%MODULE_PATH% --enable-native-access=javafx.graphics,javafx.web,javafx.media,com.sun.jna --add-opens=javafx.graphics/com.sun.javafx.stage=org.gsea_msigdb.gsea -Xmx4g -Djava.awt.headless=false -Dgsea.ui=javafx @gsea.args -Djava.util.logging.config.file=logging.properties --module=org.gsea_msigdb.gsea/xapps.gsea.GSEA  %*
 )

@@ -8,11 +8,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
-import java.util.concurrent.CountDownLatch;
-
 import org.apache.commons.lang3.SystemUtils;
 import org.gsea_msigdb.gsea.ui.api.ViewPage;
-import org.gsea_msigdb.gsea.ui.api.Workspace;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,8 +31,6 @@ import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
-import javafx.scene.control.MenuItem;
-import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.image.Image;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
@@ -46,10 +41,8 @@ import org.gsea_msigdb.gsea.runtime.WorkspaceSession;
 import org.gsea_msigdb.gsea.ui.api.FeatureHost;
 import org.gsea_msigdb.gsea.ui.api.PageId;
 import org.gsea_msigdb.gsea.ui.api.PageRegistry;
-import xapps.gsea.GseaWebResources;
 import xapps.gsea.UpdateChecker;
 import xapps.gsea.VdbManagerForGsea;
-import xapps.gsea.fx.widgets.FxFileIcons;
 import xapps.gsea.fx.jobs.ApplicationLog;
 import xapps.gsea.fx.jobs.FxJobsPane;
 import xapps.gsea.fx.jobs.JobRuntime;
@@ -73,7 +66,7 @@ import xtools.munge.CollapseDataset;
 /**
  * Primary JavaFX application shell.
  */
-public class GseaFxShell implements Workspace, Application.Handler {
+public class GseaFxShell implements Application.Handler {
 
     private static final Logger klog = LoggerFactory.getLogger(GseaFxShell.class);
     private static final Properties buildProps = JarResources.getBuildInfo();
@@ -110,8 +103,7 @@ public class GseaFxShell implements Workspace, Application.Handler {
         this.appServices = new AppServices(windowManager, fileManager, vdbManager, toolManager,
                 jobRuntime, workspaceSession);
         this.appServices.bindAsCurrent();
-        this.featureHost = new FeatureHost(appServices, pageRegistry, this::openPage,
-                () -> stage.getScene() != null ? stage.getScene().getWindow() : stage);
+        this.featureHost = new FeatureHost(appServices, pageRegistry, dockWorkspace::openPage);
         this.jobsPane = new FxJobsPane(featureHost);
         this.consoleViewer = new FxConsoleViewer(applicationLog);
         this.jobRuntime.installCapture();
@@ -200,13 +192,13 @@ public class GseaFxShell implements Workspace, Application.Handler {
 
         DesktopIntegration.installHandlers(this::showAbout, this::requestQuit);
 
-        openPage(new FxHomePane(featureHost, this::openLoadData, this::openGsea, this::openAnalysisHistory));
+        dockWorkspace.openPage(new FxHomePane(featureHost, this::openLoadData, this::openGsea, this::openAnalysisHistory));
 
         klog.info("JavaFX GSEA shell ready");
 
         Thread updateThread = new Thread(() -> {
             Optional<String> updateMsg = UpdateChecker.oneTimeGseaUpdateCheckMessage();
-            updateMsg.ifPresent(msg -> Platform.runLater(() -> showMessage(null, msg)));
+            updateMsg.ifPresent(msg -> Platform.runLater(() -> windowManager.showMessage(null, msg)));
         }, "gsea-update-check");
         updateThread.setDaemon(true);
         updateThread.start();
@@ -275,126 +267,63 @@ public class GseaFxShell implements Workspace, Application.Handler {
     }
 
     private MenuBar buildMenuBar() {
-        MenuBar bar = new MenuBar();
-
-        Menu file = new Menu("File");
-        MenuItem prefs = menuItemWithTooltip("Preferences ...",
-                "View and modify application wide preferences", "Preferences16.gif");
-        prefs.setOnAction(e -> FxPreferencesPane.showDialog(stage, appServices));
-        MenuItem clearHistory = menuItemWithTooltip("Clear recent file history",
-                "Clear recent file history (from the 'Load Data' panel)");
-        clearHistory.setOnAction(e -> clearRecentFileHistory());
-        file.getItems().addAll(prefs, new SeparatorMenuItem(), clearHistory);
-        if (!SystemUtils.IS_OS_MAC) {
-            MenuItem exit = menuItemWithTooltip("Exit", "Quit the GSEA application");
-            exit.setOnAction(e -> exitApplication());
-            file.getItems().addAll(new SeparatorMenuItem(), exit);
-        }
-
-        Menu downloads = new Menu("Downloads");
-        downloads.getItems().addAll(
-                browseMenuItem("Download Human chip annotations",
-                        "Download Human array annotation files - useful to annotate GSEA reports",
-                        GseaWebResources.getHumanArrayAnnotationsURL(), false),
-                browseMenuItem("Download Mouse chip annotations",
-                        "Download Mouse array annotation files - useful to annotate GSEA reports",
-                        GseaWebResources.getMouseArrayAnnotationsURL(), false),
-                browseMenuItem("Download example datasets",
-                        "Download example datasets for GSEA - expression data, phenotype labels and gene sets files",
-                        GseaWebResources.getGseaExamplesURL(), false));
-
-        Menu help = new Menu("Help");
-        String version = buildProps.getProperty("build.version", "[NO BUILD VERSION FOUND]");
-        String buildNo = buildProps.getProperty("build.number", "Error loading build.properties!");
-        String ts = buildProps.getProperty("build.timestamp", "");
-        MenuItem buildInfo = new MenuItem("GSEA v" + version + " [build: " + buildNo + "]");
-        MenuItem showHome = menuItemWithTooltip("Show GSEA home folder",
-                "Show runtime home directory of this application");
-        showHome.setOnAction(e -> {
-            File dir = XPreferencesFactory.kAppRuntimeHomeDir;
-            if (dir == null) {
-                return;
+        return GseaFxMenus.build(new GseaFxMenus.Host() {
+            @Override
+            public void openPreferences() {
+                FxPreferencesPane.showDialog(stage, appServices);
             }
-            try {
-                // Open in explorer only — do not register folders as "recent files".
-                xapps.gsea.fx.FxDesktopUtil.openInOsExplorer(dir);
-            } catch (Exception ex) {
-                showError("Trouble launching File Explorer on path '" + dir.getPath() + "'", ex);
+
+            @Override
+            public void clearRecentFileHistory() {
+                GseaFxShell.this.clearRecentFileHistory();
             }
-        });
-        MenuItem showOut = menuItemWithTooltip("Show GSEA output folder (default location)",
-                "Show output directory of this application");
-        showOut.setOnAction(e -> {
-            File dir = appServices.vdb().getDefaultOutputDir();
-            if (dir == null) {
-                return;
+
+            @Override
+            public void exitApplication() {
+                GseaFxShell.this.exitApplication();
             }
-            try {
-                // Open in explorer only — do not register folders as "recent files".
-                xapps.gsea.fx.FxDesktopUtil.openInOsExplorer(dir);
-            } catch (Exception ex) {
-                showError("Trouble launching File Explorer on path '" + dir.getPath() + "'", ex);
+
+            @Override
+            public void showApplicationMessages() {
+                GseaFxShell.this.showApplicationMessages();
+            }
+
+            @Override
+            public void browse(String url) {
+                browseUrl(url);
+            }
+
+            @Override
+            public void showError(String message, Throwable error) {
+                klog.error(message, error);
+                windowManager.showError(message, error);
+            }
+
+            @Override
+            public File runtimeHome() {
+                return XPreferencesFactory.kAppRuntimeHomeDir;
+            }
+
+            @Override
+            public File defaultOutputDir() {
+                return appServices.vdb().getDefaultOutputDir();
+            }
+
+            @Override
+            public String version() {
+                return buildProps.getProperty("build.version", "[NO BUILD VERSION FOUND]");
+            }
+
+            @Override
+            public String buildNumber() {
+                return buildProps.getProperty("build.number", "Error loading build.properties!");
+            }
+
+            @Override
+            public String buildTimestamp() {
+                return buildProps.getProperty("build.timestamp", "");
             }
         });
-        MenuItem appMessages = menuItemWithTooltip("Application messages",
-                "Show unattributed application messages (not tied to a job)");
-        appMessages.setOnAction(e -> showApplicationMessages());
-        help.getItems().addAll(
-                browseMenuItem("GSEA web site", "Open the GSEA website in a web browser",
-                        GseaWebResources.getGseaBaseURL(), true),
-                browseMenuItem("GSEA documentation",
-                        "Online documentation of the GSEA algorithm and software",
-                        GseaWebResources.getGseaHelpURL(), true),
-                browseMenuItem("GSEA & MSigDB License Terms", "GSEA & MSigDB License Terms",
-                        GseaWebResources.getGseaBaseURL() + "/license_terms_list.jsp", true),
-                new SeparatorMenuItem(),
-                showHome,
-                showOut,
-                appMessages,
-                new SeparatorMenuItem(),
-                browseMenuItem("Contact Us", "Contact Us",
-                        GseaWebResources.getGseaContactURL(), false),
-                new SeparatorMenuItem(),
-                buildInfo);
-        if (ts == null || ts.isBlank()) {
-            help.getItems().add(new SeparatorMenuItem());
-        } else {
-            help.getItems().add(new MenuItem("Built: " + ts));
-        }
-
-        bar.getMenus().addAll(file, downloads, help);
-        return bar;
-    }
-
-    private MenuItem menuItemWithTooltip(String name, String tooltip) {
-        return menuItemWithTooltip(name, tooltip, null);
-    }
-
-    private MenuItem menuItemWithTooltip(String name, String tooltip, String iconResource) {
-        Label label = new Label(name);
-        if (iconResource != null && !iconResource.isBlank()) {
-            label.setGraphic(FxFileIcons.forResource(iconResource));
-        }
-        if (tooltip != null && !tooltip.isBlank()) {
-            label.setTooltip(new javafx.scene.control.Tooltip(tooltip));
-        }
-        javafx.scene.control.CustomMenuItem item = new javafx.scene.control.CustomMenuItem(label);
-        item.setHideOnClick(true);
-        return item;
-    }
-
-    private MenuItem browseMenuItem(String name, String tooltip, String url, boolean helpIcon) {
-        Label label = new Label(name);
-        if (helpIcon) {
-            label.setGraphic(FxFileIcons.forResource("Help16_v2.gif"));
-        }
-        if (tooltip != null && !tooltip.isBlank()) {
-            label.setTooltip(new javafx.scene.control.Tooltip(tooltip));
-        }
-        javafx.scene.control.CustomMenuItem item = new javafx.scene.control.CustomMenuItem(label);
-        item.setHideOnClick(true);
-        item.setOnAction(e -> browseUrl(url));
-        return item;
     }
 
     /** Tool groups: Load Data, Enrichment Methods, Post-Analysis, Additional Tools, Analysis History. */
@@ -457,7 +386,7 @@ public class GseaFxShell implements Workspace, Application.Handler {
 
     private void openEnrichmentMap() {
         if (pageRegistry.peekSingleton(PageId.ENRICHMENT_MAP) == null) {
-            if (!showConfirm("Please confirm this action", FxEnrichmentMapPane.LAUNCH_MSG)) {
+            if (!windowManager.showConfirm("Please confirm this action", FxEnrichmentMapPane.LAUNCH_MSG)) {
                 return;
             }
         }
@@ -491,7 +420,7 @@ public class GseaFxShell implements Workspace, Application.Handler {
     }
 
     private void clearRecentFileHistory() {
-        if (!showConfirm("Clear file history",
+        if (!windowManager.showConfirm("Clear file history",
                 "Are you sure you want to erase all file history")) {
             return;
         }
@@ -499,7 +428,8 @@ public class GseaFxShell implements Workspace, Application.Handler {
             appServices.files().getRecentFilesStore().clearAll();
             refreshOpenLoadDataPanes();
         } catch (Exception e) {
-            showError("Could not clear recent file history", e);
+            klog.error("Could not clear recent file history", e);
+            windowManager.showError("Could not clear recent file history", e);
         }
     }
 
@@ -508,96 +438,6 @@ public class GseaFxShell implements Workspace, Application.Handler {
         if (page instanceof FxLoadDataPane loadData) {
             loadData.refreshRecentFiles();
         }
-    }
-
-    @Override
-    public void openPage(ViewPage page) {
-        dockWorkspace.openPage(page);
-    }
-
-    @Override
-    public void showError(String message) {
-        windowManager.showError(message);
-    }
-
-    /** Error dialog with an explicit title (used e.g. for a named {@link edu.mit.broad.genome.Errors} bag). */
-    public void showError(String title, String message) {
-        windowManager.showError(title, message);
-    }
-
-    @Override
-    public void showError(String message, Throwable t) {
-        klog.error(message, t);
-        windowManager.showError(message, t);
-    }
-
-    @Override
-    public void showMessage(String title, String message) {
-        windowManager.showMessage(title, message);
-    }
-
-    /** Strips a leading {@code <html>...</html>} wrapper down to plain text for a simple Label/Alert body. */
-    private static String contentFor(String message) {
-        if (message == null) {
-            return "";
-        }
-        String trimmed = message.trim();
-        if (!trimmed.regionMatches(true, 0, "<html>", 0, Math.min(6, trimmed.length()))) {
-            return message;
-        }
-        String stripped = trimmed.replaceAll("(?i)<br\\s*/?>", "\n")
-                .replaceAll("(?i)</p>", "\n")
-                .replaceAll("<[^>]+>", "")
-                .replace("&nbsp;", " ")
-                .replace("&amp;", "&")
-                .replace("&lt;", "<")
-                .replace("&gt;", ">")
-                .replace("&quot;", "\"");
-        return stripped.trim();
-    }
-
-    @Override
-    public boolean showConfirm(String title, String message) {
-        Boolean result = runOnFxThreadBlocking(() -> showConfirmOnFxThread(title, message));
-        return Boolean.TRUE.equals(result);
-    }
-
-    private boolean showConfirmOnFxThread(String title, String message) {
-        Alert alert = new Alert(Alert.AlertType.CONFIRMATION, contentFor(message), ButtonType.OK, ButtonType.CANCEL);
-        alert.setHeaderText(title);
-        alert.initOwner(stage);
-        alert.setResizable(true);
-        xapps.gsea.fx.FxTheme.apply(alert);
-        Optional<ButtonType> result = alert.showAndWait();
-        return result.isPresent() && result.get() == ButtonType.OK;
-    }
-
-    private <T> T runOnFxThreadBlocking(java.util.concurrent.Callable<T> callable) {
-        if (Platform.isFxApplicationThread()) {
-            try {
-                return callable.call();
-            } catch (Exception e) {
-                klog.warn("FX dialog failed", e);
-                return null;
-            }
-        }
-        final java.util.concurrent.atomic.AtomicReference<T> result = new java.util.concurrent.atomic.AtomicReference<>();
-        final CountDownLatch latch = new CountDownLatch(1);
-        Platform.runLater(() -> {
-            try {
-                result.set(callable.call());
-            } catch (Exception e) {
-                klog.warn("FX dialog failed", e);
-            } finally {
-                latch.countDown();
-            }
-        });
-        try {
-            latch.await();
-        } catch (InterruptedException ie) {
-            Thread.currentThread().interrupt();
-        }
-        return result.get();
     }
 
     private void normalizeBuildProps() {
@@ -652,7 +492,8 @@ public class GseaFxShell implements Workspace, Application.Handler {
             } catch (Throwable ignored) {
             }
         } catch (Exception e) {
-            showError("Could not launch browser", e);
+            klog.error("Could not launch browser", e);
+            windowManager.showError("Could not launch browser", e);
         }
     }
 
@@ -661,11 +502,12 @@ public class GseaFxShell implements Workspace, Application.Handler {
      */
     private boolean requestQuit() {
         if (XPreferencesFactory.kAskBeforeAppShutdown.getBoolean()) {
-            if (!showConfirm("Please confirm this action", "Exit the application?")) {
+            if (!windowManager.showConfirm("Please confirm this action", "Exit the application?")) {
                 return false;
             }
         }
         persistWindowAndDock();
+        fileManager.flushRecentWrites();
         jobsPane.dispose();
         jobRuntime.dispose();
         appServices.unbindIfCurrent();

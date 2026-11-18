@@ -235,85 +235,69 @@ public class GeneSetScoringTables {
         public float getMissScore(String name) { return miss_score; }
     }
 
-    public static class WeightedDoubleSidedAs extends AbstractScoringTable {
-
-        private static final String NAME = "weighted_as";
-
-        private float totalPosWeight_of_hits;
-        private float totalNegWeight_of_hits;
-
-        private float numPosScores;
-        private float numNegScores;
-
-        private float nhExpected;
-        private float nhPosActual;
-        private float nhNegActual;
-
-        private float nhPos_by_nh;
-        private float nhNeg_by_nh;
-
-        private float miss_pos_score;
-        private float miss_neg_score;
-
-        private int maxPosRealRank;
-
-        private GeneSet gset;
+    /**
+     * Shared hit/miss arithmetic for the two double-sided weighting schemes.
+     * They differ only in whether each side is scaled by its hit fraction.
+     */
+    private static final class DoubleSidedWeights {
         private RankedList rankedList;
+        private final int maxPosRealRank;
+        private final float totalPosWeight;
+        private final float totalNegWeight;
+        private final float nhPosByNh;
+        private final float nhNegByNh;
+        private final float missPosScore;
+        private final float missNegScore;
 
-        public void setReal(RankedList rl) {
-            this.rankedList = rl;
+        private DoubleSidedWeights(RankedList rankedList, int maxPosRealRank, float totalPosWeight,
+                float totalNegWeight, float nhPosByNh, float nhNegByNh, float missPosScore, float missNegScore) {
+            this.rankedList = rankedList;
+            this.maxPosRealRank = maxPosRealRank;
+            this.totalPosWeight = totalPosWeight;
+            this.totalNegWeight = totalNegWeight;
+            this.nhPosByNh = nhPosByNh;
+            this.nhNegByNh = nhNegByNh;
+            this.missPosScore = missPosScore;
+            this.missNegScore = missNegScore;
         }
 
-        public WeightedDoubleSidedAs() {
-        }
-
-        static int cnt = 0;
-
-        public WeightedDoubleSidedAs(final GeneSet gset, final RankedList rl, final RankedList real) {
-
-            this.gset = gset;
-            this.rankedList = rl;
-            this.nhExpected = gset.getNumMembers();
-
-            if (nhExpected == 0) {
+        static DoubleSidedWeights compute(GeneSet gset, RankedList rl, RankedList real, boolean scaleByHitFraction) {
+            if (gset.getNumMembers() == 0) {
                 throw new IllegalArgumentException("Number of members in gene set cannot be 0: " + gset.getName());
             }
-
+            int maxPosRealRank;
             if (real == null) {
                 klog.warn("Null real_rl so assuming real: {}", rl.getName());
-                this.maxPosRealRank = rl.getMetricWeightStruc().getTotalPosLength();
+                maxPosRealRank = rl.getMetricWeightStruc().getTotalPosLength();
             } else {
-                this.maxPosRealRank = real.getMetricWeightStruc().getTotalPosLength();
+                maxPosRealRank = real.getMetricWeightStruc().getTotalPosLength();
             }
 
-            for (int i = 0; i < this.gset.getNumMembers(); i++) {
-                String name = this.gset.getMember(i);
+            float totalPosWeight = 0f;
+            float totalNegWeight = 0f;
+            float nhPosActual = 0f;
+            float nhNegActual = 0f;
+            for (int i = 0; i < gset.getNumMembers(); i++) {
+                String name = gset.getMember(i);
                 float score = rl.getScore(name);
                 int rank = rl.getRank(name);
-
                 if (XMath.isPositive(score)) {
-                    // if the rank is beyond the max pos rank of the real list
-                    // then the weight is 0 and the gene wasnt really on the list
                     if (rank <= maxPosRealRank) {
-                        totalPosWeight_of_hits += score;
-                        nhPosActual++;
-                    } else {// weight add is 0 and its NOT a pos list hit
-                        totalNegWeight_of_hits += 0;
-                        nhNegActual++;
-                    }
-                } else {
-                    // if the rank is lower than the cross over point
-                    // then the weight is 0 and the gene wasnt really on the list
-                    if (rank <= maxPosRealRank) {
-                        totalPosWeight_of_hits += 0;
+                        totalPosWeight += score;
                         nhPosActual++;
                     } else {
-                        totalNegWeight_of_hits += score;
                         nhNegActual++;
                     }
+                } else if (rank <= maxPosRealRank) {
+                    nhPosActual++;
+                } else {
+                    totalNegWeight += score;
+                    nhNegActual++;
                 }
             }
 
+            float numPosScores = 0f;
+            float numNegScores = 0f;
             for (int r = 0; r < rl.getSize(); r++) {
                 float score = rl.getScore(r);
                 if (XMath.isPositive(score) && r <= maxPosRealRank) {
@@ -323,25 +307,68 @@ public class GeneSetScoringTables {
                 }
             }
 
+            float nhExpected = gset.getNumMembers();
             if (nhPosActual + nhNegActual != nhExpected) {
-                throw new IllegalArgumentException("nhPosActual: " + nhPosActual + " nhNegActual: " + nhNegActual + " nhExpected: " + nhExpected);
+                throw new IllegalArgumentException("nhPosActual: " + nhPosActual + " nhNegActual: " + nhNegActual
+                        + " nhExpected: " + nhExpected);
             }
 
+            float nhPosByNh = scaleByHitFraction ? nhPosActual / nhExpected : 1.0f;
+            float nhNegByNh = scaleByHitFraction ? nhNegActual / nhExpected : 1.0f;
+            return new DoubleSidedWeights(rl, maxPosRealRank, totalPosWeight, totalNegWeight, nhPosByNh, nhNegByNh,
+                    nhPosByNh * (1 / (numPosScores - nhPosActual)),
+                    nhNegByNh * (1 / (numNegScores - nhNegActual)));
+        }
 
-            this.nhPos_by_nh = nhPosActual / nhExpected;
-            this.nhNeg_by_nh = nhNegActual / nhExpected;
+        void setReal(RankedList rl) {
+            this.rankedList = rl;
+        }
 
-            this.miss_pos_score = nhPos_by_nh * (1 / (numPosScores - nhPosActual));
-            this.miss_neg_score = nhNeg_by_nh * (1 / (numNegScores - nhNegActual));
+        RankedList rankedList() {
+            return rankedList;
+        }
 
-            if (cnt % 250 == 0) {
-                klog.debug("xover={} nhPos_by_nh={} nhNeg_by_nh={}", maxPosRealRank, nhPos_by_nh, nhNeg_by_nh);
+        float hitScore(String name) {
+            float score = rankedList.getScore(name);
+            int rank = rankedList.getRank(name);
+            if (XMath.isPositive(score)) {
+                if (rank <= maxPosRealRank) {
+                    return (score / totalPosWeight) * nhPosByNh;
+                }
+                return 0.0f;
             }
-            cnt++;
+            if (rank <= maxPosRealRank) {
+                return 0.0f;
+            }
+            return (score / totalNegWeight) * nhNegByNh;
+        }
 
-            //System.out.println("miss_pos_score: " + miss_pos_score);
-            //System.out.println("miss_neg_score: " + miss_neg_score);
+        float missScore(String name) {
+            if (XMath.isPositive(rankedList.getScore(name))) {
+                return missPosScore;
+            }
+            return missNegScore;
+        }
+    }
 
+    public static class WeightedDoubleSidedAs extends AbstractScoringTable {
+        private static final String NAME = "weighted_as";
+        private DoubleSidedWeights weights;
+        /** Set on the unbound prototype; {@link GeneSetCohort} reads it back as the real list. */
+        private RankedList prototypeReal;
+
+        public WeightedDoubleSidedAs() {
+        }
+
+        public WeightedDoubleSidedAs(final GeneSet gset, final RankedList rl, final RankedList real) {
+            this.weights = DoubleSidedWeights.compute(gset, rl, real, true);
+        }
+
+        public void setReal(RankedList rl) {
+            this.prototypeReal = rl;
+            if (weights != null) {
+                weights.setReal(rl);
+            }
         }
 
         public GeneSetScoringTable createTable(GeneSet gset, RankedList rl, RankedList real) {
@@ -353,162 +380,36 @@ public class GeneSetScoringTables {
         }
 
         public RankedList getRankedList() {
-            return rankedList;
+            return weights != null ? weights.rankedList() : prototypeReal;
         }
 
         public float getHitScore(final String name) {
-
-            float score = rankedList.getScore(name);
-            int rank = rankedList.getRank(name);
-
-            float weight;
-
-            if (XMath.isPositive(score)) {
-
-                if (rank <= maxPosRealRank) {
-                    weight = score / totalPosWeight_of_hits;
-                    return weight * nhPos_by_nh; // this will be a positive number (i.e go UP)
-                } else {
-                    return 0.0f;
-                }
-
-
-            } else {
-
-                if (rank <= maxPosRealRank) {
-                    return 0.0f;
-                } else {
-                    weight = score / totalNegWeight_of_hits;
-                    return weight * nhNeg_by_nh; // this will be a negative number (i.e go DOWN)
-                }
-            }
+            return weights.hitScore(name);
         }
 
-        // misses are not weighted
         public float getMissScore(String name) {
-
-            float score = rankedList.getScore(name);
-
-            if (XMath.isPositive(score)) {
-                return miss_pos_score;
-            } else {
-                return miss_neg_score; // a bit unintuitive but the kscore alg does a minus for misses
-                //return -1 * miss_neg_score; // a bit unintuitive byt the kscore alg does a minus for misses
-            }
+            return weights.missScore(name);
         }
     }
 
     public static class WeightedDoubleSidedAs1 extends AbstractScoringTable {
-
         private static final String NAME = "weighted_as_1";
-
-        private float totalPosWeight_of_hits;
-        private float totalNegWeight_of_hits;
-
-        private float numPosScores;
-        private float numNegScores;
-
-        private float nhExpected;
-        private float nhPosActual;
-        private float nhNegActual;
-
-        private float nhPos_by_nh;
-        private float nhNeg_by_nh;
-
-        private float miss_pos_score;
-        private float miss_neg_score;
-
-        private int maxPosRealRank;
-
-        private GeneSet gset;
-        private RankedList rankedList;
-
-        public void setReal(RankedList rl) {
-            this.rankedList = rl;
-        }
+        private DoubleSidedWeights weights;
+        /** Set on the unbound prototype; {@link GeneSetCohort} reads it back as the real list. */
+        private RankedList prototypeReal;
 
         public WeightedDoubleSidedAs1() {
         }
 
-        static int cnt = 0;
-
         public WeightedDoubleSidedAs1(final GeneSet gset, final RankedList rl, final RankedList real) {
+            this.weights = DoubleSidedWeights.compute(gset, rl, real, false);
+        }
 
-            this.gset = gset;
-            this.rankedList = rl;
-            this.nhExpected = gset.getNumMembers();
-
-            if (nhExpected == 0) {
-                throw new IllegalArgumentException("Number of members in gene set cannot be 0: " + gset.getName());
+        public void setReal(RankedList rl) {
+            this.prototypeReal = rl;
+            if (weights != null) {
+                weights.setReal(rl);
             }
-
-            if (real == null) {
-                klog.warn("Null real_rl so assuming real: {}", rl.getName());
-                this.maxPosRealRank = rl.getMetricWeightStruc().getTotalPosLength();
-            } else {
-                this.maxPosRealRank = real.getMetricWeightStruc().getTotalPosLength();
-            }
-
-
-            for (int i = 0; i < this.gset.getNumMembers(); i++) {
-                String name = this.gset.getMember(i);
-                float score = rl.getScore(name);
-                int rank = rl.getRank(name);
-
-                if (XMath.isPositive(score)) {
-                    // if the rank is beyond the max pos rank of the real list
-                    // then the weight is 0 and the gene wasnt really on the list
-                    if (rank <= maxPosRealRank) {
-                        totalPosWeight_of_hits += score;
-                        nhPosActual++;
-                    } else {// weight add is 0 and its NOT a pos list hit
-                        totalNegWeight_of_hits += 0;
-                        nhNegActual++;
-                    }
-                } else {
-                    // if the rank is lower than the cross over point
-                    // then the weight is 0 and the gene wasnt really on the list
-                    if (rank <= maxPosRealRank) {
-                        totalPosWeight_of_hits += 0;
-                        nhPosActual++;
-                    } else {
-                        totalNegWeight_of_hits += score;
-                        nhNegActual++;
-                    }
-                }
-            }
-
-            for (int r = 0; r < rl.getSize(); r++) {
-                float score = rl.getScore(r);
-                if (XMath.isPositive(score) && r <= maxPosRealRank) {
-                    numPosScores++;
-                } else {
-                    numNegScores++;
-                }
-            }
-
-            if (nhPosActual + nhNegActual != nhExpected) {
-                throw new IllegalArgumentException("nhPosActual: " + nhPosActual + " nhNegActual: " + nhNegActual + " nhExpected: " + nhExpected);
-            }
-
-            //this.nhPos_by_nh = nhPosActual / nhExpected;
-            //this.nhNeg_by_nh = nhNegActual / nhExpected;
-
-            this.nhPos_by_nh = 1.0f;
-            this.nhNeg_by_nh = 1.0f;
-
-
-            this.miss_pos_score = nhPos_by_nh * (1 / (numPosScores - nhPosActual));
-            this.miss_neg_score = nhNeg_by_nh * (1 / (numNegScores - nhNegActual));
-
-            if (cnt % 250 == 0) {
-                klog.debug("xover={} nhPos_by_nh={} nhNeg_by_nh={}", maxPosRealRank, nhPos_by_nh, nhNeg_by_nh);
-            }
-            cnt++;
-
-            //System.out.println("miss_pos_score: " + miss_pos_score);
-            //System.out.println("miss_neg_score: " + miss_neg_score);
-
         }
 
         public GeneSetScoringTable createTable(GeneSet gset, RankedList rl, RankedList real) {
@@ -520,48 +421,15 @@ public class GeneSetScoringTables {
         }
 
         public RankedList getRankedList() {
-            return rankedList;
+            return weights != null ? weights.rankedList() : prototypeReal;
         }
 
         public float getHitScore(final String name) {
-
-            float score = rankedList.getScore(name);
-            int rank = rankedList.getRank(name);
-
-            float weight;
-
-            if (XMath.isPositive(score)) {
-
-                if (rank <= maxPosRealRank) {
-                    weight = score / totalPosWeight_of_hits;
-                    return weight * nhPos_by_nh; // this will be a positive number (i.e go UP)
-                } else {
-                    return 0.0f;
-                }
-
-
-            } else {
-
-                if (rank <= maxPosRealRank) {
-                    return 0.0f;
-                } else {
-                    weight = score / totalNegWeight_of_hits;
-                    return weight * nhNeg_by_nh; // this will be a negative number (i.e go DOWN)
-                }
-            }
+            return weights.hitScore(name);
         }
 
-        // misses are not weighted
         public float getMissScore(String name) {
-
-            float score = rankedList.getScore(name);
-
-            if (XMath.isPositive(score)) {
-                return miss_pos_score;
-            } else {
-                return miss_neg_score; // a bit unintuitive but the kscore alg does a minus for misses
-                //return -1 * miss_neg_score; // a bit unintuitive byt the kscore alg does a minus for misses
-            }
+            return weights.missScore(name);
         }
     }
 }

@@ -31,7 +31,7 @@ public final class FxToolRelaunch {
     public static void showInToolRunner(Report report, boolean loadData, FeatureHost host) {
         Objects.requireNonNull(host, "host");
         if (report == null) {
-            host.dialogs().showError("No report selected");
+            host.services().dialogs().showError("No report selected");
             return;
         }
         javafx.concurrent.Task<Void> task = new javafx.concurrent.Task<>() {
@@ -50,7 +50,7 @@ public final class FxToolRelaunch {
         task.setOnFailed(e -> {
             Throwable t = task.getException();
             klog.error("Could not open tool from report", t);
-            host.dialogs().showError("Could not open tool from report", t);
+            host.services().dialogs().showError("Could not open tool from report", t);
         });
         xapps.gsea.fx.FxWorkers.start(task, "gsea-tool-relaunch");
     }
@@ -59,7 +59,7 @@ public final class FxToolRelaunch {
     public static void showInToolRunner(Tool sourceTool, Properties paramSnapshot, FeatureHost host) {
         Objects.requireNonNull(host, "host");
         if (sourceTool == null || paramSnapshot == null) {
-            host.dialogs().showError("No saved parameters available for this run");
+            host.services().dialogs().showError("No saved parameters available for this run");
             return;
         }
         javafx.concurrent.Task<Void> task = new javafx.concurrent.Task<>() {
@@ -73,7 +73,7 @@ public final class FxToolRelaunch {
         task.setOnFailed(e -> {
             Throwable t = task.getException();
             klog.error("Could not reopen tool with saved parameters", t);
-            host.dialogs().showError("Could not reopen tool with saved parameters", t);
+            host.services().dialogs().showError("Could not reopen tool with saved parameters", t);
         });
         xapps.gsea.fx.FxWorkers.start(task, "gsea-tool-relaunch");
     }
@@ -97,7 +97,7 @@ public final class FxToolRelaunch {
 
         final String missingText = missing.toString();
         if (!missingText.isEmpty()) {
-            boolean proceed = host.dialogs().showConfirm("Some Files Missing",
+            boolean proceed = host.services().dialogs().showConfirm("Some Files Missing",
                     "Some parameter files were not found:\n" + missingText
                             + "\n\nContinue opening the tool with available parameters?");
             if (!proceed) {
@@ -120,7 +120,7 @@ public final class FxToolRelaunch {
                 }
             }
             if (errs.length() > 0) {
-                Platform.runLater(() -> host.dialogs().showMessage(
+                Platform.runLater(() -> host.services().dialogs().showMessage(
                         "Load warnings", "Some files could not be loaded:\n" + errs));
             }
         }
@@ -129,7 +129,7 @@ public final class FxToolRelaunch {
         Platform.runLater(() -> {
             host.openPage(FxToolLauncherPane.forTool(tool, tabTitle, "ToolLauncher.gif", true, host));
             if (showToast) {
-                host.dialogs().showMessage(
+                host.services().dialogs().showMessage(
                         "Opened a tool with the parameters from that run. "
                                 + "Data files that were found were imported.");
             }
