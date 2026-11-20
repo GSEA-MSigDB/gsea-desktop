@@ -31,18 +31,10 @@ public class GseaWebResources {
         return getGseaHelpURL() + "GSEA/GSEA_User_Guide/#appendix-b";
     }
 
-    public static String getHumanArrayAnnotationsURL() {
-        return "https://data.broadinstitute.org/gsea-msigdb/msigdb/annotations/human/";
-    }
-
-    public static String getMouseArrayAnnotationsURL() {
-        return "https://data.broadinstitute.org/gsea-msigdb/msigdb/annotations/mouse/";
-    }
-
     public static String getGseaExamplesURL() {
         return getGseaBaseURL() + "/datasets.jsp";
     }
 
     public final static String DEFAULT_MSIGDB_CATALOG_URL =
-            "https://data.broadinstitute.org/gsea-msigdb/msigdb/release/msigdb_releases.json";
+            "https://content.msigdb.org/downloads/msigdb/release/msigdb_releases.json";
 }

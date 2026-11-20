@@ -98,6 +98,13 @@ public class ChooserHelper {
                 }
             }
         });
+        
+        // Auto-open the most recent release's node, since that's the one whose files are already fetched and ready to select.
+        if (root.getChildCount() > 0) {
+            TreePath firstReleasePath = new TreePath(((DefaultTreeModel) tree.getModel()).getPathToRoot((DefaultMutableTreeNode) root.getChildAt(0)));
+            tree.expandPath(firstReleasePath);
+        }
+        
         desc.enableDoubleClickableJTree(tree);
     }
 

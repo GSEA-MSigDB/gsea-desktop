@@ -4,6 +4,7 @@
 package xtools.gsea;
 
 import edu.mit.broad.genome.Headers;
+import edu.mit.broad.genome.StandardException;
 import edu.mit.broad.genome.alg.DatasetGenerators;
 import edu.mit.broad.genome.alg.Metric;
 import edu.mit.broad.genome.alg.Metrics;
@@ -83,44 +84,54 @@ public abstract class AbstractGsea2Tool extends AbstractGseaTool {
         if (log.isDebugEnabled()) { log.debug(">>>>> Using samples: {}", dsForValidation.getColumnNames()); }
         final KSTests tests = new KSTests(getOutputStream());
         
-        final boolean waldSelected = Metrics.isWaldZFamily(fMetricParam.getMetric());
-        boolean useDeseq2LikeCountModel = false;
+        Metric metric = fMetricParam.getMetric();
+        String metricName = metric.getName();
+        final boolean waldSelected = Metrics.isWaldZFamily(metric);
 
         if (waldSelected) {
             final boolean medianOfRatiosSelected = Norms.MEDIAN_OF_RATIOS.equals(fNormModeParam.getNormModeName());
             final boolean rawIntegerCounts = isDataRawIntegerCounts(dsForValidation);
-            if (medianOfRatiosSelected) {
+            if (Metrics.WaldPrenorm.NAME.equals(metricName)) {
                 if (rawIntegerCounts) {
-                    useDeseq2LikeCountModel = true;
-                    if (fullCd.wasCollapsed && !"Sum_of_probes".equals(fCollapseModeParam.getValue().toString())) {
-                        final String warningMessage = fNormModeParam.getNormModeName() + " with " + Norms.MEDIAN_OF_RATIOS
-                                + " is running on collapsed counts using mode '"
-                                + fCollapseModeParam.getValue() + "'. For DESeq2-like agreement, prefer collapse mode 'Sum_of_probes' "
-                                + "because non-additive collapse modes can distort count-model statistics.";
-                        log.warn(warningMessage);
-                        fReport.addWarning(warningMessage);
-                    }
+                    final String warningMessage = metricName
+                            + " scoring requested but all-integer data detected.  If this is raw counts data, consider using "
+                            + Metrics.Wald.NAME + " or " + Metrics.WaldFast.NAME
+                            + " instead with " + Norms.MEDIAN_OF_RATIOS
+                            + " normalization mode and Sum_of_probes collapse mode. ";
+                    log.warn(warningMessage);
+                    fReport.addWarning(warningMessage);
+                }
+                if (!Norms.NONE.equals(fNormModeParam.getNormModeName())) {
+                    final String errorMessage = metricName
+                            + " scoring assumes the data has already been normalized outside of GSEA.  Use '"
+                            + Norms.NONE + "' as the normalization mode.";
+                    throw new StandardException(errorMessage, 1030);
+                }
+            } else if (medianOfRatiosSelected) {
+                if (fullCd.wasCollapsed && !"Sum_of_probes".equals(fCollapseModeParam.getValue().toString())) {
+                    final String errorMessage = metricName + " with " + Norms.MEDIAN_OF_RATIOS
+                            + " is running on collapsed counts using mode '"
+                            + fCollapseModeParam.getValue() + "'. For DESeq2-like agreement, prefer collapse mode 'Sum_of_probes' "
+                            + "because non-additive collapse modes can distort count-model statistics.";
+                    throw new StandardException(errorMessage, 1030);
+                }
+                if (rawIntegerCounts) {
                     final File edbDir = fReport.createSubDir("edb");
                     final File diagnosticsFile = new File(edbDir, "deseq2_main_stats.tsv");
                     tests.setDeseq2DiagnosticOutputFile(diagnosticsFile);
                     fReport.addComment("DESeq2-style main statistics saved to: edb/" + diagnosticsFile.getName());
                 } else {
-                    final String warningMessage = fNormModeParam.getNormModeName()
+                    final String warningMessage = metricName
                             + " scoring requested with " + Norms.MEDIAN_OF_RATIOS
-                            + " normalization, but dataset contains non-integer (pre-normalized) values. Skipping "
-                            + Norms.MEDIAN_OF_RATIOS + " and using normalized linear-model ranking instead.";
+                            + " normalization, but dataset contains non-integer, possibly pre-normalized values. Consider using "
+                            + Metrics.WaldPrenorm.NAME + " instead.";
                     log.warn(warningMessage);
                     fReport.addWarning(warningMessage);
-                    // TODO: should we switch fNormModeParam at this point?
                 }
             } else {
-                if (rawIntegerCounts) {
-                    final String warningMessage = fNormModeParam.getNormModeName()
-                            + " scoring requested on raw integer count data without "
-                            + Norms.MEDIAN_OF_RATIOS + " normalization. Using normalized linear-model ranking instead.";
-                    log.warn(warningMessage);
-                    fReport.addWarning(warningMessage);
-                }
+                final String errorMessage = metricName
+                        + " scoring requires " + Norms.MEDIAN_OF_RATIOS + " normalization mode.";
+                throw new StandardException(errorMessage, 1030);
             }
         }
         
@@ -130,11 +141,10 @@ public abstract class AbstractGsea2Tool extends AbstractGseaTool {
                     ((RandomSeedGenerators.Timestamp)rst).getTimestamp());
         }
 
-        return tests.executeGsea(dt, origGeneSets, fNumPermParam.getIValue(), fMetricParam.getMetric(),
+        return tests.executeGsea(dt, origGeneSets, fNumPermParam.getIValue(), metric,
         		fSortParam.getMode(), fOrderParam.getOrder(), rst, fRndTypeParam.getRandomizerType(), getMetricParams(fMedianParam),
                 fGcohGenReqdParam.createGeneSetCohortGenerator(fGeneSetMinSizeParam.getIValue(), fGeneSetMaxSizeParam.getIValue()), 
-                fPermuteTypeParamType.permuteTemplate(), fNumMarkersParam.getIValue(), store_rnd_ranked_lists_here_opt,
-                useDeseq2LikeCountModel);
+                fPermuteTypeParamType.permuteTemplate(), fNumMarkersParam.getIValue(), store_rnd_ranked_lists_here_opt);
     }
 
     protected void execute_one_with_reporting(final CollapsedDetails.Data fullCd, final Template template, final GeneSet[] origGeneSets,

@@ -407,14 +407,6 @@ public class GseaFijiTabsApplicationFrame extends JFrame implements Application.
                 SystemUtils.IS_OS_MAC_OSX ? null : new MyExitAction()
         }));
 
-        menuBar.add(createJMenu("Downloads", new Object[]{
-                new BrowserAction("Download Human chip annotations", "Download Human array annotation files - useful to annotate GSEA reports",
-                        null, GseaWebResources.getHumanArrayAnnotationsURL()),
-                new BrowserAction("Download Mouse chip annotations", "Download Mouse array annotation files - useful to annotate GSEA reports",
-                        null, GseaWebResources.getMouseArrayAnnotationsURL()),
-                new BrowserAction("Download example datasets", "Download example datasets for GSEA - expression data, phenotype labels and gene sets files",
-                        null, GseaWebResources.getGseaExamplesURL())}));
-        
         menuBar.add(createJMenu("Help", new Object[]{
                 new BrowserAction("GSEA web site", "Open the GSEA website in a web browser",
                         GuiHelper.ICON_HELP16, GseaWebResources.getGseaBaseURL()),
@@ -422,7 +414,9 @@ public class GseaFijiTabsApplicationFrame extends JFrame implements Application.
                         GuiHelper.ICON_HELP16, GseaWebResources.getGseaHelpURL()),
                 new BrowserAction("GSEA & MSigDB License Terms", "GSEA & MSigDB License Terms", GuiHelper.ICON_HELP16, 
                         GseaWebResources.getGseaBaseURL() + "/" + "license_terms_list.jsp"),
-                        null,
+                new BrowserAction("Download example datasets", "Download example datasets for GSEA - expression data, phenotype labels and gene sets files",
+                        null, GseaWebResources.getGseaExamplesURL()),
+                null,
                 new ShowAppRuntimeHomeDirAction("Show GSEA home folder"),
                 new ShowDefaultOutputDirAction("Show GSEA output folder (default location)"),
                 null,

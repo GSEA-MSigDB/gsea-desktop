@@ -63,7 +63,7 @@ public class Metrics {
             return false;
         }
         final String n = metric.getName();
-        return Wald.NAME.equalsIgnoreCase(n) || WaldFast.NAME.equalsIgnoreCase(n);
+        return Wald.NAME.equalsIgnoreCase(n) || WaldFast.NAME.equalsIgnoreCase(n) || WaldPrenorm.NAME.equalsIgnoreCase(n);
     }
 
     /**
@@ -342,6 +342,23 @@ public class Metrics {
         }
     }
 
+    /**
+     * DESeq2-like Wald Z ranking for GSEA, but meant for use with pre-normalized counts (non-integer, non-count data).
+     * Use of this metric will force use of @{link edu.mit.broad.genome.alg.gsea.PrenormalizedDeseq2LikeRegressionZModel}
+     * instead of the standard {@link edu.mit.broad.genome.alg.gsea.Deseq2LikeRegressionZModel}.
+     */
+    public static class WaldPrenorm extends AbstractMetric {
+        public static final String NAME = "Wald_Z_Prenorm";
+
+        public WaldPrenorm() {
+            super(CATEGORICAL, NAME, MIN_NUM_FOR_VAR);
+        }
+
+        public double getScore(final Vector profile, final Template template, final Map<String, Boolean> params) {
+            return waldStyleRowScore(profile, template, params);
+        }
+    }
+    
     public static class ClassRatio extends AbstractMetric {
         public ClassRatio() { super(CATEGORICAL, "Ratio_of_Classes"); }
 

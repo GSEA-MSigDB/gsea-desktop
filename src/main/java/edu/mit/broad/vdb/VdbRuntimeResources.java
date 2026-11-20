@@ -39,11 +39,6 @@ public class VdbRuntimeResources {
             return new Chip(tmpf.getName(), tmpf.getPath());
         }
 
-        //System.out.println(">>>>" + chipName + "<");
-
-        // Ok, its from a file path or ftp location
-        //String chipName = _nameOrPath2Name(chipNameOrPath);
-
         Chip chip = kChipNameChipFileObject.get(chipNameOrPath);
         if (chip == null) {
             String chipFile_source = getChipFile_source(chipNameOrPath);
@@ -58,47 +53,16 @@ public class VdbRuntimeResources {
             throw new IllegalArgumentException("Param chipNameOrPath cannot be null");
         }
 
-        if (chipNameOrPath.startsWith("ftp")) {
-
-            // common error is ftp.broad... while it should be ftp://ftp.broad...
-            if (chipNameOrPath.startsWith("ftp.")) {
-                chipNameOrPath = "ftp://" + chipNameOrPath;
-            }
-
-            return chipNameOrPath;
-        }
-
-        if (chipNameOrPath.startsWith("gseaftp")) {
-
-            // common error is gseaftp.broad... while it should be ftp://gseaftp.broad...
-            if (chipNameOrPath.startsWith("gseaftp.")) {
-                chipNameOrPath = "ftp://" + chipNameOrPath;
-            }
-
-            return chipNameOrPath;
-        }
-
         if (NamingConventions.isURL(chipNameOrPath)) {
             // Already a full URL (e.g. selected from the CHIP catalog chooser) -- use it as-is,
             // same as the ftp/gseaftp cases above. Only a bare chip name (handled below) needs a
             // base URL prepended; doing that to an already-complete URL would double it up.
             return chipNameOrPath;
         }
-
-        chipNameOrPath = chipNameOrPath.replace('-', '_');
-
-        // No scheme or path given -- resolve against the HTTPS annotations mirror instead of the
-        // old FTP site. Chip file names conventionally encode their species (e.g.
-        // "Human_..."/"Mouse_..."), so use that to pick the right one; default to Human otherwise,
-        // matching the same species-guessing convention already used for gene set files in
-        // GmtParser.
-        String base = StringUtils.containsIgnoreCase(chipNameOrPath, "mouse")
-                ? GseaWebResources.getMouseArrayAnnotationsURL() : GseaWebResources.getHumanArrayAnnotationsURL();
-        String path = base + chipNameOrPath;
-        if (!path.endsWith(".chip")) {
-            path += ".chip";
+        if (!chipNameOrPath.endsWith(".chip")) {
+            chipNameOrPath += ".chip";
         }
 
-        return path;
+        return chipNameOrPath;
     }
 }

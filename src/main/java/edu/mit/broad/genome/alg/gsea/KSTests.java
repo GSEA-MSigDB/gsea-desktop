@@ -83,8 +83,7 @@ public class KSTests {
     public EnrichmentDb executeGsea(final DatasetTemplate dt, final GeneSet[] origGeneSets, final int nperm, final Metric metric,
     		final SortMode sort, final Order order, final RandomSeedGenerator rst, final TemplateRandomizerType rt, 
     		final Map<String, Boolean> mps, final GeneSetCohort.Generator gcohgen, final boolean permuteTemplate, 
-        final int numMarkers, final List<RankedList> store_rnd_ranked_lists_here_opt,
-                        final boolean useDeseq2LikeCountModel) throws Exception {
+        final int numMarkers, final List<RankedList> store_rnd_ranked_lists_here_opt) throws Exception {
         final Dataset ds = dt.getDataset(false);
         final Template t = dt.getTemplate();
 		log.debug("!!!! Executing for: {} # samples: {}", ds.getName(), ds.getNumCol());
@@ -112,24 +111,12 @@ public class KSTests {
         Deseq2LikeRegressionZModel deseq2LikeCountModel = null;
         PrenormalizedRegressionZModel normalizedLinearModel = null;
         if (Metrics.isWaldZFamily(metric)) {
-            if (useDeseq2LikeCountModel) {
-                try {
-                    deseq2LikeCountModel = Deseq2LikeRegressionZModel.fit(ds, t, markerScores);
-                    log.debug("Using DESeq2-like count model for {}", metric.getName());
-                } catch (IllegalArgumentException e) {
-                    log.warn("DESeq2-like count model could not be initialized; falling back to normalized model", e);
-                }
-            }
-
-            if (deseq2LikeCountModel == null) {
-                try {
-                    normalizedLinearModel = PrenormalizedRegressionZModel.fit(ds, t, markerScores);
-                    log.debug("Using normalized linear model for {}", metric.getName());
-                } catch (IllegalArgumentException e) {
-                    // If model init fails, use legacy metric implementation
-                    log.debug("Normalized linear model failed; falling back to standard metric implementation", e);
-                    normalizedLinearModel = null;
-                }
+            if (Metrics.WaldPrenorm.NAME.equals(metric.getName())) {
+                normalizedLinearModel = PrenormalizedRegressionZModel.fit(ds, t, markerScores);
+                log.debug("Using normalized linear model for {}", metric.getName());
+            } else {
+                deseq2LikeCountModel = Deseq2LikeRegressionZModel.fit(ds, t, markerScores);
+                log.debug("Using DESeq2-like count model for {}", metric.getName());
             }
         }
 		

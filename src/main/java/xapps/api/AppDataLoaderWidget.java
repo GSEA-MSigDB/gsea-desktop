@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2023 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2026 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package xapps.api;
 
@@ -9,6 +9,7 @@ import java.awt.Component;
 import java.awt.FileDialog;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.GridLayout;
 import java.awt.Insets;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.event.ActionEvent;
@@ -86,11 +87,31 @@ public class AppDataLoaderWidget extends GseaSimpleInternalFrame implements Widg
         sif.add(new JScrollPane(tree), BorderLayout.CENTER);
         split.add(sif);
 
-        this.add(loadPanel, BorderLayout.CENTER);
+        // Instead of adding the loadPanel and split using a BorderLayout, we use a GridBagLayout so that they
+        // can be resized proportionally when the window is resized
+        JPanel mainPanel = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc1 = new GridBagConstraints();
+        gbc1.gridx = 0;
+        gbc1.gridy = 0;
+        gbc1.fill = GridBagConstraints.BOTH;
+        gbc1.weightx = 1.0;
+        gbc1.weighty = 0.4;
+        mainPanel.add(loadPanel, gbc1);
+        
+        GridBagConstraints gbc2 = new GridBagConstraints();
+        gbc2.gridx = 0;
+        gbc2.gridy = 1;
+        gbc2.fill = GridBagConstraints.BOTH;
+        gbc2.weightx = 1.0;
+        gbc2.weighty = 0.6;
+        mainPanel.add(split, gbc2);
+        
+//        this.add(loadPanel, BorderLayout.CENTER);
         split.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
-        this.add(split, BorderLayout.SOUTH);
+//        this.add(split, BorderLayout.SOUTH);
         split.setResizeWeight(0.5d);
         split.setDividerLocation(0.5d);
+        this.add(mainPanel, BorderLayout.CENTER);
     }
 
     private JPanel createLoadPanel() {
@@ -189,7 +210,7 @@ public class AppDataLoaderWidget extends GseaSimpleInternalFrame implements Widg
             }
         });
 
-        final JButton bLoad = new JButton("Load these files!", JarResources.getIcon("Dnd2.gif"));
+        final JButton bLoad = new JButton("Load files", JarResources.getIcon("Dnd2.gif"));
         bLoad.addActionListener(new ActionListener() {
             public void actionPerformed(final ActionEvent evt) {
                 final File[] files = ta.getFiles();
