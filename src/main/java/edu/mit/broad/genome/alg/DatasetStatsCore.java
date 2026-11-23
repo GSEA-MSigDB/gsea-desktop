@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2026 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.genome.alg;
 
@@ -41,6 +41,11 @@ public class DatasetStatsCore {
         // This is the only field currently used.  Added recently for tracking rows with missing samples for later removal.
         // This can probably be accomplished a better way, possibly allowing removal of the entire class.
         public boolean omit = false;
+
+        // Used by Wald_Z to exclude low-information features before enrichment scoring.
+        public boolean lowInformation = false;
+        public boolean lowInformationChecked = false;
+        public double lowInformationThreshold = Double.NaN;
         
         public double getScore() {
             return score;
@@ -69,6 +74,20 @@ public class DatasetStatsCore {
         public double getStdev_all() {
             return stdev_all;
         }
+
+        /**
+         * Copy fields used by {@link edu.mit.broad.genome.alg.gsea.KSTests#filterRankedListIfNecessary}
+         * so phenotype permutations can refit the count model while keeping the same ranking universe
+         * as the real template.
+         */
+        public TwoClassMarkerStats copyRankingFilterState() {
+            final TwoClassMarkerStats c = new TwoClassMarkerStats();
+            c.omit = this.omit;
+            c.lowInformation = this.lowInformation;
+            c.lowInformationChecked = this.lowInformationChecked;
+            c.lowInformationThreshold = this.lowInformationThreshold;
+            return c;
+        }
     }
 
     // key -> feature name, value -> TwoClassMarkerStats
@@ -85,7 +104,9 @@ public class DatasetStatsCore {
                     "\n<br>This metric can only be used with 2 class comparisons");
         }
 
-        final boolean reqThreeSamplesPerClass = metric.getName().equalsIgnoreCase(Metrics.Signal2Noise.NAME) || metric.getName().equalsIgnoreCase(Metrics.tTest.NAME);
+        final boolean reqThreeSamplesPerClass = metric.getName().equalsIgnoreCase(Metrics.Signal2Noise.NAME)
+            || metric.getName().equalsIgnoreCase(Metrics.tTest.NAME)
+            || Metrics.isWaldZFamily(metric);
         if (reqThreeSamplesPerClass) {
             if (ds.getNumCol() < 6) { 
                 throw new BadParamException("Too few samples in the dataset to use this metric", 1006);

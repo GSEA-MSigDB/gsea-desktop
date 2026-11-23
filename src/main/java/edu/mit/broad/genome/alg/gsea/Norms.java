@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2026 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.genome.alg.gsea;
 
@@ -23,11 +23,14 @@ public class Norms {
 
     public static final String MEANDIV_POS_NEG_SEPERATE = MeanDivPosNegSeperate.NAME;
 
+    public static final String MEDIAN_OF_RATIOS = MedianOfRatios.NAME;
+
     // @maint need to keep in synch with above and below
     public static String[] createNormModeNames() {
         return new String[]{
                 NONE,
-                MEANDIV_POS_NEG_SEPERATE
+                MEANDIV_POS_NEG_SEPERATE,
+                MEDIAN_OF_RATIOS
         };
     }
 
@@ -41,6 +44,8 @@ public class Norms {
             return new None(realScore, rndScores);
         } else if (normModeName.equals(MEANDIV_POS_NEG_SEPERATE)) {
             return new Norms.MeanDivPosNegSeperate(realScore, rndScores);
+        } else if (normModeName.equals(MEDIAN_OF_RATIOS)) {
+            return new Norms.MedianOfRatios(realScore, rndScores);
         } else {
             throw new IllegalArgumentException("Unknown norm mode: " + normModeName);
         }
@@ -53,30 +58,117 @@ public class Norms {
 
     // This is the key API
     public static Struc normalize(final String normName, final LabelledVector realScores, final Dataset rndScores_full) {
-
-        final Vector normRealScores = new Vector(realScores.getSize());
-        final String[] labels = new String[realScores.getSize()];
+        final int rowCount = realScores.getSize();
+        final String[] labels = new String[rowCount];
         final List<String> labels_list = new ArrayList<String>();
+        final Vector normRealScores = new Vector(rowCount);
+        final int rndColCount = rndScores_full.getNumCol();
+        final Matrix normRndScoresMatrix = new Matrix(rowCount, rndColCount);
 
-        // @note end ds may have more rows that in the real scores
-        // we pick only those that we want
+        if (MEDIAN_OF_RATIOS.equals(normName)) {
+            final int sampleCount = rndColCount + 1; // real + random columns
 
-        final Matrix normRndScoresMatrix = new Matrix(realScores.getSize(), rndScores_full.getNumCol());
+            final double[] geometricMeans = new double[rowCount];
+            final boolean[] includeRow = new boolean[rowCount];
 
-        for (int r = 0; r < realScores.getSize(); r++) {
+            int usableRows = 0;
+            for (int r = 0; r < rowCount; r++) {
+                final String rowName = realScores.getLabel(r);
+                final float real = realScores.getScore(rowName);
+                final Vector rnd = rndScores_full.getRow(rowName);
 
-            final String rowName = realScores.getLabel(r);
-            final float real = realScores.getScore(rowName);
-            final Norm norm = Norms.createNorm(normName, real, rndScores_full.getRow(rowName));
+                labels[r] = rowName;
+                labels_list.add(rowName);
 
-            // Note from Pablo:
-            // I think the NES with NaN (because of the skewness) should ... 
-            // be excluded from the computation of p-values or FDRs.
-            
-            normRndScoresMatrix.setRow(r, norm.getRandomNorm());
-            normRealScores.setElement(r, norm.getRealNorm());
-            labels[r] = rowName;
-            labels_list.add(rowName);
+                final double absReal = Math.abs(real);
+                double sumLog = 0.0d;
+                boolean usable = (Double.isFinite(absReal) && absReal > 0.0d);
+                if (usable) {
+                    sumLog += Math.log(absReal);
+                    for (int c = 0; c < rndColCount; c++) {
+                        final double absRnd = Math.abs(rnd.getElement(c));
+                        if (Double.isFinite(absRnd) && absRnd > 0.0d) {
+                            sumLog += Math.log(absRnd);
+                        } else {
+                            usable = false;
+                            break;
+                        }
+                    }
+                }
+
+                if (usable) {
+                    geometricMeans[r] = Math.exp(sumLog / sampleCount);
+                    includeRow[r] = true;
+                    usableRows++;
+                } else {
+                    geometricMeans[r] = Double.NaN;
+                    includeRow[r] = false;
+                }
+            }
+
+            final float[] sizeFactors = new float[sampleCount];
+            for (int s = 0; s < sampleCount; s++) {
+                if (usableRows == 0) {
+                    sizeFactors[s] = 1.0f;
+                    continue;
+                }
+
+                final Vector ratios = new Vector(usableRows);
+                int pos = 0;
+                for (int r = 0; r < rowCount; r++) {
+                    if (!includeRow[r]) {
+                        continue;
+                    }
+
+                    final String rowName = realScores.getLabel(r);
+                    final double absValue;
+                    if (s == 0) {
+                        absValue = Math.abs(realScores.getScore(rowName));
+                    } else {
+                        absValue = Math.abs(rndScores_full.getRow(rowName).getElement(s - 1));
+                    }
+
+                    ratios.setElement(pos, (float) (absValue / geometricMeans[r]));
+                    pos++;
+                }
+
+                final float sf = (float) ratios.median();
+                if (Float.isNaN(sf) || Float.isInfinite(sf) || sf == 0.0f) {
+                    sizeFactors[s] = 1.0f;
+                } else {
+                    sizeFactors[s] = sf;
+                }
+            }
+
+            for (int r = 0; r < rowCount; r++) {
+                final String rowName = labels[r];
+                final float real = realScores.getScore(rowName);
+                normRealScores.setElement(r, real / sizeFactors[0]);
+
+                final Vector rnd = rndScores_full.getRow(rowName);
+                final Vector normRnd = new Vector(rndColCount);
+                for (int c = 0; c < rndColCount; c++) {
+                    normRnd.setElement(c, rnd.getElement(c) / sizeFactors[c + 1]);
+                }
+                normRndScoresMatrix.setRow(r, normRnd);
+            }
+        } else {
+            // @note end ds may have more rows that in the real scores
+            // we pick only those that we want
+            for (int r = 0; r < rowCount; r++) {
+                final String rowName = realScores.getLabel(r);
+                final float real = realScores.getScore(rowName);
+                final Norm norm = Norms.createNorm(normName, real, rndScores_full.getRow(rowName));
+
+                // Note from Pablo:
+                // I think the NES with NaN (because of the skewness) should ... 
+                // be excluded from the computation of p-values or FDRs.
+                
+                normRndScoresMatrix.setRow(r, norm.getRandomNorm());
+                normRealScores.setElement(r, norm.getRealNorm());
+                labels[r] = rowName;
+                labels_list.add(rowName);
+            }
         }
 
         Struc struc = new Struc();
@@ -185,4 +277,19 @@ public class Norms {
             }
         }
     } // End class MeanDivPosNegSeperate
+
+    // Median-of-ratios (Anders & Huber 2010) size-factor normalization is computed across the full
+    // matrix in normalize(), not on a single row. This class exists only to expose the mode name
+    // consistently.
+    public static class MedianOfRatios extends AbstractNormOne {
+        public static String NAME = "median_of_ratios";
+
+        public MedianOfRatios(final float real, final Vector rnd) {
+            super(NAME);
+            this.real_orig = real;
+            this.rnd_orig = rnd;
+            this.rndNorm = rnd_orig;
+            this.realNorm = real_orig;
+        }
+    }
 }

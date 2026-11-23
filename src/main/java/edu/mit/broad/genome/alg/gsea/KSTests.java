@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2026 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.genome.alg.gsea;
 
@@ -16,10 +16,15 @@ import edu.mit.broad.genome.objects.strucs.TemplateRandomizerType;
 import edu.mit.broad.vdb.chip.Chip;
 import xtools.api.param.BadParamException;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.io.PrintWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -40,7 +45,26 @@ public class KSTests {
 
     private static final int LOG_FREQ = 5;
 
+    private static String formatEtaRemaining(long remainingNanos) {
+        long secs = (remainingNanos + 999_999_999L) / 1_000_000_000L;
+        if (secs <= 0) {
+            return "0s";
+        }
+        if (secs < 60) {
+            return secs + "s";
+        }
+        long m = secs / 60;
+        long s = secs % 60;
+        if (secs < 3600) {
+            return m + "m " + s + "s";
+        }
+        long h = secs / 3600;
+        m = (secs % 3600) / 60;
+        return h + "h " + m + "m";
+    }
+
     private PrintStream sout;
+    private File deseq2DiagnosticOutputFile;
 
     /**
      * Class Constructor.
@@ -52,10 +76,14 @@ public class KSTests {
         this.core = new KSCore();
     }
 
+    public void setDeseq2DiagnosticOutputFile(final File outputFile) {
+        this.deseq2DiagnosticOutputFile = outputFile;
+    }
+
     public EnrichmentDb executeGsea(final DatasetTemplate dt, final GeneSet[] origGeneSets, final int nperm, final Metric metric,
     		final SortMode sort, final Order order, final RandomSeedGenerator rst, final TemplateRandomizerType rt, 
     		final Map<String, Boolean> mps, final GeneSetCohort.Generator gcohgen, final boolean permuteTemplate, 
-    		final int numMarkers, final List<RankedList> store_rnd_ranked_lists_here_opt) throws Exception {
+        final int numMarkers, final List<RankedList> store_rnd_ranked_lists_here_opt) throws Exception {
         final Dataset ds = dt.getDataset(false);
         final Template t = dt.getTemplate();
 		log.debug("!!!! Executing for: {} # samples: {}", ds.getName(), ds.getNumCol());
@@ -75,14 +103,30 @@ public class KSTests {
             throw new BadParamException("Too few samples in the dataset to use this metric", 1006);
 		}
 		
-        if (!filterFeaturesWithMissingValues) { markerScores = null; }
+        // For Wald Z-style metrics, always keep markerScores to enable low-information gene filtering
+        if (!filterFeaturesWithMissingValues && !Metrics.isWaldZFamily(metric)) {
+            markerScores = null;
+        }
+
+        Deseq2LikeRegressionZModel deseq2LikeCountModel = null;
+        PrenormalizedRegressionZModel normalizedLinearModel = null;
+        if (Metrics.isWaldZFamily(metric)) {
+            if (Metrics.WaldPrenorm.NAME.equals(metric.getName())) {
+                normalizedLinearModel = PrenormalizedRegressionZModel.fit(ds, t, markerScores);
+                log.debug("Using normalized linear model for {}", metric.getName());
+            } else {
+                deseq2LikeCountModel = Deseq2LikeRegressionZModel.fit(ds, t, markerScores);
+                log.debug("Using DESeq2-like count model for {}", metric.getName());
+            }
+        }
 		
 		try {
 			if (permuteTemplate) {
 			    return shuffleTemplate(nperm, metric, sort, order, mps, ds, t, origGeneSets, gcohgen, rt, 
-			            rst, numMarkers, store_rnd_ranked_lists_here_opt, markerScores);
+                        rst, numMarkers, store_rnd_ranked_lists_here_opt, markerScores, deseq2LikeCountModel, normalizedLinearModel);
 			} else {
-			    return shuffleGeneSet(nperm, metric, sort, order, mps, ds, t, origGeneSets, gcohgen, rst, markerScores);
+                return shuffleGeneSet(nperm, metric, sort, order, mps, ds, t, origGeneSets, gcohgen, rst, markerScores,
+                        deseq2LikeCountModel, normalizedLinearModel);
 			}
 		}
 		finally {
@@ -105,7 +149,8 @@ public class KSTests {
     private EnrichmentDb shuffleTemplate(final int nperm, final Metric metric, final SortMode sort, final Order order,
     		final Map<String, Boolean> metricParams, final Dataset ds, final Template template, final GeneSet[] origGeneSets, 
     		final GeneSetCohort.Generator gcohgen, final TemplateRandomizerType rt, final RandomSeedGenerator rst, 
-    		final int numMarkers, final List<RankedList> store_rnd_ranked_lists_here_opt, Map<String, TwoClassMarkerStats> markerScores)
+            final int numMarkers, final List<RankedList> store_rnd_ranked_lists_here_opt, Map<String, TwoClassMarkerStats> markerScores,
+            final Deseq2LikeRegressionZModel deseq2LikeCountModel, final PrenormalizedRegressionZModel normalizedLinearModel)
     		        throws Exception {
         final Template[] rndTemplates = TemplateFactoryRandomizer.createRandomTemplates(nperm, template, rt, rst);
         log.debug("Done generating rnd templates: {}", rndTemplates.length);
@@ -117,13 +162,56 @@ public class KSTests {
                 metric, sort, order, metricParams, ds, template, null, template.isCategorical());
 
         // calc real scores
-        ScoredDataset rlReal = dm.scoreDataset(metric, sort, order, metricParams, ds, template);
+        ScoredDataset rlReal;
+        if (deseq2LikeCountModel != null) {
+            rlReal = deseq2LikeCountModel.scoreForTemplate(template, sort, order, markerScores);
+            writeDeseq2MainStatsDiagnostic(deseq2LikeCountModel, template, markerScores);
+        } else if (normalizedLinearModel != null) {
+            rlReal = normalizedLinearModel.scoreForTemplate(template, sort, order, markerScores);
+        } else {
+            rlReal = dm.scoreDataset(metric, sort, order, metricParams, ds, template);
+        }
 
         int origSize = rlReal.getSize();
         if (origSize != ds.getNumRow()) { throw new MismatchedSizeException(); } // sanity check
-        rlReal = filterRankedListIfNecessary(rlReal, ds, markerScores);
+        rlReal = filterRankedListIfNecessary(rlReal, ds, markerScores, metric);
         boolean warnGeneRankingValues = checkRankedListForInfinityOrNaN(rlReal);
         final GeneSet[] gsets = gcohgen.filterGeneSetsByMembersAndSize(rlReal, origGeneSets);
+
+        // Wald_Z: DESeq2 estimates dispersions from the design matrix; each phenotype permutation refits.
+        // Wald_Z_Fast: reuse the real fit; permutations only rescored (Wald z under shuffled labels).
+        // Independent filtering is applied only on the real run; permutations reuse the real omit /
+        // low-information gates and IF cutoff for GSEA so the gene universe matches rlReal.
+        final boolean waldZFastPhenotypePerm = deseq2LikeCountModel != null && Metrics.isWaldZFast(metric);
+        Map<String, TwoClassMarkerStats> frozenWaldRankingFilters = null;
+        double realIndFilterThreshold = Double.NaN;
+        double[] sharedSizeFactors = null;
+        double[] baselineMeanNormCounts = null;
+        double sharedMeanInverseSizeFactor = Double.NaN;
+        boolean hasAnyMissingValues = false;
+        if (deseq2LikeCountModel != null && markerScores != null) {
+            frozenWaldRankingFilters = new HashMap<>();
+            for (Map.Entry<String, TwoClassMarkerStats> e : markerScores.entrySet()) {
+                frozenWaldRankingFilters.put(e.getKey(), e.getValue().copyRankingFilterState());
+            }
+            realIndFilterThreshold = deseq2LikeCountModel.getIndependentFilterThreshold();
+            if (!waldZFastPhenotypePerm) {
+                sharedSizeFactors = deseq2LikeCountModel.copySizeFactors();
+                baselineMeanNormCounts = deseq2LikeCountModel.meanNormCountsForPermBaselineIfUnreplaced();
+                if (baselineMeanNormCounts == null) {
+                    baselineMeanNormCounts = Deseq2LikeRegressionZModel.meanNormalizedCounts(ds, sharedSizeFactors);
+                }
+                sharedMeanInverseSizeFactor = Deseq2LikeRegressionZModel.meanInverseSizeFactorForSizeFactors(sharedSizeFactors);
+                hasAnyMissingValues = hasAnyMissingValues(ds);
+            }
+        }
+
+        DatasetStatsCore permMarkerStatsCore = null;
+        Map<String, TwoClassMarkerStats> markerScoresPermReuse = null;
+        if (!waldZFastPhenotypePerm && hasAnyMissingValues) {
+            permMarkerStatsCore = new DatasetStatsCore();
+            markerScoresPermReuse = new HashMap<>();
+        }
 
         log.debug("shuffleTemplate with -- nperm: {} Order: {} Sort: {} gsets: {}", rndTemplates.length, order, sort, gsets.length);
         final GeneSetCohort gcoh = gcohgen.createGeneSetCohort(rlReal, gsets, true); // @note ASSUME already qualified
@@ -135,31 +223,47 @@ public class KSTests {
 
         boolean warnPermutationValues = false;
         // Each row is a "geneset", and each column a randomization
-        for (int c = 0; c < rndTemplates.length; c++) {
-            ScoredDataset rndRl = dm.scoreDataset(metric, sort, order, metricParams, ds, rndTemplates[c]);
-            rndRl = filterRankedListIfNecessary(rndRl, ds, markerScores);
+        final int totalPerm = rndTemplates.length;
+        final long permLoopStartNanos = System.nanoTime();
+        for (int c = 0; c < totalPerm; c++) {
+            ScoredDataset rndRl;
+            GeneSetCohort gcohRnd;
+            if (deseq2LikeCountModel != null) {
+                if (waldZFastPhenotypePerm) {
+                    rndRl = deseq2LikeCountModel.scoreForTemplate(rndTemplates[c], sort, order, frozenWaldRankingFilters,
+                            realIndFilterThreshold);
+                } else {
+                    Map<String, TwoClassMarkerStats> markersForFit = markerScores;
+                    if (hasAnyMissingValues && rndTemplates[c].isCategorical()) {
+                        markerScoresPermReuse.clear();
+                        permMarkerStatsCore.calc2ClassCategoricalMetricMarkerScores(ds, rndTemplates[c], metric,
+                                metricParams, markerScoresPermReuse);
+                        markersForFit = markerScoresPermReuse;
+                    }
+                    final Deseq2LikeRegressionZModel permModel = Deseq2LikeRegressionZModel.fitPermutationRefit(ds,
+                            rndTemplates[c], markersForFit, sharedSizeFactors, baselineMeanNormCounts,
+                            sharedMeanInverseSizeFactor);
+                    rndRl = permModel.scoreForTemplate(rndTemplates[c], sort, order, frozenWaldRankingFilters,
+                            realIndFilterThreshold);
+                }
+                final Map<String, TwoClassMarkerStats> filterMarkers =
+                        frozenWaldRankingFilters != null ? frozenWaldRankingFilters : markerScores;
+                rndRl = filterRankedListIfNecessary(rndRl, ds, filterMarkers, metric);
+                gcohRnd = gcohgen.createGeneSetCohort(rndRl, gsets, false);
+            } else if (normalizedLinearModel != null) {
+                rndRl = normalizedLinearModel.scoreForTemplate(rndTemplates[c], sort, order, markerScores);
+                rndRl = filterRankedListIfNecessary(rndRl, ds, markerScores, metric);
+                gcohRnd = gcohgen.createGeneSetCohort(rndRl, gsets, false);
+            } else {
+                rndRl = dm.scoreDataset(metric, sort, order, metricParams, ds, rndTemplates[c]);
+                rndRl = filterRankedListIfNecessary(rndRl, ds, markerScores, metric);
+                gcohRnd = gcohgen.createGeneSetCohort(rndRl, gsets, false);
+            }
             if (!warnPermutationValues) { warnPermutationValues = checkRankedListForInfinityOrNaN(rndRl); }
             
             if (store_rnd_ranked_lists_here_opt != null) { store_rnd_ranked_lists_here_opt.add(rndRl); }
 
-        	// TODO: eval for performance.
-        	// Could use sout.print() instead, to avoid String concat.  Could also try to avoid the modulo call:
-        	//   int nextLogPoint = LOG_FREQ; // outside loop
-        	//   if (c == nextLogPoint) { // inside loop
-        	//      // print message
-        	//      nextLogPoint += LOG_FREQ
-        	//   }
-            if (c % LOG_FREQ == 0) {
-                StringBuffer ib = new StringBuffer("Iteration: ").append(c + 1).append('/').append(rndTemplates.length);
-                ib.append(" for ").append(dstName);
-                //sout.println(ib.toString());    // dont use log!
-                System.out.println(ib.toString());
-            }
-
             // DO THE RND CALC
-            // @note better to just clone the existing real gcoh rather than generate a whole new one
-            // as only the ranked list has changed and not the feature or gene set content
-            final GeneSetCohort gcohRnd = gcohgen.createGeneSetCohort(rndRl, gsets, false);
             final EnrichmentScore[] rndScores = core.calculateKSScore(gcohRnd, false);
 
             for (int g = 0; g < gsets.length; g++) {
@@ -167,6 +271,25 @@ public class KSTests {
             }
 
             ptest.addRnd(rndTemplates[c], rndRl);
+
+            final int done = c + 1;
+            if (done % LOG_FREQ == 0 || c == totalPerm - 1) {
+                StringBuilder ib = new StringBuilder("Iteration: ").append(done).append('/').append(totalPerm);
+                ib.append(" for ").append(dstName);
+                if (c < totalPerm - 1) {
+                    long elapsedNanos = System.nanoTime() - permLoopStartNanos;
+                    long remainingNanos = (totalPerm - done) * (elapsedNanos / done);
+                    ib.append(", ~").append(formatEtaRemaining(remainingNanos)).append(" remaining");
+                } else {
+                    ib.append(" (complete)");
+                }
+                // JUL (log.info) drives the status bar; SystemConsole only follows the redirected System.out (sout).
+                final String progressMsg = ib.toString();
+                log.info(progressMsg);
+                if (sout != null) {
+                    sout.println(progressMsg);
+                }
+            }
         }
 
         // 1 result for every gene set
@@ -179,10 +302,39 @@ public class KSTests {
 
         EnrichmentDb enrichmentDb = new EnrichmentDb(dstName, rlReal, ds, template,
                 results, metric, metricParams, sort, order, rndTemplates.length, null, ptest);
-        int rowsNotMeetingMetricSize = origSize - rlReal.getSize();
+        int rowsNotMeetingMetricSize = 0;
+        if (markerScores != null) {
+            for (TwoClassMarkerStats markerScore : markerScores.values()) {
+                if (markerScore.omit) {
+                    rowsNotMeetingMetricSize++;
+                }
+            }
+        }
         if (rowsNotMeetingMetricSize > 0) {
             enrichmentDb.addWarning("There were " + rowsNotMeetingMetricSize + 
                     " row(s) of this dataset where one of the classes has too few samples to use the chosen metric.  See the log for more details.");
+        }
+        if (Metrics.isWaldZFamily(metric) && markerScores != null) {
+            int lowInformationRows = 0;
+            double lowInformationThreshold = Double.NaN;
+            for (TwoClassMarkerStats markerScore : markerScores.values()) {
+                if (markerScore.lowInformation) {
+                    lowInformationRows++;
+                }
+                if (!Double.isFinite(lowInformationThreshold) && Double.isFinite(markerScore.lowInformationThreshold)) {
+                    lowInformationThreshold = markerScore.lowInformationThreshold;
+                }
+            }
+            if (lowInformationRows > 0) {
+                StringBuilder filterWarning = new StringBuilder();
+                filterWarning.append("There were ").append(lowInformationRows)
+                        .append(" low-information row(s) removed before Wald Z-style enrichment scoring by independent filtering");
+                if (Double.isFinite(lowInformationThreshold)) {
+                    filterWarning.append(" using mean normalized count threshold ").append(lowInformationThreshold);
+                }
+                filterWarning.append('.');
+                enrichmentDb.addWarning(filterWarning.toString());
+            }
         }
         if (warnGeneRankingValues) {
             enrichmentDb.addWarning("Infinite or NaN value(s) detected during gene rank computations. "
@@ -195,6 +347,18 @@ public class KSTests {
                     + "This may affect enrichment score calculations and report plotting.");
         }
         return enrichmentDb;
+    }
+
+    private boolean hasAnyMissingValues(final Dataset ds) {
+        for (int row = 0; row < ds.getNumRow(); row++) {
+            final Vector v = ds.getRow(row);
+            for (int col = 0; col < v.getSize(); col++) {
+                if (!Double.isFinite(v.getElement(col))) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     // this is the CORE method
@@ -241,15 +405,23 @@ public class KSTests {
 
     private EnrichmentDb shuffleGeneSet(final int nperm, final Metric metric, final SortMode sort, final Order order,
     		final Map<String, Boolean> metricParams, final Dataset ds, final Template template, final GeneSet[] origGeneSets, 
-    		final GeneSetCohort.Generator gen, final RandomSeedGenerator rst, Map<String, TwoClassMarkerStats> markerScores)
+			final GeneSetCohort.Generator gen, final RandomSeedGenerator rst, Map<String, TwoClassMarkerStats> markerScores,
+                final Deseq2LikeRegressionZModel deseq2LikeCountModel, final PrenormalizedRegressionZModel normalizedLinearModel)
     		        throws Exception {
         if (ds == null) { throw new IllegalArgumentException("Param ds cannot be null"); }
 
         // The same (real template) scored dataset for all gsets
         final DatasetMetrics dm = new DatasetMetrics();
-        ScoredDataset rlReal = dm.scoreDataset(metric, sort, order, metricParams, ds, template);
-        int origSize = rlReal.getSize();
-        rlReal = filterRankedListIfNecessary(rlReal, ds, markerScores);
+        ScoredDataset rlReal;
+        if (deseq2LikeCountModel != null) {
+            rlReal = deseq2LikeCountModel.scoreForTemplate(template, sort, order, markerScores);
+            writeDeseq2MainStatsDiagnostic(deseq2LikeCountModel, template, markerScores);
+        } else if (normalizedLinearModel != null) {
+            rlReal = normalizedLinearModel.scoreForTemplate(template, sort, order, markerScores);
+        } else {
+            rlReal = dm.scoreDataset(metric, sort, order, metricParams, ds, template);
+        }
+        rlReal = filterRankedListIfNecessary(rlReal, ds, markerScores, metric);
         boolean warnGeneRankingValues = checkRankedListForInfinityOrNaN(rlReal);
         final GeneSet[] gsets = gen.filterGeneSetsByMembersAndSize(rlReal, origGeneSets);
         
@@ -261,10 +433,39 @@ public class KSTests {
         EnrichmentDb enrichmentDb = new EnrichmentDb(name, rlReal, ds, template,
                 results, metric, metricParams, sort, order, nperm, null, null);
         
-        int rowsNotMeetingMetricSize = origSize - rlReal.getSize();
+        int rowsNotMeetingMetricSize = 0;
+        if (markerScores != null) {
+            for (TwoClassMarkerStats markerScore : markerScores.values()) {
+                if (markerScore.omit) {
+                    rowsNotMeetingMetricSize++;
+                }
+            }
+        }
         if (rowsNotMeetingMetricSize > 0) {
             enrichmentDb.addWarning("There were " + rowsNotMeetingMetricSize + 
                     " row(s) of this dataset where one of the classes has too few samples to use the chosen metric.  See the log for more details.");
+        }
+        int lowInformationRows = 0;
+        double lowInformationThreshold = Double.NaN;
+        if (Metrics.isWaldZFamily(metric) && markerScores != null) {
+            for (TwoClassMarkerStats markerScore : markerScores.values()) {
+                if (markerScore.lowInformation) {
+                    lowInformationRows++;
+                }
+                if (!Double.isFinite(lowInformationThreshold) && Double.isFinite(markerScore.lowInformationThreshold)) {
+                    lowInformationThreshold = markerScore.lowInformationThreshold;
+                }
+            }
+        }
+        if (lowInformationRows > 0) {
+            StringBuilder filterWarning = new StringBuilder();
+            filterWarning.append("There were ").append(lowInformationRows)
+                    .append(" low-information row(s) removed before Wald Z-style enrichment scoring by independent filtering");
+            if (Double.isFinite(lowInformationThreshold)) {
+                filterWarning.append(" using mean normalized count threshold ").append(lowInformationThreshold);
+            }
+            filterWarning.append('.');
+            enrichmentDb.addWarning(filterWarning.toString());
         }
         if (warnGeneRankingValues) {
             enrichmentDb.addWarning("Infinite or NaN value(s) detected during gene rank computations. "
@@ -276,13 +477,17 @@ public class KSTests {
     
     // Some features may need to be filtered out due to missing values causing them to not meet Metric min-sample requirements.
     // This is signaled by being passed a non-null/non-empty markerScores Map by the caller; otherwise we ignore this filtering pass.
-    private ScoredDataset filterRankedListIfNecessary(ScoredDataset rankedList, final Dataset ds, Map<String, TwoClassMarkerStats> markerScores) {
+    private ScoredDataset filterRankedListIfNecessary(ScoredDataset rankedList, final Dataset ds, Map<String, TwoClassMarkerStats> markerScores,
+            final Metric metric) {
         if (markerScores == null || markerScores.isEmpty()) { return rankedList; }
         
         List<DoubleElement> dels = new ArrayList<DoubleElement>(rankedList.getSize());
-        for (String feature: rankedList.getRankedNames()) {
-            TwoClassMarkerStats markerScore = markerScores.get(feature);
-            if (!markerScore.omit) { dels.add(new DoubleElement(ds.getRowIndex(feature), rankedList.getScore(feature))); }
+        for (int rank = 0; rank < rankedList.getSize(); rank++) {
+            final String feature = rankedList.getRankName(rank);
+            final TwoClassMarkerStats markerScore = markerScores.get(feature);
+            if (markerScore != null && !markerScore.omit && !markerScore.lowInformation) {
+                dels.add(new DoubleElement(ds.getRowIndex(feature), rankedList.getScore(rank)));
+            }
         }
         ScoredDatasetImpl filtered = new ScoredDatasetImpl(new AddressedVector(dels), ds);
         // Preserve any warnings attached to the RL
@@ -298,5 +503,58 @@ public class KSTests {
         if (!Float.isFinite(rankedList.getScore(0))) { return true; }
         final int end = rankedList.getNumRow() - 1;
         return !Float.isFinite(rankedList.getScore(end));
+    }
+
+    private void writeDeseq2MainStatsDiagnostic(final Deseq2LikeRegressionZModel model,
+                                                final Template template,
+                                                final Map<String, TwoClassMarkerStats> markerScores) {
+        if (deseq2DiagnosticOutputFile == null || model == null) {
+            return;
+        }
+
+        final List<Deseq2LikeRegressionZModel.MainStat> rows = model.computeMainStatsForTemplate(template, markerScores);
+        final File parent = deseq2DiagnosticOutputFile.getParentFile();
+        if (parent != null && !parent.exists() && !parent.mkdirs()) {
+            log.warn("Could not create directory for DESeq2 diagnostic output: {}", parent.getAbsolutePath());
+            return;
+        }
+
+        try (PrintWriter writer = new PrintWriter(new BufferedWriter(new FileWriter(deseq2DiagnosticOutputFile)))) {
+            writer.println("feature\tbaseMean\tlog2FoldChange\tlfcSE\tstat\tpvalue\tpadj\tdispersion\tmaxCooks\tcooksOutlier\tlowInformation\tomit");
+            for (Deseq2LikeRegressionZModel.MainStat row : rows) {
+                writer.print(row.feature);
+                writer.print('\t');
+                writer.print(toDiagnosticString(row.baseMean));
+                writer.print('\t');
+                writer.print(toDiagnosticString(row.log2FoldChange));
+                writer.print('\t');
+                writer.print(toDiagnosticString(row.lfcSE));
+                writer.print('\t');
+                writer.print(toDiagnosticString(row.stat));
+                writer.print('\t');
+                writer.print(toDiagnosticString(row.pvalue));
+                writer.print('\t');
+                writer.print(toDiagnosticString(row.padj));
+                writer.print('\t');
+                writer.print(toDiagnosticString(row.dispersion));
+                writer.print('\t');
+                writer.print(toDiagnosticString(row.maxCooks));
+                writer.print('\t');
+                writer.print(row.cooksOutlier);
+                writer.print('\t');
+                writer.print(row.lowInformation);
+                writer.print('\t');
+                writer.println(row.omit);
+            }
+            log.info("Wrote DESeq2-style main statistics diagnostic: {}", deseq2DiagnosticOutputFile.getAbsolutePath());
+        } catch (IOException e) {
+            log.warn("Failed writing DESeq2-style main statistics diagnostic: {}", deseq2DiagnosticOutputFile.getAbsolutePath(), e);
+            return;
+        }
+
+    }
+
+    private static String toDiagnosticString(final double value) {
+        return Double.isFinite(value) ? Double.toString(value) : "NA";
     }
 }

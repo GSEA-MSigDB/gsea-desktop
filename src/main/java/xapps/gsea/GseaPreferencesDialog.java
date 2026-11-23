@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2024 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2026 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package xapps.gsea;
 
@@ -88,6 +88,7 @@ public class GseaPreferencesDialog extends JDialog {
             XPreferencesFactory.kCytoscapeRESTPort.setValueOfPref2SelectionComponentValue();
             XPreferencesFactory.kDefaultReportsOutputDir.setValueOfPref2SelectionComponentValue();
             XPreferencesFactory.kMakeGseaUpdateCheck.setValueOfPref2SelectionComponentValue();
+            XPreferencesFactory.kMSigDBCatalogURL.setValueOfPref2SelectionComponentValue();
 
             XPreferencesFactory.kBiasedVar.setValueOfPref2SelectionComponentValue();
             XPreferencesFactory.kMedian.setValueOfPref2SelectionComponentValue();
@@ -181,6 +182,22 @@ public class GseaPreferencesDialog extends JDialog {
             return panel;
         }
 
+        private JPanel createMSigDBCatalogPanel() {
+            final String str = "150dlu,      4dlu,        320dlu"; // columns
+            //            // 1(label)    2 (spacer)   3(field)
+            int rowCnt = 3;
+            final StringBuffer rowStr = _createRowStr(1);
+            final FormLayout layout = new FormLayout(str, rowStr.toString());
+            PanelBuilder builder = new PanelBuilder(layout);
+            builder.setDefaultDialogBorder();
+            final CellConstraints cc = new CellConstraints();
+            builder.add(new JLabel(XPreferencesFactory.kMSigDBCatalogURL.getName()), cc.xy(1, rowCnt));
+            builder.add(XPreferencesFactory.kMSigDBCatalogURL.getSelectionComponent().getComponent(), cc.xy(3, rowCnt));
+            JPanel panel = builder.getPanel();
+            panel.setBorder(createRoundCornerBorder(" MSigDB catalog "));
+            return panel;
+        }
+
         private JPanel createPanel() {
             // home page panel
             JPanel outPanel = createOutputPanel();
@@ -189,6 +206,7 @@ public class GseaPreferencesDialog extends JDialog {
 
             // app prefs
             JPanel windowsAndTabsPanel = createAppPreferencesPanel();
+            JPanel msigdbCatalogPanel = createMSigDBCatalogPanel();
             JPanel panel = new JPanel();
             panel.setLayout(new BoxLayout(panel, BoxLayout.PAGE_AXIS));
             panel.add(Box.createVerticalStrut(20));
@@ -198,6 +216,9 @@ public class GseaPreferencesDialog extends JDialog {
             panel.add(Box.createVerticalStrut(6));
             panel.add(Box.createVerticalStrut(6));
             panel.add(windowsAndTabsPanel);
+            panel.add(Box.createVerticalStrut(6));
+            panel.add(Box.createVerticalStrut(6));
+            panel.add(msigdbCatalogPanel);
             panel.add(Box.createVerticalStrut(6));
             panel.add(Box.createVerticalStrut(6));
             panel.add(algPanel);

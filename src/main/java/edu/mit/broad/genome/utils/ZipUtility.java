@@ -41,6 +41,14 @@ public class ZipUtility {
             while (zipEntries.hasMoreElements()) {
                 ZipEntry zipEntry = zipEntries.nextElement();
                 File targetFile = new File(targetDirectory, zipEntry.getName());
+                
+                // Guard against the Zip Slip vulnerability (CVE-2002-2021) by checking that the target file is within the target directory.
+                String targetDirPath = targetDirectory.getCanonicalPath();
+                String targetFilePath = targetFile.getCanonicalPath();
+                if (!targetFilePath.startsWith(targetDirPath + File.separator)) {
+                    throw new IOException("Entry is outside of the target directory: " + zipEntry.getName());
+                }
+                
                 if (zipEntry.isDirectory()) {
                     targetFile.mkdirs();
                 } else {

@@ -1,14 +1,17 @@
 /*
- * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2026 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package xtools.gsea;
 
 import edu.mit.broad.genome.Headers;
+import edu.mit.broad.genome.StandardException;
 import edu.mit.broad.genome.alg.DatasetGenerators;
 import edu.mit.broad.genome.alg.Metric;
 import edu.mit.broad.genome.alg.Metrics;
 import edu.mit.broad.genome.alg.gsea.KSTests;
+import edu.mit.broad.genome.alg.gsea.Norms;
 import edu.mit.broad.genome.math.*;
+import edu.mit.broad.genome.objects.Dataset;
 import edu.mit.broad.genome.objects.GeneSet;
 import edu.mit.broad.genome.objects.RankedList;
 import edu.mit.broad.genome.objects.Template;
@@ -77,10 +80,60 @@ public abstract class AbstractGsea2Tool extends AbstractGseaTool {
             List<RankedList> store_rnd_ranked_lists_here_opt) throws Exception {
         final RandomSeedGenerator rst = fRndSeedTypeParam.createSeed();
         final DatasetTemplate dt = new DatasetGenerators().extract(fullCd.getDataset(), template);
-
-        if (log.isDebugEnabled()) { log.debug(">>>>> Using samples: {}", dt.getDataset().getColumnNames()); }
-
+        final Dataset dsForValidation = dt.getDataset();
+        if (log.isDebugEnabled()) { log.debug(">>>>> Using samples: {}", dsForValidation.getColumnNames()); }
         final KSTests tests = new KSTests(getOutputStream());
+        
+        Metric metric = fMetricParam.getMetric();
+        String metricName = metric.getName();
+        final boolean waldSelected = Metrics.isWaldZFamily(metric);
+
+        if (waldSelected) {
+            final boolean medianOfRatiosSelected = Norms.MEDIAN_OF_RATIOS.equals(fNormModeParam.getNormModeName());
+            final boolean rawIntegerCounts = isDataRawIntegerCounts(dsForValidation);
+            if (Metrics.WaldPrenorm.NAME.equals(metricName)) {
+                if (rawIntegerCounts) {
+                    final String warningMessage = metricName
+                            + " scoring requested but all-integer data detected.  If this is raw counts data, consider using "
+                            + Metrics.Wald.NAME + " or " + Metrics.WaldFast.NAME
+                            + " instead with " + Norms.MEDIAN_OF_RATIOS
+                            + " normalization mode and Sum_of_probes collapse mode. ";
+                    log.warn(warningMessage);
+                    fReport.addWarning(warningMessage);
+                }
+                if (!Norms.NONE.equals(fNormModeParam.getNormModeName())) {
+                    final String errorMessage = metricName
+                            + " scoring assumes the data has already been normalized outside of GSEA.  Use '"
+                            + Norms.NONE + "' as the normalization mode.";
+                    throw new StandardException(errorMessage, 1030);
+                }
+            } else if (medianOfRatiosSelected) {
+                if (fullCd.wasCollapsed && !"Sum_of_probes".equals(fCollapseModeParam.getValue().toString())) {
+                    final String errorMessage = metricName + " with " + Norms.MEDIAN_OF_RATIOS
+                            + " is running on collapsed counts using mode '"
+                            + fCollapseModeParam.getValue() + "'. For DESeq2-like agreement, prefer collapse mode 'Sum_of_probes' "
+                            + "because non-additive collapse modes can distort count-model statistics.";
+                    throw new StandardException(errorMessage, 1030);
+                }
+                if (rawIntegerCounts) {
+                    final File edbDir = fReport.createSubDir("edb");
+                    final File diagnosticsFile = new File(edbDir, "deseq2_main_stats.tsv");
+                    tests.setDeseq2DiagnosticOutputFile(diagnosticsFile);
+                    fReport.addComment("DESeq2-style main statistics saved to: edb/" + diagnosticsFile.getName());
+                } else {
+                    final String warningMessage = metricName
+                            + " scoring requested with " + Norms.MEDIAN_OF_RATIOS
+                            + " normalization, but dataset contains non-integer, possibly pre-normalized values. Consider using "
+                            + Metrics.WaldPrenorm.NAME + " instead.";
+                    log.warn(warningMessage);
+                    fReport.addWarning(warningMessage);
+                }
+            } else {
+                final String errorMessage = metricName
+                        + " scoring requires " + Norms.MEDIAN_OF_RATIOS + " normalization mode.";
+                throw new StandardException(errorMessage, 1030);
+            }
+        }
         
         // If we have a RandomSeedGenerator.Timestamp instance, save the timestamp for later reference
         if (rst instanceof RandomSeedGenerators.Timestamp) {
@@ -88,11 +141,10 @@ public abstract class AbstractGsea2Tool extends AbstractGseaTool {
                     ((RandomSeedGenerators.Timestamp)rst).getTimestamp());
         }
 
-        return tests.executeGsea(dt, origGeneSets, fNumPermParam.getIValue(), fMetricParam.getMetric(),
+        return tests.executeGsea(dt, origGeneSets, fNumPermParam.getIValue(), metric,
         		fSortParam.getMode(), fOrderParam.getOrder(), rst, fRndTypeParam.getRandomizerType(), getMetricParams(fMedianParam),
                 fGcohGenReqdParam.createGeneSetCohortGenerator(fGeneSetMinSizeParam.getIValue(), fGeneSetMaxSizeParam.getIValue()), 
                 fPermuteTypeParamType.permuteTemplate(), fNumMarkersParam.getIValue(), store_rnd_ranked_lists_here_opt);
-
     }
 
     protected void execute_one_with_reporting(final CollapsedDetails.Data fullCd, final Template template, final GeneSet[] origGeneSets,
@@ -165,5 +217,29 @@ public abstract class AbstractGsea2Tool extends AbstractGseaTool {
         params.put(Headers.USE_BIASED, XPreferencesFactory.kBiasedVar.getBooleanO());
         params.put(Headers.USE_MEDIAN, (Boolean)medianParam.getValue());
         return Collections.unmodifiableMap(params);
+    }
+
+    private static boolean isDataRawIntegerCounts(final Dataset ds) {
+        final int rowCount = ds.getNumRow();
+        final int colCount = ds.getNumCol();
+        for (int rowIndex = 0; rowIndex < rowCount; rowIndex++) {
+            final Vector row = ds.getRow(rowIndex);
+            for (int columnIndex = 0; columnIndex < colCount; columnIndex++) {
+                final double value = row.getElement(columnIndex);
+                if (!Double.isFinite(value)) {
+                    continue;
+                }
+                if (value < 0.0d) {
+                    return false;
+                }
+                final double nearestInteger = Math.rint(value);
+                final float nearestAsFloat = (float) nearestInteger;
+                final double tolerance = Math.max(1.0e-4d, 4.0d * (double) Math.ulp(nearestAsFloat == 0.0f ? 1.0f : nearestAsFloat));
+                if (Math.abs(value - nearestInteger) > tolerance) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 }

@@ -4,8 +4,7 @@
 package edu.mit.broad.genome.parsers;
 
 import edu.mit.broad.genome.*;
-import edu.mit.broad.genome.io.FtpResultInputStream;
-import edu.mit.broad.genome.io.FtpSingleUrlTransferCommand;
+import edu.mit.broad.genome.io.HttpDownloadCommand;
 import edu.mit.broad.genome.objects.*;
 import edu.mit.broad.genome.objects.esmatrix.db.EnrichmentDb;
 import edu.mit.broad.genome.reports.api.Report;
@@ -15,8 +14,6 @@ import edu.mit.broad.xbench.core.api.Application;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import xapps.gsea.GseaWebResources;
 
 import java.io.*;
 import java.net.URI;
@@ -397,6 +394,20 @@ public class ParserFactory implements Constants {
      */
     public static GeneSet readGeneSet(File file, boolean useCache) throws Exception {
         return readGeneSet(file, useCache, true);
+    }
+
+    /**
+     * Same as {@link #readGeneSet(File, boolean)}, but safe to call with a URL string. Wrapping a
+     * URL in a File first (as the File-based overload requires) silently corrupts it: File's own
+     * path normalization collapses "//" to "/", turning "https://host/a" into "https:/host/a" and
+     * leaving it with no recoverable host once something tries to actually connect. Checking for
+     * a URL before any File is constructed avoids that.
+     */
+    public static GeneSet readGeneSet(String path, boolean useCache) throws Exception {
+        if (NamingConventions.isURL(path)) {
+            return readGeneSet(path, createInputStream(path), useCache);
+        }
+        return readGeneSet(new File(path), useCache);
     }
 
     public static GeneSet readGeneSet(File file, boolean useCache, boolean add2Cache) throws Exception {
@@ -814,6 +825,20 @@ public class ParserFactory implements Constants {
     }
 
     /**
+     * Same as {@link #read(File, boolean)}, but safe to call with a URL string. Wrapping a URL in
+     * a File first (as the File-based overload requires) silently corrupts it: File's own path
+     * normalization collapses "//" to "/", turning "https://host/a" into "https:/host/a" and
+     * leaving it with no recoverable host once something tries to actually connect. Checking for
+     * a URL before any File is constructed avoids that.
+     */
+    public static PersistentObject read(final String path, final boolean useCache) throws Exception {
+        if (NamingConventions.isURL(path)) {
+            return read(path, createInputStream(path), useCache);
+        }
+        return read(new File(path), useCache);
+    }
+
+    /**
      * auto adds appropriate extension if specified file doesnt already have it
      *
      * @param pob
@@ -1070,18 +1095,14 @@ public class ParserFactory implements Constants {
 
     private static InputStream createInputStream(URL url) throws IOException {
         klog.debug("Parsing URL: {} >> {}", url.getPath(), url.toString());
-        if (url.getProtocol().equalsIgnoreCase("ftp") && url.getHost().equalsIgnoreCase(GseaWebResources.getGseaFTPServer())) {
-            try {
-                FtpSingleUrlTransferCommand ftpCommand = new FtpSingleUrlTransferCommand(url);
-                FtpResultInputStream ftpInputStream = ftpCommand.retrieveAsInputStream();
-                return ftpInputStream;
-            }
-            catch (Exception e) {
-                throw new IOException(e);
-            }
-        } else {
-            return new BufferedInputStream(url.openStream());
+        // FTP downloads are no longer supported in any form -- checked on protocol alone (not a
+        // specific host) so that no ftp:// URL can ever reach url.openStream() below, which would
+        // otherwise silently succeed via the JVM's own built-in (anonymous-only) FTP handler.
+        if ("ftp".equalsIgnoreCase(url.getProtocol())) {
+            throw new IOException("FTP-based downloads are no longer supported for: " + url
+                    + ". Please re-select this file from the current MSigDB catalog.");
         }
+        return new BufferedInputStream(HttpDownloadCommand.retrieveAsInputStream(url));
     }
 
     private static InputStream createInputStream(final Object source) throws IOException {

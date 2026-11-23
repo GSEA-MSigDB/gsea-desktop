@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2026 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.genome.alg.gsea;
 
@@ -194,6 +194,14 @@ public class GeneSetCohort {
                 log.info("Done preproc for larger than: " + geneSetMaxSize);
            } else { // @note hack
                 log.info("Skipped gene set size filtering: max and min thresholds are equal");
+                // Still intersect each set with the ranked list. Otherwise members absent from rl
+                // (e.g. filtered by Wald_Z low-information) remain in the set and
+                // GeneSetScoringTables.getScore(member) throws IllegalArgumentException.
+                final List<GeneSet> qualified = new ArrayList<GeneSet>(gsets.length);
+                for (int i = 0; i < gsets.length; i++) {
+                    qualified.add(gsets[i].cloneDeep(rl));
+                }
+                gsets = qualified.toArray(new GeneSet[qualified.size()]);
             }
 
             // Finally remove all 0 size gene sets (if min is 0 these will still be in there)

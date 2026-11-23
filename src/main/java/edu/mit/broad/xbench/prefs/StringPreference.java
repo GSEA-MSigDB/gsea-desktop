@@ -1,6 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2003-2016 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright (c) 2003-2026 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ */
 package edu.mit.broad.xbench.prefs;
 
 import edu.mit.broad.genome.swing.fields.GFieldPlusChooser;
@@ -31,8 +31,6 @@ public class StringPreference extends AbstractPreference {
         }
 
         fField.setValue(getValue());
-
-        //klog.debug("Getting component");
         return fField;
     }
 
@@ -40,5 +38,10 @@ public class StringPreference extends AbstractPreference {
         kPrefs.put(getName(), value.toString());
     }
 
-} // End FilePreference
+    public void setValueOfPref2SelectionComponentValue() {
+        if (fField != null) {
+            super._setValueOfPref2SelectionComponentValue(fField.getValue());
+        }
+    }
+}
 

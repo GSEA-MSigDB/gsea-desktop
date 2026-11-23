@@ -1,4 +1,4 @@
-// Copyright (c) 2003-2024 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents 
+// Copyright (c) 2003-2026 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents 
 // of the University of California. All rights reserved.
 apply plugin: 'java'
 import org.apache.tools.ant.filters.ReplaceTokens
@@ -7,11 +7,18 @@ ext.moduleName = 'org.gsea_msigdb.gsea'
 ext.mainClassName = 'xapps.gsea.GSEA'
 
 repositories {
+    mavenCentral()
     flatDir { dirs 'modules' }
 }
 
 dependencies {
     implementation fileTree(dir: 'modules', include: '*.jar')
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.10.2'
+}
+
+test {
+    useJUnitPlatform()
 }
 
 tasks.withType(JavaCompile) {
@@ -71,6 +78,7 @@ task createDist(type: Copy, dependsOn: jar)  {
     with copySpec {
         from ("${buildDir}/libs")
         from ("modules")
+        from (configurations.runtimeClasspath)
         into "modules"
     }
     into "${buildDir}/GSEA-dist"

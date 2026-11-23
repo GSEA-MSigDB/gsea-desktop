@@ -1,13 +1,15 @@
 /*
- * Copyright (c) 2003-2023 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2026 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package xtools.api.ui;
 
 import edu.mit.broad.genome.Errors;
 import edu.mit.broad.genome.JarResources;
-import edu.mit.broad.genome.alg.ComparatorFactory;
+import edu.mit.broad.genome.io.MSigDBCatalogClient;
 import edu.mit.broad.genome.objects.GeneSet;
 import edu.mit.broad.genome.objects.GeneSetMatrix;
+import edu.mit.broad.genome.objects.MSigDBCatalogFile;
+import edu.mit.broad.genome.objects.MSigDBRelease;
 import edu.mit.broad.genome.objects.MSigDBSpecies;
 import edu.mit.broad.genome.objects.MSigDBVersion;
 import edu.mit.broad.genome.objects.PersistentObject;
@@ -24,8 +26,6 @@ import edu.mit.broad.xbench.prefs.XPreferencesFactory;
 import xapps.gsea.GseaWebResources;
 
 import org.apache.commons.lang3.StringUtils;
-import org.genepattern.uiutil.FTPFile;
-import org.genepattern.uiutil.FTPList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,7 +49,9 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextArea;
+import javax.swing.JTree;
 import javax.swing.ListSelectionModel;
+import javax.swing.tree.TreeSelectionModel;
 
 /**
  * @author Aravind Subramanian, David Eby
@@ -69,27 +71,18 @@ public class GeneSetMatrixChooserWindow {
                 GuiHelper.ICON_HELP16, GseaWebResources.getGseaBaseURL() + "/msigdb/");
         DialogDescriptor desc = Application.getWindowManager().createDialogDescriptor("Select a gene set", wrapper, helpAction, infoAction, true);
 
-        final JList<FTPFile> humanFTPFileJList = new JList<FTPFile>();
-        final JList<FTPFile> mouseFTPFileJList = new JList<FTPFile>();
+        final JTree humanFileJTree = new JTree();
+        final JTree mouseFileJTree = new JTree();
         if (XPreferencesFactory.kOnlineMode.getBoolean()) {
-            FTPList ftpList = null;
             try {
-                ftpList = new FTPList(GseaWebResources.getGseaFTPServer(),
-                        GseaWebResources.getGseaFTPServerUserName(), GseaWebResources.getGseaFTPServerPassword());
-                try {
-                    FTPFile[] humanFTPFiles = ChooserHelper.retrieveFTPFiles(ftpList, ".symbols.gmt",
-                            MSigDBSpecies.Human, GseaWebResources.getGseaFTPServerGeneSetsDir(MSigDBSpecies.Human));
-                    FTPFile[] mouseFTPFiles = ChooserHelper.retrieveFTPFiles(ftpList, ".symbols.gmt",
-                            MSigDBSpecies.Mouse, GseaWebResources.getGseaFTPServerGeneSetsDir(MSigDBSpecies.Mouse));
-                    ChooserHelper.populateFTPModel(humanFTPFiles, humanFTPFileJList, desc,
-                            new ComparatorFactory.FTPFileByVersionComparator("h"), ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-                    ChooserHelper.populateFTPModel(mouseFTPFiles, mouseFTPFileJList, desc,
-                            new ComparatorFactory.FTPFileByVersionComparator("mh"), ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-                    tabbedPane.addTab("Human Collection (MSigDB)", new JScrollPane(humanFTPFileJList));
-                    tabbedPane.addTab("Mouse Collection (MSigDB)", new JScrollPane(mouseFTPFileJList));
-                } finally {
-                    if (ftpList != null) { ftpList.quit(); }
-                }
+                List<MSigDBRelease> allReleases =
+                        MSigDBCatalogClient.fetchReleaseCatalog(XPreferencesFactory.kMSigDBCatalogURL.getString());
+                ChooserHelper.populateCatalogTree(humanFileJTree, allReleases, MSigDBSpecies.Human,
+                        MSigDBRelease::getGeneSetsCatalogUrl, desc, TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION);
+                ChooserHelper.populateCatalogTree(mouseFileJTree, allReleases, MSigDBSpecies.Mouse,
+                        MSigDBRelease::getGeneSetsCatalogUrl, desc, TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION);
+                tabbedPane.addTab("Human Collection (MSigDB)", new JScrollPane(humanFileJTree));
+                tabbedPane.addTab("Mouse Collection (MSigDB)", new JScrollPane(mouseFileJTree));
             } catch (Exception ex) {
                 klog.error(ex.getMessage(), ex);
                 tabbedPane.addTab("Human Collection (MSigDB)", new JScrollPane(ChooserHelper.createErrorMessageDisplay(ex)));
@@ -102,7 +95,7 @@ public class GeneSetMatrixChooserWindow {
 
         // TODO: strong typing, should be JList<GeneSetMatrix> (or POB) but need to verify and make changes elsewhere
         // Likewise for the next two.
-        DefaultListCellRenderer defaultRenderer = new GeneSetMatrixChooserWindow.NonFTPGeneSetsRenderer();
+        DefaultListCellRenderer defaultRenderer = new GeneSetMatrixChooserWindow.LocalGeneSetsRenderer();
         final JList<GeneSetMatrix> localGeneSetMatrixJList = new JList<GeneSetMatrix>(ObjectBindery.getModel(GeneSetMatrix.class));
         localGeneSetMatrixJList.setCellRenderer(defaultRenderer);
         localGeneSetMatrixJList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
@@ -127,8 +120,8 @@ public class GeneSetMatrixChooserWindow {
         tabbedPane.addTab("Text entry", new JScrollPane(taGenes));
         
         BooleanSupplier warningChecker = () -> {
-            List<Versioned> selectedItems = new ArrayList<Versioned>(humanFTPFileJList.getSelectedValuesList());
-            selectedItems.addAll(mouseFTPFileJList.getSelectedValuesList());
+            List<Versioned> selectedItems = new ArrayList<Versioned>(ChooserHelper.getSelectedFiles(humanFileJTree));
+            selectedItems.addAll(ChooserHelper.getSelectedFiles(mouseFileJTree));
             selectedItems.addAll(localGeneSetMatrixJList.getSelectedValuesList());
             selectedItems.addAll(localGeneSetJList.getSelectedValuesList());
             selectedItems.addAll(localMatrixSubsetsJList.getSelectedValuesList());
@@ -171,8 +164,8 @@ public class GeneSetMatrixChooserWindow {
         desc.setWarningValidator(warningValidator);
         
         BooleanSupplier errorChecker = () -> {
-            List<Versioned> selectedItems = new ArrayList<Versioned>(humanFTPFileJList.getSelectedValuesList());
-            selectedItems.addAll(mouseFTPFileJList.getSelectedValuesList());
+            List<Versioned> selectedItems = new ArrayList<Versioned>(ChooserHelper.getSelectedFiles(humanFileJTree));
+            selectedItems.addAll(ChooserHelper.getSelectedFiles(mouseFileJTree));
             selectedItems.addAll(localGeneSetMatrixJList.getSelectedValuesList());
             selectedItems.addAll(localGeneSetJList.getSelectedValuesList());
             selectedItems.addAll(localMatrixSubsetsJList.getSelectedValuesList());
@@ -206,11 +199,11 @@ public class GeneSetMatrixChooserWindow {
             return null;
         } else {
             List<String> allValues = new ArrayList<String>();
-            for (FTPFile ftpFile : humanFTPFileJList.getSelectedValuesList()) {
-                allValues.add(ftpFile.getPath());
+            for (MSigDBCatalogFile file : ChooserHelper.getSelectedFiles(humanFileJTree)) {
+                allValues.add(file.getPath());
             }
-            for (FTPFile ftpFile : mouseFTPFileJList.getSelectedValuesList()) { 
-                allValues.add(ftpFile.getPath());
+            for (MSigDBCatalogFile file : ChooserHelper.getSelectedFiles(mouseFileJTree)) {
+                allValues.add(file.getPath());
             }
             for (GeneSetMatrix geneSetMatrix : localGeneSetMatrixJList.getSelectedValuesList()) {
                 allValues.add(ParserFactory.getCache().getSourcePath(geneSetMatrix));
@@ -240,7 +233,7 @@ public class GeneSetMatrixChooserWindow {
         }
     }
 
-    public static class NonFTPGeneSetsRenderer extends DefaultListCellRenderer {
+    public static class LocalGeneSetsRenderer extends DefaultListCellRenderer {
         public Component getListCellRendererComponent(@SuppressWarnings("rawtypes") JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
             super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
     

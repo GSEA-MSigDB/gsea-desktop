@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2026 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.xbench.tui;
 
@@ -179,12 +179,7 @@ public class ToolSelectorTree extends JTree {
                     this.setToolTipText(((ToolCategory) node).getDesc());
                     this.setIcon(((ToolCategory) node).getIcon());
                 } else if (node instanceof Tool) {
-                    StringTokenizer tok = new StringTokenizer(((Tool) node).getClass().getName(), ".");
-                    String name = null;
-                    while (tok.hasMoreTokens()) {
-                        name = tok.nextToken();
-                    }
-                    this.setText(name);
+                    this.setText(((Tool) node).getName());
                     this.setIcon(Tool.ICON);
                     this.setToolTipText(((Tool) node).getDesc());
                 } else if (node instanceof Report) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2026 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.xbench.tui;
 
@@ -183,7 +183,7 @@ public class ToolRunnerControl extends JPanel {
                         final ReportStub rs = Application.getToolManager().getLastReportStub(fHook.getCurrentTool().getClass().getName());
 
                         if (rs == null) {
-                            Application.getWindowManager().showMessage("No history available for: " + fHook.getCurrentTool().getClass().getName());
+                            Application.getWindowManager().showMessage("No history available for: " + fHook.getCurrentTool().getName());
                             return null;
                         }
 
@@ -245,7 +245,7 @@ public class ToolRunnerControl extends JPanel {
                     }
                 });
 
-                ApplicationDialog dd = new ApplicationDialog("Command Line for: " + fHook.getCurrentTool().getClass().getName(), new JScrollPane(ta));
+                ApplicationDialog dd = new ApplicationDialog("Command Line for: " + fHook.getCurrentTool().getName(), new JScrollPane(ta));
                 dd.setButtons(new JButton[]{bCopy});
                 dd.show();
             }

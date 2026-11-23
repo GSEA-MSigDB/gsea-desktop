@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2024 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2026 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package xapps.gsea;
 
@@ -80,6 +80,7 @@ import xtools.api.Tool;
 import xtools.chip2chip.Chip2Chip;
 import xtools.gsea.Gsea;
 import xtools.gsea.GseaPreranked;
+import xtools.gsea.SsGsea;
 import xtools.munge.CollapseDataset;
 
 public class GseaFijiTabsApplicationFrame extends JFrame implements Application.Handler {
@@ -282,6 +283,13 @@ public class GseaFijiTabsApplicationFrame extends JFrame implements Application.
                 ), 
                 width, height, font, true);
         tb2.add(Box.createVerticalStrut(struth));
+
+        final SsGsea ssGseaTool = new SsGsea();
+        tb2.add(JarResources.toURL("GseaApp24.gif"), "Run ssGSEA          ",
+                new AppToolLauncherAction(ssGseaTool, ssGseaTool.getParamSet(),
+                        "ssGSEA — single-sample GSEA (gene-set scores per sample)", JarResources.getIcon("Gsea_app16_v2.png")),
+                width, height, font, true);
+        tb2.add(Box.createVerticalStrut(struth));
         
         tb2.add(JarResources.toURL("ProjectSpecific16.png"), "Collapse Dataset   ", 
                 new AppToolLauncherAction(cd, cd.getParamSet(),
@@ -399,14 +407,6 @@ public class GseaFijiTabsApplicationFrame extends JFrame implements Application.
                 SystemUtils.IS_OS_MAC_OSX ? null : new MyExitAction()
         }));
 
-        menuBar.add(createJMenu("Downloads", new Object[]{
-                new BrowserAction("Download Human chip annotations", "Download Human array annotation files - useful to annotate GSEA reports",
-                        null, GseaWebResources.getHumanArrayAnnotationsURL()),
-                new BrowserAction("Download Mouse chip annotations", "Download Mouse array annotation files - useful to annotate GSEA reports",
-                        null, GseaWebResources.getMouseArrayAnnotationsURL()),
-                new BrowserAction("Download example datasets", "Download example datasets for GSEA - expression data, phenotype labels and gene sets files",
-                        null, GseaWebResources.getGseaExamplesURL())}));
-        
         menuBar.add(createJMenu("Help", new Object[]{
                 new BrowserAction("GSEA web site", "Open the GSEA website in a web browser",
                         GuiHelper.ICON_HELP16, GseaWebResources.getGseaBaseURL()),
@@ -414,7 +414,9 @@ public class GseaFijiTabsApplicationFrame extends JFrame implements Application.
                         GuiHelper.ICON_HELP16, GseaWebResources.getGseaHelpURL()),
                 new BrowserAction("GSEA & MSigDB License Terms", "GSEA & MSigDB License Terms", GuiHelper.ICON_HELP16, 
                         GseaWebResources.getGseaBaseURL() + "/" + "license_terms_list.jsp"),
-                        null,
+                new BrowserAction("Download example datasets", "Download example datasets for GSEA - expression data, phenotype labels and gene sets files",
+                        null, GseaWebResources.getGseaExamplesURL()),
+                null,
                 new ShowAppRuntimeHomeDirAction("Show GSEA home folder"),
                 new ShowDefaultOutputDirAction("Show GSEA output folder (default location)"),
                 null,

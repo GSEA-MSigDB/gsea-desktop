@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2023 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2026 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.xbench.tui;
 
@@ -27,7 +27,9 @@ import javax.swing.table.TableColumn;
 
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.io.IOException;
 import java.lang.reflect.Constructor;
+import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -180,11 +182,23 @@ public class TaskManager {
     }
 
     private void updateTable() {
-        // it does a a jig, but thats ok as visual indicator of a change in state
-        fModel.fireTableStructureChanged(); // needed for consistent updates
-        fTaskTable.repaint();
-        fTaskTable.revalidate();
-        setColNumWidth(fTaskTable);
+        // ToolRunnable invokes this from a worker thread; all model/table updates
+        // must run on the EDT to keep column model and header paint in sync.
+        Runnable refresh = () -> {
+            if (fTaskTable == null) {
+                return;
+            }
+            // it does a a jig, but thats ok as visual indicator of a change in state
+            fModel.fireTableStructureChanged(); // needed for consistent updates
+            fTaskTable.repaint();
+            fTaskTable.revalidate();
+            setColNumWidth(fTaskTable);
+        };
+        if (SwingUtilities.isEventDispatchThread()) {
+            refresh.run();
+        } else {
+            SwingUtilities.invokeLater(refresh);
+        }
     }
 
     /**
@@ -447,6 +461,8 @@ public class TaskManager {
 
     private static final Icon RESULTS_ICON = JarResources.getIcon("Results.gif");
 
+    private static final String OS_NAME = System.getProperty("os.name", "").toLowerCase();
+
     // needs to be called after every fire structure changed
     // else its ok at first, and then after first fire, it changes back to default width
     private void setColNumWidth(JTable table) {
@@ -455,6 +471,62 @@ public class TaskManager {
         column.setMinWidth(0);
         column.setMaxWidth(20);
         column.setPreferredWidth(20);
+    }
+
+    private static boolean isWslEnvironment() {
+        return System.getenv("WSL_DISTRO_NAME") != null || System.getenv("WSL_INTEROP") != null;
+    }
+
+    private static boolean tryLaunch(String... command) {
+        try {
+            new ProcessBuilder(command).start();
+            return true;
+        } catch (IOException ioe) {
+            klog.debug("Could not launch command: {}", command[0], ioe);
+            return false;
+        }
+    }
+
+    private static void openUrlInBrowser(URL url) throws Exception {
+        URI uri = url.toURI();
+        String uriText = uri.toString();
+
+        if (Desktop.isDesktopSupported()) {
+            Desktop desktop = Desktop.getDesktop();
+            if (desktop.isSupported(Desktop.Action.BROWSE)) {
+                desktop.browse(uri);
+                return;
+            }
+        }
+
+        // Desktop integration is often unavailable in WSL/headless sessions.
+        if (isWslEnvironment()) {
+            if (tryLaunch("wslview", uriText)) {
+                return;
+            }
+            if (tryLaunch("cmd.exe", "/c", "start", "", uriText)) {
+                return;
+            }
+            if (tryLaunch("powershell.exe", "-NoProfile", "-Command", "Start-Process '" + uriText + "'")) {
+                return;
+            }
+        }
+
+        if (OS_NAME.contains("win")) {
+            if (tryLaunch("cmd", "/c", "start", "", uriText)) {
+                return;
+            }
+        } else if (OS_NAME.contains("mac")) {
+            if (tryLaunch("open", uriText)) {
+                return;
+            }
+        } else {
+            if (tryLaunch("xdg-open", uriText)) {
+                return;
+            }
+        }
+
+        throw new UnsupportedOperationException("Unable to open browser for URL on this platform: " + uriText);
     }
 
     /**
@@ -509,7 +581,7 @@ public class TaskManager {
                 				try {
                 					URL url = report.getReportIndex().toURL();
                 					if (url != null) {
-                						Desktop.getDesktop().browse(url.toURI());                                
+                						openUrlInBrowser(url);
                 					} else {
                 						Application.getWindowManager().showMessage("No report produced");
                 					}

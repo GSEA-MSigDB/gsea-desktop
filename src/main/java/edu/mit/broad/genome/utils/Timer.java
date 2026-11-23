@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2026 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.genome.utils;
 
@@ -46,6 +46,21 @@ public class Timer {
 
     public void printTimeTakenS() {
         System.out.println(_timeTaken(null));
+    }
+
+    public String getTimeTakenLabel(final String label) {
+        return _timeTaken(label);
+    }
+
+    public long getTimeTakenMillis() {
+        if (!stopped) {
+            stop();
+        }
+        return fStop - fStart;
+    }
+
+    public long getTimeTakenSeconds() {
+        return getTimeTakenMillis() / 1000;
     }
 
     private String _timeTaken(String label) {

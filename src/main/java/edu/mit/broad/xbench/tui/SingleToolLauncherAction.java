@@ -1,11 +1,10 @@
 /*
- * Copyright (c) 2003-2019 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2026 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.xbench.tui;
 
 import java.awt.Dimension;
 
-import edu.mit.broad.genome.parsers.ParseUtils;
 import edu.mit.broad.xbench.actions.WidgetAction;
 import edu.mit.broad.xbench.core.Widget;
 import xtools.api.Tool;
@@ -21,7 +20,7 @@ public class SingleToolLauncherAction extends WidgetAction {
         if (tool == null) {
             throw new IllegalArgumentException("Param tool cannot be null");
         }
-        return ParseUtils.getLastToken(tool.getClass().getName(), ".");
+        return tool.getName();
     }
 
     private Tool fTool;

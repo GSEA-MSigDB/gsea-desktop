@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2022 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2026 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package edu.mit.broad.genome.alg;
 
@@ -25,8 +25,10 @@ public class Metrics {
     private static final int MIN_NUM_FOR_VAR = 3;
 
     // @maint add a metric and this array might need updating
-    public static Metric[] METRICS_FOR_GSEA = new Metric[] { new Signal2Noise(), new tTest(), new Cosine(), 
-            new Euclidean(), new Manhattan(), new Pearson(), new Spearman(), new ClassRatio(), new ClassDiff(), new ClassLog2Ratio()
+    public static Metric[] METRICS_FOR_GSEA = new Metric[] { 
+    		new Signal2Noise(), new tTest(), new Wald(), new WaldFast(), new Cosine(),
+            new Euclidean(), new Manhattan(), new Pearson(), new Spearman(), new ClassRatio(),
+            new ClassDiff(), new ClassLog2Ratio()
     };
     public static Metric NONE_METRIC = new None();
 
@@ -41,7 +43,7 @@ public class Metrics {
         // Correct for an old misspelling.
         String lookupName = obj.toString();
         if (Manhattan.TYPO_NAME.equalsIgnoreCase(lookupName)) { lookupName = "Manhattan"; }
-        
+
         for (int i = 0; i < METRICS_FOR_GSEA.length; i++) {
             if (METRICS_FOR_GSEA[i].getName().equalsIgnoreCase(lookupName)) {
                 return METRICS_FOR_GSEA[i];
@@ -51,6 +53,41 @@ public class Metrics {
         if (None.NAME.equalsIgnoreCase(lookupName)) { return NONE_METRIC; }
         
         throw new RuntimeException("Cannot lookup Metric for: " + lookupName + "; unsupported Metric.");
+    }
+
+    /**
+     * DESeq2-like Wald Z ranking ({@link Wald}, {@link WaldFast}, raw counts + median-of-ratios).
+     */
+    public static boolean isWaldZFamily(final Metric metric) {
+        if (metric == null) {
+            return false;
+        }
+        final String n = metric.getName();
+        return Wald.NAME.equalsIgnoreCase(n) || WaldFast.NAME.equalsIgnoreCase(n) || WaldPrenorm.NAME.equalsIgnoreCase(n);
+    }
+
+    /**
+     * {@link WaldFast}: same real-phenotype fit as {@link Wald}, but phenotype permutations reuse that
+     * fit (Wald z under shuffled labels only; dispersions not refit).
+     */
+    public static boolean isWaldZFast(final Metric metric) {
+        return metric != null && WaldFast.NAME.equalsIgnoreCase(metric.getName());
+    }
+
+    private static double waldStyleRowScore(final Vector profile, final Template template, final Map<String, Boolean> params) {
+        final VectorSplitter splitter = new VectorSplitter(MIN_NUM_FOR_VAR);
+        final boolean usemedian = AlgMap.isMedian(params);
+        final boolean usebiased = AlgMap.isBiased(params);
+        final boolean fixlow = AlgMap.isFixLowVar(params);
+        final Vector[] vs = splitter.splitBiphasic_nansafe(profile, template);
+        if (vs == null) {
+            return 0.0;
+        }
+        final int coiIndex = template.getClassOfInterestIndex();
+        if (coiIndex == 0) {
+            return XMath.tTest(vs[0], vs[1], usebiased, usemedian, fixlow);
+        }
+        return XMath.tTest(vs[1], vs[0], usebiased, usemedian, fixlow);
     }
 
     public static abstract class AbstractMetric implements Metric {
@@ -260,6 +297,68 @@ public class Metrics {
         }
     }
 
+    /**
+     * DESeq2-like Wald Z ranking for GSEA. Phenotype permutations refit everything that changes gene
+     * ranks under the shuffled labels (dispersions, MAP shrinkage, outlier handling, Wald z). Size
+     * factors are reused (label-invariant). Independent filtering is applied on the observed
+     * phenotype only; the same gene universe and gene sets are used for enrichment on every
+     * permutation. The post-dispersion IF block inside {@code fit()} is skipped on permutations
+     * because it does not affect Wald z-scores and those gates are taken from the real run.
+     */
+    public static class Wald extends AbstractMetric {
+        public static final String NAME = "Wald_Z";
+
+        public Wald() {
+            super(CATEGORICAL, NAME, MIN_NUM_FOR_VAR);
+        }
+
+        /**
+         * USE_MEDIAN -> true or false (Boolean objects). Default is TRUE.
+         * USE_BIASED -> true or false (Boolean objects). Default is FALSE.
+         * FIX_LOW    -> true or false (Boolean objects). Default is TRUE
+         * Template is required.
+         */
+        public double getScore(final Vector profile, final Template template, final Map<String, Boolean> params) {
+            return waldStyleRowScore(profile, template, params);
+        }
+    }
+
+    /**
+     * Faster phenotype permutations for the DESeq2-like count path: the real phenotype gets a full
+     * {@link edu.mit.broad.genome.alg.gsea.Deseq2LikeRegressionZModel#fit}; each permutation only recomputes Wald z-scores under
+     * the shuffled template using that fitted model (dispersions and related quantities are not
+     * refit). This is an approximation relative to {@link Wald}. Independent filtering and ranking
+     * gates for GSEA still follow the real run.
+     */
+    public static class WaldFast extends AbstractMetric {
+        public static final String NAME = "Wald_Z_Fast";
+
+        public WaldFast() {
+            super(CATEGORICAL, NAME, MIN_NUM_FOR_VAR);
+        }
+
+        public double getScore(final Vector profile, final Template template, final Map<String, Boolean> params) {
+            return waldStyleRowScore(profile, template, params);
+        }
+    }
+
+    /**
+     * DESeq2-like Wald Z ranking for GSEA, but meant for use with pre-normalized counts (non-integer, non-count data).
+     * Use of this metric will force use of @{link edu.mit.broad.genome.alg.gsea.PrenormalizedDeseq2LikeRegressionZModel}
+     * instead of the standard {@link edu.mit.broad.genome.alg.gsea.Deseq2LikeRegressionZModel}.
+     */
+    public static class WaldPrenorm extends AbstractMetric {
+        public static final String NAME = "Wald_Z_Prenorm";
+
+        public WaldPrenorm() {
+            super(CATEGORICAL, NAME, MIN_NUM_FOR_VAR);
+        }
+
+        public double getScore(final Vector profile, final Template template, final Map<String, Boolean> params) {
+            return waldStyleRowScore(profile, template, params);
+        }
+    }
+    
     public static class ClassRatio extends AbstractMetric {
         public ClassRatio() { super(CATEGORICAL, "Ratio_of_Classes"); }
 

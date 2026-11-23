@@ -88,12 +88,14 @@ module org.gsea_msigdb.gsea {
     requires commons.compress;
     requires commons.io;
     requires commons.lang3;
+    requires commons.math3;
     requires dom4j.full;
     requires ecs;
-    requires edtftpj;
     requires forms;
     requires httpclient;
     requires httpcore;
+    requires hipparchus.core;
+    requires hipparchus.stat;
     requires java.datatransfer;
     requires transitive java.desktop;
     requires java.logging;

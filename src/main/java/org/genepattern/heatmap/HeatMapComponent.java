@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2024 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003-2026 Broad Institute, Inc., Massachusetts Institute of Technology, and Regents of the University of California.  All rights reserved.
  */
 package org.genepattern.heatmap;
 
@@ -846,9 +846,10 @@ public class HeatMapComponent extends JComponent {
     }
 
     private void fireFeatureTableChanged() {
-
-        featureTableModel.fireTableChanged(new TableModelEvent(
-                featureTableModel, TableModelEvent.HEADER_ROW));
+        // Column count depends on showRowNames / showRowDescriptions; HEADER_ROW
+        // alone does not recreate TableColumns, which desynchronizes the header
+        // from the model (ArrayIndexOutOfBoundsException in BasicTableHeaderUI).
+        featureTableModel.fireTableStructureChanged();
     }
 
     public IExpressionData getExpressionData() {
